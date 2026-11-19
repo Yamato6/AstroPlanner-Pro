@@ -1,0 +1,40 @@
+{
+  "_comment": "Curated overlay applied by tools/AstroPlanner.DataBuilder on top of OpenNGC. commonNames: English common names of the Messier objects that have one (from AstroPlanner v1; generic descriptions such as 'Globular cluster' are left out, OpenNGC names are kept as alternates). messierOverrides: Messier id -> OpenNGC name of the object that carries it, where OpenNGC differs from the usual convention (OpenNGC lists M102 as a duplicate of M101; the app follows the common identification with NGC 5866, as AstroPlanner v1 did).",
+  "commonNames": {
+    "M1": "Crab Nebula",
+    "M6": "Butterfly Cluster",
+    "M7": "Ptolemy Cluster",
+    "M8": "Lagoon Nebula",
+    "M11": "Wild Duck Cluster",
+    "M13": "Great Hercules Cluster",
+    "M16": "Eagle Nebula",
+    "M17": "Omega Nebula",
+    "M20": "Trifid Nebula",
+    "M24": "Sagittarius Star Cloud",
+    "M27": "Dumbbell Nebula",
+    "M31": "Andromeda Galaxy",
+    "M33": "Triangulum Galaxy",
+    "M38": "Starfish Cluster",
+    "M40": "Winnecke 4",
+    "M42": "Orion Nebula",
+    "M43": "De Mairan's Nebula",
+    "M44": "Beehive Cluster",
+    "M45": "Pleiades",
+    "M51": "Whirlpool Galaxy",
+    "M57": "Ring Nebula",
+    "M63": "Sunflower Galaxy",
+    "M64": "Black Eye Galaxy",
+    "M76": "Little Dumbbell Nebula",
+    "M81": "Bode's Galaxy",
+    "M82": "Cigar Galaxy",
+    "M83": "Southern Pinwheel Galaxy",
+    "M87": "Virgo A",
+    "M97": "Owl Nebula",
+    "M101": "Pinwheel Galaxy",
+    "M102": "Spindle Galaxy",
+    "M104": "Sombrero Galaxy"
+  },
+  "messierOverrides": {
+    "M102": "NGC5866"
+  }
+}

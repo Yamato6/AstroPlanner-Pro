@@ -1,0 +1,24 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- Developer tool: converts the raw sources (data/raw) into the app's data files (data/build).
+       Run by developers, never by users or by the app. See docs/data-pipeline.md. -->
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\AstroPlanner.Core\AstroPlanner.Core.csproj" />
+    <ProjectReference Include="..\..\src\AstroPlanner.Data\AstroPlanner.Data.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Data.Sqlite" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="AstroPlanner.DataBuilder.Tests" />
+  </ItemGroup>
+
+</Project>
