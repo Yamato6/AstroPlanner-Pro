@@ -1,0 +1,38 @@
+[
+  {
+    "id": "6f1c2a9e-1d2b-4c8e-9a51-3b7e2f0d4a11",
+    "objectId": "M42",
+    "objectName": "Nebulosa de Orión",
+    "observedAtLocal": "2026-01-15T22:30:00",
+    "location": "Aguascalientes",
+    "equipment": "Canon T7 + Rokinon 16mm",
+    "seeing": 3,
+    "transparency": 4,
+    "rating": 5,
+    "notes": "Primera foto"
+  },
+  {
+    "id": "0b8d4e31-7c2a-4f5e-8d9b-1a2c3e4f5a6b",
+    "objectId": "Saturno",
+    "objectName": "Saturno",
+    "observedAtLocal": "2025-09-21T23:05:00",
+    "location": "Aguascalientes",
+    "equipment": "StarSense 130",
+    "seeing": 4,
+    "transparency": 3,
+    "rating": 4,
+    "notes": "Anillos muy abiertos"
+  },
+  {
+    "id": "c3d2e1f0-a9b8-4c7d-8e6f-5a4b3c2d1e0f",
+    "objectId": "X99",
+    "objectName": "Objeto desconocido",
+    "observedAtLocal": "2025-08-01T21:00:00",
+    "location": "",
+    "equipment": "",
+    "seeing": 1,
+    "transparency": 1,
+    "rating": 1,
+    "notes": ""
+  }
+]

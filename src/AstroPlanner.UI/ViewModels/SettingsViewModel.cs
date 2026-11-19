@@ -20,6 +20,8 @@ public sealed partial class SettingsViewModel : ObservableValidator
     private readonly ISettingsService _settingsService;
     private readonly ICityRepository _cityRepository;
     private readonly IAppLogger _logger;
+    private string? _activeLocationId;
+    private (double Latitude, double Longitude, double Elevation, string TimeZoneId) _activeLocationValues;
 
     public SettingsViewModel(ISettingsService settingsService, ICityRepository cityRepository, IAppLogger logger)
     {
@@ -81,6 +83,15 @@ public sealed partial class SettingsViewModel : ObservableValidator
     public partial bool HasError { get; private set; }
 
     public bool IsCitySelectionEnabled => !IsManualLocation;
+
+    /// <summary>
+    /// Saved location in use, or null. It is kept while the coordinates stay those of the
+    /// location; editing them by hand makes the site an unsaved one.
+    /// </summary>
+    public string? ActiveLocationId =>
+        _activeLocationId is not null && _activeLocationValues == (Latitude, Longitude, Elevation, TimeZoneId)
+            ? _activeLocationId
+            : null;
 
     public bool IsManualFieldsEnabled => IsManualLocation;
 
@@ -167,6 +178,7 @@ public sealed partial class SettingsViewModel : ObservableValidator
                 LongitudeDegrees = Longitude,
                 ElevationMeters = Elevation,
                 TimeZoneId = TimeZoneId,
+                ActiveLocationId = ActiveLocationId,
                 MinimumAltitude = MinimumAltitude,
                 MaximumMagnitude = MaximumMagnitude,
                 WeatherForecastEnabled = WeatherForecastEnabled,
@@ -194,6 +206,34 @@ public sealed partial class SettingsViewModel : ObservableValidator
         HasError = false;
     }
 
+    /// <summary>Makes a saved location the active site and saves the settings.</summary>
+    public void UseLocation(Location location)
+    {
+        ArgumentNullException.ThrowIfNull(location);
+        IsManualLocation = true;
+        SelectedCity = null;
+        Latitude = location.LatitudeDegrees;
+        Longitude = location.LongitudeDegrees;
+        Elevation = location.ElevationMeters;
+        TimeZoneId = location.WindowsTimeZoneId;
+        OnPropertyChanged(nameof(SelectedTimeZone));
+        RememberActiveLocation(location.Id);
+        Save();
+    }
+
+    /// <summary>Forgets the active saved location (e.g. it was deleted) and saves the settings.</summary>
+    public void ClearActiveLocation()
+    {
+        _activeLocationId = null;
+        Save();
+    }
+
+    private void RememberActiveLocation(string? id)
+    {
+        _activeLocationId = id;
+        _activeLocationValues = (Latitude, Longitude, Elevation, TimeZoneId);
+    }
+
     /// <summary>Discards unsaved changes and goes back to the persisted settings.</summary>
     public void RevertChanges() => Apply(_settingsService.Load());
 
@@ -216,6 +256,7 @@ public sealed partial class SettingsViewModel : ObservableValidator
         MaximumMagnitude = settings.MaximumMagnitude;
         WeatherForecastEnabled = settings.WeatherForecastEnabled;
         CheckForUpdates = settings.CheckForUpdates;
+        RememberActiveLocation(settings.ActiveLocationId);
         // If the city list is already loaded the saved city is restored; otherwise
         // LoadCitiesAsync selects it once loaded.
         SelectedCity = settings.IsManualLocation

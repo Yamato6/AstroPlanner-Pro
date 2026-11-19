@@ -1,0 +1,26 @@
+# catalogs.sqlite build report (schema 1)
+OpenNGC v20260501: 13371 objects (652 duplicate rows folded, 10 non-existent dropped)
+HYG v4.4: 83476 stars to magnitude 9.0
+
+## Objects by type
+Galaxy: 10521
+OpenCluster: 663
+Star: 546
+Unknown: 419
+GalaxyGroup: 270
+DoubleStar: 244
+GlobularCluster: 208
+PlanetaryNebula: 130
+DiffuseNebula: 94
+HiiRegion: 83
+ClusterWithNebula: 67
+StellarAssociation: 64
+ReflectionNebula: 38
+SupernovaRemnant: 11
+EmissionNebula: 8
+Nova: 3
+DarkNebula: 2
+
+## Constellation differences with OpenNGC (0; the app uses the computed IAU boundary)
+
+## Warnings (0)

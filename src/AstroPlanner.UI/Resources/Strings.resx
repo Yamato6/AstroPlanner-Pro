@@ -112,7 +112,7 @@
   <data name="FilterMinimumAltitudeTooltip" xml:space="preserve"><value>Minimum altitude above the horizon for an object to count as visible</value></data>
   <data name="FilterMinimumAltitudeName" xml:space="preserve"><value>Minimum altitude</value></data>
   <data name="FilterMaximumMagnitude" xml:space="preserve"><value>Max. mag.</value></data>
-  <data name="FilterMaximumMagnitudeTooltip" xml:space="preserve"><value>Hides fainter objects (higher number = fainter)</value></data>
+  <data name="FilterMaximumMagnitudeTooltip" xml:space="preserve"><value>Hides fainter objects (higher number = fainter). Nebulae without a known magnitude are always shown.</value></data>
   <data name="FilterMaximumMagnitudeName" xml:space="preserve"><value>Maximum magnitude</value></data>
   <data name="FilterOnlyVisible" xml:space="preserve"><value>Visible only</value></data>
   <data name="ShowingObjectsFormat" xml:space="preserve"><value>Showing {0} objects</value></data>
@@ -123,8 +123,8 @@
   <data name="ColumnConstellation" xml:space="preserve"><value>Constellation</value></data>
   <data name="ColumnType" xml:space="preserve"><value>Type</value></data>
   <data name="ColumnMagnitude" xml:space="preserve"><value>Mag.</value></data>
-  <data name="ColumnAltitude" xml:space="preserve"><value>Altitude</value></data>
-  <data name="ColumnAzimuth" xml:space="preserve"><value>Azimuth</value></data>
+  <data name="ColumnAltitude" xml:space="preserve"><value>Alt.</value></data>
+  <data name="ColumnAzimuth" xml:space="preserve"><value>Az.</value></data>
   <data name="ColumnMoon" xml:space="preserve"><value>Moon</value></data>
   <data name="ColumnStatus" xml:space="preserve"><value>Status</value></data>
   <data name="ColumnCulmination" xml:space="preserve"><value>Culmination</value></data>
@@ -291,14 +291,14 @@
   <data name="SettingsDefaultsLoaded" xml:space="preserve"><value>Defaults loaded (not saved).</value></data>
   <data name="AboutWindowTitle" xml:space="preserve"><value>About AstroPlanner Pro</value></data>
   <data name="AboutVersion" xml:space="preserve"><value>Version</value></data>
-  <data name="AboutDescription" xml:space="preserve"><value>Astronomical observation planner: which Messier objects and planets are visible tonight from your location, when they culminate, how much the Moon gets in the way and how many clouds are forecast.</value></data>
+  <data name="AboutDescription" xml:space="preserve"><value>Astrophotography and observation planner: which objects of the NGC, IC, Messier and Caldwell catalogs and which planets are up tonight from your sites, when they culminate, when their best window in darkness is, how much the Moon gets in the way and how many clouds are forecast.</value></data>
   <data name="AboutCredits" xml:space="preserve"><value>Credits</value></data>
   <data name="AboutCloudForecast" xml:space="preserve"><value>Cloud forecast:</value></data>
   <data name="AboutCloudForecastLicense" xml:space="preserve"><value>(data under the CC BY 4.0 license)</value></data>
   <data name="AboutAlgorithms" xml:space="preserve"><value>Astronomical algorithms:</value></data>
   <data name="AboutAlgorithmsText" xml:space="preserve"><value>Jean Meeus, “Astronomical Algorithms” (2nd ed.), and approximate orbital elements from JPL (NASA).</value></data>
   <data name="AboutLibraries" xml:space="preserve"><value>Libraries:</value></data>
-  <data name="AboutLibrariesText" xml:space="preserve"><value>.NET and WPF, ScottPlot, CommunityToolkit.Mvvm and Microsoft.Extensions.DependencyInjection.</value></data>
+  <data name="AboutLibrariesText" xml:space="preserve"><value>.NET and WPF, ScottPlot, CommunityToolkit.Mvvm, Microsoft.Extensions.DependencyInjection and Microsoft.Data.Sqlite (SQLite).</value></data>
   <data name="AboutYourData" xml:space="preserve"><value>Your data</value></data>
   <data name="AboutYourDataText" xml:space="preserve"><value>Settings, plan, logbook and logs are stored only on this computer. Uninstalling AstroPlanner Pro does not delete them.</value></data>
   <data name="AboutOpenFolder" xml:space="preserve"><value>Open folder</value></data>
@@ -312,4 +312,78 @@
   <data name="ShortcutPrint" xml:space="preserve"><value>Print the plan</value></data>
   <data name="ShortcutExport" xml:space="preserve"><value>Export the plan to CSV</value></data>
   <data name="ShortcutAbout" xml:space="preserve"><value>This window</value></data>
+  <data name="TypeGalaxyGroup" xml:space="preserve"><value>Galaxy group</value></data>
+  <data name="TypeStellarAssociation" xml:space="preserve"><value>Stellar association</value></data>
+  <data name="TypeClusterWithNebula" xml:space="preserve"><value>Cluster with nebula</value></data>
+  <data name="TypeHiiRegion" xml:space="preserve"><value>H II region</value></data>
+  <data name="TypeEmissionNebula" xml:space="preserve"><value>Emission nebula</value></data>
+  <data name="TypeReflectionNebula" xml:space="preserve"><value>Reflection nebula</value></data>
+  <data name="TypeDarkNebula" xml:space="preserve"><value>Dark nebula</value></data>
+  <data name="TypeStar" xml:space="preserve"><value>Star</value></data>
+  <data name="TypeDoubleStar" xml:space="preserve"><value>Double star</value></data>
+  <data name="TypeNova" xml:space="preserve"><value>Nova</value></data>
+  <data name="FilterCatalog" xml:space="preserve"><value>Catalog:</value></data>
+  <data name="FilterCatalogName" xml:space="preserve"><value>Catalog filter</value></data>
+  <data name="CatalogAll" xml:space="preserve"><value>All</value></data>
+  <data name="CatalogMessier" xml:space="preserve"><value>Messier</value></data>
+  <data name="CatalogCaldwell" xml:space="preserve"><value>Caldwell</value></data>
+  <data name="CatalogNgc" xml:space="preserve"><value>NGC</value></data>
+  <data name="CatalogIc" xml:space="preserve"><value>IC</value></data>
+  <data name="CatalogSolarSystem" xml:space="preserve"><value>Solar system</value></data>
+  <data name="FilterMinimumSize" xml:space="preserve"><value>Min. size (′):</value></data>
+  <data name="FilterMinimumSizeName" xml:space="preserve"><value>Minimum size in arcminutes</value></data>
+  <data name="FilterMinimumSizeTooltip" xml:space="preserve"><value>Hide objects smaller than this, in arcminutes (0 shows everything). Objects without a known size are always shown.</value></data>
+  <data name="MinimumSizeRange" xml:space="preserve"><value>The minimum size must be between 0 and 600 arcminutes.</value></data>
+  <data name="FilterObservableTonight" xml:space="preserve"><value>Observable tonight</value></data>
+  <data name="FilterObservableTonightTooltip" xml:space="preserve"><value>Only objects that are above the minimum altitude and the local horizon for some time during astronomical darkness</value></data>
+  <data name="ColumnAlsoKnownAs" xml:space="preserve"><value>Also known as</value></data>
+  <data name="ColumnSize" xml:space="preserve"><value>Size</value></data>
+  <data name="ColumnSizeTooltip" xml:space="preserve"><value>Apparent size (major × minor axis), in arcminutes</value></data>
+  <data name="ColumnSurfaceBrightness" xml:space="preserve"><value>Surf. br.</value></data>
+  <data name="ColumnSurfaceBrightnessTooltip" xml:space="preserve"><value>Mean surface brightness, mag/arcsec²</value></data>
+  <data name="ColumnMaximumAltitudeTonightTooltip" xml:space="preserve"><value>Highest altitude between sunset and sunrise</value></data>
+  <data name="ColumnBestWindow" xml:space="preserve"><value>Best window</value></data>
+  <data name="ColumnBestWindowTooltip" xml:space="preserve"><value>Longest stretch of astronomical darkness with the object above the minimum altitude and the local horizon</value></data>
+  <data name="SizeFormat" xml:space="preserve"><value>{0:0.#}′ × {1:0.#}′</value></data>
+  <data name="SizeSingleFormat" xml:space="preserve"><value>{0:0.#}′</value></data>
+  <data name="WindowFormat" xml:space="preserve"><value>{0:HH:mm}–{1:HH:mm}</value></data>
+  <data name="DurationFormat" xml:space="preserve"><value>{0}h {1:00}m</value></data>
+  <data name="CalculatingNight" xml:space="preserve"><value>Calculating tonight's windows…</value></data>
+  <data name="DetailDesignationsFormat" xml:space="preserve"><value>Also known as: {0}</value></data>
+  <data name="DetailSizeFormat" xml:space="preserve"><value>Size: {0}</value></data>
+  <data name="DetailSurfaceBrightnessFormat" xml:space="preserve"><value>Surface brightness: {0:0.0} mag/arcsec²</value></data>
+  <data name="DetailBestWindowFormat" xml:space="preserve"><value>Best window tonight: {0} ({1} in darkness)</value></data>
+  <data name="DetailBestWindowNone" xml:space="preserve"><value>Best window tonight: not observable in darkness</value></data>
+  <data name="TabLocations" xml:space="preserve"><value>Locations</value></data>
+  <data name="LocationsHint" xml:space="preserve"><value>Saved observing sites. The active site is used for every calculation. A horizon profile (trees, buildings) can be stored with each site; its editor arrives with the live sky.</value></data>
+  <data name="ColumnLocationName" xml:space="preserve"><value>Name</value></data>
+  <data name="ColumnCoordinates" xml:space="preserve"><value>Coordinates</value></data>
+  <data name="ColumnElevation" xml:space="preserve"><value>Elevation</value></data>
+  <data name="ColumnTimeZone" xml:space="preserve"><value>Time zone</value></data>
+  <data name="ColumnHorizon" xml:space="preserve"><value>Horizon</value></data>
+  <data name="ColumnNotesLocation" xml:space="preserve"><value>Notes</value></data>
+  <data name="LocationsNewName" xml:space="preserve"><value>Name for the current site:</value></data>
+  <data name="LocationsNewNameName" xml:space="preserve"><value>Name for the current site</value></data>
+  <data name="LocationsSaveCurrent" xml:space="preserve"><value>Save current site</value></data>
+  <data name="LocationsSaveCurrentTooltip" xml:space="preserve"><value>Saves the location now in use (Settings) as a site you can come back to</value></data>
+  <data name="LocationsUse" xml:space="preserve"><value>Use</value></data>
+  <data name="LocationsUseTooltip" xml:space="preserve"><value>Make this the active site</value></data>
+  <data name="LocationsDelete" xml:space="preserve"><value>Delete</value></data>
+  <data name="LocationsActiveMark" xml:space="preserve"><value>●</value></data>
+  <data name="LocationsActiveTooltip" xml:space="preserve"><value>Active site</value></data>
+  <data name="LocationsDefaultName" xml:space="preserve"><value>My site</value></data>
+  <data name="HorizonFlat" xml:space="preserve"><value>Flat</value></data>
+  <data name="HorizonPointsFormat" xml:space="preserve"><value>{0} points</value></data>
+  <data name="CoordinatesFormat" xml:space="preserve"><value>{0:0.####}°, {1:0.####}°</value></data>
+  <data name="ElevationFormat" xml:space="preserve"><value>{0:0} m</value></data>
+  <data name="ImportV1Title" xml:space="preserve"><value>Import from AstroPlanner v1</value></data>
+  <data name="ImportV1Question" xml:space="preserve"><value>AstroPlanner v1 data was found on this computer (settings, plan and logbook).\n\nImport it into AstroPlanner Pro? The v1 files are only read, never changed.</value></data>
+  <data name="ImportV1DoneFormat" xml:space="preserve"><value>Imported from AstroPlanner v1:\n• Settings and location: {0}\n• Plan items: {1}\n• Logbook entries: {2}</value></data>
+  <data name="ImportV1NotesFormat" xml:space="preserve"><value>\n\nNotes:\n{0}</value></data>
+  <data name="ImportV1Failed" xml:space="preserve"><value>The AstroPlanner v1 data could not be imported: {0}</value></data>
+  <data name="LogbookCaldwellProgressName" xml:space="preserve"><value>Caldwell progress</value></data>
+  <data name="DatabaseOpenFailedFormat" xml:space="preserve"><value>Your AstroPlanner Pro data could not be opened: {0}\n\nThe app will close without changing it.</value></data>
+  <data name="DatabaseCorruptFormat" xml:space="preserve"><value>Your AstroPlanner Pro data file was damaged. It was kept as\n{0}\nand a new, empty one was created.</value></data>
+  <data name="AboutCatalogs" xml:space="preserve"><value>Catalogs:</value></data>
+  <data name="AboutCatalogsText" xml:space="preserve"><value>OpenNGC by Mattia Verga (NGC, IC, Messier and Caldwell objects) and the HYG database v4.4 by David Nash / astronexus.net (stars), both under CC BY-SA 4.0; IAU constellation boundaries from Roman (1987), CDS catalogue VI/42, as distributed with astropy (BSD-3-Clause). Full notices in THIRD_PARTY_NOTICES.md.</value></data>
 </root>

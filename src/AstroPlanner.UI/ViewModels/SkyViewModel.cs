@@ -33,21 +33,38 @@ public sealed partial class SkyViewModel : ObservableObject
 
     public double MinimumAltitude => _context.MinimumAltitude;
 
-    /// <summary>Objects above the horizon that pass the filters.</summary>
+    /// <summary>Most objects drawn on the chart: with the full catalog thousands are above the horizon.</summary>
+    public const int MaximumPoints = 300;
+
+    /// <summary>How many of the brightest objects get a label (plan, selection and planets always do).</summary>
+    public const int MaximumLabels = 60;
+
+    /// <summary>
+    /// Objects above the horizon that pass the filters: those in the plan, the selected one and
+    /// the planets first, then the brightest, up to <see cref="MaximumPoints"/>.
+    /// </summary>
     public IReadOnlyList<SkyMapPoint> GetSkyMapPoints()
     {
         var planIds = _plan.Items.Select(item => item.Id).ToHashSet();
+        var selected = _targets.SelectedObject;
+        bool IsHighlighted(CelestialObjectRowViewModel item) =>
+            item.IsPlanet || planIds.Contains(item.Id) || ReferenceEquals(item, selected);
+
         return _targets.Objects
             .Where(item => item.AltitudeDegrees > 0)
-            .Select(item => new SkyMapPoint(
+            .OrderByDescending(IsHighlighted)
+            .ThenBy(item => double.IsNaN(item.ApparentMagnitude) ? double.MaxValue : item.ApparentMagnitude)
+            .Take(MaximumPoints)
+            .Select((item, rank) => new SkyMapPoint(
                 item.Id,
                 item.AltitudeDegrees,
                 item.AzimuthDegrees,
                 item.ApparentMagnitude,
                 item.IsVisible,
                 planIds.Contains(item.Id),
-                ReferenceEquals(item, _targets.SelectedObject),
-                item.IsPlanet))
+                ReferenceEquals(item, selected),
+                item.IsPlanet,
+                HasLabel: IsHighlighted(item) || rank < MaximumLabels))
             .ToList();
     }
 

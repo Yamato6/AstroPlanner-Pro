@@ -355,13 +355,18 @@ public partial class MainWindow : Window
             else
             {
                 var color = point.IsInPlan ? "WarningBrush" : point.IsVisible ? "AccentBrush" : "PlaceholderTextBrush";
-                size = (float)Math.Clamp(13 - point.Magnitude, 4, 10);
+                size = double.IsNaN(point.Magnitude) ? 4 : (float)Math.Clamp(13 - point.Magnitude, 4, 10);
                 plot.Add.Marker(x, y, ScottPlot.MarkerShape.FilledCircle, size, Theme(color));
             }
 
             if (point.IsSelected)
             {
                 plot.Add.Marker(x, y, ScottPlot.MarkerShape.OpenCircle, size + 12, ScottPlot.Colors.White);
+            }
+
+            if (!point.HasLabel)
+            {
+                continue;
             }
 
             var label = plot.Add.Text(point.Id, x + 2.5, y);
@@ -444,7 +449,7 @@ public partial class MainWindow : Window
             thresholdLine.LegendText = Strings.ChartMinimumAltitude;
 
             AltitudePlot.Plot.Axes.Title.Label.Text =
-                $"{viewModel.SelectedObject?.Id} — {viewModel.SelectedObject?.CommonName}";
+                viewModel.SelectedObject?.Title ?? string.Empty;
             AltitudePlot.Plot.Axes.Bottom.Label.Text = Strings.ChartLocalTime;
             AltitudePlot.Plot.Axes.Left.Label.Text = Strings.ChartAltitudeAxis;
             AltitudePlot.Plot.ShowLegend();

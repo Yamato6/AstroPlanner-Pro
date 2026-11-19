@@ -66,6 +66,28 @@ internal sealed class FakeLogService : IObservationLogService
     }
 }
 
+internal sealed class FakeLocationRepository : ILocationRepository
+{
+    public List<Location> Locations { get; } = [];
+
+    public IReadOnlyList<Location> GetAll() => [.. Locations];
+
+    public void Save(Location location)
+    {
+        var index = Locations.FindIndex(l => l.Id == location.Id);
+        if (index >= 0)
+        {
+            Locations[index] = location;
+        }
+        else
+        {
+            Locations.Add(location);
+        }
+    }
+
+    public void Delete(string id) => Locations.RemoveAll(l => l.Id == id);
+}
+
 internal sealed class NullLogger : IAppLogger
 {
     public string LogLocation => "";
@@ -88,7 +110,8 @@ internal static class TestShell
         LogbookViewModel? logbook = null,
         TimeProvider? time = null,
         IWeatherForecastService? weather = null,
-        IUpdateChecker? updates = null)
+        IUpdateChecker? updates = null,
+        ILocationRepository? locations = null)
     {
         var logger = new NullLogger();
         var astronomy = new AstronomyService();
@@ -104,7 +127,9 @@ internal static class TestShell
         var detail = new ObjectDetailViewModel(astronomy, context, weatherState, targets, planViewModel, logbook);
         var sky = new SkyViewModel(context, targets, planViewModel);
         var tonight = new TonightViewModel(context, weatherState, logbook);
+        var locationsViewModel = new LocationsViewModel(locations ?? new FakeLocationRepository(), settingsViewModel, logger);
         return new ShellViewModel(
-            context, weatherState, tonight, targets, sky, detail, planViewModel, logbook, settingsViewModel, logger, time, updates);
+            context, weatherState, tonight, targets, sky, detail, planViewModel, logbook, locationsViewModel, settingsViewModel,
+            logger, time, updates);
     }
 }

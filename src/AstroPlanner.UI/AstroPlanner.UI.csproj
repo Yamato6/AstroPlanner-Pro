@@ -32,6 +32,12 @@
     <PackageReference Include="ScottPlot.WPF" />
   </ItemGroup>
 
+  <!-- Domain types used everywhere in the UI (also by the WPF-generated code). -->
+  <ItemGroup>
+    <Using Include="AstroPlanner.Core.Models" />
+    <Using Include="AstroPlanner.Core.Interfaces" />
+  </ItemGroup>
+
   <ItemGroup>
     <Resource Include="Assets\AstroPlanner.png" />
   </ItemGroup>

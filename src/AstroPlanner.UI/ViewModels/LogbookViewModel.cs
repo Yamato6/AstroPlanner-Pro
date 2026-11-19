@@ -13,15 +13,18 @@ using static AstroPlanner.UI.Services.DisplayNames;
 namespace AstroPlanner.UI.ViewModels;
 
 /// <summary>
-/// Observation logbook: logged entries, objects already observed and Messier marathon progress.
+/// Observation logbook: logged entries, objects already observed and Messier marathon and
+/// Caldwell progress.
 /// </summary>
 public sealed partial class LogbookViewModel : ObservableObject
 {
     public const int MessierTotal = 110;
+    public const int CaldwellTotal = 109;
 
     private readonly IObservationLogService _service;
     private readonly IAppLogger _logger;
     private HashSet<string> _observedIds = [];
+    private HashSet<string> _caldwellIds = [];
 
     public LogbookViewModel(IObservationLogService service, IAppLogger logger)
     {
@@ -52,6 +55,24 @@ public sealed partial class LogbookViewModel : ObservableObject
     public string MessierProgressText => string.Create(CultureInfo.CurrentCulture, $"{ObservedMessierCount} / {MessierTotal}");
 
     public double MessierProgressPercent => 100.0 * ObservedMessierCount / MessierTotal;
+
+    [ObservableProperty]
+    public partial int ObservedCaldwellCount { get; private set; }
+
+    public string CaldwellProgressText => string.Create(CultureInfo.CurrentCulture, $"{ObservedCaldwellCount} / {CaldwellTotal}");
+
+    public double CaldwellProgressPercent => 100.0 * ObservedCaldwellCount / CaldwellTotal;
+
+    /// <summary>
+    /// Tells the logbook which catalog objects are Caldwell objects (their ids are NGC/IC
+    /// numbers, so the id alone does not say it).
+    /// </summary>
+    public void UseCatalog(IEnumerable<CelestialObject> catalog)
+    {
+        ArgumentNullException.ThrowIfNull(catalog);
+        _caldwellIds = catalog.Where(o => o.CaldwellNumber is not null).Select(o => o.Id).ToHashSet(StringComparer.Ordinal);
+        RefreshSummary();
+    }
 
     [GeneratedRegex(@"^M\d+$")]
     private static partial Regex MessierId();
@@ -188,9 +209,12 @@ public sealed partial class LogbookViewModel : ObservableObject
     {
         _observedIds = Entries.Select(e => e.ObjectId).ToHashSet(StringComparer.Ordinal);
         ObservedMessierCount = _observedIds.Count(id => MessierId().IsMatch(id));
+        ObservedCaldwellCount = _observedIds.Count(_caldwellIds.Contains);
         OnPropertyChanged(nameof(ObservedIds));
         OnPropertyChanged(nameof(MessierProgressText));
         OnPropertyChanged(nameof(MessierProgressPercent));
+        OnPropertyChanged(nameof(CaldwellProgressText));
+        OnPropertyChanged(nameof(CaldwellProgressPercent));
         Changed?.Invoke();
     }
 }

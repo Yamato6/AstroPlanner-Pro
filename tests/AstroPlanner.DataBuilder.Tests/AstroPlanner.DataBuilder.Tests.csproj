@@ -1,0 +1,18 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\tools\AstroPlanner.DataBuilder\AstroPlanner.DataBuilder.csproj" />
+  </ItemGroup>
+
+  <!-- Small excerpts of the real sources (data/SOURCES.md); the tests never download anything. -->
+  <ItemGroup>
+    <None Include="..\fixtures\openngc\*.csv" Link="fixtures\openngc\%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="..\fixtures\hyg\*.csv" Link="fixtures\hyg\%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="..\..\data\curated\messier.json" Link="fixtures\curated\messier.json" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
+</Project>

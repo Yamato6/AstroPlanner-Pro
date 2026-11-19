@@ -23,9 +23,19 @@ jobs:
       - name: Build (warnings are errors)
         run: dotnet build AstroPlanner.slnx -c Release -warnaserror
 
+      # The committed catalogs.sqlite must pass the sanity checks (no download: sources are
+      # only fetched by developers, see docs/data-pipeline.md).
+      - name: Verify the catalog database
+        run: dotnet run --project tools/AstroPlanner.DataBuilder -c Release --no-build -- verify
+
+      # Timing budgets (spec §14) are measured without coverage instrumentation, which
+      # slows tight numeric loops several times.
+      - name: Performance tests
+        run: dotnet test AstroPlanner.slnx -c Release --no-build --filter "Category=Performance"
+
       - name: Test with coverage
         run: >
-          dotnet test AstroPlanner.slnx -c Release --no-build
+          dotnet test AstroPlanner.slnx -c Release --no-build --filter "Category!=Performance"
           --logger "trx;LogFileName=results.trx"
           --collect "XPlat Code Coverage"
           --results-directory TestResults

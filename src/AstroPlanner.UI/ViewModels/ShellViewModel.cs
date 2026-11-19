@@ -35,6 +35,7 @@ public sealed partial class ShellViewModel : ObservableObject, IDisposable
         ObjectDetailViewModel detail,
         SessionPlanViewModel plan,
         LogbookViewModel logbook,
+        LocationsViewModel locations,
         SettingsViewModel settings,
         IAppLogger logger,
         TimeProvider? timeProvider = null,
@@ -51,8 +52,10 @@ public sealed partial class ShellViewModel : ObservableObject, IDisposable
         Detail = detail;
         Plan = plan;
         Logbook = logbook;
+        Locations = locations;
         Settings = settings;
 
+        Targets.CatalogLoaded += (_, _) => Logbook.UseCatalog(Targets.AllObjects.Select(row => row.Target));
         _context.PropertyChanged += OnContextPropertyChanged;
         _context.Recalculated += (_, _) => OnPropertyChanged(nameof(LocationSummary));
         Settings.PropertyChanged += OnSettingsPropertyChanged;
@@ -61,7 +64,8 @@ public sealed partial class ShellViewModel : ObservableObject, IDisposable
         // The persisted settings win over runtime values.
         _weather.IsEnabled = settings.WeatherForecastEnabled;
         _context.LocationName = DescribeLocation();
-        _context.Initialize(settings.Latitude, settings.Longitude, settings.Elevation, settings.TimeZoneId, settings.MinimumAltitude);
+        _context.Initialize(settings.Latitude, settings.Longitude, settings.Elevation, settings.TimeZoneId, settings.MinimumAltitude,
+            horizonMask: locations.ActiveLocation?.HorizonMask ?? HorizonMask.Flat);
     }
 
     /// <summary>Shared observing state (location, time, minimum altitude).</summary>
@@ -76,6 +80,7 @@ public sealed partial class ShellViewModel : ObservableObject, IDisposable
     public ObjectDetailViewModel Detail { get; }
     public SessionPlanViewModel Plan { get; }
     public LogbookViewModel Logbook { get; }
+    public LocationsViewModel Locations { get; }
     public SettingsViewModel Settings { get; }
 
     /// <summary>Loads the catalog (and with it the saved plan).</summary>
@@ -89,9 +94,10 @@ public sealed partial class ShellViewModel : ObservableObject, IDisposable
     public string LocationSummary =>
         string.Create(CultureInfo.CurrentCulture, $"{_context.Latitude:0.####}°, {_context.Longitude:0.####}°");
 
-    private string DescribeLocation() => Settings.IsManualLocation
-        ? Strings.LocationManual
-        : Settings.SelectedCity?.DisplayName ?? Strings.LocationSelectCity;
+    private string DescribeLocation() => Locations.ActiveLocation?.Name
+        ?? (Settings.IsManualLocation
+            ? Strings.LocationManual
+            : Settings.SelectedCity?.DisplayName ?? Strings.LocationSelectCity);
 
     private void OnSettingsPropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
@@ -105,10 +111,11 @@ public sealed partial class ShellViewModel : ObservableObject, IDisposable
     private void OnSettingsSaved(ObserverSettings settings)
     {
         Targets.MaximumMagnitude = settings.MaximumMagnitude;
+        Locations.Reload();
         _context.LocationName = DescribeLocation();
         _context.Apply(
             settings.LatitudeDegrees, settings.LongitudeDegrees, settings.ElevationMeters,
-            settings.TimeZoneId, settings.MinimumAltitude);
+            settings.TimeZoneId, settings.MinimumAltitude, Locations.ActiveLocation?.HorizonMask ?? HorizonMask.Flat);
 
         if (_weather.IsEnabled != settings.WeatherForecastEnabled)
         {

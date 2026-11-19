@@ -1,10 +1,13 @@
+using System.IO;
 using System.Net.Http;
 using System.Windows;
 using System.Windows.Threading;
 using Microsoft.Extensions.DependencyInjection;
 using AstroPlanner.Core.Interfaces;
 using AstroPlanner.Core.Services;
+using AstroPlanner.Data.Catalog;
 using AstroPlanner.Data.Repositories;
+using AstroPlanner.Data.Storage;
 using AstroPlanner.Online.Weather;
 using AstroPlanner.UI.Resources;
 using AstroPlanner.UI.Services;
@@ -37,9 +40,10 @@ public partial class App : Application
         // Error log (one file per day in %LocalAppData%\AstroPlannerPro\logs)
         services.AddSingleton<IAppLogger, FileAppLogger>();
 
-        // Data: Messier catalog + planets, cities
-        services.AddSingleton<ICelestialRepository>(
-            new CatalogWithPlanetsRepository(new JsonCelestialRepository()));
+        // Data: deep-sky catalog (embedded catalogs.sqlite, copied to the data folder on first
+        // use) + planets, cities
+        services.AddSingleton<ICelestialRepository>(new CatalogWithPlanetsRepository(
+            SqliteCatalogRepository.FromEmbedded(AppPaths.DataFile("catalogs"))));
         services.AddSingleton<ICityRepository, JsonCityRepository>();
 
         // Application services (pure Core)
@@ -58,10 +62,17 @@ public partial class App : Application
             new OpenMeteoForecastService(sp.GetRequiredService<HttpClient>(), sp.GetRequiredService<TimeProvider>()));
         services.AddSingleton<IUpdateChecker, GitHubUpdateChecker>();
 
-        // UI persistence
-        services.AddSingleton<ISettingsService, JsonSettingsService>();
-        services.AddSingleton<IObservationPlanService, JsonObservationPlanService>();
-        services.AddSingleton<IObservationLogService>(_ => new JsonObservationLogService());
+        // User data: app.db (settings, locations, plan, logbook), migrated on first use
+        services.AddSingleton(_ => new AppDatabase(AppPaths.DataFile("app.db")));
+        services.AddSingleton<ISettingsService, SqliteSettingsService>();
+        services.AddSingleton<IObservationPlanService, SqlitePlanService>();
+        services.AddSingleton<IObservationLogService, SqliteLogbookService>();
+        services.AddSingleton<ILocationRepository, SqliteLocationRepository>();
+        services.AddSingleton(sp => new V1ImportService(
+            sp.GetRequiredService<AppDatabase>(), sp.GetRequiredService<ICelestialRepository>(),
+            sp.GetRequiredService<ISettingsService>(), sp.GetRequiredService<IObservationPlanService>(),
+            sp.GetRequiredService<IObservationLogService>(), sp.GetRequiredService<ILocationRepository>(),
+            V1ImportService.DefaultV1Directory()));
 
         // Shared observing state and forecast
         services.AddSingleton<IObserverContext, ObserverContext>();
@@ -70,6 +81,7 @@ public partial class App : Application
         // View models
         services.AddSingleton<SettingsViewModel>();
         services.AddSingleton<LogbookViewModel>();
+        services.AddSingleton<LocationsViewModel>();
         services.AddSingleton<TargetsViewModel>();
         services.AddSingleton<SessionPlanViewModel>();
         services.AddSingleton<ObjectDetailViewModel>();
@@ -107,6 +119,14 @@ public partial class App : Application
             _logger.LogInfo("Could not check whether another instance was already open; continuing anyway.");
         }
 
+        if (!OpenDatabase(_serviceProvider.GetRequiredService<AppDatabase>()))
+        {
+            Shutdown(1);
+            return;
+        }
+
+        OfferV1Import(_serviceProvider.GetRequiredService<V1ImportService>());
+
         var mainWindow = _serviceProvider.GetRequiredService<MainWindow>();
         mainWindow.DataContext = _serviceProvider.GetRequiredService<ShellViewModel>();
         mainWindow.RememberPlacement(new WindowPlacementStore());
@@ -114,6 +134,65 @@ public partial class App : Application
 
         _singleInstance?.ListenForActivation(() =>
             Dispatcher.BeginInvoke(() => NativeWindows.BringToFront(mainWindow)));
+    }
+
+    /// <summary>
+    /// Creates or migrates app.db before anything reads it. A damaged file is set aside and the
+    /// user is told; a database from a newer version stops the app instead of being changed.
+    /// </summary>
+    private bool OpenDatabase(AppDatabase database)
+    {
+        try
+        {
+            database.Initialize();
+        }
+        catch (Exception ex) when (ex is InvalidDataException or IOException or UnauthorizedAccessException)
+        {
+            _logger?.LogError("Could not open the user database.", ex);
+            MessageBox.Show(DisplayNames.Format(Strings.DatabaseOpenFailedFormat, ex.Message),
+                Strings.AppName, MessageBoxButton.OK, MessageBoxImage.Error);
+            return false;
+        }
+
+        if (database.PreservedCorruptFilePath is { } preserved)
+        {
+            _logger?.LogInfo($"Damaged database set aside as {preserved}.");
+            MessageBox.Show(DisplayNames.Format(Strings.DatabaseCorruptFormat, preserved),
+                Strings.AppName, MessageBoxButton.OK, MessageBoxImage.Warning);
+        }
+
+        return true;
+    }
+
+    /// <summary>First run: offers to import AstroPlanner v1's settings, plan and logbook.</summary>
+    private void OfferV1Import(V1ImportService import)
+    {
+        try
+        {
+            if (!import.ShouldOffer)
+            {
+                return;
+            }
+
+            var answer = MessageBox.Show(Strings.ImportV1Question, Strings.ImportV1Title,
+                MessageBoxButton.YesNo, MessageBoxImage.Question);
+            if (answer != MessageBoxResult.Yes)
+            {
+                import.MarkOffered();
+                return;
+            }
+
+            // Before any window exists: blocking here is safe (the import does not need the UI thread).
+            var result = import.ImportAsync().GetAwaiter().GetResult();
+            _logger?.LogInfo($"Imported from AstroPlanner v1: {result.PlanItemsAdded} plan items, {result.LogEntriesAdded} logbook entries.");
+            MessageBox.Show(V1ImportService.Describe(result), Strings.ImportV1Title, MessageBoxButton.OK, MessageBoxImage.Information);
+        }
+        catch (Exception ex) when (V1ImportService.IsImportError(ex))
+        {
+            _logger?.LogError("Could not import the AstroPlanner v1 data.", ex);
+            MessageBox.Show(DisplayNames.Format(Strings.ImportV1Failed, ex.Message), Strings.ImportV1Title,
+                MessageBoxButton.OK, MessageBoxImage.Warning);
+        }
     }
 
     /// <summary>
