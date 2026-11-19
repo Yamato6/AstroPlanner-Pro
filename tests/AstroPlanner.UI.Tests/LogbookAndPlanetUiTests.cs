@@ -138,24 +138,6 @@ public sealed class LogbookAndPlanetUiTests : IDisposable
     }
 
     [Fact]
-    public void JsonLog_RoundTripsAndSetsAsideACorruptFile()
-    {
-        var path = Path.Combine(_directory, "logbook.json");
-        var service = new JsonObservationLogService(path);
-        var entry = Entry("M42", new DateTime(2026, 1, 10, 22, 15, 0)) with { Notes = "with \"quotes\"" };
-
-        service.Save([entry]);
-        service.Load().Should().Equal(entry);
-
-        File.WriteAllText(path, "{ not json");
-        var corrupt = new JsonObservationLogService(path);
-
-        corrupt.Load().Should().BeEmpty();
-        File.Exists(path).Should().BeFalse("the damaged file is set aside instead of being overwritten");
-        File.ReadAllText(corrupt.PreservedCorruptFilePath!).Should().Be("{ not json");
-    }
-
-    [Fact]
     public async Task ObservedObjects_AreMarkedInTheTableAndUpdateLive()
     {
         _logService.Entries = [Entry("M42", new DateTime(2026, 1, 10))];

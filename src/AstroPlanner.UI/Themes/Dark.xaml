@@ -419,6 +419,10 @@
         <Setter Property="IsReadOnly" Value="True"/>
         <Setter Property="HeadersVisibility" Value="Column"/>
         <Setter Property="EnableRowVirtualization" Value="True"/>
+        <!-- The targets table holds ~13k rows: reuse row containers while scrolling. -->
+        <Setter Property="VirtualizingPanel.IsVirtualizing" Value="True"/>
+        <Setter Property="VirtualizingPanel.VirtualizationMode" Value="Recycling"/>
+        <Setter Property="ScrollViewer.CanContentScroll" Value="True"/>
         <Setter Property="Background" Value="{StaticResource SurfaceBrush}"/>
         <Setter Property="Foreground" Value="{StaticResource StrongTextBrush}"/>
         <Setter Property="BorderThickness" Value="0"/>

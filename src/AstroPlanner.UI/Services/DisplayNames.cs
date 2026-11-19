@@ -22,8 +22,37 @@ public static class DisplayNames
         CelestialObjectType.DiffuseNebula => Strings.TypeDiffuseNebula,
         CelestialObjectType.SupernovaRemnant => Strings.TypeSupernovaRemnant,
         CelestialObjectType.Planet => Strings.TypePlanet,
+        CelestialObjectType.GalaxyGroup => Strings.TypeGalaxyGroup,
+        CelestialObjectType.StellarAssociation => Strings.TypeStellarAssociation,
+        CelestialObjectType.ClusterWithNebula => Strings.TypeClusterWithNebula,
+        CelestialObjectType.HiiRegion => Strings.TypeHiiRegion,
+        CelestialObjectType.EmissionNebula => Strings.TypeEmissionNebula,
+        CelestialObjectType.ReflectionNebula => Strings.TypeReflectionNebula,
+        CelestialObjectType.DarkNebula => Strings.TypeDarkNebula,
+        CelestialObjectType.Star => Strings.TypeStar,
+        CelestialObjectType.DoubleStar => Strings.TypeDoubleStar,
+        CelestialObjectType.Nova => Strings.TypeNova,
         _ => Strings.TypeOther
     };
+
+    /// <summary>Apparent size, e.g. "177.8′ × 69.7′" or "6.9′"; empty if unknown.</summary>
+    public static string Size(double? majorAxisArcmin, double? minorAxisArcmin) => (majorAxisArcmin, minorAxisArcmin) switch
+    {
+        ({ } major, { } minor) when minor > 0 && Math.Abs(major - minor) > 1e-9 => Format(Strings.SizeFormat, major, minor),
+        ({ } major, _) => Format(Strings.SizeSingleFormat, major),
+        _ => string.Empty
+    };
+
+    /// <summary>A time window, e.g. "21:20–05:05"; empty without one.</summary>
+    public static string Window(DateTime? start, DateTime? end) =>
+        start is { } from && end is { } to ? Format(Strings.WindowFormat, from, to) : string.Empty;
+
+    /// <summary>A duration in hours and minutes, e.g. "7h 45m".</summary>
+    public static string Duration(TimeSpan duration)
+    {
+        var minutes = (int)Math.Round(duration.TotalMinutes);
+        return Format(Strings.DurationFormat, minutes / 60, minutes % 60);
+    }
 
     /// <summary>Name of the lunar phase from the illuminated fraction.</summary>
     public static string MoonPhase(double illuminatedFraction, bool isWaxing) => illuminatedFraction switch

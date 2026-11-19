@@ -41,11 +41,27 @@ public sealed class UsabilityTests
     [InlineData("orion nebula", "M42", true)]
     [InlineData("hercules", "M42", false)]
     [InlineData("", "M42", true)]
-    public void CatalogSearch_MatchesIdNameAndConstellationIgnoringAccents(string query, string id, bool expected)
+    [InlineData("NGC 1976", "M42", true)]  // cross-identifications
+    [InlineData("ngc1976", "M42", true)]
+    [InlineData("NGC 0224", "M31", true)]  // leading zeros are ignored
+    [InlineData("ngc 197", "M42", false)]  // ids are exact here too
+    [InlineData("great orion", "M42", true)]  // alternate names
+    public void CatalogSearch_MatchesIdsCrossIdsNamesAndConstellationIgnoringAccents(string query, string id, bool expected)
     {
         var item = new[] { TestCatalog.M42, TestCatalog.M31, TestCatalog.M13 }.Single(o => o.Id == id);
 
-        CatalogSearch.Matches(item.Id, item.CommonName, item.Constellation, query).Should().Be(expected);
+        CatalogSearch.Matches(new CelestialObjectRowViewModel(item), query).Should().Be(expected);
+    }
+
+    [Theory]
+    [InlineData("C14", "c14")]
+    [InlineData("Sh2-155", "sh2155")]
+    [InlineData("IC 0434", "ic434")]
+    [InlineData("M101", "m101")]
+    [InlineData("PGC 002557", "pgc2557")]
+    public void CompactKey_NormalizesIdentifiers(string identifier, string key)
+    {
+        CatalogSearch.CompactKey(identifier).Should().Be(key);
     }
 
     [Fact]

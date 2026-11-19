@@ -18,6 +18,8 @@
         <converters:BooleanToTextConverter x:Key="ObservedMarkConverter" TrueText="✓" FalseText=""/>
         <converters:BooleanToVisibilityConverter x:Key="InverseBooleanToVisibilityConverter" Invert="True"/>
         <converters:DisplayNameConverter x:Key="DisplayNameConverter"/>
+        <converters:NullToCollapsedConverter x:Key="NullToCollapsedConverter"/>
+        <converters:BooleanToTextConverter x:Key="ActiveMarkConverter" TrueText="●" FalseText=""/>
         <Style TargetType="TextBlock">
             <Setter Property="Foreground" Value="{StaticResource NightTextBrush}"/>
         </Style>
@@ -241,7 +243,7 @@
             <TabItem x:Name="PlannerTab" Header="{x:Static res:Strings.TabPlanner}" Style="{StaticResource DarkTabItemStyle}">
             <Grid Margin="12">
                     <Grid.ColumnDefinitions>
-                        <!-- The table needs ~650 px to show every column. -->
+                        <!-- The table scrolls horizontally when its ~1100 px of columns do not fit. -->
                         <ColumnDefinition Width="3*" MinWidth="460"/>
                         <ColumnDefinition Width="12"/>
                         <ColumnDefinition Width="2*" MinWidth="320"/>
@@ -282,6 +284,13 @@
                                     </TextBlock>
                                 </Grid>
                                 <StackPanel Orientation="Horizontal" Margin="0,0,12,6">
+                                    <TextBlock Style="{StaticResource FilterLabelStyle}" Text="{x:Static res:Strings.FilterCatalog}"/>
+                                    <ComboBox Style="{StaticResource DarkComboBoxStyle}"
+                                              Width="110" Margin="0,0,12,0"
+                                              AutomationProperties.Name="{x:Static res:Strings.FilterCatalogName}"
+                                              ItemsSource="{Binding Targets.CatalogFilters}"
+                                              DisplayMemberPath="Label" TextSearch.TextPath="Label"
+                                              SelectedValuePath="Value" SelectedValue="{Binding Targets.CatalogFilter}"/>
                                     <TextBlock Style="{StaticResource FilterLabelStyle}" Text="{x:Static res:Strings.FilterType}"/>
                                     <ComboBox Style="{StaticResource DarkComboBoxStyle}"
                                               Width="160" Margin="0,0,12,0" MaxDropDownHeight="320"
@@ -306,8 +315,16 @@
                                                ToolTip="{x:Static res:Strings.FilterMaximumMagnitudeTooltip}"/>
                                     <TextBox Width="44" Margin="0,0,12,0" AutomationProperties.Name="{x:Static res:Strings.FilterMaximumMagnitudeName}"
                                              Text="{Binding Targets.MaximumMagnitude, UpdateSourceTrigger=PropertyChanged}"/>
-                                    <CheckBox VerticalAlignment="Center" Content="{x:Static res:Strings.FilterOnlyVisible}"
+                                    <TextBlock Style="{StaticResource FilterLabelStyle}" Text="{x:Static res:Strings.FilterMinimumSize}"
+                                               ToolTip="{x:Static res:Strings.FilterMinimumSizeTooltip}"/>
+                                    <TextBox Width="44" Margin="0,0,12,0" AutomationProperties.Name="{x:Static res:Strings.FilterMinimumSizeName}"
+                                             ToolTip="{x:Static res:Strings.FilterMinimumSizeTooltip}"
+                                             Text="{Binding Targets.MinimumSizeArcmin, UpdateSourceTrigger=PropertyChanged}"/>
+                                    <CheckBox VerticalAlignment="Center" Margin="0,0,12,0" Content="{x:Static res:Strings.FilterOnlyVisible}"
                                               IsChecked="{Binding Targets.OnlyVisible}"/>
+                                    <CheckBox VerticalAlignment="Center" Content="{x:Static res:Strings.FilterObservableTonight}"
+                                              ToolTip="{x:Static res:Strings.FilterObservableTonightTooltip}"
+                                              IsChecked="{Binding Targets.OnlyObservableTonight}"/>
                                 </StackPanel>
                             </WrapPanel>
 
@@ -341,8 +358,13 @@
                                         </Style>
                                     </TextBlock.Style>
                                 </TextBlock>
-                                <TextBlock Foreground="{StaticResource NightMutedTextBrush}" TextWrapping="Wrap"
-                                           Text="{Binding Targets.Objects.Count, Mode=OneWay, StringFormat={x:Static res:Strings.ShowingObjectsFormat}}"/>
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock Foreground="{StaticResource NightMutedTextBrush}" TextWrapping="Wrap"
+                                               Text="{Binding Targets.Objects.Count, Mode=OneWay, StringFormat={x:Static res:Strings.ShowingObjectsFormat}}"/>
+                                    <TextBlock Foreground="{StaticResource NightMutedTextBrush}" Margin="12,0,0,0" FontStyle="Italic"
+                                               Text="{x:Static res:Strings.CalculatingNight}"
+                                               Visibility="{Binding Targets.IsCalculatingNight, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+                                </StackPanel>
                             </StackPanel>
 
                             <!-- Results table -->
@@ -352,14 +374,35 @@
                                 <DataGrid.Columns>
                                     <DataGridTextColumn Header="{x:Static res:Strings.ColumnObserved}" Binding="{Binding IsObserved, Converter={StaticResource ObservedMarkConverter}}" Width="26"
                                                         ElementStyle="{StaticResource ObservedCellStyle}"/>
-                                    <DataGridTextColumn Header="{x:Static res:Strings.ColumnId}" Binding="{Binding Id}" Width="66"/>
-                                    <DataGridTextColumn Header="{x:Static res:Strings.ColumnName}" Binding="{Binding CommonName}" Width="*" ElementStyle="{StaticResource TrimmedCellStyle}"/>
-                                    <DataGridTextColumn Header="{x:Static res:Strings.ColumnConstellation}" Binding="{Binding Constellation}" Width="100" ElementStyle="{StaticResource TrimmedCellStyle}"/>
-                                    <DataGridTextColumn Header="{x:Static res:Strings.ColumnType}" Binding="{Binding Type, Converter={StaticResource DisplayNameConverter}}" Width="130"/>
-                                    <DataGridTextColumn Header="{x:Static res:Strings.ColumnMagnitude}" Binding="{Binding ApparentMagnitude, StringFormat=F1}" Width="50" ElementStyle="{StaticResource NumericCellStyle}"/>
-                                    <DataGridTextColumn Header="{x:Static res:Strings.ColumnAltitude}" Binding="{Binding AltitudeDegrees, StringFormat=F1}" Width="62" ElementStyle="{StaticResource NumericCellStyle}"/>
-                                    <DataGridTextColumn Header="{x:Static res:Strings.ColumnAzimuth}" Binding="{Binding AzimuthDegrees, StringFormat=F1}" Width="64" ElementStyle="{StaticResource NumericCellStyle}"/>
-                                    <DataGridTextColumn Header="{x:Static res:Strings.ColumnMoon}" Binding="{Binding MoonSeparationDegrees, StringFormat={}{0:0}°}" Width="52" ElementStyle="{StaticResource MoonCellStyle}"/>
+                                    <DataGridTextColumn Header="{x:Static res:Strings.ColumnId}" Binding="{Binding Id}" Width="96" ElementStyle="{StaticResource TrimmedCellStyle}"/>
+                                    <DataGridTextColumn Header="{x:Static res:Strings.ColumnName}" Binding="{Binding Name}" Width="170" ElementStyle="{StaticResource TrimmedCellStyle}"/>
+                                    <DataGridTextColumn Header="{x:Static res:Strings.ColumnAlsoKnownAs}" Binding="{Binding CrossIdentifiers}" Width="112" ElementStyle="{StaticResource TrimmedCellStyle}"/>
+                                    <DataGridTextColumn Header="{x:Static res:Strings.ColumnConstellation}" Binding="{Binding Constellation}" Width="124" ElementStyle="{StaticResource TrimmedCellStyle}"/>
+                                    <DataGridTextColumn Header="{x:Static res:Strings.ColumnType}" Binding="{Binding Type, Converter={StaticResource DisplayNameConverter}}" Width="124" ElementStyle="{StaticResource TrimmedCellStyle}"/>
+                                    <DataGridTextColumn Header="{x:Static res:Strings.ColumnMagnitude}" Binding="{Binding MagnitudeText}" Width="64" ElementStyle="{StaticResource NumericCellStyle}"/>
+                                    <DataGridTextColumn Binding="{Binding SizeText}" Width="86" ElementStyle="{StaticResource NumericCellStyle}">
+                                        <DataGridTextColumn.Header>
+                                            <TextBlock Text="{x:Static res:Strings.ColumnSize}" ToolTip="{x:Static res:Strings.ColumnSizeTooltip}"/>
+                                        </DataGridTextColumn.Header>
+                                    </DataGridTextColumn>
+                                    <DataGridTextColumn Binding="{Binding SurfaceBrightness, StringFormat=F1}" Width="70" ElementStyle="{StaticResource NumericCellStyle}">
+                                        <DataGridTextColumn.Header>
+                                            <TextBlock Text="{x:Static res:Strings.ColumnSurfaceBrightness}" ToolTip="{x:Static res:Strings.ColumnSurfaceBrightnessTooltip}"/>
+                                        </DataGridTextColumn.Header>
+                                    </DataGridTextColumn>
+                                    <DataGridTextColumn Header="{x:Static res:Strings.ColumnAltitude}" Binding="{Binding AltitudeDegrees, StringFormat=F1}" Width="70" ElementStyle="{StaticResource NumericCellStyle}"/>
+                                    <DataGridTextColumn Header="{x:Static res:Strings.ColumnAzimuth}" Binding="{Binding AzimuthDegrees, StringFormat=F1}" Width="74" ElementStyle="{StaticResource NumericCellStyle}"/>
+                                    <DataGridTextColumn Binding="{Binding MaximumAltitudeTonight, StringFormat={}{0:0}°}" Width="76" ElementStyle="{StaticResource NumericCellStyle}">
+                                        <DataGridTextColumn.Header>
+                                            <TextBlock Text="{x:Static res:Strings.ColumnMaximumAltitude}" ToolTip="{x:Static res:Strings.ColumnMaximumAltitudeTonightTooltip}"/>
+                                        </DataGridTextColumn.Header>
+                                    </DataGridTextColumn>
+                                    <DataGridTextColumn Binding="{Binding BestWindowText}" Width="124" ElementStyle="{StaticResource NumericCellStyle}">
+                                        <DataGridTextColumn.Header>
+                                            <TextBlock Text="{x:Static res:Strings.ColumnBestWindow}" ToolTip="{x:Static res:Strings.ColumnBestWindowTooltip}"/>
+                                        </DataGridTextColumn.Header>
+                                    </DataGridTextColumn>
+                                    <DataGridTextColumn Header="{x:Static res:Strings.ColumnMoon}" Binding="{Binding MoonSeparationDegrees, StringFormat={}{0:0}°}" Width="68" ElementStyle="{StaticResource MoonCellStyle}"/>
                                     <DataGridTextColumn Header="{x:Static res:Strings.ColumnStatus}" Binding="{Binding VisibilityStatus}" Width="82" ElementStyle="{StaticResource StatusCellStyle}"/>
                                 </DataGrid.Columns>
                             </DataGrid>
@@ -415,7 +458,7 @@
                                    Text="{x:Static res:Strings.SkyFiltersNote}"/>
                         <TextBlock Margin="0,14,0,0" FontWeight="SemiBold"
                                    Text="{Binding Targets.SelectedObject.Id, StringFormat={x:Static res:Strings.SkySelectedFormat}}"/>
-                        <TextBlock Foreground="{StaticResource NightMutedTextBrush}" Text="{Binding Targets.SelectedObject.CommonName}" TextWrapping="Wrap"/>
+                        <TextBlock Foreground="{StaticResource NightMutedTextBrush}" Text="{Binding Targets.SelectedObject.Name}" TextWrapping="Wrap"/>
                     </StackPanel>
                 </Grid>
             </TabItem>
@@ -463,7 +506,7 @@
                             <StackPanel Grid.ColumnSpan="3" Orientation="Horizontal">
                                 <TextBlock FontSize="24" FontWeight="SemiBold" Text="{Binding Target.Id}"/>
                                 <!-- For planets the id already is the name: do not repeat it -->
-                                <TextBlock Margin="10,0,0,0" FontSize="24" Text="{Binding Target.CommonName}"
+                                <TextBlock Margin="10,0,0,0" FontSize="24" Text="{Binding Target.CommonName}" TextTrimming="CharacterEllipsis"
                                            Visibility="{Binding IsPlanet, Converter={StaticResource InverseBooleanToVisibilityConverter}}"/>
                             </StackPanel>
                             <TextBlock Grid.Row="1" Grid.ColumnSpan="3" Margin="0,6,0,18"
@@ -471,8 +514,12 @@
                                        Text="{Binding Target.Type, Converter={StaticResource DisplayNameConverter}, StringFormat={x:Static res:Strings.DetailTypeFormat}}"/>
                             <StackPanel Grid.Row="2" Grid.Column="0">
                                 <TextBlock Foreground="{StaticResource NightMutedTextBrush}" Text="{x:Static res:Strings.DetailAstronomicalInfo}"/>
-                                <TextBlock Margin="0,6,0,0" Text="{Binding Target.Constellation, StringFormat={x:Static res:Strings.DetailConstellationFormat}}"/>
+                                <TextBlock Margin="0,6,0,0" Text="{Binding Constellation, StringFormat={x:Static res:Strings.DetailConstellationFormat}}"/>
                                 <TextBlock Text="{Binding Magnitude, StringFormat={x:Static res:Strings.DetailMagnitudeFormat}}"/>
+                                <TextBlock Text="{Binding SizeText}" Visibility="{Binding SizeText, Converter={StaticResource NullToCollapsedConverter}}"/>
+                                <TextBlock Text="{Binding SurfaceBrightnessText}" Visibility="{Binding SurfaceBrightnessText, Converter={StaticResource NullToCollapsedConverter}}"/>
+                                <TextBlock Text="{Binding DesignationsText}" TextWrapping="Wrap" Margin="0,0,12,0"
+                                           Visibility="{Binding DesignationsText, Converter={StaticResource NullToCollapsedConverter}}"/>
                                 <TextBlock Text="{Binding MaximumAltitudeDegrees, StringFormat={x:Static res:Strings.DetailMaximumAltitudeFormat}}"/>
                                 <!-- Planets only: values that change with the date -->
                                 <StackPanel Visibility="{Binding IsPlanet, Converter={StaticResource BooleanToVisibilityConverter}}">
@@ -499,6 +546,7 @@
                                 <TextBlock Text="{Binding BestObservationTimeLocal, StringFormat={x:Static res:Strings.DetailCulminationFormat}}"/>
                                 <TextBlock Text="{Binding SetTimeLocal, StringFormat={x:Static res:Strings.DetailSetFormat}, TargetNullValue={x:Static res:Strings.DetailSetNone}}"/>
                                 <TextBlock Text="{Binding CloudCoverAtCulmination, StringFormat={x:Static res:Strings.DetailCloudsFormat}, TargetNullValue={x:Static res:Strings.DetailCloudsNone}}"/>
+                                <TextBlock Text="{Binding BestWindowText}" TextWrapping="Wrap" Margin="0,0,12,0"/>
                                 <StackPanel Orientation="Horizontal" Margin="0,14,0,0">
                                     <Button Style="{StaticResource PrimaryButtonStyle}" Content="{x:Static res:Strings.DetailAddToPlan}"
                                             Command="{Binding DataContext.Detail.AddToPlanCommand, RelativeSource={RelativeSource AncestorType=Window}}"/>
@@ -569,10 +617,10 @@
                                   ItemsSource="{Binding Plan.Items}">
                             <DataGrid.Columns>
                                 <DataGridTextColumn Header="{x:Static res:Strings.ColumnCulmination}" Binding="{Binding CulminationLocal, StringFormat=HH:mm}" Width="88"/>
-                                <DataGridTextColumn Header="{x:Static res:Strings.ColumnId}" Binding="{Binding Row.Id}" Width="55"/>
-                                <DataGridTextColumn Header="{x:Static res:Strings.ColumnName}" Binding="{Binding Row.CommonName}" Width="200" ElementStyle="{StaticResource TrimmedCellStyle}"/>
+                                <DataGridTextColumn Header="{x:Static res:Strings.ColumnId}" Binding="{Binding Row.Id}" Width="90" ElementStyle="{StaticResource TrimmedCellStyle}"/>
+                                <DataGridTextColumn Header="{x:Static res:Strings.ColumnName}" Binding="{Binding Row.Name}" Width="200" ElementStyle="{StaticResource TrimmedCellStyle}"/>
                                 <DataGridTextColumn Header="{x:Static res:Strings.ColumnConstellation}" Binding="{Binding Row.Constellation}" Width="100"/>
-                                <DataGridTextColumn Header="{x:Static res:Strings.ColumnMagnitude}" Binding="{Binding Row.ApparentMagnitude, StringFormat=F1}" Width="50" ElementStyle="{StaticResource NumericCellStyle}"/>
+                                <DataGridTextColumn Header="{x:Static res:Strings.ColumnMagnitude}" Binding="{Binding Row.MagnitudeText}" Width="50" ElementStyle="{StaticResource NumericCellStyle}"/>
                                 <DataGridTextColumn Header="{x:Static res:Strings.ColumnMaximumAltitude}" Binding="{Binding MaximumAltitudeDegrees, StringFormat={}{0:0}°}" Width="66" ElementStyle="{StaticResource NumericCellStyle}"/>
                                 <DataGridTextColumn Header="{x:Static res:Strings.ColumnClouds}" Binding="{Binding CloudCoverAtCulmination, StringFormat={x:Static res:Strings.PercentFormat}, TargetNullValue='—'}" Width="58" ElementStyle="{StaticResource NumericCellStyle}"/>
                                 <DataGridTextColumn Header="{x:Static res:Strings.ColumnAltitude}" Binding="{Binding Row.AltitudeDegrees, StringFormat=F1}" Width="62" ElementStyle="{StaticResource NumericCellStyle}"/>
@@ -624,6 +672,14 @@
                             <ProgressBar Width="360" Height="8" Margin="0,6,0,0" HorizontalAlignment="Left"
                                          Minimum="0" Maximum="100" Value="{Binding MessierProgressPercent, Mode=OneWay}"
                                          AutomationProperties.Name="{x:Static res:Strings.LogbookMessierProgressName}"/>
+                            <StackPanel Orientation="Horizontal" Margin="0,8,0,0">
+                                <TextBlock FontSize="14" FontWeight="SemiBold" Text="{x:Static res:Strings.CatalogCaldwell}"/>
+                                <TextBlock FontSize="14" Margin="10,0,0,0" Foreground="{StaticResource SuccessSoftBrush}" FontWeight="SemiBold"
+                                           Text="{Binding CaldwellProgressText}"/>
+                            </StackPanel>
+                            <ProgressBar Width="360" Height="6" Margin="0,4,0,0" HorizontalAlignment="Left"
+                                         Minimum="0" Maximum="100" Value="{Binding CaldwellProgressPercent, Mode=OneWay}"
+                                         AutomationProperties.Name="{x:Static res:Strings.LogbookCaldwellProgressName}"/>
                             <TextBlock Margin="0,6,0,0" Foreground="{StaticResource NightMutedTextBrush}" TextWrapping="Wrap"
                                        Text="{x:Static res:Strings.LogbookExplanation}"/>
                             <TextBlock Foreground="{StaticResource SuccessSoftBrush}" Text="{Binding StatusMessage}" TextWrapping="Wrap"/>
@@ -678,6 +734,68 @@
                                             <Button Style="{StaticResource GridButtonStyle}" Content="{x:Static res:Strings.LogbookDelete}"
                                                     Command="{Binding DataContext.Logbook.DeleteCommand, RelativeSource={RelativeSource AncestorType=Window}}"
                                                     CommandParameter="{Binding}"/>
+                                        </DataTemplate>
+                                    </DataGridTemplateColumn.CellTemplate>
+                                </DataGridTemplateColumn>
+                            </DataGrid.Columns>
+                        </DataGrid>
+                    </Border>
+                </Grid>
+            </TabItem>
+
+            <TabItem Header="{x:Static res:Strings.TabLocations}" Style="{StaticResource DarkTabItemStyle}">
+                <Grid Margin="12" DataContext="{Binding Locations}">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+
+                    <!-- Save the site in use -->
+                    <StackPanel Grid.Row="0" Margin="0,0,0,10">
+                        <TextBlock Foreground="{StaticResource NightMutedTextBrush}" TextWrapping="Wrap" Margin="0,0,0,8"
+                                   Text="{x:Static res:Strings.LocationsHint}"/>
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Style="{StaticResource FilterLabelStyle}" Text="{x:Static res:Strings.LocationsNewName}"/>
+                            <TextBox Width="200" Margin="0,0,8,0" AutomationProperties.Name="{x:Static res:Strings.LocationsNewNameName}"
+                                     Text="{Binding NewLocationName, UpdateSourceTrigger=PropertyChanged}"/>
+                            <Button Style="{StaticResource PrimaryButtonStyle}" Content="{x:Static res:Strings.LocationsSaveCurrent}"
+                                    ToolTip="{x:Static res:Strings.LocationsSaveCurrentTooltip}"
+                                    Command="{Binding SaveCurrentCommand}"/>
+                        </StackPanel>
+                        <TextBlock Foreground="{StaticResource DangerBrush}" Text="{Binding StatusMessage}" TextWrapping="Wrap"
+                                   Visibility="{Binding StatusMessage, Converter={StaticResource NullToCollapsedConverter}}"/>
+                    </StackPanel>
+
+                    <Border Grid.Row="1" Padding="8" Background="{StaticResource SurfaceBrush}"
+                            BorderBrush="{StaticResource NightBorderBrush}" BorderThickness="1" CornerRadius="6">
+                        <DataGrid Style="{StaticResource NightDataGridStyle}" ItemsSource="{Binding Locations}">
+                            <DataGrid.Columns>
+                                <DataGridTextColumn Binding="{Binding IsActive, Converter={StaticResource ActiveMarkConverter}}" Width="26"
+                                                    ElementStyle="{StaticResource ObservedCellStyle}">
+                                    <DataGridTextColumn.Header>
+                                        <TextBlock Text="{x:Static res:Strings.LocationsActiveMark}" ToolTip="{x:Static res:Strings.LocationsActiveTooltip}"/>
+                                    </DataGridTextColumn.Header>
+                                </DataGridTextColumn>
+                                <DataGridTextColumn Header="{x:Static res:Strings.ColumnLocationName}" Binding="{Binding Name}" Width="200" ElementStyle="{StaticResource TrimmedCellStyle}"/>
+                                <DataGridTextColumn Header="{x:Static res:Strings.ColumnCoordinates}" Binding="{Binding CoordinatesText}" Width="170"/>
+                                <DataGridTextColumn Header="{x:Static res:Strings.ColumnElevation}" Binding="{Binding ElevationText}" Width="80" ElementStyle="{StaticResource NumericCellStyle}"/>
+                                <DataGridTextColumn Header="{x:Static res:Strings.ColumnTimeZone}" Binding="{Binding TimeZoneText}" Width="170" ElementStyle="{StaticResource TrimmedCellStyle}"/>
+                                <DataGridTextColumn Header="{x:Static res:Strings.ColumnHorizon}" Binding="{Binding HorizonText}" Width="80"/>
+                                <DataGridTextColumn Header="{x:Static res:Strings.ColumnNotesLocation}" Binding="{Binding Notes}" Width="*" ElementStyle="{StaticResource TrimmedCellStyle}"/>
+                                <DataGridTemplateColumn Width="150">
+                                    <DataGridTemplateColumn.CellTemplate>
+                                        <DataTemplate>
+                                            <StackPanel Orientation="Horizontal">
+                                                <Button Style="{StaticResource SecondaryButtonStyle}" Padding="8,2" Margin="0,0,6,0"
+                                                        Content="{x:Static res:Strings.LocationsUse}" ToolTip="{x:Static res:Strings.LocationsUseTooltip}"
+                                                        Command="{Binding DataContext.UseCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}"
+                                                        CommandParameter="{Binding}"
+                                                        Visibility="{Binding IsActive, Converter={StaticResource InverseBooleanToVisibilityConverter}}"/>
+                                                <Button Style="{StaticResource SecondaryButtonStyle}" Padding="8,2"
+                                                        Content="{x:Static res:Strings.LocationsDelete}"
+                                                        Command="{Binding DataContext.DeleteCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}"
+                                                        CommandParameter="{Binding}"/>
+                                            </StackPanel>
                                         </DataTemplate>
                                     </DataGridTemplateColumn.CellTemplate>
                                 </DataGridTemplateColumn>

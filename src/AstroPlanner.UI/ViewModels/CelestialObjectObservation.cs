@@ -1,5 +1,6 @@
 using AstroPlanner.Core.Models;
 using AstroPlanner.UI.Resources;
+using AstroPlanner.UI.Services;
 
 namespace AstroPlanner.UI.ViewModels;
 
@@ -9,6 +10,27 @@ public sealed class CelestialObjectObservation
     public required CelestialObject Target { get; init; }
     public required HorizontalCoordinates Coordinates { get; init; }
     public bool IsVisible { get; init; }
+
+    /// <summary>IAU constellation at the chosen time (planets move between constellations).</summary>
+    public string Constellation { get; init; } = string.Empty;
+
+    /// <summary>Cross-identifications, e.g. "Also known as: NGC 1976, LBN 974"; null if none.</summary>
+    public string? DesignationsText => Target.Designations.Count == 0
+        ? null
+        : DisplayNames.Format(Strings.DetailDesignationsFormat, string.Join(", ", Target.Designations.Take(8)));
+
+    /// <summary>"Size: 90′ × 60′"; null if unknown.</summary>
+    public string? SizeText => DisplayNames.Size(Target.MajorAxisArcmin, Target.MinorAxisArcmin) is { Length: > 0 } size
+        ? DisplayNames.Format(Strings.DetailSizeFormat, size)
+        : null;
+
+    /// <summary>"Surface brightness: 23.6 mag/arcsec²"; null if unknown.</summary>
+    public string? SurfaceBrightnessText => Target.SurfaceBrightness is { } brightness
+        ? DisplayNames.Format(Strings.DetailSurfaceBrightnessFormat, brightness)
+        : null;
+
+    /// <summary>Best window in darkness tonight and the time above the minimum altitude.</summary>
+    public string BestWindowText { get; init; } = string.Empty;
 
     public string VisibilityStatus => Coordinates.AltitudeDegrees < 0
         ? Strings.StatusNotVisible

@@ -1,6 +1,7 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using AstroPlanner.Core.Algorithms;
+using AstroPlanner.Core.Planning;
 using AstroPlanner.Core.Interfaces;
 using AstroPlanner.Core.Models;
 using AstroPlanner.UI.Resources;
@@ -152,11 +153,23 @@ public sealed partial class ObjectDetailViewModel : ObservableObject
         var moonInterferes = !item.IsPlanet
             && moon is not null && moonSeparation is not null && MoonInterference.Interferes(moon, moonSeparation.Value);
 
+        var nightEphemeris = new NightEphemerisCalculator(_astronomy).Calculate(item.Target,
+            new NightEphemerisRequest(observer, _context.TimeZone, night, _context.MinimumAltitude, _context.HorizonMask));
+        var bestWindow = nightEphemeris.IsObservableInDarkness
+            ? DisplayNames.Format(Strings.DetailBestWindowFormat,
+                DisplayNames.Window(nightEphemeris.BestWindowStartLocal, nightEphemeris.BestWindowEndLocal),
+                DisplayNames.Duration(nightEphemeris.TimeAboveMinimumInDarkness))
+            : Strings.DetailBestWindowNone;
+        var horizon = _context.HorizonMask;
+
         return new CelestialObjectObservation
         {
             Target = item.Target,
             Coordinates = current,
-            IsVisible = current.AltitudeDegrees >= _context.MinimumAltitude,
+            IsVisible = current.AltitudeDegrees >= _context.MinimumAltitude
+                        && (horizon.IsFlat || current.AltitudeDegrees >= horizon.AltitudeAt(current.AzimuthDegrees)),
+            Constellation = _astronomy.GetConstellation(item.Target, utc).Name,
+            BestWindowText = bestWindow,
             RiseTimeLocal = events.RiseLocal,
             VisibilityStartTimeLocal = events.ThresholdCrossingLocal,
             BestObservationTimeLocal = events.CulminationLocal,

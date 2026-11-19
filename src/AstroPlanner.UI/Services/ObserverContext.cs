@@ -29,6 +29,9 @@ public interface IObserverContext : INotifyPropertyChanged, INotifyDataErrorInfo
     /// <summary>Display name of the active location (city or manual coordinates).</summary>
     string LocationName { get; set; }
 
+    /// <summary>Local horizon of the active location (flat by default).</summary>
+    HorizonMask HorizonMask { get; set; }
+
     /// <summary>Message for the first invalid input (latitude, longitude, minimum altitude), or null.</summary>
     string? InputError { get; }
 
@@ -58,13 +61,14 @@ public interface IObserverContext : INotifyPropertyChanged, INotifyDataErrorInfo
     /// for the first time. Nothing is calculated before this call.
     /// </summary>
     void Initialize(
-        double latitude, double longitude, double elevation, string timeZoneId, double minimumAltitude, DateTime? observationDateTime = null);
+        double latitude, double longitude, double elevation, string timeZoneId, double minimumAltitude,
+        DateTime? observationDateTime = null, HorizonMask? horizonMask = null);
 
-    /// <summary>Sets every value at once and recalculates a single time.</summary>
-    void Apply(double latitude, double longitude, double elevation, string timeZoneId, double minimumAltitude);
+    /// <summary>Sets every value at once and recalculates a single time (a null horizon keeps the current one).</summary>
+    void Apply(double latitude, double longitude, double elevation, string timeZoneId, double minimumAltitude, HorizonMask? horizonMask = null);
 
     /// <summary>
-    /// Raised after any change of location, time zone, time or minimum altitude, once the night
+    /// Raised after any change of location, time zone, time, minimum altitude or horizon, once the night
     /// and Moon have been recalculated (also when the input is invalid: see <see cref="InputError"/>).
     /// </summary>
     event EventHandler? Recalculated;
@@ -106,6 +110,9 @@ public sealed partial class ObserverContext(IAstronomyService astronomy, TimePro
     public partial string LocationName { get; set; } = "";
 
     [ObservableProperty]
+    public partial HorizonMask HorizonMask { get; set; } = HorizonMask.Flat;
+
+    [ObservableProperty]
     public partial string? InputError { get; private set; }
 
     [ObservableProperty]
@@ -139,11 +146,13 @@ public sealed partial class ObserverContext(IAstronomyService astronomy, TimePro
     /// DateTime.MinValue) would produce an invalid night.
     /// </remarks>
     public void Initialize(
-        double latitude, double longitude, double elevation, string timeZoneId, double minimumAltitude, DateTime? observationDateTime = null)
+        double latitude, double longitude, double elevation, string timeZoneId, double minimumAltitude,
+        DateTime? observationDateTime = null, HorizonMask? horizonMask = null)
     {
         _isBatchUpdating = true;
         try
         {
+            HorizonMask = horizonMask ?? HorizonMask;
             Latitude = latitude;
             Longitude = longitude;
             Elevation = elevation;
@@ -160,11 +169,12 @@ public sealed partial class ObserverContext(IAstronomyService astronomy, TimePro
         Recalculate();
     }
 
-    public void Apply(double latitude, double longitude, double elevation, string timeZoneId, double minimumAltitude)
+    public void Apply(double latitude, double longitude, double elevation, string timeZoneId, double minimumAltitude, HorizonMask? horizonMask = null)
     {
         _isBatchUpdating = true;
         try
         {
+            HorizonMask = horizonMask ?? HorizonMask;
             Latitude = latitude;
             Longitude = longitude;
             Elevation = elevation;
@@ -185,6 +195,7 @@ public sealed partial class ObserverContext(IAstronomyService astronomy, TimePro
     partial void OnTimeZoneIdChanged(string value) => RecalculateIfReady();
     partial void OnObservationDateTimeChanged(DateTime value) => RecalculateIfReady();
     partial void OnMinimumAltitudeChanged(double value) => RecalculateIfReady();
+    partial void OnHorizonMaskChanged(HorizonMask value) => RecalculateIfReady();
 
     private void RecalculateIfReady()
     {
