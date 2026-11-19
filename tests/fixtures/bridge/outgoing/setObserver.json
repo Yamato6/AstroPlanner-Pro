@@ -1,0 +1,25 @@
+{
+  "v": 1,
+  "type": "setObserver",
+  "payload": {
+    "name": "Aguascalientes",
+    "latitudeDegrees": 21.88,
+    "longitudeDegrees": -102.29,
+    "elevationMeters": 1888,
+    "minimumAltitudeDegrees": 20,
+    "horizon": [
+      {
+        "azimuth": 0,
+        "altitude": 5
+      },
+      {
+        "azimuth": 90,
+        "altitude": 12.5
+      },
+      {
+        "azimuth": 200,
+        "altitude": 3
+      }
+    ]
+  }
+}

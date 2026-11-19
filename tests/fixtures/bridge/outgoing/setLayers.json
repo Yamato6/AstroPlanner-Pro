@@ -1,0 +1,21 @@
+{
+  "v": 1,
+  "type": "setLayers",
+  "payload": {
+    "stars": true,
+    "constellationLines": true,
+    "constellationBoundaries": false,
+    "constellationNames": true,
+    "altAzGrid": false,
+    "equatorialGrid": true,
+    "ecliptic": false,
+    "meridian": false,
+    "milkyWay": true,
+    "deepSky": true,
+    "bodies": true,
+    "labels": true,
+    "ground": true,
+    "starLimitMagnitude": 7,
+    "deepSkyLimitMagnitude": 12
+  }
+}

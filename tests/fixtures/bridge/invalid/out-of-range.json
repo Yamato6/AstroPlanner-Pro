@@ -1,0 +1,1 @@
+{ "v": 1, "type": "viewChanged", "payload": { "mode": "dome", "azimuthDegrees": 400, "altitudeDegrees": 10, "fovDegrees": 70 } }

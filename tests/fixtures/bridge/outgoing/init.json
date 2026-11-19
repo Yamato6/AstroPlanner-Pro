@@ -1,0 +1,34 @@
+{
+  "v": 1,
+  "type": "init",
+  "payload": {
+    "dataBaseUrl": "https://data.astroplanner/",
+    "refraction": {
+      "a": 1.02,
+      "b": 10.3,
+      "c": 5.11,
+      "d": 0.0019279,
+      "minimumAltitudeDegrees": -2
+    },
+    "layers": {
+      "stars": true,
+      "constellationLines": true,
+      "constellationBoundaries": false,
+      "constellationNames": true,
+      "altAzGrid": false,
+      "equatorialGrid": false,
+      "ecliptic": false,
+      "meridian": false,
+      "milkyWay": true,
+      "deepSky": true,
+      "bodies": true,
+      "labels": true,
+      "ground": true,
+      "starLimitMagnitude": 8.5,
+      "deepSkyLimitMagnitude": 12
+    },
+    "viewMode": "dome",
+    "theme": "dark",
+    "showStats": false
+  }
+}
