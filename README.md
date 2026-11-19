@@ -17,21 +17,32 @@
 </p>
 
 > **Status: work in progress (v2.0 under development).** AstroPlanner Pro is based on
-> [AstroPlanner v1](https://github.com/Yamato6/AstroPlanner), whose full history it keeps. Milestone
-> M0 is done: the v1 app now runs in English on .NET 10 with a new architecture. The roadmap
-> (live 2D/3D sky, equipment and capture-feasibility model, online enrichment, comets and satellites)
-> is in the [specification](ASTROPLANNER_PRO_SPEC.md).
+> [AstroPlanner v1](https://github.com/Yamato6/AstroPlanner), whose full history it keeps.
+> Milestones M0 (English, .NET 10, new architecture) and M1 (data foundation: the full NGC/IC
+> catalog, saved sites, refined events, v1 import) are done. The roadmap (live 2D/3D sky,
+> equipment and capture-feasibility model, online enrichment, comets and satellites) is in the
+> [specification](ASTROPLANNER_PRO_SPEC.md).
 
-![The planner: visible objects, dark night, Moon, clouds and the altitude of the selected object during the night](docs/screenshots/planner.png)
+![The planner: the NGC/IC catalog with sizes, tonight's maximum altitude and best window, the dark night, Moon, clouds and the altitude of the selected object](docs/screenshots/planner.png)
 
 ## What it does today
 
-- 🔭 **110 Messier objects and the 7 planets**: altitude, azimuth and visibility at the time you choose, with search and filters.
+- 🔭 **13,371 deep-sky objects and the 7 planets**: the whole NGC/IC catalog (OpenNGC), with all
+  110 Messier and 109 Caldwell objects, sizes, surface brightness, common names and cross-IDs.
+  Search by any identifier (`M31`, `NGC 224`, `C14`, `IC 434`, `Sh2-155`, `PGC 2557`) or name, and
+  filter by catalog, type, constellation, magnitude, size and visibility, in milliseconds.
+- 🌌 **Tonight for every object**: maximum altitude and the best window in astronomical darkness
+  above your minimum altitude and your local horizon, computed for the whole catalog in the
+  background.
 - 🌙 **The real night**: sunset and sunrise, astronomical darkness, Moon phase and a warning when its glare gets in the way.
 - ☁️ **Hourly clouds**: Open-Meteo forecast and the clearest hour of the night.
 - 🗺️ **Sky chart**: what is above the horizon and where, as when looking up.
+- 📍 **Saved sites**: home, dark sites… each with its IANA and Windows time zone and a horizon
+  profile (the editor arrives with the live sky).
 - 📋 **My plan**: tonight's list in the best observing order, with notes, as CSV or printed.
-- 📓 **Logbook**: record what you observe and track your Messier marathon.
+- 📓 **Logbook**: record what you observe and track your Messier marathon and Caldwell progress.
+- ↪️ **Import from AstroPlanner v1**: on first run, your v1 settings, plan and logbook are offered
+  for import (the v1 files are only read).
 - ⏱️ **Live mode**: follows the clock and refreshes everything every minute.
 
 It works offline; the internet is only used for the cloud forecast and the new-version notice, and both
@@ -58,8 +69,9 @@ survey imagery for framing. See the [specification](ASTROPLANNER_PRO_SPEC.md) an
 | `F5` | Current time | `Ctrl+E` | Export the plan to CSV |
 | `Ctrl+,` | Settings | `F1` | About |
 
-Your data (settings, plan, logbook) is stored in `%LocalAppData%\AstroPlannerPro`. AstroPlanner v1's
-data is left untouched, and both apps can be installed side by side.
+Your data (settings, sites, plan, logbook) is stored in `%LocalAppData%\AstroPlannerPro\app.db`
+(SQLite). AstroPlanner v1's data is only read when you import it, never changed, and both apps
+can be installed side by side.
 
 ## Privacy
 
@@ -75,11 +87,12 @@ Both can be turned off in **Settings → Internet connection**.
 ```bash
 dotnet build AstroPlanner.slnx -warnaserror
 dotnet run --project src/AstroPlanner.UI
-dotnet test AstroPlanner.slnx          # ~200 tests, no network
+dotnet test AstroPlanner.slnx          # ~370 tests, no network
+dotnet run --project tools/AstroPlanner.DataBuilder -- all   # rebuild the catalogs (downloads the sources)
 ```
 
 Requires the .NET 10 SDK. Every push runs CI (build with warnings as errors, tests, coverage with an
-85 % line-coverage gate on Core); a `v*` tag publishes the `.exe`, the installer and the checksums to a
+85 % line-coverage gate on Core, a check of the committed catalog database); a `v*` tag publishes the `.exe`, the installer and the checksums to a
 draft release. Contributor notes are in the docs.
 
 <details>
@@ -90,18 +103,24 @@ rules are enforced by architecture tests.
 
 ```
 src/
-  AstroPlanner.Core/     Domain: models, astronomy algorithms (Meeus), AstronomyService, interfaces
-  AstroPlanner.Data/     Embedded catalogs (Messier, cities) and repositories          → Core
+  AstroPlanner.Core/     Domain: models, astronomy algorithms (Meeus, event finder, IAU constellations,
+                         air mass), night ephemerides, AstronomyService, interfaces
+  AstroPlanner.Data/     SQLite: embedded catalogs.sqlite, app.db (migrations, settings, sites,
+                         plan, logbook), v1 importer, cities                           → Core
   AstroPlanner.Online/   HTTP clients (Open-Meteo)                                     → Core
   AstroPlanner.UI/       WPF app and composition root
-    ViewModels/            Shell, Tonight, Targets, Sky, ObjectDetail, SessionPlan, Logbook, Settings
+    ViewModels/            Shell, Tonight, Targets, Sky, ObjectDetail, SessionPlan, Logbook, Locations, Settings
     Services/              IObserverContext (shared observing state), WeatherState, JSON persistence,
                            CSV/print, logging, update checker, safe links, single instance
     Resources/Strings.resx All user-facing text (localisable)
     Themes/Dark.xaml       Palette and styles (also used by the charts)
+tools/
+  AstroPlanner.DataBuilder    Builds data/build/catalogs.sqlite from OpenNGC and HYG (docs/data-pipeline.md)
+data/                     SOURCES.md, curated/ overlays, build/ generated files (raw/ is git-ignored)
 tests/
-  AstroPlanner.Core.Tests     Meeus worked examples and published ephemerides
-  AstroPlanner.Data.Tests     Catalogs and repositories
+  AstroPlanner.Core.Tests     Meeus worked examples, JPL Horizons fixtures, Roman (1987) test positions
+  AstroPlanner.Data.Tests     Catalog database, app.db, migrations, v1 import
+  AstroPlanner.DataBuilder.Tests  Catalog build from small excerpts of the sources
   AstroPlanner.Online.Tests   HTTP clients with stubbed responses
   AstroPlanner.UI.Tests       View models, services and architecture rules
 installer/                Inno Setup script
@@ -117,6 +136,17 @@ installer/                Inno Setup script
 - **Observing night:** from sunset to sunrise (Sun's center at −0.833°); the dark night with the Sun
   below −18°. 02:00 belongs to the night that started the day before. Where the Sun does not set,
   18:00 → 06:00 is used.
+- **Event times:** bracketed every 10 minutes in UTC, then refined by bisection (rise, set,
+  thresholds, twilight) and golden-section search (culmination) to about a second. Checked
+  against JPL Horizons: sunset, sunrise and twilight in Aguascalientes, Madrid and Oslo, and
+  Jupiter and Saturn rise, culmination and set, all **within one minute**.
+- **Night ephemerides of the catalog:** fixed objects are precessed once per night and sampled
+  every 5 minutes with a shared sidereal time (transit solved analytically); planets go through
+  the full model. ~13k objects take well under a second, in the background.
+- **Constellations:** the IAU boundaries (Roman 1987, CDS VI/42) after precessing to B1875; they
+  agree with OpenNGC for all 13,371 objects. Planets get their real constellation for the date.
+- **Air mass and extinction:** Kasten & Young (1989) and Δm = k·X with k = 0.25 mag (used by the
+  feasibility model from M3).
 - **Precision:** precession J2000 → date (~0.36° in 2026) and standard refraction (~34′ at the
   horizon). No nutation or aberration (< 30″); UT instead of TT (ΔT ≈ 70 s). Elevation is stored but
   not used yet.
@@ -124,8 +154,8 @@ installer/                Inno Setup script
   interferes when above the horizon, ≥ 25 % lit and less than 30° from the object.
 - **Planets:** JPL Keplerian elements (1800-2050) with light-time correction; ~1′ error for the inner
   planets and up to ~10′ for Jupiter and Saturn. Meeus magnitudes (ch. 41) including Saturn's rings (ch. 45).
-- **Wall-clock time → UTC:** the Windows time zone id is stored and converted with `TimeZoneInfo`;
-  times skipped by daylight saving time move forward one hour.
+- **Wall-clock time → UTC:** sites store both the IANA and the Windows time zone id and convert
+  with `TimeZoneInfo`; times skipped by daylight saving time move forward one hour.
 
 **Application**
 - **Filtering never recalculates:** search and filters only filter; positions are recalculated only
@@ -136,8 +166,12 @@ installer/                Inno Setup script
   through the captured `SynchronizationContext`.
 - **Invalid input:** `ObservableValidator` with `[Range]`; an out-of-range value shows a warning and
   the last valid calculation is kept.
-- **Data:** JSON in `%LocalAppData%\AstroPlannerPro`, written atomically (temp file + rename). A
-  damaged logbook is set aside as `logbook.corrupt-<date>.json` instead of being overwritten.
+- **Catalog:** `catalogs.sqlite` is built by a deterministic tool, embedded in the `.exe`, copied
+  once to the data folder and loaded into memory; search keys are precomputed, so filtering
+  ~13k objects takes milliseconds and never recalculates positions.
+- **Data:** SQLite `app.db` in `%LocalAppData%\AstroPlannerPro`, with versioned migrations applied
+  in a transaction after a backup copy. A damaged file is set aside as `app.corrupt-<date>.db`
+  instead of being overwritten.
 - **Errors:** unhandled exceptions are logged in `logs\` and reported without closing the app.
 - **Single instance:** opening it twice brings the existing window to the front, so two processes never
   write the plan at the same time.
@@ -161,6 +195,7 @@ installer/                Inno Setup script
 
 | Project | Package | Version |
 |---|---|---|
+| Data, DataBuilder | Microsoft.Data.Sqlite | 11.0.0 |
 | UI | CommunityToolkit.Mvvm | 8.4.2 |
 | UI | Microsoft.Extensions.DependencyInjection | 11.0.0 |
 | UI | ScottPlot.WPF | 5.1.59 |
@@ -172,9 +207,19 @@ installer/                Inno Setup script
 
 ## Credits and license
 
+- Deep-sky catalog: [OpenNGC](https://github.com/mattiaverga/OpenNGC) by Mattia Verga
+  ([CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/)).
+- Stars: [HYG database](https://codeberg.org/astronexus/hyg) v4.4 by David Nash / astronexus.net (CC BY-SA 4.0).
+- Constellation boundaries: Roman (1987), CDS VI/42, as distributed with
+  [astropy](https://github.com/astropy/astropy) (BSD-3-Clause).
 - Cloud forecast: [Open-Meteo.com](https://open-meteo.com/) (data under [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/)).
 - Algorithms: Jean Meeus, *Astronomical Algorithms* (2nd ed.), and approximate orbital elements from JPL (NASA).
 - Charts: [ScottPlot](https://scottplot.net/).
 - Based on [AstroPlanner](https://github.com/Yamato6/AstroPlanner) v1.0.0 by the same author.
+
+Sources, versions and checksums: [data/SOURCES.md](data/SOURCES.md); license texts:
+[THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md). The code is MIT; the catalogs keep their own
+licenses. **AstroPlanner Pro is and will stay free:** the light-pollution atlas it will use from M3
+(Falchi et al. 2016) is licensed for non-commercial use only.
 
 © 2026 Yamato6 · [MIT License](LICENSE)

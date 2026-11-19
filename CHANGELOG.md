@@ -6,6 +6,59 @@ versions follow [Semantic Versioning](https://semver.org/). Versions up to 1.0.0
 
 ## [Unreleased] — 2.0.0
 
+### M1 — Data foundation & catalogs
+
+#### Added
+- **The whole NGC/IC catalog**: 13,371 objects from OpenNGC (v20260501), with all 110 Messier
+  and 109 Caldwell objects, sizes, position angles, surface brightness, common and alternate
+  names and cross-IDs (M, NGC, IC, Caldwell, PGC, UGC, ESO, LBN, Sh2, Mel, Cl…). Messier objects
+  keep their ids and English names; M102 is NGC 5866, as in v1. 83,476 HYG v4.4 stars to
+  magnitude 9 are stored for the sky renderer (M2).
+- **`tools/AstroPlanner.DataBuilder`**: `download` (pinned URLs, SHA-256 checked), `build-catalogs`
+  (deterministic `catalogs.sqlite` + report) and `verify`. Sources and licenses in
+  `data/SOURCES.md`, license texts in `THIRD_PARTY_NOTICES.md`, details in `docs/data-pipeline.md`.
+- **Targets table**: search by any identifier or name; catalog, minimum size and "Observable
+  tonight" filters; new columns *Also known as*, *Size*, *Surface brightness*, *Max. alt.* tonight
+  and *Best window* (longest stretch of darkness above the minimum altitude and the horizon).
+  Filtering 15k objects takes < 200 ms (test).
+- **Night ephemerides** of the whole catalog, in the background and cancellable (< 1 s for 15k
+  objects, test), recalculated only when the night, the site, the horizon or the minimum
+  altitude change.
+- **IAU constellation lookup** (Roman 1987, CDS VI/42): planets now show their real constellation
+  instead of "Solar System"; the constellation filter lists the 88 constellations.
+- **Air mass and extinction** (Kasten & Young 1989, Δm = k·X) in Core, for the feasibility model.
+- **Saved sites** (*Locations* tab): save the site in use, switch, delete; each site has IANA and
+  Windows time-zone ids and a horizon profile, already used for visibility and the best window
+  (its editor comes in M2). The cities list gains IANA ids; Hermosillo now uses
+  America/Hermosillo.
+- **Import from AstroPlanner v1** on first run: settings (as a saved site), plan and logbook;
+  Spanish planet ids are mapped (Marte → Mars), names re-resolved, pre-0.6 plans understood, v1
+  files only read.
+- Logbook: **Caldwell progress** next to the Messier marathon.
+- Object detail: cross-IDs, size, surface brightness, real constellation and tonight's best window.
+- About window: catalog credits.
+
+#### Changed
+- **Event times are refined** to about a second (bisection for rise/set/thresholds/twilight,
+  golden-section search for culmination) and computed in UTC; checked against JPL Horizons
+  fixtures (Sun at three sites, Jupiter, Saturn) within one minute. Before, culmination was the
+  highest 10-minute sample.
+- **User data moves to SQLite** (`app.db`) with versioned migrations, a backup before migrating
+  and damaged files set aside; the M0 JSON files are no longer used.
+- Persistence contracts (`ISettingsService`, `IObservationPlanService`, `IObservationLogService`,
+  `ILocationRepository`) move to Core; Data implements them.
+- Objects of unknown magnitude: nebulae and associations always pass the magnitude filter; other
+  objects without a magnitude are hidden by it.
+- The 2D sky chart draws at most the 300 brightest objects (plan, selection and planets first)
+  and labels 60, until the live sky of M2.
+- The single-file `.exe` stays at ~75 MB (the catalog adds ~4.8 MB compressed).
+
+#### Project
+- Architecture tests: the DataBuilder may use only Core and Data and nothing may use it; only
+  Data talks to SQLite.
+- CI verifies the committed catalog database.
+- Tests: 364 (Core 128, Data 36, DataBuilder 38, Online 6, UI 156); Core line coverage ~89 %.
+
 ### M0 — Bootstrap the new repository
 
 Behaviour is unchanged from AstroPlanner 1.0.0; the app now runs in English on .NET 10.

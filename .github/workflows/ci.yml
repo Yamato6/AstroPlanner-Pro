@@ -23,6 +23,11 @@ jobs:
       - name: Build (warnings are errors)
         run: dotnet build AstroPlanner.slnx -c Release -warnaserror
 
+      # The committed catalogs.sqlite must pass the sanity checks (no download: sources are
+      # only fetched by developers, see docs/data-pipeline.md).
+      - name: Verify the catalog database
+        run: dotnet run --project tools/AstroPlanner.DataBuilder -c Release --no-build -- verify
+
       - name: Test with coverage
         run: >
           dotnet test AstroPlanner.slnx -c Release --no-build
