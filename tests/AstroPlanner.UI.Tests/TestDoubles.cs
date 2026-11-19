@@ -88,6 +88,21 @@ internal sealed class FakeLocationRepository : ILocationRepository
     public void Delete(string id) => Locations.RemoveAll(l => l.Id == id);
 }
 
+internal sealed class FakeSkyViewStore : ISkyViewStore
+{
+    public SkyViewSettings Saved { get; private set; } = new();
+
+    public int SaveCount { get; private set; }
+
+    public SkyViewSettings Load() => Saved.Clone();
+
+    public void Save(SkyViewSettings settings)
+    {
+        Saved = settings.Clone();
+        SaveCount++;
+    }
+}
+
 internal sealed class NullLogger : IAppLogger
 {
     public string LogLocation => "";
@@ -111,7 +126,8 @@ internal static class TestShell
         TimeProvider? time = null,
         IWeatherForecastService? weather = null,
         IUpdateChecker? updates = null,
-        ILocationRepository? locations = null)
+        ILocationRepository? locations = null,
+        ISkyViewStore? skyStore = null)
     {
         var logger = new NullLogger();
         var astronomy = new AstronomyService();
@@ -125,7 +141,7 @@ internal static class TestShell
             astronomy, context, settings, logbook, logger);
         var planViewModel = new SessionPlanViewModel(plan ?? new FakePlanService(), astronomy, context, weatherState, targets, logger);
         var detail = new ObjectDetailViewModel(astronomy, context, weatherState, targets, planViewModel, logbook);
-        var sky = new SkyViewModel(context, targets, planViewModel);
+        var sky = new SkyViewModel(context, targets, planViewModel, skyStore ?? new FakeSkyViewStore(), logger, time);
         var tonight = new TonightViewModel(context, weatherState, logbook);
         var locationsViewModel = new LocationsViewModel(locations ?? new FakeLocationRepository(), settingsViewModel, logger);
         return new ShellViewModel(

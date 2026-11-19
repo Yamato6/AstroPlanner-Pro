@@ -1,0 +1,17 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- DTOs and serializer of the WPF ⇄ WebView2 sky protocol (spec §5.4). Depends on Core only;
+       no WPF or WebView2 types, so it is testable and shared with the contract tests. -->
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\AstroPlanner.Core\AstroPlanner.Core.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="AstroPlanner.SkyBridge.Tests" />
+  </ItemGroup>
+
+</Project>

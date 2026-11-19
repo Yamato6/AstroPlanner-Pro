@@ -150,6 +150,21 @@ public sealed class SqliteStoreTests : TempFolderTest
     }
 
     [Fact]
+    public void SkyView_DefaultsUntilSaved_ThenRoundTrip_AndSurvivesDamage()
+    {
+        var database = Database();
+        var store = new SqliteSkyViewStore(database);
+        store.Load().StarLimitMagnitude.Should().Be(8.5);
+
+        store.Save(new SkyViewSettings { EquatorialGrid = true, StarLimitMagnitude = 7, FovDegrees = 30, Ground = false });
+        var loaded = new SqliteSkyViewStore(Database()).Load();
+        loaded.Should().BeEquivalentTo(new { EquatorialGrid = true, StarLimitMagnitude = 7.0, FovDegrees = 30.0, Ground = false, Stars = true });
+
+        SettingsTable.Write(database, "sky", "[broken");
+        store.Load().FovDegrees.Should().Be(70);
+    }
+
+    [Fact]
     public void Plan_KeepsOrderAndNotes_AndSaveReplacesIt()
     {
         var service = new SqlitePlanService(Database());

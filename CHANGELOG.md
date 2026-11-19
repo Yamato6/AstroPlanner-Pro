@@ -6,6 +6,42 @@ versions follow [Semantic Versioning](https://semver.org/). Versions up to 1.0.0
 
 ## [Unreleased] — 2.0.0
 
+### M2 — Live sky (part 1: renderer, bridge and 3D dome)
+
+#### Added
+- **Live 3D sky** in the *Sky* tab: a TypeScript + three.js renderer (`src/sky-renderer`) in
+  WebView2 with the 83,476 HYG stars (size and color from magnitude and B−V, limit adjustable,
+  fainter stars as you zoom), constellation lines, names and boundaries, the Milky Way outline,
+  13,371 deep-sky markers scaled and oriented by size and position angle, the Sun, the Moon with
+  its phase and bright limb, the planets, alt-az and equatorial grids, ecliptic, meridian,
+  ground and cardinal points. Drag to look around, scroll to zoom (1°–120°), hover for names,
+  click to select.
+- **Sky time**: play at ×1/×60/×600/×3600, pause, step ±1 min/10 min/1 h/1 day, Now. Only the
+  renderer animates; pausing or stepping moves the observation time, so Targets recalculates once.
+- **Selection both ways**: picking a deep-sky object or planet selects it in Targets and the detail
+  (kept in the table even if the filters hide it); selecting in Targets highlights it in the sky;
+  *Center on selection*, *Open details*, *Find* (`m31`, `ngc 7000`, `Orion Nebula`, `Jupiter`).
+  Session-plan objects are highlighted. Shortcuts: Space, `/`.
+- Layers, star limit and the last camera are remembered (`app.db`, key `sky`).
+- **Core**: `Matrix3`/`Vector3d`, precession as a matrix (Meeus 21.b), `SkyFrame` (J2000 →
+  horizontal matrix reproducing `GetHorizontal`), `MovingBodyCalculator` (Sun, Moon, planets and
+  their tracks), Moon phase angle and bright-limb position angle (Meeus 48.a).
+- **`AstroPlanner.SkyBridge`**: the WPF ⇄ WebView2 protocol (DTOs, source-generated JSON, strict
+  validation of every incoming message) with contract tests and the projection cross-check shared
+  with Vitest (≤ 0.01° against Core).
+- **DataBuilder `build-sky`**: binary J2000 buffers of stars, deep-sky objects, constellation lines
+  and boundaries and the Milky Way, plus label files (`data/build/sky`), deterministic and verified
+  in CI.
+- Benchmark switches `--sky-benchmark` and `--sky-stars=N`; 1,530 fps (p95 0.9 ms) with 83k stars
+  on the development desktop (Radeon RX 6600); see `docs/sky-renderer.md`.
+- Docs: `docs/sky-renderer.md` (transform, protocol, security, packaging, performance).
+
+#### Changed
+- Without the WebView2 Runtime the Sky tab falls back to the 2D chart of v1, with a notice.
+- CI sets up Node (`.nvmrc`), lints, builds and tests the renderer before the .NET build; the
+  release job builds it too. Dependabot watches npm.
+- The renderer and its data are embedded in the exe (~2.8 MB zip); the single-file exe is ~79 MB.
+
 ### M1 — Data foundation & catalogs
 
 #### Added

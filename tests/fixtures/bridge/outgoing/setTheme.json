@@ -1,0 +1,7 @@
+{
+  "v": 1,
+  "type": "setTheme",
+  "payload": {
+    "theme": "dark"
+  }
+}

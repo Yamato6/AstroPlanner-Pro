@@ -11,8 +11,9 @@ namespace AstroPlanner.DataBuilder;
 /// Entry point. Commands:
 ///   download        fetch the pinned sources into data/raw (verifies SHA-256)
 ///   build-catalogs  data/raw + data/curated → data/build/catalogs.sqlite and data/build/sky/
-///   verify          sanity checks of data/build/catalogs.sqlite
-///   all             the three, in order
+///   build-sky       data/build/catalogs.sqlite + d3-celestial GeoJSON → data/build/sky/*.bin|json (renderer data)
+///   verify          sanity checks of data/build/catalogs.sqlite and data/build/sky
+///   all             download, build-catalogs, build-sky and verify, in order
 /// Option: --root &lt;repository root&gt; (default: the folder containing AstroPlanner.slnx).
 /// </summary>
 internal static class Program
@@ -34,14 +35,18 @@ internal static class Program
                 case "build-catalogs":
                     Build(paths);
                     return 0;
+                case "build-sky":
+                    BuildSky(paths);
+                    return 0;
                 case "verify":
                     return Verify(paths);
                 case "all":
                     await DownloadAsync(paths).ConfigureAwait(false);
                     Build(paths);
+                    BuildSky(paths);
                     return Verify(paths);
                 default:
-                    Console.WriteLine("Usage: AstroPlanner.DataBuilder download | build-catalogs | verify | all [--root <repo>]");
+                    Console.WriteLine("Usage: AstroPlanner.DataBuilder download | build-catalogs | build-sky | verify | all [--root <repo>]");
                     return command == "help" ? 0 : 2;
             }
         }
@@ -114,9 +119,18 @@ internal static class Program
         Console.WriteLine(result.Report);
     }
 
+    private static void BuildSky(RepositoryPaths paths)
+    {
+        var sky = paths.Build("sky");
+        var result = SkyDataBuilder.Build(paths.Build(CatalogSchema.FileName), sky, sky);
+        Console.WriteLine(result.Report);
+    }
+
     private static int Verify(RepositoryPaths paths)
     {
-        var failures = CatalogVerifier.Verify(paths.Build(CatalogSchema.FileName), CatalogVerifier.FullBuild);
+        var failures = CatalogVerifier.Verify(paths.Build(CatalogSchema.FileName), CatalogVerifier.FullBuild)
+            .Concat(SkyDataBuilder.Verify(paths.Build("sky"), CatalogVerifier.FullBuild.MinimumStars, CatalogVerifier.FullBuild.MinimumObjects))
+            .ToList();
         foreach (var failure in failures)
         {
             Console.WriteLine("FAIL " + failure);

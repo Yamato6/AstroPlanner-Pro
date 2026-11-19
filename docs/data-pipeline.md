@@ -10,7 +10,8 @@ data/curated/    hand-written overlays (committed)        ─┐
 data/build/      generated files (committed, shipped)    ◄─┘
   catalogs.sqlite        deep-sky objects + stars (embedded in AstroPlanner.Data)
   catalogs-report.txt    counts and differences of the last build (review it in PRs)
-  sky/*.json             d3-celestial files for the sky renderer (M2)
+  sky/*.json             d3-celestial GeoJSON (input of build-sky)
+  sky/*.bin, sky/*.json  sky renderer data written by build-sky (docs/sky-renderer.md)
 ```
 
 ## Commands
@@ -20,14 +21,19 @@ Run from anywhere inside the repository (or pass `--root <repo>`):
 ```bash
 dotnet run --project tools/AstroPlanner.DataBuilder -- download        # fetch + verify the pinned sources
 dotnet run --project tools/AstroPlanner.DataBuilder -- build-catalogs  # data/raw + data/curated → data/build
-dotnet run --project tools/AstroPlanner.DataBuilder -- verify          # sanity checks of data/build/catalogs.sqlite
-dotnet run --project tools/AstroPlanner.DataBuilder -- all             # the three, in order
+dotnet run --project tools/AstroPlanner.DataBuilder -- build-sky       # catalogs.sqlite + GeoJSON → data/build/sky (renderer data)
+dotnet run --project tools/AstroPlanner.DataBuilder -- verify          # sanity checks of catalogs.sqlite and data/build/sky
+dotnet run --project tools/AstroPlanner.DataBuilder -- all             # all of the above, in order
 ```
 
 `download` skips files that are already present with the right checksum and fails if a
 download does not match the pinned SHA-256. To update a source, change its URL, version and
 checksum in `tools/AstroPlanner.DataBuilder/DataSources.cs` and in `data/SOURCES.md`, rebuild,
 and review the diff of `catalogs-report.txt`.
+
+`build-sky` needs no download: it reads the committed `catalogs.sqlite` and GeoJSON, so it can
+be rerun at any time (it is deterministic; the formats are described in
+[sky-renderer.md](sky-renderer.md#static-data-build-sky)).
 
 The light-pollution grids (`build-lp-grid`, from the World Atlas 2015) arrive in M3.
 
@@ -69,7 +75,8 @@ checks it). `meta` records the schema version and the version and checksum of ev
 `AstroPlanner.Data`. SQLite needs a file, so `SqliteCatalogRepository` copies it once to
 `%LocalAppData%\AstroPlannerPro\catalogs\catalogs-<hash>.sqlite` (older copies are deleted),
 opens it read-only and loads the ~13k objects into memory. Search and filters never touch the
-database. Stars are not loaded yet: the sky renderer reads them from M2.
+database. The stars are not loaded by the app itself: the sky renderer reads
+`data/build/sky/stars.bin`, packed into the exe with the renderer (docs/sky-renderer.md).
 
 ## Tests
 
@@ -78,4 +85,6 @@ database. Stars are not loaded yet: the sky renderer reads them from M2.
   ambiguous cross-IDs, the curated overlay, determinism and the basic checks of `verify`.
 - `tests/AstroPlanner.Data.Tests` reads the committed `catalogs.sqlite`: 110 Messier and 109
   Caldwell objects, cross-IDs, sizes, names, metadata.
-- CI runs `verify` on the committed database; it never downloads the sources.
+- `SkyDataBuilderTests` builds the sky files from the same excerpts and small GeoJSON fixtures
+  (`tests/fixtures/sky`): order, unit vectors, labels, ≤ 2° pieces, determinism, `verify`.
+- CI runs `verify` on the committed database and sky files; it never downloads the sources.

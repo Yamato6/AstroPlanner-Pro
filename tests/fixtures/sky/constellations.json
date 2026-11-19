@@ -1,0 +1,5 @@
+{"type":"FeatureCollection","features":[
+{"type":"Feature","id":"Ori","properties":{"name":"Orion","desig":"Ori","gen":"Orionis","rank":"1"},"geometry":{"type":"Point","coordinates":[83.0,3.0]}},
+{"type":"Feature","id":"Ser","properties":{"name":"Serpens Caput","desig":"Ser","gen":"Serpentis","rank":"2"},"geometry":{"type":"Point","coordinates":[-127.5,5]}},
+{"type":"Feature","id":"Ser","properties":{"name":"Serpens Cauda","desig":"Ser","gen":"Serpentis","rank":"2"},"geometry":{"type":"Point","coordinates":[-79.5,3]}},
+{"type":"Feature","id":"And","properties":{"name":"Andromeda","desig":"And","gen":"Andromedae","rank":"1"},"geometry":{"type":"Point","coordinates":[0.75,43]}}]}

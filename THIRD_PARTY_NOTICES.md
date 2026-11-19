@@ -63,7 +63,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 Weather data by [Open-Meteo.com](https://open-meteo.com/), under CC BY 4.0, fetched at run time.
 
-## Data in the repository, shipped from M2
+## Sky data (shipped since M2)
 
 ### d3-celestial — BSD-3-Clause
 
@@ -118,6 +118,12 @@ AstroPlanner Pro is and must remain free of charge.** Only derived grids will be
 | SQLitePCLRaw (bundled SQLite) | Apache-2.0; SQLite itself is public domain |
 | CommunityToolkit.Mvvm | MIT |
 | ScottPlot, SkiaSharp | MIT |
+| Microsoft.Web.WebView2 (SDK) | BSD-3-Clause (Microsoft); the WebView2 Runtime is part of Windows / installed separately |
+| three.js (sky renderer) | MIT — Copyright © 2010-2026 three.js authors |
+| zod (sky renderer) | MIT — Copyright © 2025 Colin McDonnell |
+
+Build- and test-only packages of the renderer (not shipped): TypeScript (Apache-2.0), Vite,
+Vitest, ESLint, typescript-eslint, Prettier (MIT).
 
 Test-only packages (not shipped): xUnit (Apache-2.0), FluentAssertions 8 (Xceed Community
 License, free for non-commercial use), coverlet (MIT), Microsoft.NET.Test.Sdk (MIT).

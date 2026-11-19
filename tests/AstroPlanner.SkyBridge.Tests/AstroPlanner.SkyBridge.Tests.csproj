@@ -1,0 +1,21 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- Contract tests of the sky bridge: golden message samples and the projection cross-check
+       (tests/fixtures/bridge), shared with the Vitest suite of src/sky-renderer. -->
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\AstroPlanner.SkyBridge\AstroPlanner.SkyBridge.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Absolute path of the fixtures, so that the golden files can be regenerated in place. -->
+    <AssemblyAttribute Include="System.Reflection.AssemblyMetadataAttribute">
+      <_Parameter1>BridgeFixtures</_Parameter1>
+      <_Parameter2>$(MSBuildThisFileDirectory)..\fixtures\bridge</_Parameter2>
+    </AssemblyAttribute>
+  </ItemGroup>
+
+</Project>

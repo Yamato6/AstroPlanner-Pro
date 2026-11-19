@@ -1,0 +1,83 @@
+{
+  "v": 1,
+  "type": "movingBodies",
+  "payload": {
+    "bodies": [
+      {
+        "id": "Sun",
+        "kind": "sun",
+        "name": "Sun",
+        "magnitude": -26.74,
+        "diameterArcsec": 1927.5,
+        "phaseAngleDegrees": 0,
+        "illuminatedFraction": 1,
+        "brightLimbAngleDegrees": 0,
+        "track": {
+          "startUtc": "2026-03-20T01:50:00.000Z",
+          "stepSeconds": 600,
+          "vectors": [
+            0.9998777,
+            -0.0143467,
+            -0.0062253,
+            0.9998796,
+            -0.0142362,
+            -0.0061774,
+            0.9998814,
+            -0.0141257,
+            -0.0061295
+          ]
+        }
+      },
+      {
+        "id": "Moon",
+        "kind": "moon",
+        "name": "Moon",
+        "magnitude": -5.36,
+        "diameterArcsec": 1935.59,
+        "phaseAngleDegrees": 166.167,
+        "illuminatedFraction": 0.0145,
+        "brightLimbAngleDegrees": 235.218,
+        "track": {
+          "startUtc": "2026-03-20T01:50:00.000Z",
+          "stepSeconds": 600,
+          "vectors": [
+            0.9785918,
+            0.1631891,
+            0.125409,
+            0.9782452,
+            0.1647225,
+            0.1261065,
+            0.977891,
+            0.1662836,
+            0.1268031
+          ]
+        }
+      },
+      {
+        "id": "Mercury",
+        "kind": "planet",
+        "name": "Mercury",
+        "magnitude": 1.32,
+        "diameterArcsec": 9.86,
+        "phaseAngleDegrees": 124.868,
+        "illuminatedFraction": 0.2142,
+        "brightLimbAngleDegrees": 71.136,
+        "track": {
+          "startUtc": "2026-03-20T01:50:00.000Z",
+          "stepSeconds": 600,
+          "vectors": [
+            0.9280394,
+            -0.3493507,
+            -0.1292166,
+            0.9280366,
+            -0.3493467,
+            -0.1292474,
+            0.9280339,
+            -0.3493426,
+            -0.1292783
+          ]
+        }
+      }
+    ]
+  }
+}

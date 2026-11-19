@@ -24,11 +24,13 @@
     <ProjectReference Include="..\AstroPlanner.Core\AstroPlanner.Core.csproj" />
     <ProjectReference Include="..\AstroPlanner.Data\AstroPlanner.Data.csproj" />
     <ProjectReference Include="..\AstroPlanner.Online\AstroPlanner.Online.csproj" />
+    <ProjectReference Include="..\AstroPlanner.SkyBridge\AstroPlanner.SkyBridge.csproj" />
   </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="CommunityToolkit.Mvvm" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection" />
+    <PackageReference Include="Microsoft.Web.WebView2" />
     <PackageReference Include="ScottPlot.WPF" />
   </ItemGroup>
 
@@ -63,6 +65,52 @@
       <!-- Whatever its spelling (relative or absolute), keep a single copy of the generated file. -->
       <Compile Remove="@(Compile)" Condition="'%(Filename)%(Extension)' == 'Strings.Designer.cs'" />
       <Compile Include="$(StringsDesignerFile)" />
+    </ItemGroup>
+  </Target>
+
+  <!-- Sky renderer (src/sky-renderer, TypeScript + three.js) and its data (data/build/sky) are
+       packed into one zip embedded in the exe; SkyAssets extracts it at run time and WebView2
+       serves it from https://app.astroplanner/ and https://data.astroplanner/ (docs/sky-renderer.md).
+       Needs Node.js; pass -p:SkipSkyRendererBuild=true to build without it (the Sky tab then
+       falls back to the 2D chart unless a previous build left src/sky-renderer/dist). -->
+  <PropertyGroup>
+    <SkyRendererDirectory>$([System.IO.Path]::GetFullPath('$(MSBuildProjectDirectory)\..\sky-renderer'))\</SkyRendererDirectory>
+    <SkyDataDirectory>$([System.IO.Path]::GetFullPath('$(MSBuildProjectDirectory)\..\..\data\build\sky'))\</SkyDataDirectory>
+    <!-- BaseIntermediateOutputPath (obj\) is already defined here; IntermediateOutputPath is not yet. -->
+    <SkyAssetsStaging>$(MSBuildProjectDirectory)\$(BaseIntermediateOutputPath)sky-assets\</SkyAssetsStaging>
+    <SkyAssetsZip>$(MSBuildProjectDirectory)\$(BaseIntermediateOutputPath)sky-assets.zip</SkyAssetsZip>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <SkyRendererSource Include="$(SkyRendererDirectory)src\**\*;$(SkyRendererDirectory)index.html;$(SkyRendererDirectory)package-lock.json;$(SkyRendererDirectory)vite.config.ts;$(SkyRendererDirectory)tsconfig.json" />
+    <SkyDataFile Include="$(SkyDataDirectory)*.bin;$(SkyDataDirectory)star-names.json;$(SkyDataDirectory)dsos.json;$(SkyDataDirectory)constellation-labels.json" />
+  </ItemGroup>
+
+  <Target Name="BuildSkyRenderer"
+          Condition="'$(SkipSkyRendererBuild)' != 'true'"
+          Inputs="@(SkyRendererSource)"
+          Outputs="$(SkyRendererDirectory)dist\index.html">
+    <Exec Command="npm ci --no-audit --no-fund" WorkingDirectory="$(SkyRendererDirectory)" Condition="!Exists('$(SkyRendererDirectory)node_modules')" />
+    <Exec Command="npm run build" WorkingDirectory="$(SkyRendererDirectory)" />
+  </Target>
+
+  <Target Name="PackSkyAssets"
+          DependsOnTargets="BuildSkyRenderer"
+          Condition="Exists('$(SkyRendererDirectory)dist\index.html')"
+          Inputs="@(SkyDataFile);$(SkyRendererDirectory)dist\index.html"
+          Outputs="$(SkyAssetsZip)">
+    <ItemGroup>
+      <SkyAppFile Include="$(SkyRendererDirectory)dist\**\*" />
+    </ItemGroup>
+    <RemoveDir Directories="$(SkyAssetsStaging)" />
+    <Copy SourceFiles="@(SkyAppFile)" DestinationFiles="@(SkyAppFile->'$(SkyAssetsStaging)app\%(RecursiveDir)%(Filename)%(Extension)')" />
+    <Copy SourceFiles="@(SkyDataFile)" DestinationFolder="$(SkyAssetsStaging)data" />
+    <ZipDirectory SourceDirectory="$(SkyAssetsStaging)" DestinationFile="$(SkyAssetsZip)" Overwrite="true" />
+  </Target>
+
+  <Target Name="EmbedSkyAssets" DependsOnTargets="PackSkyAssets" BeforeTargets="BeforeBuild">
+    <ItemGroup Condition="Exists('$(SkyAssetsZip)')">
+      <EmbeddedResource Include="$(SkyAssetsZip)" LogicalName="AstroPlanner.UI.Sky.sky-assets.zip" />
     </ItemGroup>
   </Target>
 

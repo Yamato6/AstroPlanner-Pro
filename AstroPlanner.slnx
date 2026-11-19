@@ -3,6 +3,7 @@
     <Project Path="src/AstroPlanner.Core/AstroPlanner.Core.csproj" />
     <Project Path="src/AstroPlanner.Data/AstroPlanner.Data.csproj" />
     <Project Path="src/AstroPlanner.Online/AstroPlanner.Online.csproj" />
+    <Project Path="src/AstroPlanner.SkyBridge/AstroPlanner.SkyBridge.csproj" />
     <Project Path="src/AstroPlanner.UI/AstroPlanner.UI.csproj" />
   </Folder>
   <Folder Name="/tools/">
@@ -13,6 +14,7 @@
     <Project Path="tests/AstroPlanner.Data.Tests/AstroPlanner.Data.Tests.csproj" />
     <Project Path="tests/AstroPlanner.DataBuilder.Tests/AstroPlanner.DataBuilder.Tests.csproj" />
     <Project Path="tests/AstroPlanner.Online.Tests/AstroPlanner.Online.Tests.csproj" />
+    <Project Path="tests/AstroPlanner.SkyBridge.Tests/AstroPlanner.SkyBridge.Tests.csproj" />
     <Project Path="tests/AstroPlanner.UI.Tests/AstroPlanner.UI.Tests.csproj" />
   </Folder>
   <Folder Name="/Solution Items/">

@@ -80,7 +80,11 @@ public static class SolarSystemCalculator
     /// Illuminated fraction of the lunar disc (0 = new, 1 = full) from the phase angle
     /// (Meeus, ch. 48).
     /// </summary>
-    public static double GetMoonIlluminatedFraction(MoonPosition moon, SunPosition sun)
+    public static double GetMoonIlluminatedFraction(MoonPosition moon, SunPosition sun) =>
+        (1 + Math.Cos(AstronomyMath.DegreesToRadiansValue(GetMoonPhaseAngleDegrees(moon, sun)))) / 2;
+
+    /// <summary>Selenocentric Sun-Earth angle i in degrees (0 = full, 180 = new; Meeus 48.2–48.3).</summary>
+    public static double GetMoonPhaseAngleDegrees(MoonPosition moon, SunPosition sun)
     {
         ArgumentNullException.ThrowIfNull(moon);
         ArgumentNullException.ThrowIfNull(sun);
@@ -90,11 +94,29 @@ public static class SolarSystemCalculator
             * Cos(moon.EclipticLongitudeDegrees - sun.EclipticLongitudeDegrees);
         var elongation = Math.Acos(Math.Clamp(cosElongation, -1.0, 1.0));
 
-        var phaseAngle = Math.Atan2(
+        return AstronomyMath.RadiansToDegreesValue(Math.Atan2(
             sun.DistanceKm * Math.Sin(elongation),
-            moon.DistanceKm - sun.DistanceKm * Math.Cos(elongation));
+            moon.DistanceKm - sun.DistanceKm * Math.Cos(elongation)));
+    }
 
-        return (1 + Math.Cos(phaseAngle)) / 2;
+    /// <summary>
+    /// Position angle χ of the Moon's bright limb, measured from the north point of the disc
+    /// toward the east (Meeus 48.5). Works for any body lit by the Sun.
+    /// </summary>
+    public static double GetBrightLimbPositionAngleDegrees(EquatorialCoordinates body, EquatorialCoordinates sun)
+    {
+        ArgumentNullException.ThrowIfNull(body);
+        ArgumentNullException.ThrowIfNull(sun);
+
+        var alpha = AstronomyMath.DegreesToRadiansValue(body.RightAscensionHours * 15.0);
+        var delta = AstronomyMath.DegreesToRadiansValue(body.DeclinationDegrees);
+        var alpha0 = AstronomyMath.DegreesToRadiansValue(sun.RightAscensionHours * 15.0);
+        var delta0 = AstronomyMath.DegreesToRadiansValue(sun.DeclinationDegrees);
+
+        var chi = Math.Atan2(
+            Math.Cos(delta0) * Math.Sin(alpha0 - alpha),
+            Math.Sin(delta0) * Math.Cos(delta) - Math.Cos(delta0) * Math.Sin(delta) * Math.Cos(alpha0 - alpha));
+        return AstronomyMath.NormalizeDegrees(AstronomyMath.RadiansToDegreesValue(chi));
     }
 
     /// <summary>True while the Moon is waxing (between new and full Moon).</summary>

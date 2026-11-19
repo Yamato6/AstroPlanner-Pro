@@ -25,6 +25,8 @@
 
 ![The planner: the NGC/IC catalog with sizes, tonight's maximum altitude and best window, the dark night, Moon, clouds and the altitude of the selected object](docs/screenshots/planner.png)
 
+![The live sky: looking north from Mexico City, with constellations, Messier objects, the Milky Way outline and the frame-rate overlay](docs/screenshots/sky.png)
+
 ## What it does today
 
 - 🔭 **13,371 deep-sky objects and the 7 planets**: the whole NGC/IC catalog (OpenNGC), with all
@@ -36,9 +38,12 @@
   background.
 - 🌙 **The real night**: sunset and sunrise, astronomical darkness, Moon phase and a warning when its glare gets in the way.
 - ☁️ **Hourly clouds**: Open-Meteo forecast and the clearest hour of the night.
-- 🗺️ **Sky chart**: what is above the horizon and where, as when looking up.
+- 🌠 **Live sky**: a GPU-rendered sky dome (three.js in WebView2) with 83k stars, constellations,
+  the Milky Way, 13k deep-sky objects and the Sun, Moon (with its phase) and planets, all
+  positioned by the same tested astronomy core as the tables. Play time at up to ×3600, step by
+  minutes to days, find any object, click to select it and open its details.
 - 📍 **Saved sites**: home, dark sites… each with its IANA and Windows time zone and a horizon
-  profile (the editor arrives with the live sky).
+  profile (its editor arrives with the 2D charts).
 - 📋 **My plan**: tonight's list in the best observing order, with notes, as CSV or printed.
 - 📓 **Logbook**: record what you observe and track your Messier marathon and Caldwell progress.
 - ↪️ **Import from AstroPlanner v1**: on first run, your v1 settings, plan and logbook are offered
@@ -87,11 +92,13 @@ Both can be turned off in **Settings → Internet connection**.
 ```bash
 dotnet build AstroPlanner.slnx -warnaserror
 dotnet run --project src/AstroPlanner.UI
-dotnet test AstroPlanner.slnx          # ~370 tests, no network
+dotnet test AstroPlanner.slnx          # ~460 tests, no network
+cd src/sky-renderer && npm ci && npm test   # renderer: ~130 Vitest tests (the UI build runs npm itself)
 dotnet run --project tools/AstroPlanner.DataBuilder -- all   # rebuild the catalogs (downloads the sources)
 ```
 
-Requires the .NET 10 SDK. Every push runs CI (build with warnings as errors, tests, coverage with an
+Requires the .NET 10 SDK and Node.js 22.12+ (the UI build compiles the sky renderer; see
+[docs/sky-renderer.md](docs/sky-renderer.md)). Every push runs CI (build with warnings as errors, tests, coverage with an
 85 % line-coverage gate on Core, a check of the committed catalog database); a `v*` tag publishes the `.exe`, the installer and the checksums to a
 draft release. Contributor notes are in the docs.
 
@@ -108,6 +115,8 @@ src/
   AstroPlanner.Data/     SQLite: embedded catalogs.sqlite, app.db (migrations, settings, sites,
                          plan, logbook), v1 importer, cities                           → Core
   AstroPlanner.Online/   HTTP clients (Open-Meteo)                                     → Core
+  AstroPlanner.SkyBridge/ WPF ⇄ WebView2 protocol: DTOs, validating codec              → Core
+  sky-renderer/          TypeScript + three.js sky (WebView2); draws only, astronomy comes from Core
   AstroPlanner.UI/       WPF app and composition root
     ViewModels/            Shell, Tonight, Targets, Sky, ObjectDetail, SessionPlan, Logbook, Locations, Settings
     Services/              IObserverContext (shared observing state), WeatherState, JSON persistence,
@@ -115,13 +124,14 @@ src/
     Resources/Strings.resx All user-facing text (localisable)
     Themes/Dark.xaml       Palette and styles (also used by the charts)
 tools/
-  AstroPlanner.DataBuilder    Builds data/build/catalogs.sqlite from OpenNGC and HYG (docs/data-pipeline.md)
+  AstroPlanner.DataBuilder    Builds data/build/catalogs.sqlite and the sky data (docs/data-pipeline.md)
 data/                     SOURCES.md, curated/ overlays, build/ generated files (raw/ is git-ignored)
 tests/
   AstroPlanner.Core.Tests     Meeus worked examples, JPL Horizons fixtures, Roman (1987) test positions
   AstroPlanner.Data.Tests     Catalog database, app.db, migrations, v1 import
   AstroPlanner.DataBuilder.Tests  Catalog build from small excerpts of the sources
   AstroPlanner.Online.Tests   HTTP clients with stubbed responses
+  AstroPlanner.SkyBridge.Tests  Protocol contract and projection cross-check (shared with Vitest)
   AstroPlanner.UI.Tests       View models, services and architecture rules
 installer/                Inno Setup script
 .github/workflows/        CI and releases
