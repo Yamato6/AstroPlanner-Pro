@@ -62,6 +62,12 @@ public interface IAstronomyService
     /// </summary>
     PlanetPosition? GetPlanetPosition(CelestialObject target, DateTime utcDateTime);
 
+    /// <summary>
+    /// IAU constellation of <paramref name="target"/> at <paramref name="utcDateTime"/>: planets
+    /// move between constellations, fixed objects never do.
+    /// </summary>
+    Constellation GetConstellation(CelestialObject target, DateTime utcDateTime);
+
     /// <summary>Apparent magnitude: calculated for a planet, the catalog one for the rest.</summary>
     double GetApparentMagnitude(CelestialObject target, DateTime utcDateTime);
 

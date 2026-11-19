@@ -12,6 +12,11 @@
     <Compile Include="..\Shared\TestCatalog.cs" Link="Shared\TestCatalog.cs" />
   </ItemGroup>
 
+  <!-- JPL Horizons golden fixtures (tools/fetch-horizons-fixtures.ps1); never fetched by tests. -->
+  <ItemGroup>
+    <None Include="..\fixtures\horizons\*.csv" Link="fixtures\horizons\%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
   <ItemGroup>
     <Using Include="AstroPlanner.Testing" />
   </ItemGroup>

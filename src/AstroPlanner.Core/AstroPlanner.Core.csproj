@@ -5,4 +5,9 @@
     <TargetFramework>net10.0</TargetFramework>
   </PropertyGroup>
 
+  <!-- Small reference tables (read from the assembly, never from disk). See data/SOURCES.md. -->
+  <ItemGroup>
+    <EmbeddedResource Include="Algorithms\Data\*.dat" LogicalName="AstroPlanner.Core.Data.%(Filename)%(Extension)" />
+  </ItemGroup>
+
 </Project>

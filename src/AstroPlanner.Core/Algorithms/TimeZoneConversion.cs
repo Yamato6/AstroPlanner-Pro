@@ -28,6 +28,52 @@ public static class TimeZoneConversion
     }
 
     /// <summary>
+    /// IANA id (e.g. "America/Mexico_City") of a time zone given by its Windows or IANA id;
+    /// null if it is unknown.
+    /// </summary>
+    public static string? ToIanaId(string? timeZoneId)
+    {
+        if (string.IsNullOrWhiteSpace(timeZoneId))
+        {
+            return null;
+        }
+
+        if (TimeZoneInfo.TryConvertWindowsIdToIanaId(timeZoneId, out var ianaId))
+        {
+            return ianaId;
+        }
+
+        return TimeZoneInfo.TryConvertIanaIdToWindowsId(timeZoneId, out _) ? timeZoneId : null;
+    }
+
+    /// <summary>
+    /// Windows id (e.g. "Central Standard Time (Mexico)") of a time zone given by its IANA or
+    /// Windows id; null if it is unknown.
+    /// </summary>
+    public static string? ToWindowsId(string? timeZoneId)
+    {
+        if (string.IsNullOrWhiteSpace(timeZoneId))
+        {
+            return null;
+        }
+
+        if (TimeZoneInfo.TryConvertIanaIdToWindowsId(timeZoneId, out var windowsId))
+        {
+            return windowsId;
+        }
+
+        return TimeZoneInfo.TryConvertWindowsIdToIanaId(timeZoneId, out _) ? timeZoneId : null;
+    }
+
+    /// <summary>Converts a UTC instant to the wall-clock time of <paramref name="timeZone"/> (kind Unspecified).</summary>
+    public static DateTime ToLocal(DateTime utc, TimeZoneInfo timeZone)
+    {
+        ArgumentNullException.ThrowIfNull(timeZone);
+        var local = TimeZoneInfo.ConvertTimeFromUtc(DateTime.SpecifyKind(utc, DateTimeKind.Utc), timeZone);
+        return DateTime.SpecifyKind(local, DateTimeKind.Unspecified);
+    }
+
+    /// <summary>
     /// Converts a wall-clock date/time in <paramref name="timeZone"/> to UTC.
     /// </summary>
     public static DateTime ToUtc(DateTime localWallClock, TimeZoneInfo timeZone)

@@ -20,9 +20,6 @@ public sealed class AstronomyService : IAstronomyService
     /// <summary>Sun at -18°: end/start of astronomical twilight.</summary>
     public const double AstronomicalTwilightAltitudeDegrees = -18.0;
 
-    private static readonly TimeSpan SunSampleStep = TimeSpan.FromMinutes(10);
-    private static readonly TimeSpan EventSampleStep = TimeSpan.FromMinutes(10);
-
     public HorizontalCoordinates GetHorizontal(
         CelestialObject target,
         ObserverLocation observer,
@@ -50,6 +47,16 @@ public sealed class AstronomyService : IAstronomyService
     {
         ArgumentNullException.ThrowIfNull(target);
         return target.Planet is { } planet ? PlanetCalculator.GetPosition(planet, utcDateTime) : null;
+    }
+
+    public Constellation GetConstellation(CelestialObject target, DateTime utcDateTime)
+    {
+        ArgumentNullException.ThrowIfNull(target);
+
+        return target.Planet is { } planet
+            ? ConstellationLookup.Find(PlanetCalculator.GetPosition(planet, utcDateTime).Equatorial,
+                AstronomyMath.ToJulianDate(utcDateTime))
+            : ConstellationLookup.FromJ2000(target.Coordinates);
     }
 
     public double GetApparentMagnitude(CelestialObject target, DateTime utcDateTime) =>
@@ -99,15 +106,26 @@ public sealed class AstronomyService : IAstronomyService
         TimeZoneInfo timeZone,
         double minimumAltitudeDegrees)
     {
-        var samples = GetNightAltitudeSeries(target, observer, startLocal, endLocal, timeZone, EventSampleStep);
-        var maximum = samples.MaxBy(sample => sample.AltitudeDegrees);
+        ArgumentNullException.ThrowIfNull(target);
+        ArgumentNullException.ThrowIfNull(observer);
+        ArgumentNullException.ThrowIfNull(timeZone);
+
+        // Bracket the events every 10 minutes in UTC (immune to daylight saving changes), then
+        // refine each one to about a second.
+        double Altitude(DateTime utc) => GetHorizontal(target, observer, utc).AltitudeDegrees;
+        var samples = EventFinder.Sample(Altitude,
+            TimeZoneConversion.ToUtc(startLocal, timeZone), TimeZoneConversion.ToUtc(endLocal, timeZone),
+            EventFinder.DefaultStep);
+        var maximum = EventFinder.FindMaximum(Altitude, samples);
+
+        DateTime? Local(DateTime? utc) => utc is { } value ? TimeZoneConversion.ToLocal(value, timeZone) : null;
 
         return new ObjectNightEvents(
-            RiseLocal: ObservationNight.FindCrossing(samples, 0, rising: true),
-            ThresholdCrossingLocal: ObservationNight.FindCrossing(samples, minimumAltitudeDegrees, rising: true),
-            CulminationLocal: maximum.LocalTime,
-            SetLocal: ObservationNight.FindCrossing(samples, 0, rising: false),
-            MaximumAltitudeDegrees: maximum.AltitudeDegrees);
+            RiseLocal: Local(EventFinder.FindCrossing(Altitude, samples, 0, rising: true)),
+            ThresholdCrossingLocal: Local(EventFinder.FindCrossing(Altitude, samples, minimumAltitudeDegrees, rising: true)),
+            CulminationLocal: TimeZoneConversion.ToLocal(maximum.Time, timeZone),
+            SetLocal: Local(EventFinder.FindCrossing(Altitude, samples, 0, rising: false)),
+            MaximumAltitudeDegrees: maximum.Value);
     }
 
     public double GetSunAltitudeDegrees(ObserverLocation observer, DateTime utcDateTime)
@@ -135,16 +153,26 @@ public sealed class AstronomyService : IAstronomyService
     {
         ArgumentNullException.ThrowIfNull(observer);
 
-        // Search from noon to noon around the night that contains the time.
+        ArgumentNullException.ThrowIfNull(timeZone);
+
+        // Search from noon to noon around the night that contains the time, bracketing in UTC
+        // every 10 minutes and refining each crossing to about a second.
         var nightDate = ObservationNight.GetNightStartLocal(localTime).Date;
         var noon = nightDate.AddHours(12);
-        var samples = SampleLocal(noon, noon.AddDays(1), timeZone, SunSampleStep,
-            utc => GetSunAltitudeDegrees(observer, utc));
+        double SunAltitude(DateTime utc) => GetSunAltitudeDegrees(observer, utc);
+        var samples = EventFinder.Sample(SunAltitude,
+            TimeZoneConversion.ToUtc(noon, timeZone), TimeZoneConversion.ToUtc(noon.AddDays(1), timeZone),
+            EventFinder.DefaultStep);
 
-        var sunset = ObservationNight.FindCrossing(samples, SunriseSunsetAltitudeDegrees, rising: false);
-        var sunrise = ObservationNight.FindCrossing(samples, SunriseSunsetAltitudeDegrees, rising: true);
-        var dusk = ObservationNight.FindCrossing(samples, AstronomicalTwilightAltitudeDegrees, rising: false);
-        var dawn = ObservationNight.FindCrossing(samples, AstronomicalTwilightAltitudeDegrees, rising: true);
+        DateTime? Crossing(double altitude, bool rising) =>
+            EventFinder.FindCrossing(SunAltitude, samples, altitude, rising) is { } utc
+                ? TimeZoneConversion.ToLocal(utc, timeZone)
+                : null;
+
+        var sunset = Crossing(SunriseSunsetAltitudeDegrees, rising: false);
+        var sunrise = Crossing(SunriseSunsetAltitudeDegrees, rising: true);
+        var dusk = Crossing(AstronomicalTwilightAltitudeDegrees, rising: false);
+        var dawn = Crossing(AstronomicalTwilightAltitudeDegrees, rising: true);
 
         // Without sunset or sunrise (polar day or night) the fixed 18:00 → 06:00 window is used.
         var hasSunWindow = sunset is not null && sunrise is not null && sunrise > sunset;
