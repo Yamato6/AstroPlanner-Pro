@@ -5,22 +5,21 @@ using AstroPlanner.Core.Models;
 using AstroPlanner.Core.Services;
 using AstroPlanner.UI.Services;
 using AstroPlanner.UI.ViewModels;
-using FluentAssertions;
 
 namespace AstroPlanner.UI.Tests;
 
 /// <summary>
-/// Funciones de la 0.8: pronóstico de nubes (Open-Meteo) y aviso de versión
-/// nueva (GitHub), sin red: las respuestas HTTP son simuladas.
+/// Cloud forecast (Open-Meteo) in the view models and new-version notice (GitHub), without
+/// network: HTTP responses are stubbed.
 /// </summary>
 public sealed class OnlineTests
 {
-    // 2026-01-16 04:00 UTC = 2026-01-15 22:00 en CDMX (UTC-6).
+    // 2026-01-16 04:00 UTC = 2026-01-15 22:00 in Mexico City (UTC-6).
     private static readonly DateTimeOffset WinterNightUtc = new(2026, 1, 16, 4, 0, 0, TimeSpan.Zero);
 
-    // ─── Dobles de prueba ───────────────────────────────────────────────
+    // ─── Test doubles ───────────────────────────────────────────────────
 
-    /// <summary>Como el servicio real, devuelve el pronóstico de las coordenadas pedidas.</summary>
+    /// <summary>Like the real service, returns the forecast for the requested coordinates.</summary>
     private sealed class CountingWeatherService(Func<double, double, WeatherForecast> make) : IWeatherForecastService
     {
         public int Calls { get; private set; }
@@ -46,7 +45,7 @@ public sealed class OnlineTests
         }
     }
 
-    /// <summary>Pronóstico para CDMX: despejado de 06 a 10 UTC (00-04 local), nublado el resto.</summary>
+    /// <summary>Forecast for Mexico City: clear from 06 to 10 UTC (00-04 local), cloudy the rest.</summary>
     private static WeatherForecast CdmxForecast(DateTime fetchedAtUtc, double latitude = 19.4326, double longitude = -99.1332)
     {
         var start = new DateTime(2026, 1, 15, 0, 0, 0, DateTimeKind.Utc);
@@ -66,7 +65,7 @@ public sealed class OnlineTests
             weather: weather,
             updates: updates);
 
-    // ─── Pronóstico en el ViewModel ─────────────────────────────────────
+    // ─── Forecast in the view models ────────────────────────────────────
 
     [Fact]
     public async Task Night_ShowsCloudSummaryAndPlanCloudsAtCulmination()
@@ -77,13 +76,13 @@ public sealed class OnlineTests
         var viewModel = CreateMain(clock, weather, plan: plan);
         await viewModel.LoadCommand.ExecuteAsync(null);
 
-        viewModel.Tonight.CloudCoverText.Should().MatchRegex(@"^\d+ %$");
-        viewModel.Tonight.CloudDetailText.Should().Contain("mejor 00:00").And.Contain("(5 %)");
+        viewModel.Tonight.CloudCoverText.Should().MatchRegex(@"^\d+%$");
+        viewModel.Tonight.CloudDetailText.Should().Contain("best 00:00").And.Contain("(5%)");
         viewModel.Detail.GetNightCloudCover().Should().NotBeEmpty()
             .And.OnlyContain(h => h.StartLocal >= viewModel.Observer.Night!.WindowStartLocal && h.EndLocal <= viewModel.Observer.Night.WindowEndLocal);
 
         var m42 = viewModel.Plan.Items.Single();
-        m42.CloudCoverAtCulmination.Should().Be(80, "M42 culmina hacia las 22:20 local (04:20 UTC), hora nublada");
+        m42.CloudCoverAtCulmination.Should().Be(80, "M42 culminates around 22:20 local (04:20 UTC), a cloudy hour");
         viewModel.Detail.Observation!.CloudCoverAtCulmination.Should().NotBeNull();
     }
 
@@ -96,18 +95,18 @@ public sealed class OnlineTests
         await viewModel.LoadCommand.ExecuteAsync(null);
         var callsAfterLoad = weather.Calls;
 
-        // Cambiar la hora o filtrar no vuelve a consultar.
+        // Changing the time or filtering does not fetch again.
         viewModel.ShiftObservationTimeCommand.Execute("60");
         viewModel.Targets.SearchText = "m42";
         weather.Calls.Should().Be(callsAfterLoad);
 
-        // Pasada una hora, sí.
+        // After an hour it does.
         clock.UtcNow = clock.UtcNow.AddMinutes(61);
         await viewModel.Weather.RefreshAsync();
         weather.Calls.Should().Be(callsAfterLoad + 1);
 
-        // Otra ubicación (más de ~1 km): se pide el pronóstico nuevo al recalcular,
-        // y después vuelve a usarse la caché.
+        // Another location (more than ~1 km away): the new forecast is fetched when
+        // recalculating, and then the cache is used again.
         viewModel.Observer.Latitude = 20.6597;
         weather.Calls.Should().Be(callsAfterLoad + 2);
         await viewModel.Weather.RefreshAsync();
@@ -120,17 +119,17 @@ public sealed class OnlineTests
         var clock = new ManualTimeProvider(WinterNightUtc);
         var weather = new CountingWeatherService((lat, lon) => CdmxForecast(clock.UtcNow.UtcDateTime, lat, lon))
         {
-            FailWith = new WeatherForecastException("Sin conexión con el servicio del tiempo.")
+            FailWith = new WeatherForecastException("No connection to the weather service.")
         };
         var viewModel = CreateMain(clock, weather);
         await viewModel.LoadCommand.ExecuteAsync(null);
 
         viewModel.Tonight.CloudCoverText.Should().Be("—");
-        viewModel.Tonight.CloudDetailText.Should().Contain("Sin conexión");
+        viewModel.Tonight.CloudDetailText.Should().Contain("No connection");
         var calls = weather.Calls;
 
         viewModel.ShiftObservationTimeCommand.Execute("60");
-        weather.Calls.Should().Be(calls, "tras un fallo se espera antes de reintentar");
+        weather.Calls.Should().Be(calls, "after a failure it waits before retrying");
 
         weather.FailWith = null;
         clock.UtcNow = clock.UtcNow.AddMinutes(6);
@@ -148,11 +147,11 @@ public sealed class OnlineTests
         await viewModel.Weather.RefreshAsync(force: true);
 
         weather.Calls.Should().Be(0);
-        viewModel.Tonight.CloudDetailText.Should().Contain("desactivado");
+        viewModel.Tonight.CloudDetailText.Should().Contain("disabled");
         viewModel.Detail.GetNightCloudCover().Should().BeEmpty();
     }
 
-    // ─── Aviso de versión nueva ─────────────────────────────────────────
+    // ─── New version notice ─────────────────────────────────────────────
 
     private const string ReleasesJson = """
         [
@@ -164,9 +163,9 @@ public sealed class OnlineTests
         """;
 
     [Theory]
-    [InlineData("0.8.0.0", "0.8.1")]   // hay una más nueva (el borrador 0.9 no cuenta)
-    [InlineData("0.8.1.0", null)]      // ya es la última
-    [InlineData("1.0.0.0", null)]      // más nueva que todas
+    [InlineData("0.8.0.0", "0.8.1")]   // there is a newer one (the 0.9 draft does not count)
+    [InlineData("0.8.1.0", null)]      // already the latest
+    [InlineData("1.0.0.0", null)]      // newer than all of them
     public async Task UpdateChecker_FindsTheNewestPublishedVersion(string current, string? expected)
     {
         var checker = new GitHubUpdateChecker(new HttpClient(new StubHttpHandler(_ => StubHttpHandler.Json(ReleasesJson))), new NullLogger());
@@ -184,7 +183,7 @@ public sealed class OnlineTests
         var notFound = new GitHubUpdateChecker(
             new HttpClient(new StubHttpHandler(_ => StubHttpHandler.Json("""{"message":"Not Found"}""", HttpStatusCode.NotFound))), new NullLogger());
         var offline = new GitHubUpdateChecker(
-            new HttpClient(new StubHttpHandler(_ => throw new HttpRequestException("sin red"))), new NullLogger());
+            new HttpClient(new StubHttpHandler(_ => throw new HttpRequestException("no network"))), new NullLogger());
 
         (await notFound.CheckAsync(AppVersion.Parse("0.8.0"))).Should().BeNull();
         (await offline.CheckAsync(AppVersion.Parse("0.8.0"))).Should().BeNull();
@@ -220,6 +219,6 @@ public sealed class OnlineTests
             settings: new ObserverSettings { CheckForUpdates = false });
         await disabled.CheckForUpdatesAsync(AppVersion.Parse("0.8.0"));
         disabled.HasUpdate.Should().BeFalse();
-        checker.Calls.Should().Be(1, "con la opción desactivada no se consulta GitHub");
+        checker.Calls.Should().Be(1, "with the option off GitHub is not queried");
     }
 }

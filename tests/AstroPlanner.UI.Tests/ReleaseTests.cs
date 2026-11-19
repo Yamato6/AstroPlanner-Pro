@@ -4,19 +4,18 @@ using System.Windows;
 using AstroPlanner.Core.Models;
 using AstroPlanner.UI.Converters;
 using AstroPlanner.UI.Services;
-using FluentAssertions;
 
 namespace AstroPlanner.UI.Tests;
 
-/// <summary>Detalles de la versión 1.0: versiones con RC, enlaces, posición de la ventana y textos en español.</summary>
+/// <summary>Versions with RCs, links, window position and user-facing names.</summary>
 public class ReleaseTests
 {
-    // ─── Versiones ──────────────────────────────────────────────────────
+    // ─── Versions ───────────────────────────────────────────────────────
 
     [Theory]
     [InlineData("1.0.0", "1.0.0", null)]
     [InlineData("v1.0.0-rc.1", "1.0.0", "rc.1")]
-    [InlineData("1.0.0-rc.1+3f2a9c1", "1.0.0", "rc.1")]   // metadatos de compilación del SDK
+    [InlineData("1.0.0-rc.1+3f2a9c1", "1.0.0", "rc.1")]   // SDK build metadata
     [InlineData("0.8", "0.8.0", null)]
     [InlineData("1.0.0.0", "1.0.0", null)]
     public void AppVersion_ParsesReleaseAndPreReleaseTags(string text, string number, string? preRelease)
@@ -29,8 +28,8 @@ public class ReleaseTests
     }
 
     [Theory]
-    [InlineData("1.0.0-rc.1", "1.0.0")]        // la RC va antes que la final
-    [InlineData("1.0.0-rc.2", "1.0.0-rc.10")]  // identificadores numéricos como números
+    [InlineData("1.0.0-rc.1", "1.0.0")]        // the RC comes before the final release
+    [InlineData("1.0.0-rc.2", "1.0.0-rc.10")]  // numeric identifiers compare as numbers
     [InlineData("1.0.0-beta", "1.0.0-rc.1")]
     [InlineData("0.8.0", "1.0.0-rc.1")]
     [InlineData("1.0.0", "1.0.1")]
@@ -44,7 +43,7 @@ public class ReleaseTests
     public void AppVersion_Current_ComesFromTheBuild()
     {
         AppVersion.Current.Number.Should().BeGreaterThanOrEqualTo(new Version(1, 0, 0));
-        AppVersion.Current.ToString().Should().NotContain("+", "los metadatos de compilación no se muestran");
+        AppVersion.Current.ToString().Should().NotContain("+", "build metadata is not shown");
     }
 
     private static UpdateInfo? Newest(string current, params (string Tag, bool PreRelease)[] releases) =>
@@ -75,20 +74,20 @@ public class ReleaseTests
     [Fact]
     public void UpdateChecker_StableUsersNeverGetPreReleases()
     {
-        // Ni por el sufijo del tag ni por la marca "pre-release" de GitHub.
+        // Neither by the tag suffix nor by GitHub's "pre-release" flag.
         Newest("1.0.0", ("v1.1.0-rc.1", false), ("v1.0.5", true)).Should().BeNull();
         Newest("1.0.0", ("v1.1.0-rc.1", false), ("v1.0.1", false))!
             .Version.ToString().Should().Be("1.0.1");
     }
 
-    // ─── Enlaces ────────────────────────────────────────────────────────
+    // ─── Links ──────────────────────────────────────────────────────────
 
     [Theory]
     [InlineData("https://github.com/Yamato6/AstroPlanner/releases/tag/v1.0.0", true)]
     [InlineData("https://open-meteo.com/", true)]
     [InlineData("https://api.open-meteo.com/v1/forecast", true)]
-    [InlineData("http://github.com/Yamato6/AstroPlanner", false)]     // sin https
-    [InlineData("https://github.com.evil.example/", false)]           // dominio parecido
+    [InlineData("http://github.com/Yamato6/AstroPlanner", false)]     // no https
+    [InlineData("https://github.com.evil.example/", false)]           // look-alike domain
     [InlineData("https://evilgithub.com/", false)]
     [InlineData("file:///C:/Windows/System32/calc.exe", false)]
     public void SafeLinks_OnlyAllowsHttpsLinksToKnownSites(string url, bool allowed)
@@ -96,7 +95,7 @@ public class ReleaseTests
         SafeLinks.IsAllowed(new Uri(url)).Should().Be(allowed);
     }
 
-    // ─── Posición de la ventana ─────────────────────────────────────────
+    // ─── Window position ────────────────────────────────────────────────
 
     private static readonly Rect Screen = new(0, 0, 1920, 1080);
     private static readonly Rect WorkArea = new(0, 0, 1920, 1040);
@@ -112,7 +111,7 @@ public class ReleaseTests
     [Fact]
     public void WindowPlacement_CentersAWindowLeftOnADisconnectedMonitor()
     {
-        // Estaba en un segundo monitor a la derecha que ya no existe.
+        // It was on a second monitor to the right that no longer exists.
         var fitted = new WindowPlacement(2500, 100, 1400, 800, true).FitTo(Screen, WorkArea, 1080, 640);
 
         fitted.Left.Should().Be(260);
@@ -132,7 +131,7 @@ public class ReleaseTests
     [Fact]
     public void WindowPlacement_KeepsALargeWindowOnALargerSecondMonitor()
     {
-        // Principal 1920×1080 y, a su derecha, un segundo monitor de 2560×1440.
+        // Primary 1920×1080 and, to its right, a second 2560×1440 monitor.
         var desktop = new Rect(0, 0, 1920 + 2560, 1440);
         var saved = new WindowPlacement(2000, 20, 2400, 1300, false);
 
@@ -152,7 +151,7 @@ public class ReleaseTests
             store.Save(placement);
             store.Load().Should().Be(placement);
 
-            File.WriteAllText(path, "{ no es json");
+            File.WriteAllText(path, "{ not json");
             store.Load().Should().BeNull();
         }
         finally
@@ -161,23 +160,47 @@ public class ReleaseTests
         }
     }
 
-    // ─── Textos en español ──────────────────────────────────────────────
+    // ─── User-facing names ──────────────────────────────────────────────
 
     [Fact]
-    public void DisplayNames_EveryObjectTypeHasASpanishName()
+    public void DisplayNames_EveryObjectTypeHasAReadableName()
     {
-        foreach (var type in Enum.GetValues<CelestialObjectType>())
-        {
-            DisplayNames.Of(type).Should().NotBe(type.ToString(), $"{type} debe mostrarse en español");
-        }
+        var names = Enum.GetValues<CelestialObjectType>().Select(DisplayNames.Of).ToList();
 
-        DisplayNames.Of(CelestialObjectType.GlobularCluster).Should().Be("Cúmulo globular");
+        names.Should().OnlyContain(name => !string.IsNullOrWhiteSpace(name)).And.OnlyHaveUniqueItems();
+        names.Should().NotContain(name => name.Contains("Cluster", StringComparison.Ordinal) && !name.Contains(' ', StringComparison.Ordinal),
+            "internal PascalCase names such as GlobularCluster must not leak into the UI");
+
+        DisplayNames.Of(CelestialObjectType.GlobularCluster).Should().Be("Globular cluster");
     }
 
     [Fact]
-    public void DisplayNameConverter_ShowsObjectTypesInSpanish()
+    public void DisplayNameConverter_ShowsObjectTypeNames()
     {
         new DisplayNameConverter().Convert(CelestialObjectType.OpenCluster, typeof(string), null!, CultureInfo.InvariantCulture)
-            .Should().Be("Cúmulo abierto");
+            .Should().Be("Open cluster");
+    }
+
+    [Theory]
+    [InlineData(5, "Clear")]
+    [InlineData(30, "Mostly clear")]
+    [InlineData(50, "Partly cloudy")]
+    [InlineData(80, "Mostly cloudy")]
+    [InlineData(95, "Overcast")]
+    public void DisplayNames_DescribeCloudCover(double percent, string expected)
+    {
+        DisplayNames.CloudCover(percent).Should().Be(expected);
+    }
+
+    [Fact]
+    public void Strings_EveryResourceIsAvailableAndNotEmpty()
+    {
+        var properties = typeof(AstroPlanner.UI.Resources.Strings)
+            .GetProperties(System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static)
+            .Where(p => p.PropertyType == typeof(string))
+            .ToList();
+
+        properties.Should().HaveCountGreaterThan(200);
+        properties.Should().OnlyContain(p => !string.IsNullOrWhiteSpace((string?)p.GetValue(null)));
     }
 }

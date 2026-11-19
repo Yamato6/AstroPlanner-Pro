@@ -5,13 +5,13 @@ using AstroPlanner.Online.Weather;
 
 namespace AstroPlanner.Online.Tests;
 
-/// <summary>Pronóstico de nubes de Open-Meteo, sin red: las respuestas HTTP son simuladas.</summary>
+/// <summary>Open-Meteo cloud forecast without network: HTTP responses are stubbed.</summary>
 public sealed class OpenMeteoForecastServiceTests
 {
-    // 2026-01-16 04:00 UTC = 2026-01-15 22:00 en CDMX (UTC-6).
+    // 2026-01-16 04:00 UTC = 2026-01-15 22:00 in Mexico City (UTC-6).
     private static readonly DateTimeOffset WinterNightUtc = new(2026, 1, 16, 4, 0, 0, TimeSpan.Zero);
 
-    /// <summary>Respuesta de Open-Meteo con 48 horas desde el 15/1/2026 00:00 UTC.</summary>
+    /// <summary>Open-Meteo response with 48 hours from 2026-01-15 00:00 UTC.</summary>
     private static string OpenMeteoJson(Func<int, int> cloudAtHour)
     {
         var start = new DateTime(2026, 1, 15, 0, 0, 0);
@@ -62,9 +62,9 @@ public sealed class OpenMeteoForecastServiceTests
         var handler = new StubHttpHandler(_ => failure switch
         {
             "server-error" => StubHttpHandler.Json("{}", HttpStatusCode.InternalServerError),
-            "bad-json" => StubHttpHandler.Json("{ no es json"),
+            "bad-json" => StubHttpHandler.Json("{ not json"),
             "incomplete" => StubHttpHandler.Json("""{"hourly":{"time":["2026-01-15T00:00"]}}"""),
-            _ => throw new HttpRequestException("sin red")
+            _ => throw new HttpRequestException("no network")
         });
         var service = new OpenMeteoForecastService(new HttpClient(handler));
 

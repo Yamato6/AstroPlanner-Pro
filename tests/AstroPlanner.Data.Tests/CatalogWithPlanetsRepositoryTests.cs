@@ -14,7 +14,7 @@ public sealed class CatalogWithPlanetsRepositoryTests
 
         objects.Should().HaveCount(117);
         objects.Where(o => o.IsPlanet).Select(o => o.CommonName)
-            .Should().Equal("Mercurio", "Venus", "Marte", "Júpiter", "Saturno", "Urano", "Neptuno");
+            .Should().Equal("Mercury", "Venus", "Mars", "Jupiter", "Saturn", "Uranus", "Neptune");
         objects.Where(o => o.IsPlanet).Should().OnlyContain(o =>
             o.Type == CelestialObjectType.Planet && o.Constellation == CelestialObject.SolarSystemConstellation);
     }

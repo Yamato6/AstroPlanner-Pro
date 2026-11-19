@@ -1,14 +1,14 @@
 namespace AstroPlanner.Core.Algorithms;
 
 /// <summary>
-/// Conversión entre la hora "de pared" del observador y UTC, que es lo que
-/// requieren los cálculos astronómicos.
+/// Conversion between the observer's wall-clock time and UTC, which is what the
+/// astronomical calculations need.
 /// </summary>
 public static class TimeZoneConversion
 {
     /// <summary>
-    /// Busca una zona horaria del sistema por id; si no existe o es inválida,
-    /// devuelve la zona local.
+    /// Finds a system time zone by id; if it does not exist or is invalid, returns the local
+    /// zone.
     /// </summary>
     public static TimeZoneInfo FindOrLocal(string? timeZoneId)
     {
@@ -28,7 +28,7 @@ public static class TimeZoneConversion
     }
 
     /// <summary>
-    /// Convierte una fecha/hora "de pared" en <paramref name="timeZone"/> a UTC.
+    /// Converts a wall-clock date/time in <paramref name="timeZone"/> to UTC.
     /// </summary>
     public static DateTime ToUtc(DateTime localWallClock, TimeZoneInfo timeZone)
     {
@@ -36,15 +36,15 @@ public static class TimeZoneConversion
 
         var wallClock = DateTime.SpecifyKind(localWallClock, DateTimeKind.Unspecified);
 
-        // Una hora inexistente ocurre durante el cambio a horario de verano.
-        // Se desplaza a la primera hora válida para mantener el cálculo usable.
+        // A non-existent time happens when daylight saving time starts. It is moved to the
+        // first valid time to keep the calculation usable.
         if (timeZone.IsInvalidTime(wallClock))
         {
             wallClock = wallClock.AddHours(1);
         }
 
-        // Para una hora ambigua (fin del horario de verano), ConvertTimeToUtc
-        // aplica de forma determinista el desplazamiento estándar de la zona.
+        // For an ambiguous time (end of daylight saving time), ConvertTimeToUtc
+        // deterministically applies the zone's standard offset.
         return TimeZoneInfo.ConvertTimeToUtc(wallClock, timeZone);
     }
 }

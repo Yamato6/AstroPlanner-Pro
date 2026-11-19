@@ -6,13 +6,14 @@ using System.Text;
 using System.Text.RegularExpressions;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using AstroPlanner.UI.Resources;
 using AstroPlanner.UI.Services;
+using static AstroPlanner.UI.Services.DisplayNames;
 
 namespace AstroPlanner.UI.ViewModels;
 
 /// <summary>
-/// Bitácora de observaciones: entradas registradas, objetos ya observados y
-/// progreso del maratón Messier.
+/// Observation logbook: logged entries, objects already observed and Messier marathon progress.
 /// </summary>
 public sealed partial class LogbookViewModel : ObservableObject
 {
@@ -34,19 +35,21 @@ public sealed partial class LogbookViewModel : ObservableObject
         RefreshSummary();
     }
 
-    /// <summary>Se dispara al añadir o borrar entradas.</summary>
+    /// <summary>Raised when entries are added or deleted.</summary>
     public event Action? Changed;
 
-    /// <summary>Entradas, de la más reciente a la más antigua.</summary>
+    /// <summary>Entries, newest first.</summary>
     public ObservableCollection<ObservationLogEntry> Entries { get; } = [];
 
     public IReadOnlySet<string> ObservedIds => _observedIds;
 
-    [ObservableProperty] private int observedMessierCount;
+    [ObservableProperty]
+    public partial int ObservedMessierCount { get; private set; }
 
-    [ObservableProperty] private string? statusMessage;
+    [ObservableProperty]
+    public partial string? StatusMessage { get; private set; }
 
-    public string MessierProgressText => $"{ObservedMessierCount} / {MessierTotal}";
+    public string MessierProgressText => string.Create(CultureInfo.CurrentCulture, $"{ObservedMessierCount} / {MessierTotal}");
 
     public double MessierProgressPercent => 100.0 * ObservedMessierCount / MessierTotal;
 
@@ -55,11 +58,11 @@ public sealed partial class LogbookViewModel : ObservableObject
 
     public bool HasBeenObserved(string objectId) => _observedIds.Contains(objectId);
 
-    /// <summary>Borrador de una entrada nueva para <paramref name="objectId"/>, con el equipo de la última.</summary>
+    /// <summary>Draft of a new entry for <paramref name="objectId"/>, with the equipment of the last one.</summary>
     public LogEntryDraftViewModel CreateDraft(string objectId, string objectName, DateTime observedAtLocal, string location) =>
         new(objectId, objectName, observedAtLocal, location, Entries.FirstOrDefault()?.Equipment ?? "");
 
-    /// <summary>Guarda el borrador como entrada; false si no es válido o no se pudo guardar.</summary>
+    /// <summary>Saves the draft as an entry; false if it is invalid or could not be saved.</summary>
     public bool Add(LogEntryDraftViewModel draft)
     {
         ArgumentNullException.ThrowIfNull(draft);
@@ -81,7 +84,7 @@ public sealed partial class LogbookViewModel : ObservableObject
             draft.Rating,
             draft.Notes.Trim());
 
-        // Se mantiene el orden de más reciente a más antigua.
+        // Keep the newest-to-oldest order.
         var index = 0;
         while (index < Entries.Count && Entries[index].ObservedAtLocal > entry.ObservedAtLocal)
         {
@@ -95,7 +98,7 @@ public sealed partial class LogbookViewModel : ObservableObject
             return false;
         }
 
-        StatusMessage = $"Observación de {entry.ObjectId} registrada.";
+        StatusMessage = Format(Strings.LogbookAddedFormat, entry.ObjectId);
         RefreshSummary();
         return true;
     }
@@ -121,14 +124,15 @@ public sealed partial class LogbookViewModel : ObservableObject
             return;
         }
 
-        StatusMessage = $"Observación de {entry.ObjectId} eliminada.";
+        StatusMessage = Format(Strings.LogbookDeletedFormat, entry.ObjectId);
         RefreshSummary();
     }
 
     public string BuildCsv(CultureInfo culture)
     {
-        var csv = new CsvBuilder(culture).AddRow(["Fecha", "Hora", "ID", "Nombre", "Lugar", "Equipo",
-            "Seeing (1-5)", "Transparencia (1-5)", "Valoración (1-5)", "Notas"]);
+        var csv = new CsvBuilder(culture).AddRow([Strings.CsvDate, Strings.CsvTime, Strings.CsvId, Strings.CsvName,
+            Strings.CsvLocation, Strings.CsvEquipment, Strings.CsvSeeing, Strings.CsvTransparency, Strings.CsvRating,
+            Strings.CsvNotes]);
         foreach (var entry in Entries.OrderBy(e => e.ObservedAtLocal))
         {
             csv.AddRow([
@@ -148,19 +152,19 @@ public sealed partial class LogbookViewModel : ObservableObject
         return csv.ToString();
     }
 
-    /// <summary>Exporta la bitácora a CSV (UTF-8 con BOM para que Excel respete los acentos).</summary>
+    /// <summary>Exports the logbook to CSV (UTF-8 with BOM so that Excel keeps accents).</summary>
     public bool Export(string filePath)
     {
         try
         {
             File.WriteAllText(filePath, BuildCsv(CultureInfo.CurrentCulture), new UTF8Encoding(true));
-            StatusMessage = $"Bitácora exportada a {Path.GetFileName(filePath)}.";
+            StatusMessage = Format(Strings.LogbookExportedFormat, Path.GetFileName(filePath));
             return true;
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
         {
-            _logger.LogError("No se pudo exportar la bitácora.", ex);
-            StatusMessage = $"No se pudo exportar la bitácora: {ex.Message}";
+            _logger.LogError("Could not export the logbook.", ex);
+            StatusMessage = Format(Strings.LogbookExportFailedFormat, ex.Message);
             return false;
         }
     }
@@ -174,8 +178,8 @@ public sealed partial class LogbookViewModel : ObservableObject
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
         {
-            _logger.LogError("No se pudo guardar la bitácora.", ex);
-            StatusMessage = $"No se pudo guardar la bitácora: {ex.Message}";
+            _logger.LogError("Could not save the logbook.", ex);
+            StatusMessage = Format(Strings.LogbookSaveFailedFormat, ex.Message);
             return false;
         }
     }
@@ -191,7 +195,7 @@ public sealed partial class LogbookViewModel : ObservableObject
     }
 }
 
-/// <summary>Datos de la ventana "Registrar observación".</summary>
+/// <summary>Data of the "Log observation" window.</summary>
 public sealed partial class LogEntryDraftViewModel : ObservableValidator
 {
     public LogEntryDraftViewModel(
@@ -199,34 +203,48 @@ public sealed partial class LogEntryDraftViewModel : ObservableValidator
     {
         ObjectId = objectId;
         ObjectName = objectName;
-        observedDate = observedAtLocal.Date;
-        observedTime = observedAtLocal.ToString("HH:mm", CultureInfo.InvariantCulture);
-        this.location = location;
-        this.equipment = equipment;
+        ObservedDate = observedAtLocal.Date;
+        ObservedTime = observedAtLocal.ToString("HH:mm", CultureInfo.InvariantCulture);
+        Location = location;
+        Equipment = equipment;
     }
 
     public string ObjectId { get; }
     public string ObjectName { get; }
-    /// <summary>"M42 — Nebulosa de Orión"; en los planetas el id ya es el nombre ("Júpiter").</summary>
+
+    /// <summary>"M42 — Orion Nebula"; for planets the id already is the name ("Jupiter").</summary>
     public string Title => ObjectId == ObjectName ? ObjectId : $"{ObjectId} — {ObjectName}";
 
-    /// <summary>Escala 1-5 para seeing, transparencia y valoración.</summary>
+    /// <summary>1-5 scale for seeing, transparency and rating.</summary>
     public IReadOnlyList<int> Scale { get; } = [1, 2, 3, 4, 5];
 
-    [ObservableProperty] private DateTime observedDate;
+    [ObservableProperty]
+    public partial DateTime ObservedDate { get; set; }
 
     [ObservableProperty, NotifyDataErrorInfo]
-    [RegularExpression(@"^([01]?\d|2[0-3]):[0-5]\d$", ErrorMessage = "Escribe la hora como HH:mm (por ejemplo 22:30).")]
-    private string observedTime;
+    [RegularExpression(@"^([01]?\d|2[0-3]):[0-5]\d$",
+        ErrorMessageResourceType = typeof(Strings), ErrorMessageResourceName = nameof(Strings.LogTimeFormat))]
+    public partial string ObservedTime { get; set; }
 
-    [ObservableProperty] private string location;
-    [ObservableProperty] private string equipment;
-    [ObservableProperty] private int seeing = 3;
-    [ObservableProperty] private int transparency = 3;
-    [ObservableProperty] private int rating = 3;
-    [ObservableProperty] private string notes = "";
+    [ObservableProperty]
+    public partial string Location { get; set; }
 
-    /// <summary>Fecha y hora local de la observación, o null si la hora no es válida.</summary>
+    [ObservableProperty]
+    public partial string Equipment { get; set; }
+
+    [ObservableProperty]
+    public partial int Seeing { get; set; } = 3;
+
+    [ObservableProperty]
+    public partial int Transparency { get; set; } = 3;
+
+    [ObservableProperty]
+    public partial int Rating { get; set; } = 3;
+
+    [ObservableProperty]
+    public partial string Notes { get; set; } = "";
+
+    /// <summary>Local date and time of the observation, or null if the time is invalid.</summary>
     public DateTime? ObservedAtLocal =>
         TimeSpan.TryParseExact(ObservedTime, [@"h\:mm", @"hh\:mm"], CultureInfo.InvariantCulture, out var time)
             && time < TimeSpan.FromDays(1)

@@ -3,8 +3,7 @@ using AstroPlanner.Core.Models;
 namespace AstroPlanner.UI.Services;
 
 /// <summary>
-/// Configuración persistida del observador.
-/// Se guarda/lee como JSON en %LocalAppData%\AstroPlanner\settings.json.
+/// Persisted observer settings, stored as JSON in %LocalAppData%\AstroPlanner\settings.json.
 /// </summary>
 public sealed class ObserverSettings
 {
@@ -15,28 +14,24 @@ public sealed class ObserverSettings
     public double ElevationMeters { get; set; } = 2240;
 
     /// <summary>
-    /// Id de zona horaria del sistema (ej. "Romance Standard Time").
-    /// Se usa para convertir la fecha/hora local elegida por el usuario a UTC
-    /// antes de los cálculos astronómicos.
+    /// System time zone id (e.g. "Romance Standard Time"). Used to convert the local date and
+    /// time chosen by the user to UTC before the astronomical calculations.
     /// </summary>
     public string TimeZoneId { get; set; } = "Central Standard Time (Mexico)";
 
-    /// <summary>Umbral de altitud mínimo (grados) para considerar un objeto visible.</summary>
+    /// <summary>Minimum altitude (degrees) for an object to count as visible.</summary>
     public double MinimumAltitude { get; set; } = 20;
 
     /// <summary>
-    /// Magnitud máxima (más débil) que se muestra. El objeto Messier más débil
-    /// es de ~10.2, así que el valor por defecto (12) no oculta ninguno.
+    /// Faintest magnitude shown. The faintest Messier object is ~10.2, so the default (12)
+    /// hides none.
     /// </summary>
     public double MaximumMagnitude { get; set; } = 12;
 
-    /// <summary>
-    /// Consultar el pronóstico de nubes en Open-Meteo (envía la ubicación
-    /// redondeada a ~1 km).
-    /// </summary>
+    /// <summary>Fetch the cloud forecast from Open-Meteo (sends the location rounded to ~1 km).</summary>
     public bool WeatherForecastEnabled { get; set; } = true;
 
-    /// <summary>Buscar una versión nueva en GitHub al iniciar.</summary>
+    /// <summary>Check GitHub for a new version at startup.</summary>
     public bool CheckForUpdates { get; set; } = true;
 
     public ObserverLocation ToObserverLocation() =>
@@ -50,7 +45,7 @@ public sealed class ObserverSettings
         }
         catch (TimeZoneNotFoundException)
         {
-            // Si el id guardado ya no existe (cambio de SO), se usa la local.
+            // The saved id no longer exists (e.g. after an OS change): use the local zone.
             return TimeZoneInfo.Local;
         }
         catch (InvalidTimeZoneException)

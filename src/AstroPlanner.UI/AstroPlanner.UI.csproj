@@ -36,6 +36,30 @@
     <Resource Include="Assets\AstroPlanner.png" />
   </ItemGroup>
 
+  <!-- UI strings live in Resources/Strings.resx (embedded as AstroPlanner.UI.Resources.Strings).
+       A strongly typed class, AstroPlanner.UI.Resources.Strings, is generated before every
+       compilation, including WPF's temporary markup assembly, so that both C# code and XAML
+       ({x:Static res:Strings.Key}) can use it. The Visual Studio custom tool is not needed. -->
+  <Target Name="GenerateStringsClass" BeforeTargets="CoreCompile">
+    <PropertyGroup>
+      <StringsDesignerFile>$([System.IO.Path]::GetFullPath('$(MSBuildProjectDirectory)\$(IntermediateOutputPath)Strings.Designer.cs'))</StringsDesignerFile>
+    </PropertyGroup>
+    <GenerateResource Sources="Resources\Strings.resx"
+                      OutputResources="$(IntermediateOutputPath)StringsClass.resources"
+                      StronglyTypedLanguage="CSharp"
+                      StronglyTypedNamespace="AstroPlanner.UI.Resources"
+                      StronglyTypedClassName="Strings"
+                      StronglyTypedManifestPrefix="AstroPlanner.UI.Resources"
+                      StronglyTypedFileName="$(StringsDesignerFile)"
+                      PublicClass="true"
+                      ExecuteAsTool="false" />
+    <ItemGroup>
+      <!-- Whatever its spelling (relative or absolute), keep a single copy of the generated file. -->
+      <Compile Remove="@(Compile)" Condition="'%(Filename)%(Extension)' == 'Strings.Designer.cs'" />
+      <Compile Include="$(StringsDesignerFile)" />
+    </ItemGroup>
+  </Target>
+
   <ItemGroup>
     <InternalsVisibleTo Include="AstroPlanner.UI.Tests" />
   </ItemGroup>

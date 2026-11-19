@@ -3,6 +3,7 @@ using CommunityToolkit.Mvvm.Input;
 using AstroPlanner.Core.Algorithms;
 using AstroPlanner.Core.Interfaces;
 using AstroPlanner.Core.Models;
+using AstroPlanner.UI.Resources;
 using AstroPlanner.UI.Services;
 
 namespace AstroPlanner.UI.ViewModels;
@@ -75,8 +76,8 @@ public sealed partial class ObjectDetailViewModel : ObservableObject
     public partial int ChartVersion { get; private set; }
 
     public string ChartTitle => _context.Night is not { } night
-        ? "Altitud durante la noche"
-        : $"Altitud durante la noche ({night.WindowStartLocal:HH:mm} → {night.WindowEndLocal:HH:mm})";
+        ? Strings.ChartTitle
+        : DisplayNames.Format(Strings.ChartTitleRangeFormat, night.WindowStartLocal, night.WindowEndLocal);
 
     /// <summary>Invalid input (observer values or maximum magnitude), or null.</summary>
     public string? InputError => _targets.InputError;
@@ -166,8 +167,7 @@ public sealed partial class ObjectDetailViewModel : ObservableObject
             MoonSeparationDegrees = moonSeparation,
             CloudCoverAtCulmination = _weather.CloudCoverAtLocal(events.CulminationLocal),
             MoonWarning = moonInterferes
-                ? $"La Luna ({moon!.IlluminatedFraction * 100:0} % iluminada) está a {moonSeparation:0}°: "
-                  + "su brillo dificulta la observación."
+                ? DisplayNames.Format(Strings.MoonWarningFormat, moon!.IlluminatedFraction * 100, moonSeparation)
                 : null
         };
     }

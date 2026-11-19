@@ -1,5 +1,6 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using AstroPlanner.Core.Models;
+using AstroPlanner.UI.Resources;
 
 namespace AstroPlanner.UI.ViewModels;
 
@@ -49,7 +50,7 @@ public sealed partial class CelestialObjectRowViewModel : ObservableObject
     [ObservableProperty]
     public partial bool MoonInterferes { get; private set; }
 
-    public string VisibilityStatus => IsVisible ? "Visible" : "No visible";
+    public string VisibilityStatus => IsVisible ? Strings.StatusVisible : Strings.StatusNotVisible;
 
     public void UpdatePosition(
         HorizontalCoordinates coordinates,

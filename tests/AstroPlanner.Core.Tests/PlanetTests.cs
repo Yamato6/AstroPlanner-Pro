@@ -1,13 +1,12 @@
 using AstroPlanner.Core.Algorithms;
 using AstroPlanner.Core.Models;
 using AstroPlanner.Core.Services;
-using FluentAssertions;
 
 namespace AstroPlanner.Core.Tests;
 
 /// <summary>
-/// Planetas: ejemplo resuelto de Meeus (Venus, 33.a y 41.a) y oposiciones
-/// y magnitudes publicadas para 2025-2026.
+/// Planets: Meeus worked examples (Venus, 33.a and 41.a) and published oppositions and
+/// magnitudes for 2025-2026.
 /// </summary>
 public sealed class PlanetTests
 {
@@ -17,7 +16,7 @@ public sealed class PlanetTests
     [Fact]
     public void Venus_MatchesMeeusExample33a()
     {
-        // 1992-12-20 0h TD: α = 21h04m41.454s = 316.17273°, δ = -18°53'16.84", Δ = 0.910947 UA.
+        // 1992-12-20 0h TD: α = 21h04m41.454s = 316.17273°, δ = -18°53'16.84", Δ = 0.910947 AU.
         var venus = PlanetCalculator.GetPosition(Planet.Venus, Utc(1992, 12, 20));
 
         (venus.Equatorial.RightAscensionHours * 15.0).Should().BeApproximately(316.17273, 0.05);
@@ -29,7 +28,7 @@ public sealed class PlanetTests
     [Fact]
     public void Venus_PhaseMatchesMeeusExample41a()
     {
-        // Mismo instante: fracción iluminada k = 0.647, ángulo de fase ≈ 72.96°.
+        // Same instant: illuminated fraction k = 0.647, phase angle ≈ 72.96°.
         var venus = PlanetCalculator.GetPosition(Planet.Venus, Utc(1992, 12, 20));
 
         venus.IlluminatedFraction.Should().BeApproximately(0.647, 0.01);
@@ -38,15 +37,15 @@ public sealed class PlanetTests
     }
 
     [Theory]
-    [InlineData(Planet.Mars, 2025, 1, 16, -1.4, 0.3)]     // oposición de Marte
-    [InlineData(Planet.Saturn, 2025, 9, 21, 0.6, 0.3)]    // oposición de Saturno (anillos casi de canto)
-    [InlineData(Planet.Jupiter, 2026, 1, 10, -2.7, 0.3)]  // oposición de Júpiter
+    [InlineData(Planet.Mars, 2025, 1, 16, -1.4, 0.3)]     // Mars opposition
+    [InlineData(Planet.Saturn, 2025, 9, 21, 0.6, 0.3)]    // Saturn opposition (rings almost edge-on)
+    [InlineData(Planet.Jupiter, 2026, 1, 10, -2.7, 0.3)]  // Jupiter opposition
     public void Oppositions_AreOppositeTheSunWithPublishedMagnitude(
         Planet planet, int year, int month, int day, double magnitude, double tolerance)
     {
         var position = PlanetCalculator.GetPosition(planet, Utc(year, month, day));
 
-        position.ElongationDegrees.Should().BeGreaterThan(175, "en oposición el planeta está frente al Sol");
+        position.ElongationDegrees.Should().BeGreaterThan(175, "at opposition the planet faces the Sun");
         position.Magnitude.Should().BeApproximately(magnitude, tolerance);
         position.IlluminatedFraction.Should().BeGreaterThan(0.99);
     }
@@ -62,7 +61,7 @@ public sealed class PlanetTests
     [Fact]
     public void InnerPlanets_NeverStrayFarFromTheSun()
     {
-        // Elongación máxima: Mercurio ~28°, Venus ~47°, a lo largo de dos años.
+        // Maximum elongation: Mercury ~28°, Venus ~47°, over two years.
         for (var day = 0; day < 730; day += 5)
         {
             var when = Utc(2025, 1, 1).AddDays(day);
@@ -88,5 +87,13 @@ public sealed class PlanetTests
         service.GetApparentMagnitude(mars, when).Should().BeApproximately(-1.4, 0.3);
         service.GetPlanetPosition(TestCatalog.M42, when).Should().BeNull();
         service.GetApparentMagnitude(TestCatalog.M42, when).Should().Be(4.0);
+    }
+
+    [Fact]
+    public void SolarSystemCatalog_HasTheSevenPlanetsWithEnglishNames()
+    {
+        SolarSystemCatalog.Planets.Select(p => p.CommonName)
+            .Should().Equal("Mercury", "Venus", "Mars", "Jupiter", "Saturn", "Uranus", "Neptune");
+        SolarSystemCatalog.Planets.Should().OnlyContain(p => p.Id == p.CommonName && p.IsPlanet);
     }
 }

@@ -5,24 +5,23 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using AstroPlanner.Core.Interfaces;
 using AstroPlanner.Core.Models;
+using AstroPlanner.UI.Resources;
+using AstroPlanner.UI.Services;
+using static AstroPlanner.UI.Services.DisplayNames;
 
 namespace AstroPlanner.UI.ViewModels;
 
 /// <summary>
-/// ViewModel de la pestaña de Configuración: latitud, longitud, elevación,
-/// zona horaria y umbral de altitud. Persiste la configuración y notifica
-/// al ViewModel principal mediante <see cref="SettingsSaved"/>.
+/// Settings window: latitude, longitude, elevation, time zone, minimum altitude and online
+/// features. Persists the settings and notifies the shell through <see cref="SettingsSaved"/>.
 /// </summary>
-public partial class SettingsViewModel : ObservableValidator
+public sealed partial class SettingsViewModel : ObservableValidator
 {
-    private readonly Services.ISettingsService _settingsService;
+    private readonly ISettingsService _settingsService;
     private readonly ICityRepository _cityRepository;
-    private readonly Services.IAppLogger _logger;
+    private readonly IAppLogger _logger;
 
-    public SettingsViewModel(
-        Services.ISettingsService settingsService,
-        ICityRepository cityRepository,
-        Services.IAppLogger logger)
+    public SettingsViewModel(ISettingsService settingsService, ICityRepository cityRepository, IAppLogger logger)
     {
         _settingsService = settingsService;
         _cityRepository = cityRepository;
@@ -30,59 +29,65 @@ public partial class SettingsViewModel : ObservableValidator
         LoadFrom(_settingsService.Load());
     }
 
-    /// <summary>
-    /// Se dispara después de guardar; el ViewModel principal la usa para
-    /// aplicar la nueva configuración y recalcular.
-    /// </summary>
-    public event Action<Services.ObserverSettings>? SettingsSaved;
+    /// <summary>Raised after saving; the shell applies the new settings and recalculates.</summary>
+    public event Action<ObserverSettings>? SettingsSaved;
 
-    public IReadOnlyList<TimeZoneInfo> AvailableTimeZones { get; } =
-        TimeZoneInfo.GetSystemTimeZones().ToList();
+    public IReadOnlyList<TimeZoneInfo> AvailableTimeZones { get; } = TimeZoneInfo.GetSystemTimeZones().ToList();
 
-    public IReadOnlyList<City> Cities { get; private set; } = Array.Empty<City>();
+    public IReadOnlyList<City> Cities { get; private set; } = [];
 
     [ObservableProperty, NotifyDataErrorInfo]
-    [Range(-90, 90, ErrorMessage = "La latitud debe estar entre -90 y 90°.")]
-    private double latitude;
+    [Range(-90, 90, ErrorMessageResourceType = typeof(Strings), ErrorMessageResourceName = nameof(Strings.LatitudeRange))]
+    public partial double Latitude { get; set; }
 
     [ObservableProperty, NotifyDataErrorInfo]
-    [Range(-180, 180, ErrorMessage = "La longitud debe estar entre -180 y 180°.")]
-    private double longitude;
+    [Range(-180, 180, ErrorMessageResourceType = typeof(Strings), ErrorMessageResourceName = nameof(Strings.LongitudeRange))]
+    public partial double Longitude { get; set; }
 
     [ObservableProperty, NotifyDataErrorInfo]
-    [Range(-500, 9000, ErrorMessage = "La elevación debe estar entre -500 y 9000 m.")]
-    private double elevation;
+    [Range(-500, 9000, ErrorMessageResourceType = typeof(Strings), ErrorMessageResourceName = nameof(Strings.ElevationRange))]
+    public partial double Elevation { get; set; }
 
-    [ObservableProperty] private string timeZoneId = TimeZoneInfo.Local.Id;
-
-    [ObservableProperty, NotifyDataErrorInfo]
-    [Range(0, 90, ErrorMessage = "La altitud mínima debe estar entre 0 y 90°.")]
-    private double minimumAltitude = 20;
+    [ObservableProperty]
+    public partial string TimeZoneId { get; set; } = TimeZoneInfo.Local.Id;
 
     [ObservableProperty, NotifyDataErrorInfo]
-    [Range(-2, 20, ErrorMessage = "La magnitud máxima debe estar entre -2 y 20.")]
-    private double maximumMagnitude = 12;
+    [Range(0, 90, ErrorMessageResourceType = typeof(Strings), ErrorMessageResourceName = nameof(Strings.MinimumAltitudeRange))]
+    public partial double MinimumAltitude { get; set; } = 20;
 
-    /// <summary>Consultar el pronóstico de nubes (Open-Meteo).</summary>
-    [ObservableProperty] private bool weatherForecastEnabled = true;
+    [ObservableProperty, NotifyDataErrorInfo]
+    [Range(-2, 20, ErrorMessageResourceType = typeof(Strings), ErrorMessageResourceName = nameof(Strings.MaximumMagnitudeRange))]
+    public partial double MaximumMagnitude { get; set; } = 12;
 
-    /// <summary>Buscar una versión nueva al iniciar.</summary>
-    [ObservableProperty] private bool checkForUpdates = true;
+    /// <summary>Fetch the cloud forecast (Open-Meteo).</summary>
+    [ObservableProperty]
+    public partial bool WeatherForecastEnabled { get; set; } = true;
 
-    [ObservableProperty] private City? selectedCity;
-    [ObservableProperty] private bool isManualLocation;
-    [ObservableProperty] private string? statusMessage;
-    [ObservableProperty] private bool hasError;
+    /// <summary>Check for a new version at startup.</summary>
+    [ObservableProperty]
+    public partial bool CheckForUpdates { get; set; } = true;
+
+    [ObservableProperty]
+    public partial City? SelectedCity { get; set; }
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(IsCitySelectionEnabled), nameof(IsManualFieldsEnabled))]
+    public partial bool IsManualLocation { get; set; }
+
+    [ObservableProperty]
+    public partial string? StatusMessage { get; private set; }
+
+    [ObservableProperty]
+    public partial bool HasError { get; private set; }
 
     public bool IsCitySelectionEnabled => !IsManualLocation;
 
     public bool IsManualFieldsEnabled => IsManualLocation;
 
-    /// <summary>Zona horaria seleccionada, para enlazar directamente con un ComboBox.</summary>
+    /// <summary>Selected time zone, to bind a ComboBox directly.</summary>
     public TimeZoneInfo? SelectedTimeZone
     {
-        get => AvailableTimeZones.FirstOrDefault(z => z.Id == TimeZoneId)
-               ?? TimeZoneInfo.Local;
+        get => AvailableTimeZones.FirstOrDefault(z => z.Id == TimeZoneId) ?? TimeZoneInfo.Local;
         set
         {
             if (value is null) return;
@@ -107,9 +112,9 @@ public partial class SettingsViewModel : ObservableValidator
         }
         catch (Exception ex) when (ex is IOException or InvalidDataException or JsonException)
         {
-            _logger.LogError("No se pudo cargar el catálogo de ciudades.", ex);
+            _logger.LogError("Could not load the city list.", ex);
             HasError = true;
-            StatusMessage = $"No se pudo cargar el catálogo de ciudades: {ex.Message}";
+            StatusMessage = Format(Strings.SettingsCitiesLoadFailedFormat, ex.Message);
         }
     }
 
@@ -118,7 +123,7 @@ public partial class SettingsViewModel : ObservableValidator
     {
         IsManualLocation = true;
         SelectedCity = null;
-        StatusMessage = "Modo manual activado.";
+        StatusMessage = Strings.SettingsManualModeOn;
         HasError = false;
     }
 
@@ -135,10 +140,7 @@ public partial class SettingsViewModel : ObservableValidator
 
     partial void OnIsManualLocationChanged(bool value)
     {
-        OnPropertyChanged(nameof(IsCitySelectionEnabled));
-        OnPropertyChanged(nameof(IsManualFieldsEnabled));
-        if (value) return;
-        if (SelectedCity is null && Cities.Count > 0)
+        if (!value && SelectedCity is null && Cities.Count > 0)
         {
             SelectedCity = Cities[0];
         }
@@ -157,7 +159,7 @@ public partial class SettingsViewModel : ObservableValidator
                 return;
             }
 
-            var settings = new Services.ObserverSettings
+            var settings = new ObserverSettings
             {
                 CityId = IsManualLocation ? null : SelectedCity?.Id,
                 IsManualLocation = IsManualLocation,
@@ -173,37 +175,37 @@ public partial class SettingsViewModel : ObservableValidator
 
             _settingsService.Save(settings);
             HasError = false;
-            StatusMessage = "Configuración guardada.";
+            StatusMessage = Strings.SettingsSaved;
             SettingsSaved?.Invoke(settings);
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
         {
-            _logger.LogError("No se pudo guardar la configuración.", ex);
+            _logger.LogError("Could not save the settings.", ex);
             HasError = true;
-            StatusMessage = $"No se pudo guardar: {ex.Message}";
+            StatusMessage = Format(Strings.SettingsSaveFailedFormat, ex.Message);
         }
     }
 
     [RelayCommand]
     private void LoadDefaults()
     {
-        LoadFrom(new Services.ObserverSettings());
-        StatusMessage = "Valores por defecto cargados (sin guardar).";
+        LoadFrom(new ObserverSettings());
+        StatusMessage = Strings.SettingsDefaultsLoaded;
         HasError = false;
     }
 
-    /// <summary>Descarta los cambios no guardados y vuelve a la configuración persistida.</summary>
+    /// <summary>Discards unsaved changes and goes back to the persisted settings.</summary>
     public void RevertChanges() => Apply(_settingsService.Load());
 
-    /// <summary>Aplica una configuración a las propiedades observables.</summary>
-    public void Apply(Services.ObserverSettings settings)
+    /// <summary>Applies settings to the observable properties.</summary>
+    public void Apply(ObserverSettings settings)
     {
         LoadFrom(settings);
         StatusMessage = null;
         HasError = false;
     }
 
-    private void LoadFrom(Services.ObserverSettings settings)
+    private void LoadFrom(ObserverSettings settings)
     {
         IsManualLocation = settings.IsManualLocation;
         Latitude = settings.LatitudeDegrees;
@@ -214,8 +216,8 @@ public partial class SettingsViewModel : ObservableValidator
         MaximumMagnitude = settings.MaximumMagnitude;
         WeatherForecastEnabled = settings.WeatherForecastEnabled;
         CheckForUpdates = settings.CheckForUpdates;
-        // Si el catálogo de ciudades ya está cargado se recupera la ciudad guardada;
-        // si no, LoadCitiesAsync la seleccionará al cargarlo.
+        // If the city list is already loaded the saved city is restored; otherwise
+        // LoadCitiesAsync selects it once loaded.
         SelectedCity = settings.IsManualLocation
             ? null
             : Cities.FirstOrDefault(city => city.Id == settings.CityId);

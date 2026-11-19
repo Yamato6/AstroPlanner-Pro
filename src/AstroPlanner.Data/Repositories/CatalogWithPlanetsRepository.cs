@@ -4,8 +4,8 @@ using AstroPlanner.Core.Models;
 namespace AstroPlanner.Data.Repositories;
 
 /// <summary>
-/// Añade los planetas (<see cref="SolarSystemCatalog"/>) al catálogo de
-/// cielo profundo de <paramref name="inner"/>.
+/// Adds the planets (<see cref="SolarSystemCatalog"/>) to the deep-sky catalog of
+/// <paramref name="inner"/>.
 /// </summary>
 public sealed class CatalogWithPlanetsRepository(ICelestialRepository inner) : ICelestialRepository
 {

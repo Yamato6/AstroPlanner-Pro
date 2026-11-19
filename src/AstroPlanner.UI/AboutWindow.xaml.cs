@@ -4,7 +4,7 @@ using AstroPlanner.UI.Services;
 
 namespace AstroPlanner.UI;
 
-/// <summary>Versión, créditos (incluida la atribución a Open-Meteo), carpeta de datos y licencia.</summary>
+/// <summary>Version, credits (including the Open-Meteo attribution), data folder and license.</summary>
 public partial class AboutWindow : Window
 {
     public AboutWindow()

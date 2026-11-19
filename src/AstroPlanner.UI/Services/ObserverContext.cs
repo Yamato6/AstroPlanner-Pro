@@ -4,6 +4,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using AstroPlanner.Core.Algorithms;
 using AstroPlanner.Core.Interfaces;
 using AstroPlanner.Core.Models;
+using AstroPlanner.UI.Resources;
 
 namespace AstroPlanner.UI.Services;
 
@@ -81,11 +82,11 @@ public sealed partial class ObserverContext(IAstronomyService astronomy, TimePro
     private bool _isBatchUpdating;
 
     [ObservableProperty, NotifyDataErrorInfo]
-    [Range(-90, 90, ErrorMessage = "La latitud debe estar entre -90 y 90°.")]
+    [Range(-90, 90, ErrorMessageResourceType = typeof(Strings), ErrorMessageResourceName = nameof(Strings.LatitudeRange))]
     public partial double Latitude { get; set; }
 
     [ObservableProperty, NotifyDataErrorInfo]
-    [Range(-180, 180, ErrorMessage = "La longitud debe estar entre -180 y 180°.")]
+    [Range(-180, 180, ErrorMessageResourceType = typeof(Strings), ErrorMessageResourceName = nameof(Strings.LongitudeRange))]
     public partial double Longitude { get; set; }
 
     [ObservableProperty]
@@ -98,7 +99,7 @@ public sealed partial class ObserverContext(IAstronomyService astronomy, TimePro
     public partial DateTime ObservationDateTime { get; set; }
 
     [ObservableProperty, NotifyDataErrorInfo]
-    [Range(0, 90, ErrorMessage = "La altitud mínima debe estar entre 0 y 90°.")]
+    [Range(0, 90, ErrorMessageResourceType = typeof(Strings), ErrorMessageResourceName = nameof(Strings.MinimumAltitudeRange))]
     public partial double MinimumAltitude { get; set; }
 
     [ObservableProperty]
@@ -223,17 +224,17 @@ public sealed partial class ObserverContext(IAstronomyService astronomy, TimePro
     {
         if (double.IsNaN(Latitude) || Latitude is < -90 or > 90)
         {
-            return "La latitud debe estar entre -90 y 90°. Revisa la configuración.";
+            return Strings.LatitudeRangeCheckSettings;
         }
 
         if (double.IsNaN(Longitude) || Longitude is < -180 or > 180)
         {
-            return "La longitud debe estar entre -180 y 180°. Revisa la configuración.";
+            return Strings.LongitudeRangeCheckSettings;
         }
 
         if (double.IsNaN(MinimumAltitude) || MinimumAltitude is < 0 or > 90)
         {
-            return "La altitud mínima debe estar entre 0 y 90°.";
+            return Strings.MinimumAltitudeRange;
         }
 
         return null;

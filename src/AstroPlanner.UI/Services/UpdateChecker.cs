@@ -4,23 +4,22 @@ using System.Text.Json.Serialization;
 
 namespace AstroPlanner.UI.Services;
 
-/// <summary>Una versión publicada más reciente que la instalada.</summary>
+/// <summary>A published version newer than the installed one.</summary>
 public sealed record UpdateInfo(AppVersion Version, string Name, string Url);
 
-/// <summary>Comprueba si hay una versión nueva publicada.</summary>
+/// <summary>Checks whether a newer version has been published.</summary>
 public interface IUpdateChecker
 {
     /// <summary>
-    /// La versión publicada más alta si es mayor que <paramref name="current"/>;
-    /// null si no hay ninguna o si no se pudo consultar (nunca lanza por red).
+    /// The highest published version if it is newer than <paramref name="current"/>; null if
+    /// there is none or it could not be checked (never throws for network errors).
     /// </summary>
     Task<UpdateInfo?> CheckAsync(AppVersion current, CancellationToken cancellationToken = default);
 }
 
 /// <summary>
-/// Consulta las releases de GitHub (se ignoran los borradores). Solo funciona si
-/// el repositorio es público: con uno privado la API responde 404 y simplemente
-/// no se avisa de nada.
+/// Queries the GitHub releases (drafts are ignored). It only works while the repository is
+/// public: for a private one the API answers 404 and simply nothing is announced.
 /// </summary>
 public sealed class GitHubUpdateChecker(HttpClient http, IAppLogger logger) : IUpdateChecker
 {
@@ -35,7 +34,7 @@ public sealed class GitHubUpdateChecker(HttpClient http, IAppLogger logger) : IU
             using var response = await http.SendAsync(request, cancellationToken);
             if (!response.IsSuccessStatusCode)
             {
-                logger.LogInfo($"Búsqueda de actualizaciones: GitHub respondió {(int)response.StatusCode}.");
+                logger.LogInfo($"Update check: GitHub answered {(int)response.StatusCode}.");
                 return null;
             }
 
@@ -45,15 +44,15 @@ public sealed class GitHubUpdateChecker(HttpClient http, IAppLogger logger) : IU
         }
         catch (Exception ex) when (ex is HttpRequestException or TaskCanceledException or JsonException)
         {
-            logger.LogInfo($"Búsqueda de actualizaciones no disponible: {ex.Message}");
+            logger.LogInfo($"Update check unavailable: {ex.Message}");
             return null;
         }
     }
 
     /// <summary>
-    /// La release más alta que supera a <paramref name="current"/>. Las pre-release
-    /// (sufijo como "-rc.1" o marcadas así en GitHub) solo se ofrecen a quien usa
-    /// una 0.x o una pre-release: quien tiene una versión estable solo ve estables.
+    /// The highest release above <paramref name="current"/>. Pre-releases (a suffix such as
+    /// "-rc.1", or flagged as such on GitHub) are only offered to users of a 0.x or a
+    /// pre-release: users of a stable version only see stable versions.
     /// </summary>
     internal static UpdateInfo? Newest(IEnumerable<GitHubRelease> releases, AppVersion current)
     {
@@ -69,7 +68,7 @@ public sealed class GitHubUpdateChecker(HttpClient http, IAppLogger logger) : IU
             .FirstOrDefault();
     }
 
-    /// <summary>"v0.8.0" → 0.8.0, "v1.0.0-rc.1" → 1.0.0-rc.1; null si la etiqueta no es una versión (p. ej. "PreRelease").</summary>
+    /// <summary>"v0.8.0" → 0.8.0, "v1.0.0-rc.1" → 1.0.0-rc.1; null if the tag is not a version (e.g. "PreRelease").</summary>
     internal static AppVersion? ParseTag(string? tag) => AppVersion.TryParse(tag);
 
     internal sealed class GitHubRelease

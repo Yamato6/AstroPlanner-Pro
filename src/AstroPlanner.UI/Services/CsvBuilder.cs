@@ -4,8 +4,8 @@ using System.Text;
 namespace AstroPlanner.UI.Services;
 
 /// <summary>
-/// Construye CSV con el separador de listas de la cultura indicada (la del
-/// sistema al exportar), para que Excel lo abra en columnas sin pasos extra.
+/// Builds CSV with the list separator of the given culture (the system's when exporting),
+/// so that Excel opens it in columns without extra steps.
 /// </summary>
 internal sealed class CsvBuilder(CultureInfo culture)
 {
@@ -22,15 +22,15 @@ internal sealed class CsvBuilder(CultureInfo culture)
 
     public override string ToString() => _builder.ToString();
 
-    /// <summary>Entrecomilla los campos con separador, comillas o saltos de línea (RFC 4180).</summary>
+    /// <summary>Quotes fields that contain the separator, quotes or line breaks (RFC 4180).</summary>
     private string Escape(string field)
     {
         if (field.Contains(_separator, StringComparison.Ordinal)
-            || field.Contains('"')
-            || field.Contains('\n')
-            || field.Contains('\r'))
+            || field.Contains('"', StringComparison.Ordinal)
+            || field.Contains('\n', StringComparison.Ordinal)
+            || field.Contains('\r', StringComparison.Ordinal))
         {
-            return "\"" + field.Replace("\"", "\"\"") + "\"";
+            return "\"" + field.Replace("\"", "\"\"", StringComparison.Ordinal) + "\"";
         }
 
         return field;

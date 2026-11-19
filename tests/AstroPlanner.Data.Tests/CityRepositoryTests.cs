@@ -1,5 +1,4 @@
 using AstroPlanner.Data.Repositories;
-using FluentAssertions;
 
 namespace AstroPlanner.Data.Tests;
 
@@ -13,7 +12,7 @@ public sealed class CityRepositoryTests
         var cities = await repository.GetAllAsync();
 
         cities.Should().HaveCount(11);
-        cities.Should().OnlyContain(city => city.Country == "México");
+        cities.Should().OnlyContain(city => city.Country == "Mexico");
         cities.Should().OnlyContain(city => city.LatitudeDegrees >= -90 && city.LatitudeDegrees <= 90);
         cities.Should().OnlyContain(city => city.LongitudeDegrees >= -180 && city.LongitudeDegrees <= 180);
         cities.Should().OnlyContain(city => city.ElevationMeters >= 0);
@@ -36,7 +35,7 @@ public sealed class CityRepositoryTests
     [Fact]
     public async Task GetAllAsync_MissingFile_ThrowsIOException()
     {
-        var repository = new JsonCityRepository("no existe/cities.json");
+        var repository = new JsonCityRepository("does not exist/cities.json");
 
         await Assert.ThrowsAnyAsync<IOException>(() => repository.GetAllAsync());
     }

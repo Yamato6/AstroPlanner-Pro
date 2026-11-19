@@ -4,8 +4,8 @@ using System.Text.Json;
 namespace AstroPlanner.UI.Services;
 
 /// <summary>
-/// Implementación basada en JSON de <see cref="ISettingsService"/>.
-/// Archivo: %LocalAppData%\AstroPlanner\settings.json
+/// JSON implementation of <see cref="ISettingsService"/>.
+/// File: %LocalAppData%\AstroPlanner\settings.json
 /// </summary>
 public sealed class JsonSettingsService : ISettingsService
 {
@@ -35,7 +35,7 @@ public sealed class JsonSettingsService : ISettingsService
         }
         catch (JsonException)
         {
-            // Archivo corrupto: se ignora y se usan valores por defecto.
+            // Corrupt file: ignore it and use the defaults.
             return new ObserverSettings();
         }
         catch (IOException)

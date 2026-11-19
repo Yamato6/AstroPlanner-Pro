@@ -58,7 +58,7 @@ internal sealed class FakeLogService : IObservationLogService
     {
         if (FailOnSave)
         {
-            throw new IOException("disco lleno");
+            throw new IOException("disk full");
         }
 
         Entries = entries.ToList();

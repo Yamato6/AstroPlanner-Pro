@@ -1,17 +1,17 @@
 namespace AstroPlanner.UI.Services;
 
-/// <summary>Un objeto del plan de observación con la nota del usuario.</summary>
+/// <summary>An object of the observation plan with the user's note.</summary>
 public sealed record ObservationPlanEntry(string Id, string Note = "");
 
 /// <summary>
-/// Persistencia del plan de observación ("Mi plan") entre sesiones.
-/// Solo guarda ids del catálogo y notas; los objetos se reconstruyen al cargarlo.
+/// Persistence of the observation plan ("My plan") between sessions. Only catalog ids and
+/// notes are saved; the objects are rebuilt when it is loaded.
 /// </summary>
 public interface IObservationPlanService
 {
-    /// <summary>Lee el plan guardado; si no hay plan o es inválido, devuelve una lista vacía.</summary>
+    /// <summary>Reads the saved plan; an empty list if there is none or it is invalid.</summary>
     IReadOnlyList<ObservationPlanEntry> Load();
 
-    /// <summary>Guarda el plan de forma atómica (escribe temporal y renombra).</summary>
+    /// <summary>Saves the plan atomically (writes a temporary file and renames it).</summary>
     void Save(IEnumerable<ObservationPlanEntry> entries);
 }

@@ -3,13 +3,11 @@ using AstroPlanner.Core.Models;
 using AstroPlanner.Core.Services;
 using AstroPlanner.UI.Services;
 using AstroPlanner.UI.ViewModels;
-using FluentAssertions;
 
 namespace AstroPlanner.UI.Tests;
 
 /// <summary>
-/// Funciones de la 0.7: bitácora de observaciones (persistencia, progreso
-/// Messier, CSV, marcas en la tabla) y planetas en el planificador.
+/// Observation logbook (persistence, Messier progress, CSV, table marks) and planets in the planner.
 /// </summary>
 public sealed class LogbookAndPlanetUiTests : IDisposable
 {
@@ -37,20 +35,20 @@ public sealed class LogbookAndPlanetUiTests : IDisposable
         return viewModel;
     }
 
-    // ─── Bitácora ───────────────────────────────────────────────────────
+    // ─── Logbook ────────────────────────────────────────────────────────
 
     [Fact]
     public void Add_StoresTheEntryNewestFirstAndRemembersTheEquipment()
     {
         var logbook = CreateLogbook();
 
-        var first = logbook.CreateDraft("M42", "Nebulosa de Orión", new DateTime(2026, 1, 10, 22, 15, 0), "CDMX");
+        var first = logbook.CreateDraft("M42", "Orion Nebula", new DateTime(2026, 1, 10, 22, 15, 0), "CDMX");
         first.Equipment = "Refractor 80 mm";
         first.Rating = 5;
         logbook.Add(first).Should().BeTrue();
 
-        var second = logbook.CreateDraft("M31", "Andrómeda", new DateTime(2026, 1, 12, 21, 0, 0), "CDMX");
-        second.Equipment.Should().Be("Refractor 80 mm", "se propone el equipo de la última observación");
+        var second = logbook.CreateDraft("M31", "Andromeda Galaxy", new DateTime(2026, 1, 12, 21, 0, 0), "CDMX");
+        second.Equipment.Should().Be("Refractor 80 mm", "the equipment of the last observation is suggested");
         logbook.Add(second).Should().BeTrue();
 
         logbook.Entries.Select(e => e.ObjectId).Should().Equal("M31", "M42");
@@ -68,7 +66,7 @@ public sealed class LogbookAndPlanetUiTests : IDisposable
     public void Draft_RequiresAValidTime(string time, bool valid)
     {
         var logbook = CreateLogbook();
-        var draft = logbook.CreateDraft("M42", "Orión", new DateTime(2026, 1, 10, 22, 0, 0), "CDMX");
+        var draft = logbook.CreateDraft("M42", "Orion Nebula", new DateTime(2026, 1, 10, 22, 0, 0), "CDMX");
 
         draft.ObservedTime = time;
 
@@ -82,16 +80,16 @@ public sealed class LogbookAndPlanetUiTests : IDisposable
         _logService.Entries =
         [
             Entry("M42", new DateTime(2026, 1, 10)),
-            Entry("M42", new DateTime(2026, 1, 11)),   // repetido: cuenta una vez
+            Entry("M42", new DateTime(2026, 1, 11)),   // repeated: counts once
             Entry("M31", new DateTime(2026, 1, 11)),
-            Entry("Júpiter", new DateTime(2026, 1, 11)) // no es Messier
+            Entry("Jupiter", new DateTime(2026, 1, 11)) // not a Messier object
         ];
 
         var logbook = CreateLogbook();
 
         logbook.ObservedMessierCount.Should().Be(2);
         logbook.MessierProgressText.Should().Be("2 / 110");
-        logbook.HasBeenObserved("Júpiter").Should().BeTrue();
+        logbook.HasBeenObserved("Jupiter").Should().BeTrue();
     }
 
     [Fact]
@@ -113,11 +111,11 @@ public sealed class LogbookAndPlanetUiTests : IDisposable
         var logbook = CreateLogbook();
         _logService.FailOnSave = true;
 
-        var added = logbook.Add(logbook.CreateDraft("M42", "Orión", new DateTime(2026, 1, 10, 22, 0, 0), "CDMX"));
+        var added = logbook.Add(logbook.CreateDraft("M42", "Orion Nebula", new DateTime(2026, 1, 10, 22, 0, 0), "CDMX"));
 
         added.Should().BeFalse();
-        logbook.Entries.Should().BeEmpty("lo que no se pudo guardar no debe quedar a medias en pantalla");
-        logbook.StatusMessage.Should().Contain("No se pudo guardar");
+        logbook.Entries.Should().BeEmpty("what could not be saved must not stay half-done on screen");
+        logbook.StatusMessage.Should().Contain("Could not save");
     }
 
     [Fact]
@@ -125,7 +123,7 @@ public sealed class LogbookAndPlanetUiTests : IDisposable
     {
         _logService.Entries =
         [
-            Entry("M31", new DateTime(2026, 1, 12, 21, 0, 0)) with { Notes = "brazos visibles, sin filtro" },
+            Entry("M31", new DateTime(2026, 1, 12, 21, 0, 0)) with { Notes = "arms visible, no filter" },
             Entry("M42", new DateTime(2026, 1, 10, 22, 15, 0))
         ];
         var logbook = CreateLogbook();
@@ -134,9 +132,9 @@ public sealed class LogbookAndPlanetUiTests : IDisposable
             .Split(Environment.NewLine, StringSplitOptions.RemoveEmptyEntries);
 
         lines.Should().HaveCount(3);
-        lines[0].Should().StartWith("Fecha,Hora,ID,Nombre");
+        lines[0].Should().StartWith("Date,Time,ID,Name");
         lines[1].Should().StartWith("2026-01-10,22:15,M42");
-        lines[2].Should().EndWith("\"brazos visibles, sin filtro\"");
+        lines[2].Should().EndWith("\"arms visible, no filter\"");
     }
 
     [Fact]
@@ -144,17 +142,17 @@ public sealed class LogbookAndPlanetUiTests : IDisposable
     {
         var path = Path.Combine(_directory, "logbook.json");
         var service = new JsonObservationLogService(path);
-        var entry = Entry("M42", new DateTime(2026, 1, 10, 22, 15, 0)) with { Notes = "con \"comillas\"" };
+        var entry = Entry("M42", new DateTime(2026, 1, 10, 22, 15, 0)) with { Notes = "with \"quotes\"" };
 
         service.Save([entry]);
         service.Load().Should().Equal(entry);
 
-        File.WriteAllText(path, "{ no es json");
+        File.WriteAllText(path, "{ not json");
         var corrupt = new JsonObservationLogService(path);
 
         corrupt.Load().Should().BeEmpty();
-        File.Exists(path).Should().BeFalse("el archivo dañado se aparta en lugar de sobrescribirse");
-        File.ReadAllText(corrupt.PreservedCorruptFilePath!).Should().Be("{ no es json");
+        File.Exists(path).Should().BeFalse("the damaged file is set aside instead of being overwritten");
+        File.ReadAllText(corrupt.PreservedCorruptFilePath!).Should().Be("{ not json");
     }
 
     [Fact]
@@ -166,7 +164,7 @@ public sealed class LogbookAndPlanetUiTests : IDisposable
 
         viewModel.Targets.Objects.Single(o => o.Id == "M42").IsObserved.Should().BeTrue();
         viewModel.Targets.Objects.Single(o => o.Id == "M31").IsObserved.Should().BeFalse();
-        viewModel.Tonight.ObservedSummaryText.Should().Be("Messier observados: 1 / 110");
+        viewModel.Tonight.ObservedSummaryText.Should().Be("Messier observed: 1 / 110");
 
         viewModel.Targets.SelectedObject = viewModel.Targets.Objects.Single(o => o.Id == "M31");
         var draft = viewModel.Detail.CreateLogDraft()!;
@@ -175,10 +173,10 @@ public sealed class LogbookAndPlanetUiTests : IDisposable
         logbook.Add(draft);
 
         viewModel.Targets.Objects.Single(o => o.Id == "M31").IsObserved.Should().BeTrue();
-        viewModel.Tonight.ObservedSummaryText.Should().Be("Messier observados: 2 / 110");
+        viewModel.Tonight.ObservedSummaryText.Should().Be("Messier observed: 2 / 110");
     }
 
-    // ─── Planetas en el planificador ────────────────────────────────────
+    // ─── Planets in the planner ─────────────────────────────────────────
 
     [Fact]
     public async Task Planets_GetDateDependentMagnitudeAndPlanetDetails()
@@ -186,10 +184,10 @@ public sealed class LogbookAndPlanetUiTests : IDisposable
         var jupiter = SolarSystemCatalog.Planets.Single(p => p.Planet == Planet.Jupiter);
         var viewModel = await CreateLoadedMainAsync(CreateLogbook(), jupiter);
 
-        var row = viewModel.Targets.Objects.Single(o => o.Id == "Júpiter");
+        var row = viewModel.Targets.Objects.Single(o => o.Id == "Jupiter");
         row.IsPlanet.Should().BeTrue();
-        row.ApparentMagnitude.Should().BeApproximately(-2.7, 0.3, "Júpiter estaba en oposición el 10/1/2026");
-        row.MoonInterferes.Should().BeFalse("la Luna no oculta a un planeta brillante");
+        row.ApparentMagnitude.Should().BeApproximately(-2.7, 0.3, "Jupiter was at opposition on 2026-01-10");
+        row.MoonInterferes.Should().BeFalse("the Moon does not hide a bright planet");
 
         viewModel.Targets.SelectedObject = row;
         var detail = viewModel.Detail.Observation!;
@@ -198,13 +196,13 @@ public sealed class LogbookAndPlanetUiTests : IDisposable
         detail.Planet!.ApparentDiameterArcsec.Should().BeGreaterThan(40);
 
         viewModel.Targets.TypeFilter = nameof(CelestialObjectType.Planet);
-        viewModel.Targets.Objects.Should().ContainSingle().Which.Id.Should().Be("Júpiter");
+        viewModel.Targets.Objects.Should().ContainSingle().Which.Id.Should().Be("Jupiter");
 
         viewModel.Targets.TypeFilter = "All";
         viewModel.Targets.SearchText = "jupiter";
-        viewModel.Targets.Objects.Should().ContainSingle().Which.Id.Should().Be("Júpiter");
+        viewModel.Targets.Objects.Should().ContainSingle().Which.Id.Should().Be("Jupiter");
 
         viewModel.Targets.SearchText = "";
-        viewModel.Sky.GetSkyMapPoints().Single(p => p.Id == "Júpiter").IsPlanet.Should().BeTrue();
+        viewModel.Sky.GetSkyMapPoints().Single(p => p.Id == "Jupiter").IsPlanet.Should().BeTrue();
     }
 }

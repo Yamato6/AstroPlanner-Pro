@@ -1,6 +1,8 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using AstroPlanner.Core.Models;
+using AstroPlanner.UI.Resources;
 using AstroPlanner.UI.Services;
+using static AstroPlanner.UI.Services.DisplayNames;
 
 namespace AstroPlanner.UI.ViewModels;
 
@@ -27,7 +29,7 @@ public sealed partial class TonightViewModel : ObservableObject
             // While the first forecast for a location is being fetched, say so.
             if (e.PropertyName == nameof(WeatherState.IsFetching) && _weather.IsFetching && _weather.Forecast is null)
             {
-                CloudDetailText = "Consultando el pronóstico…";
+                CloudDetailText = Strings.CloudsFetching;
             }
         };
         _logbook.Changed += () => OnPropertyChanged(nameof(ObservedSummaryText));
@@ -40,44 +42,44 @@ public sealed partial class TonightViewModel : ObservableObject
     public SkyCondition SkyCondition => _context.SkyCondition;
 
     /// <summary>Messier marathon summary for the catalog card.</summary>
-    public string ObservedSummaryText => $"Messier observados: {_logbook.MessierProgressText}";
+    public string ObservedSummaryText => Format(Strings.ObservedSummaryFormat, _logbook.MessierProgressText);
 
     public string DarkNightText => Night switch
     {
         null => "—",
-        { HasAstronomicalDarkness: true } night => $"{night.AstronomicalDuskLocal:HH:mm} → {night.AstronomicalDawnLocal:HH:mm}",
-        _ => "Sin noche oscura"
+        { HasAstronomicalDarkness: true } night =>
+            Format(Strings.DarkNightRangeFormat, night.AstronomicalDuskLocal, night.AstronomicalDawnLocal),
+        _ => Strings.DarkNightNone
     };
 
     public string SunTimesText => Night switch
     {
         null => "",
-        { IsFallbackWindow: true } => "El Sol no se pone o no sale: ventana 18:00 → 06:00",
-        { } night => $"Puesta {night.SunsetLocal:HH:mm} · Salida {night.SunriseLocal:HH:mm}"
+        { IsFallbackWindow: true } => Strings.SunFallbackWindow,
+        { } night => Format(Strings.SunTimesFormat, night.SunsetLocal, night.SunriseLocal)
     };
 
-    public string MoonIlluminationText => DisplayNames.MoonIllumination(Moon);
+    public string MoonIlluminationText => MoonIllumination(Moon);
 
     public string MoonDetailText => Moon is not { } moon
         ? ""
-        : $"{DisplayNames.MoonPhase(moon.IlluminatedFraction, moon.IsWaxing)} · "
-          + (moon.IsAboveHorizon ? $"{moon.Horizontal.AltitudeDegrees:0}° de altura" : "bajo el horizonte");
+        : moon.IsAboveHorizon
+            ? Format(Strings.MoonDetailAboveFormat, MoonPhase(moon.IlluminatedFraction, moon.IsWaxing), moon.Horizontal.AltitudeDegrees)
+            : Format(Strings.MoonDetailBelowFormat, MoonPhase(moon.IlluminatedFraction, moon.IsWaxing));
 
     /// <summary>Warning when the sky is not dark at the chosen time; null at night.</summary>
     public string? SkyBanner => (SkyCondition, Night) switch
     {
-        (_, { HasAstronomicalDarkness: false }) when SkyCondition != SkyCondition.Day =>
-            "En esta fecha y lugar el Sol no baja de -18°: el cielo nunca está totalmente oscuro.",
+        (_, { HasAstronomicalDarkness: false }) when SkyCondition != SkyCondition.Day => Strings.BannerNeverDark,
         (SkyCondition.Day, { HasAstronomicalDarkness: true } night) =>
-            $"Es de día a esta hora. La noche oscura empieza a las {night.AstronomicalDuskLocal:HH:mm}.",
-        (SkyCondition.Day, _) => "Es de día a esta hora.",
+            Format(Strings.BannerDaytimeDarkAtFormat, night.AstronomicalDuskLocal),
+        (SkyCondition.Day, _) => Strings.BannerDaytime,
         (SkyCondition.Twilight, var night) =>
-            $"Crepúsculo: el cielo aún no está oscuro (noche oscura de {night!.AstronomicalDuskLocal:HH:mm} "
-            + $"a {night.AstronomicalDawnLocal:HH:mm}).",
+            Format(Strings.BannerTwilightFormat, night!.AstronomicalDuskLocal, night.AstronomicalDawnLocal),
         _ => null
     };
 
-    /// <summary>Average cloud cover of the dark night, e.g. "20 %".</summary>
+    /// <summary>Average cloud cover of the dark night, e.g. "20%".</summary>
     [ObservableProperty]
     public partial string CloudCoverText { get; private set; } = "—";
 
@@ -109,12 +111,14 @@ public sealed partial class TonightViewModel : ObservableObject
         if (!_weather.IsEnabled)
         {
             CloudCoverText = "—";
-            CloudDetailText = "Pronóstico desactivado en Configuración";
+            CloudDetailText = Strings.CloudsDisabled;
         }
         else if (forecast is null)
         {
             CloudCoverText = "—";
-            CloudDetailText = _weather.LastError is null ? "Sin pronóstico" : $"Sin pronóstico: {_weather.LastError}";
+            CloudDetailText = _weather.LastError is null
+                ? Strings.CloudsNoForecast
+                : Format(Strings.CloudsNoForecastReasonFormat, _weather.LastError);
         }
         else if (Night is { } night)
         {
@@ -124,14 +128,17 @@ public sealed partial class TonightViewModel : ObservableObject
             if (forecast.Summarize(_context.ToUtc(start), _context.ToUtc(end)) is { } summary)
             {
                 var clearest = TimeZoneInfo.ConvertTimeFromUtc(summary.ClearestHourUtc, _context.TimeZone);
-                CloudCoverText = $"{summary.AverageCloudCoverPercent:0} %";
-                CloudDetailText = $"{WeatherForecast.Describe(summary.AverageCloudCoverPercent)} · "
-                    + $"mejor {clearest:HH:mm} ({summary.ClearestHourCloudCoverPercent} %)";
+                CloudCoverText = Format(Strings.PercentFormat, summary.AverageCloudCoverPercent);
+                CloudDetailText = Format(
+                    Strings.CloudsSummaryFormat,
+                    CloudCover(summary.AverageCloudCoverPercent),
+                    clearest,
+                    summary.ClearestHourCloudCoverPercent);
             }
             else
             {
                 CloudCoverText = "—";
-                CloudDetailText = "Sin pronóstico para esta fecha (hasta 7 días)";
+                CloudDetailText = Strings.CloudsNoForecastForDate;
             }
         }
     }

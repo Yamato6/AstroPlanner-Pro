@@ -1,13 +1,12 @@
 using AstroPlanner.Core.Algorithms;
 using AstroPlanner.Core.Models;
 using AstroPlanner.Core.Services;
-using FluentAssertions;
 
 namespace AstroPlanner.Core.Tests;
 
 /// <summary>
-/// Pruebas de referencia contra los ejemplos resueltos de Meeus,
-/// "Astronomical Algorithms" (2.ª ed.), y efemérides conocidas.
+/// Reference tests against the worked examples of Meeus, "Astronomical Algorithms" (2nd ed.),
+/// and known ephemerides.
 /// </summary>
 public sealed class SolarSystemTests
 {
@@ -17,8 +16,8 @@ public sealed class SolarSystemTests
     [Fact]
     public void Precession_MatchesMeeusExample21b()
     {
-        // θ Persei hasta 2028-11-13.19 (Meeus 21.b). La entrada ya incluye el
-        // movimiento propio: α0 = 2h44m12.975s = 41.054063°, δ0 = +49°13'39.90".
+        // θ Persei to 2028-11-13.19 (Meeus 21.b). The input already includes proper motion:
+        // α0 = 2h44m12.975s = 41.054063°, δ0 = +49°13'39.90".
         var j2000 = new EquatorialCoordinates(41.054063 / 15.0, 49.227750);
 
         var ofDate = Precession.FromJ2000(j2000, FromJulianDate(2462088.69));
@@ -39,9 +38,9 @@ public sealed class SolarSystemTests
     }
 
     [Theory]
-    [InlineData(-0.5667, 0.57)]   // en el horizonte aparente la refracción es ~34'
-    [InlineData(45, 0.0167)]       // ~1' a 45°
-    [InlineData(90, 0.0)]          // nada en el cénit
+    [InlineData(-0.5667, 0.57)]   // at the apparent horizon refraction is ~34'
+    [InlineData(45, 0.0167)]       // ~1' at 45°
+    [InlineData(90, 0.0)]          // none at the zenith
     public void Refraction_MatchesStandardValues(double trueAltitude, double expectedCorrection)
     {
         Refraction.CorrectionDegrees(trueAltitude).Should().BeApproximately(expectedCorrection, 0.005);
@@ -56,7 +55,7 @@ public sealed class SolarSystemTests
     [Fact]
     public void SunPosition_MatchesMeeusExample25a()
     {
-        // 1992-10-13 0h TD: α = 198.38083°, δ = -7.78507° (aparentes).
+        // 1992-10-13 0h TD: α = 198.38083°, δ = -7.78507° (apparent).
         var sun = SolarSystemCalculator.GetSunPosition(new DateTime(1992, 10, 13, 0, 0, 0, DateTimeKind.Utc));
 
         (sun.Equatorial.RightAscensionHours * 15.0).Should().BeApproximately(198.38083, 0.02);
@@ -67,8 +66,8 @@ public sealed class SolarSystemTests
     [Fact]
     public void MoonPosition_MatchesMeeusExample47a()
     {
-        // 1992-04-12 0h TD: α = 134.688470°, δ = 13.768368°, distancia 368409.7 km.
-        // Las fórmulas de baja precisión tienen un error de ~0.3°.
+        // 1992-04-12 0h TD: α = 134.688470°, δ = 13.768368°, distance 368409.7 km.
+        // The low-precision formulae have an error of ~0.3°.
         var moon = SolarSystemCalculator.GetMoonPosition(new DateTime(1992, 4, 12, 0, 0, 0, DateTimeKind.Utc));
 
         (moon.Equatorial.RightAscensionHours * 15.0).Should().BeApproximately(134.688470, 0.5);
@@ -79,7 +78,7 @@ public sealed class SolarSystemTests
     [Fact]
     public void MoonIllumination_MatchesMeeusExample48a()
     {
-        // 1992-04-12 0h TD: fracción iluminada k = 0.6786, Luna creciente.
+        // 1992-04-12 0h TD: illuminated fraction k = 0.6786, waxing Moon.
         var utc = new DateTime(1992, 4, 12, 0, 0, 0, DateTimeKind.Utc);
         var moon = SolarSystemCalculator.GetMoonPosition(utc);
         var sun = SolarSystemCalculator.GetSunPosition(utc);
@@ -89,8 +88,8 @@ public sealed class SolarSystemTests
     }
 
     [Theory]
-    [InlineData(2026, 1, 3, 10, 3, 1.0)]   // Luna llena del 3 de enero de 2026 (10:03 UT)
-    [InlineData(2026, 1, 18, 19, 52, 0.0)] // Luna nueva del 18 de enero de 2026 (19:52 UT)
+    [InlineData(2026, 1, 3, 10, 3, 1.0)]   // full Moon of 2026-01-03 (10:03 UT)
+    [InlineData(2026, 1, 18, 19, 52, 0.0)] // new Moon of 2026-01-18 (19:52 UT)
     public void MoonIllumination_FullAndNewMoon2026(int year, int month, int day, int hour, int minute, double expected)
     {
         var utc = new DateTime(year, month, day, hour, minute, 0, DateTimeKind.Utc);
@@ -105,7 +104,7 @@ public sealed class SolarSystemTests
     [Fact]
     public void AngularSeparation_MatchesMeeusExample17a()
     {
-        // Arturo y Espiga: 32.7930°.
+        // Arcturus and Spica: 32.7930°.
         var arcturus = new EquatorialCoordinates(213.9154 / 15.0, 19.1825);
         var spica = new EquatorialCoordinates(201.2983 / 15.0, -11.1614);
 
@@ -115,7 +114,7 @@ public sealed class SolarSystemTests
     [Fact]
     public void NightInfo_MexicoCitySummerSolstice_MatchesPublishedSunsetAndSunrise()
     {
-        // CDMX (UTC-6 todo el año): 21/6/2026 puesta ≈ 19:17, 22/6 salida ≈ 05:59.
+        // Mexico City (UTC-6 all year): 2026-06-21 sunset ≈ 19:17, 2026-06-22 sunrise ≈ 05:59.
         var service = new AstronomyService();
         var cdmx = new ObserverLocation(19.4326, -99.1332, 2240);
         var zone = TimeZoneInfo.FindSystemTimeZoneById("Central Standard Time (Mexico)");
@@ -134,7 +133,7 @@ public sealed class SolarSystemTests
     [Fact]
     public void NightInfo_HighLatitudeMidsummer_HasNoAstronomicalDarkness()
     {
-        // Latitud 60°N en el solsticio: el Sol baja solo a ~-6.5°, nunca a -18°.
+        // Latitude 60°N at the solstice: the Sun only goes down to ~-6.5°, never to -18°.
         var service = new AstronomyService();
         var observer = new ObserverLocation(60, 10.75);
         var zone = TimeZoneInfo.FindSystemTimeZoneById("W. Europe Standard Time");
@@ -148,7 +147,7 @@ public sealed class SolarSystemTests
     [Fact]
     public void NightInfo_PolarDay_FallsBackToFixedWindow()
     {
-        // Latitud 78°N en junio: el Sol no se pone.
+        // Latitude 78°N in June: the Sun does not set.
         var service = new AstronomyService();
         var observer = new ObserverLocation(78, 15);
         var zone = TimeZoneInfo.FindSystemTimeZoneById("W. Europe Standard Time");
@@ -166,7 +165,7 @@ public sealed class SolarSystemTests
         var service = new AstronomyService();
         var cdmx = new ObserverLocation(19.4326, -99.1332);
 
-        // Horas UTC del 21/6/2026 (CDMX = UTC-6).
+        // UTC times of 2026-06-21 (Mexico City = UTC-6).
         service.GetSkyCondition(cdmx, new DateTime(2026, 6, 21, 18, 0, 0, DateTimeKind.Utc)).Should().Be(SkyCondition.Day);
         service.GetSkyCondition(cdmx, new DateTime(2026, 6, 22, 1, 40, 0, DateTimeKind.Utc)).Should().Be(SkyCondition.Twilight);
         service.GetSkyCondition(cdmx, new DateTime(2026, 6, 22, 6, 0, 0, DateTimeKind.Utc)).Should().Be(SkyCondition.Dark);
@@ -183,12 +182,25 @@ public sealed class SolarSystemTests
         var geocentric = CoordinateTransformer.ToHorizontal(
             SolarSystemCalculator.GetMoonPosition(utc).Equatorial, observer, utc);
 
-        // Paralaje (~1° cerca del horizonte) menos refracción: siempre más baja salvo en el horizonte.
+        // Parallax (~1° near the horizon) minus refraction: always lower except at the horizon.
         if (geocentric.AltitudeDegrees > 10)
         {
             moon.Horizontal.AltitudeDegrees.Should().BeLessThan(geocentric.AltitudeDegrees);
         }
 
-        moon.IlluminatedFraction.Should().BeGreaterThan(0.95, "es casi Luna llena");
+        moon.IlluminatedFraction.Should().BeGreaterThan(0.95, "it is almost full Moon");
+    }
+
+    [Fact]
+    public void MoonInterference_OnlyWhenBrightCloseAndAboveHorizon()
+    {
+        var brightHigh = new MoonState(new HorizontalCoordinates(40, 180), new EquatorialCoordinates(1, 0), 0.9, true);
+        var brightLow = brightHigh with { Horizontal = new HorizontalCoordinates(-5, 180) };
+        var dim = brightHigh with { IlluminatedFraction = 0.1 };
+
+        MoonInterference.Interferes(brightHigh, 15).Should().BeTrue();
+        MoonInterference.Interferes(brightHigh, 45).Should().BeFalse();
+        MoonInterference.Interferes(brightLow, 15).Should().BeFalse();
+        MoonInterference.Interferes(dim, 15).Should().BeFalse();
     }
 }

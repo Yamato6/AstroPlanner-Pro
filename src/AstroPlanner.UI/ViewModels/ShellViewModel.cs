@@ -1,6 +1,8 @@
 using System.ComponentModel;
+using System.Globalization;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using AstroPlanner.UI.Resources;
 using AstroPlanner.UI.Services;
 
 namespace AstroPlanner.UI.ViewModels;
@@ -84,11 +86,12 @@ public sealed partial class ShellViewModel : ObservableObject, IDisposable
 
     public string ActiveLocationName => _context.LocationName;
 
-    public string LocationSummary => $"{_context.Latitude:0.####}°, {_context.Longitude:0.####}°";
+    public string LocationSummary =>
+        string.Create(CultureInfo.CurrentCulture, $"{_context.Latitude:0.####}°, {_context.Longitude:0.####}°");
 
     private string DescribeLocation() => Settings.IsManualLocation
-        ? "Coordenadas manuales"
-        : Settings.SelectedCity?.DisplayName ?? "Selecciona una ciudad";
+        ? Strings.LocationManual
+        : Settings.SelectedCity?.DisplayName ?? Strings.LocationSelectCity;
 
     private void OnSettingsPropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
@@ -150,7 +153,7 @@ public sealed partial class ShellViewModel : ObservableObject, IDisposable
     [RelayCommand]
     private void ShiftObservationTime(string minutes)
     {
-        if (int.TryParse(minutes, System.Globalization.CultureInfo.InvariantCulture, out var delta))
+        if (int.TryParse(minutes, CultureInfo.InvariantCulture, out var delta))
         {
             ObservationDateTime = ObservationDateTime.AddMinutes(delta);
         }
@@ -251,7 +254,7 @@ public sealed partial class ShellViewModel : ObservableObject, IDisposable
 
     public string? UpdateBannerText => AvailableUpdate is null
         ? null
-        : $"Hay una versión nueva de AstroPlanner: {AvailableUpdate.Name}.";
+        : DisplayNames.Format(Strings.UpdateAvailableFormat, AvailableUpdate.Name);
 
     /// <summary>Looks for a version newer than <paramref name="current"/> if enabled in Settings. Never throws.</summary>
     public async Task CheckForUpdatesAsync(AppVersion current)
@@ -267,7 +270,7 @@ public sealed partial class ShellViewModel : ObservableObject, IDisposable
         }
         catch (Exception ex)
         {
-            _logger.LogError("Error inesperado al buscar actualizaciones.", ex);
+            _logger.LogError("Unexpected error while checking for updates.", ex);
         }
     }
 

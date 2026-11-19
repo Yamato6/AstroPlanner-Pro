@@ -1,14 +1,13 @@
 <!--
-    Tema oscuro de AstroPlanner: todos los colores y estilos compartidos por
-    las ventanas. Los estilos implícitos de este archivo son solo de controles
-    (Button, TextBox, ToolTip…); el de TextBlock va en cada ventana, porque a
-    nivel de aplicación también afectaría al texto de las plantillas y de la
-    impresión.
+    AstroPlanner dark theme: every color and style shared by the windows. The implicit
+    styles in this file are for controls only (Button, TextBox, ToolTip…); the TextBlock one
+    lives in each window, because at application level it would also affect the text inside
+    templates and printing.
 -->
 <ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
 
-    <!-- ─── Colores ─────────────────────────────────────────────────── -->
+    <!-- ─── Colors ──────────────────────────────────────────────────── -->
     <SolidColorBrush x:Key="WindowBackgroundBrush" Color="#0D1726"/>
     <SolidColorBrush x:Key="DialogBackgroundBrush" Color="#101A2B"/>
     <SolidColorBrush x:Key="NightPanelBrush" Color="#172033"/>
@@ -46,14 +45,14 @@
     <SolidColorBrush x:Key="PlanetBrush" Color="#F5C26B"/>
     <SolidColorBrush x:Key="DarknessBrush" Color="#B9A7FF"/>
 
-    <!-- Solo gráficos (ScottPlot): MainWindow los lee con FindResource -->
+    <!-- Charts only (ScottPlot): MainWindow reads them with FindResource -->
     <SolidColorBrush x:Key="ChartTwilightBrush" Color="#3A4F7A"/>
     <SolidColorBrush x:Key="ChartCloudBrush" Color="#A9B4C2"/>
     <SolidColorBrush x:Key="SkyHorizonBrush" Color="#4A6A90"/>
     <SolidColorBrush x:Key="SkyFillBrush" Color="#101E33"/>
     <SolidColorBrush x:Key="SkyLabelBrush" Color="#7F93B0"/>
 
-    <!-- Foco de teclado visible sobre fondo oscuro -->
+    <!-- Keyboard focus visible on a dark background -->
     <Style x:Key="DarkFocusVisual">
         <Setter Property="Control.Template">
             <Setter.Value>
@@ -65,8 +64,8 @@
         </Setter>
     </Style>
 
-    <!-- ─── Botones ─────────────────────────────────────────────────── -->
-    <!-- Plantilla propia: la de Windows pinta el fondo celeste al pasar el ratón. -->
+    <!-- ─── Buttons ─────────────────────────────────────────────────── -->
+    <!-- Own template: the Windows one paints a light blue background on hover. -->
     <Style x:Key="SecondaryButtonStyle" TargetType="Button">
         <Setter Property="Foreground" Value="{StaticResource StrongTextBrush}"/>
         <Setter Property="Background" Value="{StaticResource ControlRaisedBrush}"/>
@@ -131,7 +130,7 @@
         </Style.Triggers>
     </Style>
 
-    <!-- ─── Texto editable ──────────────────────────────────────────── -->
+    <!-- ─── Editable text ───────────────────────────────────────────── -->
     <Style x:Key="DarkTextBoxStyle" TargetType="TextBox">
         <Setter Property="Background" Value="{StaticResource ControlBrush}"/>
         <Setter Property="Foreground" Value="White"/>
@@ -170,7 +169,7 @@
                 </ControlTemplate>
             </Setter.Value>
         </Setter>
-        <!-- Error de validación: borde rojo del tema y el mensaje en la información sobre herramientas -->
+        <!-- Validation error: the theme's red border, and the message in the tooltip -->
         <Setter Property="Validation.ErrorTemplate">
             <Setter.Value>
                 <ControlTemplate>
@@ -222,7 +221,7 @@
         </Setter>
     </Style>
 
-    <!-- ─── Listas desplegables ─────────────────────────────────────── -->
+    <!-- ─── Drop-down lists ─────────────────────────────────────────── -->
     <Style x:Key="DarkComboBoxStyle" TargetType="ComboBox">
         <Setter Property="Foreground" Value="{StaticResource StrongTextBrush}"/>
         <Setter Property="Background" Value="{StaticResource ControlBrush}"/>
@@ -333,13 +332,14 @@
         </Setter>
     </Style>
 
-    <!-- ─── Fecha ───────────────────────────────────────────────────── -->
+    <!-- ─── Date ────────────────────────────────────────────────────── -->
     <Style x:Key="DarkDatePickerStyle" TargetType="DatePicker">
         <Setter Property="Background" Value="{StaticResource SurfaceBrush}"/>
         <Setter Property="BorderBrush" Value="{StaticResource ControlBorderBrush}"/>
         <Setter Property="Foreground" Value="White"/>
         <Setter Property="VerticalContentAlignment" Value="Center"/>
-        <Setter Property="Language" Value="es-MX"/>
+        <!-- English text with unambiguous yyyy-MM-dd dates. -->
+        <Setter Property="Language" Value="en-CA"/>
         <Setter Property="SelectedDateFormat" Value="Short"/>
         <Style.Resources>
             <Style TargetType="DatePickerTextBox">
@@ -347,7 +347,7 @@
                 <Setter Property="Foreground" Value="White"/>
                 <Setter Property="CaretBrush" Value="White"/>
                 <Setter Property="VerticalContentAlignment" Value="Center"/>
-                <!-- La plantilla por defecto ignora Background y pinta la caja en blanco. -->
+                <!-- The default template ignores Background and paints the box white. -->
                 <Setter Property="Template">
                     <Setter.Value>
                         <ControlTemplate TargetType="DatePickerTextBox">
@@ -361,7 +361,7 @@
         </Style.Resources>
     </Style>
 
-    <!-- ─── Pestañas ────────────────────────────────────────────────── -->
+    <!-- ─── Tabs ────────────────────────────────────────────────────── -->
     <Style x:Key="DarkTabItemStyle" TargetType="TabItem">
         <Setter Property="Foreground" Value="{StaticResource TabTextBrush}"/>
         <Setter Property="Background" Value="{StaticResource ControlBrush}"/>
@@ -412,7 +412,7 @@
         <Setter Property="Padding" Value="0"/>
     </Style>
 
-    <!-- ─── Tablas ──────────────────────────────────────────────────── -->
+    <!-- ─── Tables ──────────────────────────────────────────────────── -->
     <Style x:Key="NightDataGridStyle" TargetType="DataGrid">
         <Setter Property="AutoGenerateColumns" Value="False"/>
         <Setter Property="CanUserAddRows" Value="False"/>
@@ -444,8 +444,8 @@
                 <Setter Property="Padding" Value="6,4"/>
                 <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
                 <Style.Triggers>
-                    <!-- Sin esto WPF usa el color de selección inactiva del sistema
-                         (casi blanco) cuando la tabla no tiene el foco. -->
+                    <!-- Without this WPF uses the system inactive selection color
+                         (almost white) when the table does not have the focus. -->
                     <Trigger Property="IsSelected" Value="True">
                         <Setter Property="Background" Value="{StaticResource SelectionBrush}"/>
                         <Setter Property="Foreground" Value="White"/>
@@ -472,8 +472,8 @@
         </Style.Resources>
     </Style>
 
-    <!-- ─── Barras de desplazamiento ────────────────────────────────── -->
-    <!-- Finas y oscuras; las de Windows son grises claras sobre el fondo oscuro. -->
+    <!-- ─── Scroll bars ─────────────────────────────────────────────── -->
+    <!-- Thin and dark; the Windows ones are light grey on the dark background. -->
     <Style x:Key="ScrollThumbStyle" TargetType="Thumb">
         <Setter Property="IsTabStop" Value="False"/>
         <Setter Property="Focusable" Value="False"/>
@@ -558,26 +558,26 @@
         </Style.Triggers>
     </Style>
 
-    <!-- Botón compacto para las filas de las tablas ("Quitar", "Eliminar") -->
+    <!-- Compact button for table rows ("Remove", "Delete") -->
     <Style x:Key="GridButtonStyle" TargetType="Button" BasedOn="{StaticResource SecondaryButtonStyle}">
         <Setter Property="Padding" Value="10,2"/>
         <Setter Property="Margin" Value="4,1"/>
         <Setter Property="FontSize" Value="12"/>
     </Style>
 
-    <!-- Texto de celda que se recorta con "…" (y se lee completo en la información sobre herramientas) -->
+    <!-- Cell text trimmed with "…" (and readable in full in the tooltip) -->
     <Style x:Key="TrimmedCellStyle" TargetType="TextBlock">
         <Setter Property="TextTrimming" Value="CharacterEllipsis"/>
         <Setter Property="ToolTip" Value="{Binding Text, RelativeSource={RelativeSource Self}}"/>
         <Style.Triggers>
-            <!-- Sin texto no hay nada que leer: nada de recuadros vacíos -->
+            <!-- No text, nothing to read: no empty tooltip boxes -->
             <Trigger Property="Text" Value="">
                 <Setter Property="ToolTip" Value="{x:Null}"/>
             </Trigger>
         </Style.Triggers>
     </Style>
 
-    <!-- ─── Estilos implícitos (solo controles) ─────────────────────── -->
+    <!-- ─── Implicit styles (controls only) ─────────────────────────── -->
     <Style TargetType="ToolTip">
         <Setter Property="Background" Value="{StaticResource ControlRaisedBrush}"/>
         <Setter Property="Foreground" Value="{StaticResource StrongTextBrush}"/>

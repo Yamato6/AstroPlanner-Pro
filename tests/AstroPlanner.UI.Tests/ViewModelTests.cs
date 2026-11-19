@@ -1,14 +1,11 @@
 using AstroPlanner.Core.Models;
-using AstroPlanner.Core.Algorithms;
 using AstroPlanner.UI.Services;
 using AstroPlanner.UI.ViewModels;
-using FluentAssertions;
 
 namespace AstroPlanner.UI.Tests;
 
 /// <summary>
-/// Pruebas de MainViewModel y SettingsViewModel sin interfaz, con dobles en
-/// memoria para catálogo, configuración, plan y registro.
+/// View model tests without UI, with in-memory doubles for catalog, settings, plan and log.
 /// </summary>
 public sealed class ViewModelTests
 {
@@ -25,7 +22,7 @@ public sealed class ViewModelTests
     private async Task<ShellViewModel> CreateLoadedMainAsync()
     {
         var viewModel = TestShell.Create([M42, M31, M13], _planService, _settingsService);
-        // Noche de invierno en CDMX: M42 alta, M13 bajo el horizonte.
+        // Winter night in Mexico City: M42 high, M13 below the horizon.
         viewModel.ObservationDateTime = new DateTime(2026, 1, 15, 22, 0, 0);
         await viewModel.LoadCommand.ExecuteAsync(null);
         return viewModel;
@@ -82,15 +79,15 @@ public sealed class ViewModelTests
     }
 
     [Fact]
-    public async Task Filters_ShowSpanishLabelsAndCanBeCleared()
+    public async Task Filters_ShowEnglishLabelsAndCanBeCleared()
     {
         var viewModel = await CreateLoadedMainAsync();
 
-        viewModel.Targets.TypeFilters[0].Should().Be(new FilterOption("All", "Todos"));
-        viewModel.Targets.TypeFilters.Should().Contain(new FilterOption("GlobularCluster", "Cúmulo globular"));
-        viewModel.Targets.ConstellationFilters[0].Should().Be(new FilterOption("", "Todas"));
+        viewModel.Targets.TypeFilters[0].Should().Be(new FilterOption("All", "All"));
+        viewModel.Targets.TypeFilters.Should().Contain(new FilterOption("GlobularCluster", "Globular cluster"));
+        viewModel.Targets.ConstellationFilters[0].Should().Be(new FilterOption("", "All"));
 
-        // Elegir una constelación y volver a "Todas" desde la propia lista.
+        // Choose a constellation and go back to "All" from the list itself.
         var constellation = viewModel.Targets.ConstellationFilters[1].Value;
         viewModel.Targets.ConstellationFilter = constellation;
         viewModel.Targets.Objects.Should().OnlyContain(o => o.Constellation == constellation);
@@ -106,7 +103,7 @@ public sealed class ViewModelTests
 
         viewModel.Observer.MinimumAltitude = 120;
 
-        viewModel.Targets.ValidationMessage.Should().Contain("altitud mínima");
+        viewModel.Targets.ValidationMessage.Should().Contain("Minimum altitude");
         viewModel.Observer.HasErrors.Should().BeTrue();
         viewModel.Targets.Objects.Should().Equal(before);
 
@@ -123,7 +120,7 @@ public sealed class ViewModelTests
 
         viewModel.ObservationDateTime = new DateTime(2026, 1, 15, 2, 0, 0);
 
-        // La noche en curso va de la puesta del 14 a la salida del Sol del 15.
+        // The night in progress goes from sunset on the 14th to sunrise on the 15th.
         var night = viewModel.Observer.Night!;
         night.WindowStartLocal.Date.Should().Be(new DateTime(2026, 1, 14));
         night.WindowEndLocal.Date.Should().Be(new DateTime(2026, 1, 15));
@@ -138,7 +135,7 @@ public sealed class ViewModelTests
     {
         var viewModel = await CreateLoadedMainAsync();
 
-        // CDMX, 15/1/2026: puesta ≈ 18:16, salida ≈ 07:13 (UTC-6).
+        // Mexico City, 2026-01-15: sunset ≈ 18:16, sunrise ≈ 07:13 (UTC-6).
         viewModel.Observer.Night!.SunsetLocal.Should().BeCloseTo(new DateTime(2026, 1, 15, 18, 16, 0), TimeSpan.FromMinutes(5));
         viewModel.Observer.Night.SunriseLocal.Should().BeCloseTo(new DateTime(2026, 1, 16, 7, 13, 0), TimeSpan.FromMinutes(5));
         viewModel.Tonight.DarkNightText.Should().MatchRegex(@"^\d\d:\d\d → \d\d:\d\d$");
@@ -152,7 +149,7 @@ public sealed class ViewModelTests
 
         viewModel.ObservationDateTime = new DateTime(2026, 1, 15, 13, 0, 0);
         viewModel.Tonight.SkyCondition.Should().Be(SkyCondition.Day);
-        viewModel.Tonight.SkyBanner.Should().StartWith("Es de día");
+        viewModel.Tonight.SkyBanner.Should().StartWith("It is daytime");
 
         viewModel.ObservationDateTime = new DateTime(2026, 1, 15, 23, 0, 0);
         viewModel.Tonight.SkyCondition.Should().Be(SkyCondition.Dark);
@@ -171,33 +168,20 @@ public sealed class ViewModelTests
     }
 
     [Theory]
-    [InlineData(0.01, true, "Luna nueva")]
-    [InlineData(0.25, true, "Creciente")]
-    [InlineData(0.5, true, "Cuarto creciente")]
-    [InlineData(0.8, false, "Gibosa menguante")]
-    [InlineData(0.99, false, "Luna llena")]
+    [InlineData(0.01, true, "New moon")]
+    [InlineData(0.25, true, "Waxing crescent")]
+    [InlineData(0.5, true, "First quarter")]
+    [InlineData(0.8, false, "Waning gibbous")]
+    [InlineData(0.99, false, "Full moon")]
     public void DescribeMoonPhase_NamesThePhase(double fraction, bool waxing, string expected)
     {
         DisplayNames.MoonPhase(fraction, waxing).Should().Be(expected);
     }
 
     [Fact]
-    public void MoonInterferes_OnlyWhenBrightCloseAndAboveHorizon()
-    {
-        var brightHigh = new MoonState(new HorizontalCoordinates(40, 180), new EquatorialCoordinates(1, 0), 0.9, true);
-        var brightLow = brightHigh with { Horizontal = new HorizontalCoordinates(-5, 180) };
-        var dim = brightHigh with { IlluminatedFraction = 0.1 };
-
-        MoonInterference.Interferes(brightHigh, 15).Should().BeTrue();
-        MoonInterference.Interferes(brightHigh, 45).Should().BeFalse();
-        MoonInterference.Interferes(brightLow, 15).Should().BeFalse();
-        MoonInterference.Interferes(dim, 15).Should().BeFalse();
-    }
-
-    [Fact]
     public async Task ObservationPlan_IsRestoredByIdAndSavedOnChanges()
     {
-        _planService.Entries = [new("M31", "con filtro"), new("M999")];
+        _planService.Entries = [new("M31", "with filter"), new("M999")];
         var viewModel = await CreateLoadedMainAsync();
 
         viewModel.Plan.Items.Select(o => o.Id).Should().Equal("M31");
@@ -223,7 +207,7 @@ public sealed class ViewModelTests
         settings.SaveCommand.Execute(null);
 
         settings.HasError.Should().BeTrue();
-        settings.StatusMessage.Should().Contain("latitud");
+        settings.StatusMessage.Should().Contain("Latitude");
         _settingsService.SaveCount.Should().Be(0);
     }
 

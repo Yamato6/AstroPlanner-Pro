@@ -1,36 +1,40 @@
 using AstroPlanner.Core.Models;
+using AstroPlanner.UI.Resources;
 
 namespace AstroPlanner.UI.ViewModels;
 
+/// <summary>An object seen from the observer at the chosen time, with tonight's events.</summary>
 public sealed class CelestialObjectObservation
 {
     public required CelestialObject Target { get; init; }
     public required HorizontalCoordinates Coordinates { get; init; }
     public bool IsVisible { get; init; }
+
     public string VisibilityStatus => Coordinates.AltitudeDegrees < 0
-        ? "No visible"
-        : IsVisible ? "Visible" : "Por debajo del umbral";
+        ? Strings.StatusNotVisible
+        : IsVisible ? Strings.StatusVisible : Strings.StatusBelowThreshold;
+
     public DateTime? RiseTimeLocal { get; init; }
     public DateTime? VisibilityStartTimeLocal { get; init; }
     public DateTime? BestObservationTimeLocal { get; init; }
     public DateTime? SetTimeLocal { get; init; }
     public double MaximumAltitudeDegrees { get; init; }
 
-    /// <summary>Magnitud aparente en el instante elegido (en los planetas cambia con la fecha).</summary>
+    /// <summary>Apparent magnitude at the chosen time (for planets it changes with the date).</summary>
     public double Magnitude { get; init; }
 
-    /// <summary>Distancia, fase y tamaño aparente si el objeto es un planeta; null si no.</summary>
+    /// <summary>Distance, phase and apparent size if the object is a planet; null otherwise.</summary>
     public PlanetPosition? Planet { get; init; }
 
     public bool IsPlanet => Planet is not null;
 
-    /// <summary>Nubosidad pronosticada (%) a la hora de culminación; null sin pronóstico.</summary>
+    /// <summary>Forecast cloud cover (%) at culmination; null without a forecast.</summary>
     public int? CloudCoverAtCulmination { get; init; }
 
-    /// <summary>Distancia angular a la Luna en el instante elegido (grados).</summary>
+    /// <summary>Angular distance to the Moon at the chosen time (degrees).</summary>
     public double? MoonSeparationDegrees { get; init; }
 
-    /// <summary>Aviso cuando la Luna dificulta la observación; null si no molesta.</summary>
+    /// <summary>Warning when the Moon makes observing harder; null when it does not.</summary>
     public string? MoonWarning { get; init; }
 
     public bool HasMoonWarning => MoonWarning is not null;

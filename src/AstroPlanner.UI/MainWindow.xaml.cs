@@ -7,14 +7,15 @@ using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Navigation;
 using System.Windows.Threading;
+using AstroPlanner.UI.Resources;
 using AstroPlanner.UI.Services;
 using AstroPlanner.UI.ViewModels;
 
 namespace AstroPlanner.UI;
 
 /// <summary>
-/// Code-behind mínimo: solo actualiza el gráfico de ScottPlot cuando cambian
-/// los datos relevantes. Toda la lógica vive en los ViewModels (MVVM estricto).
+/// Minimal code-behind: it only redraws the ScottPlot charts when their data changes and opens
+/// dialogs. All the logic lives in the view models (strict MVVM).
 /// </summary>
 public partial class MainWindow : Window
 {
@@ -63,8 +64,8 @@ public partial class MainWindow : Window
     }
 
     /// <summary>
-    /// Recupera el tamaño y la posición de la sesión anterior (ajustados al
-    /// escritorio actual) y los guarda al cerrar. Se llama antes de Show().
+    /// Restores the size and position of the previous session (fitted to the current desktop)
+    /// and saves them on close. Called before Show().
     /// </summary>
     public void RememberPlacement(WindowPlacementStore store)
     {
@@ -84,7 +85,7 @@ public partial class MainWindow : Window
             }
         }
 
-        // Maximizada y luego minimizada debe volver maximizada la próxima vez.
+        // Maximized and then minimized must come back maximized next time.
         var wasMaximized = WindowState == WindowState.Maximized;
         StateChanged += (_, _) =>
         {
@@ -96,7 +97,7 @@ public partial class MainWindow : Window
 
         Closing += (_, _) =>
         {
-            // RestoreBounds: el tamaño "normal" aunque esté maximizada o minimizada.
+            // RestoreBounds: the "normal" size even while maximized or minimized.
             var bounds = WindowState == WindowState.Normal ? new Rect(Left, Top, Width, Height) : RestoreBounds;
             if (!bounds.IsEmpty)
             {
@@ -105,7 +106,7 @@ public partial class MainWindow : Window
         };
     }
 
-    /// <summary>Abre en el navegador los enlaces de la interfaz (solo sitios permitidos, ver <see cref="SafeLinks"/>).</summary>
+    /// <summary>Opens UI links in the browser (allowed sites only, see <see cref="SafeLinks"/>).</summary>
     private void OnLinkClicked(object sender, RequestNavigateEventArgs e)
     {
         SafeLinks.Open(e.Uri);
@@ -117,8 +118,8 @@ public partial class MainWindow : Window
     private void ShowAbout() => new AboutWindow { Owner = this }.ShowDialog();
 
     /// <summary>
-    /// Atajos de teclado: Ctrl+F buscar, F5 ahora, Ctrl+, configuración,
-    /// Ctrl+P imprimir el plan, Ctrl+E exportar el plan, F1 acerca de.
+    /// Keyboard shortcuts: Ctrl+F search, F5 now, Ctrl+, settings, Ctrl+P print the plan,
+    /// Ctrl+E export the plan, F1 about.
     /// </summary>
     private void OnPreviewKeyDown(object sender, KeyEventArgs e)
     {
@@ -128,7 +129,7 @@ public partial class MainWindow : Window
         {
             case Key.F when ctrl:
                 Tabs.SelectedItem = PlannerTab;
-                // Tras cambiar de pestaña, la caja aún no está en pantalla: se enfoca cuando ya lo esté.
+                // Right after switching tabs the box is not on screen yet: focus it once it is.
                 Dispatcher.BeginInvoke(() =>
                 {
                     SearchBox.Focus();
@@ -142,7 +143,7 @@ public partial class MainWindow : Window
                 OnSettingsClicked(sender, e);
                 break;
             case Key.P when ctrl:
-                Tabs.SelectedItem = PlanTab;   // con el plan vacío, al menos se ve por qué no hay nada que imprimir
+                Tabs.SelectedItem = PlanTab;   // with an empty plan, at least the user sees why nothing is printed
                 OnPrintPlanClicked(sender, e);
                 break;
             case Key.E when ctrl:
@@ -168,7 +169,7 @@ public partial class MainWindow : Window
             Owner = this
         };
 
-        // Cancelar o cerrar con la X no debe dejar cambios a medias en memoria.
+        // Cancelling or closing with the X must not leave half-applied changes in memory.
         if (window.ShowDialog() != true)
         {
             _viewModel.Settings.RevertChanges();
@@ -194,8 +195,8 @@ public partial class MainWindow : Window
     }
 
     /// <summary>
-    /// Las notas del plan se guardan al salir del campo; con un atajo de teclado
-    /// el foco no sale, así que se confirma a mano antes de exportar o imprimir.
+    /// Plan notes are saved when leaving the field; with a keyboard shortcut the focus does not
+    /// leave, so the edit is committed by hand before exporting or printing.
     /// </summary>
     private static void CommitFocusedTextBox() =>
         (Keyboard.FocusedElement as TextBox)?.GetBindingExpression(TextBox.TextProperty)?.UpdateSource();
@@ -207,9 +208,9 @@ public partial class MainWindow : Window
 
         var dialog = new Microsoft.Win32.SaveFileDialog
         {
-            Title = "Exportar Mi plan",
-            Filter = "CSV (*.csv)|*.csv",
-            FileName = $"AstroPlanner-plan-{_viewModel.ObservationDate:yyyy-MM-dd}.csv"
+            Title = Strings.PlanExportDialogTitle,
+            Filter = Strings.CsvFileFilter,
+            FileName = string.Create(CultureInfo.InvariantCulture, $"AstroPlanner-plan-{_viewModel.ObservationDate:yyyy-MM-dd}.csv")
         };
 
         if (dialog.ShowDialog(this) == true)
@@ -235,9 +236,9 @@ public partial class MainWindow : Window
 
         var dialog = new Microsoft.Win32.SaveFileDialog
         {
-            Title = "Exportar bitácora",
-            Filter = "CSV (*.csv)|*.csv",
-            FileName = $"AstroPlanner-bitacora-{DateTime.Now:yyyy-MM-dd}.csv"
+            Title = Strings.LogbookExportDialogTitle,
+            Filter = Strings.CsvFileFilter,
+            FileName = string.Create(CultureInfo.InvariantCulture, $"AstroPlanner-logbook-{DateTime.Now:yyyy-MM-dd}.csv")
         };
 
         if (dialog.ShowDialog(this) == true)
@@ -257,14 +258,14 @@ public partial class MainWindow : Window
         var document = PlanPrintDocument.Create(_viewModel.Plan.Items.ToList(), _viewModel.Plan.SummaryText);
         document.PageWidth = dialog.PrintableAreaWidth;
         document.PageHeight = dialog.PrintableAreaHeight;
-        dialog.PrintDocument(((IDocumentPaginatorSource)document).DocumentPaginator, "AstroPlanner - Mi plan");
+        dialog.PrintDocument(((IDocumentPaginatorSource)document).DocumentPaginator, Strings.PlanPrintJobName);
     }
 
     private void OnSkyPlotClicked(object sender, MouseButtonEventArgs e)
     {
         if (_viewModel is null) return;
 
-        // Píxeles de WPF → píxeles de ScottPlot (escala de pantalla) → coordenadas de la carta.
+        // WPF pixels → ScottPlot pixels (display scale) → chart coordinates.
         var position = e.GetPosition(SkyPlot);
         var scale = SkyPlot.DisplayScale;
         var coordinates = SkyPlot.Plot.GetCoordinates(
@@ -272,15 +273,15 @@ public partial class MainWindow : Window
         _viewModel.Sky.SelectNearestOnSkyMap(coordinates.X, coordinates.Y);
     }
 
-    /// <summary>Color del tema (Themes/Dark.xaml) para ScottPlot: los gráficos comparten la paleta de la interfaz.</summary>
+    /// <summary>Theme color (Themes/Dark.xaml) for ScottPlot: the charts share the UI palette.</summary>
     private ScottPlot.Color Theme(string key) =>
         TryFindResource(key) is SolidColorBrush { Color: var c }
             ? new ScottPlot.Color(c.R, c.G, c.B, c.A)
-            : ScottPlot.Colors.Magenta;   // clave mal escrita: se nota a la vista
+            : ScottPlot.Colors.Magenta;   // misspelled key: visible at a glance
 
     /// <summary>
-    /// Carta polar del cielo: círculos de altitud cada 30°, puntos cardinales,
-    /// objetos sobre el horizonte (tamaño según magnitud), Mi plan, selección y Luna.
+    /// Polar sky chart: altitude circles every 30°, cardinal points, objects above the horizon
+    /// (size by magnitude), My plan, selection and the Moon.
     /// </summary>
     private void UpdateSkyMap(SkyViewModel viewModel)
     {
@@ -304,7 +305,7 @@ public partial class MainWindow : Window
             ring.LineWidth = 1;
         }
 
-        // Altitud mínima: por encima de este círculo el objeto cuenta como visible.
+        // Minimum altitude: inside this circle an object counts as visible.
         var threshold = plot.Add.Circle(0, 0, SkyProjection.HorizonRadius - viewModel.MinimumAltitude);
         threshold.LineColor = Theme("WarningBrush").WithAlpha(0.6);
         threshold.LineWidth = 1;
@@ -319,7 +320,7 @@ public partial class MainWindow : Window
             line.LineWidth = 1;
         }
 
-        foreach (var (label, azimuth) in new[] { ("N", 0.0), ("E", 90.0), ("S", 180.0), ("O", 270.0) })
+        foreach (var (label, azimuth) in new[] { (Strings.SkyNorth, 0.0), (Strings.SkyEast, 90.0), (Strings.SkySouth, 180.0), (Strings.SkyWest, 270.0) })
         {
             var (x, y) = SkyProjection.ToXY(-8, azimuth);
             var text = plot.Add.Text(label, x, y);
@@ -329,12 +330,12 @@ public partial class MainWindow : Window
             text.LabelAlignment = ScottPlot.Alignment.MiddleCenter;
         }
 
-        // La Luna va primero (debajo): su disco no debe tapar los objetos que tenga cerca.
+        // The Moon goes first (underneath): its disc must not hide nearby objects.
         if (viewModel.Moon is { IsAboveHorizon: true } moon)
         {
             var (x, y) = SkyProjection.ToXY(moon.Horizontal.AltitudeDegrees, moon.Horizontal.AzimuthDegrees);
             plot.Add.Marker(x, y, ScottPlot.MarkerShape.FilledCircle, 22, Theme("MoonBrush").WithAlpha(0.85));
-            var label = plot.Add.Text($"Luna {viewModel.MoonIlluminationText}", x, y - 6);
+            var label = plot.Add.Text(DisplayNames.Format(Strings.MoonLabelFormat, viewModel.MoonIlluminationText), x, y - 6);
             label.LabelFontColor = Theme("MoonBrush");
             label.LabelFontSize = 12;
             label.LabelAlignment = ScottPlot.Alignment.UpperCenter;
@@ -346,7 +347,7 @@ public partial class MainWindow : Window
             float size;
             if (point.IsPlanet)
             {
-                // Planetas: rombo dorado (naranja si están en Mi plan), con su nombre.
+                // Planets: golden diamond (orange when in My plan), with their name.
                 size = 13;
                 plot.Add.Marker(x, y, ScottPlot.MarkerShape.FilledDiamond, size,
                     Theme(point.IsInPlan ? "WarningBrush" : "PlanetBrush"));
@@ -370,8 +371,8 @@ public partial class MainWindow : Window
             label.LabelAlignment = ScottPlot.Alignment.MiddleLeft;
         }
 
-        // Círculo completo y sin deformar: el lado corto del gráfico abarca
-        // ±100 y el largo se amplía en proporción (SquareUnits recortaba el corto).
+        // Full, undistorted circle: the short side of the chart spans ±100 and the long side
+        // grows in proportion (SquareUnits used to crop the short one).
         var width = Math.Max(SkyPlot.ActualWidth, 1);
         var height = Math.Max(SkyPlot.ActualHeight, 1);
         const double halfSpan = 100;
@@ -387,7 +388,7 @@ public partial class MainWindow : Window
     {
         var points = viewModel.GetNightAltitudeCurve();
 
-        // Con una entrada inválida se conserva la última curva, igual que la tabla.
+        // With invalid input the last curve is kept, like the table.
         if (points.Count == 0 && viewModel.InputError is not null)
         {
             return;
@@ -402,12 +403,11 @@ public partial class MainWindow : Window
 
         if (points.Count > 0)
         {
-            // Primero el fondo (crepúsculo y nubes) para que las curvas queden encima.
+            // Background first (twilight and clouds) so that the curves are drawn on top.
             AddTwilightBands(viewModel.Night);
             AddCloudBands(viewModel);
 
-            // Eje X con fechas reales para que el cambio de día muestre
-            // correctamente 23:00, 00:00, 01:00, etc.
+            // X axis with real dates so that the day change shows 23:00, 00:00, 01:00, etc.
             var x = points.Select(p => p.LocalTime.ToOADate()).ToArray();
             var y = points.Select(p => p.AltitudeDegrees).ToArray();
 
@@ -417,7 +417,7 @@ public partial class MainWindow : Window
                 var moonLine = AltitudePlot.Plot.Add.Scatter(
                     moonPoints.Select(p => p.LocalTime.ToOADate()).ToArray(),
                     moonPoints.Select(p => p.AltitudeDegrees).ToArray());
-                moonLine.LegendText = $"Luna ({viewModel.MoonIlluminationText})";
+                moonLine.LegendText = DisplayNames.Format(Strings.MoonLegendFormat, viewModel.MoonIlluminationText);
                 moonLine.Color = Theme("MoonBrush").WithAlpha(0.8);
                 moonLine.LineWidth = 1.5f;
                 moonLine.LinePattern = ScottPlot.LinePattern.Dashed;
@@ -431,24 +431,24 @@ public partial class MainWindow : Window
                 nowLine.LineColor = Theme("NightMutedTextBrush");
                 nowLine.LineWidth = 1;
                 nowLine.LinePattern = ScottPlot.LinePattern.Dotted;
-                nowLine.LegendText = "Hora elegida";
+                nowLine.LegendText = Strings.ChartChosenTime;
             }
 
             var altitudeLine = AltitudePlot.Plot.Add.Scatter(x, y);
-            altitudeLine.LegendText = "Altitud";
+            altitudeLine.LegendText = Strings.ChartAltitude;
             altitudeLine.Color = Theme("AccentBrush");
             altitudeLine.LineWidth = 2;
             var thresholdLine = AltitudePlot.Plot.Add.HorizontalLine(viewModel.MinimumAltitude);
             thresholdLine.LineColor = Theme("WarningBrush");
             thresholdLine.LineWidth = 2;
-            thresholdLine.LegendText = "Altitud mínima";
+            thresholdLine.LegendText = Strings.ChartMinimumAltitude;
 
             AltitudePlot.Plot.Axes.Title.Label.Text =
                 $"{viewModel.SelectedObject?.Id} — {viewModel.SelectedObject?.CommonName}";
-            AltitudePlot.Plot.Axes.Bottom.Label.Text = "Hora local";
-            AltitudePlot.Plot.Axes.Left.Label.Text = "Altitud (°)";
+            AltitudePlot.Plot.Axes.Bottom.Label.Text = Strings.ChartLocalTime;
+            AltitudePlot.Plot.Axes.Left.Label.Text = Strings.ChartAltitudeAxis;
             AltitudePlot.Plot.ShowLegend();
-            // Leyenda oscura: con el fondo blanco por defecto la línea de la Luna no se ve.
+            // Dark legend: with the default white background the Moon line is invisible.
             AltitudePlot.Plot.Legend.BackgroundColor = Theme("NightPanelBrush").WithAlpha(0.92);
             AltitudePlot.Plot.Legend.FontColor = Theme("NightTextBrush");
             AltitudePlot.Plot.Legend.OutlineColor = Theme("ControlBorderBrush");
@@ -468,8 +468,8 @@ public partial class MainWindow : Window
     }
 
     /// <summary>
-    /// Nubosidad pronosticada por horas: una franja gris por hora, más opaca
-    /// cuanto más nublado. Sin pronóstico no se dibuja nada.
+    /// Hourly forecast cloud cover: one grey band per hour, more opaque the cloudier it is.
+    /// Nothing is drawn without a forecast.
     /// </summary>
     private void AddCloudBands(ObjectDetailViewModel viewModel)
     {
@@ -486,16 +486,15 @@ public partial class MainWindow : Window
             span.LineStyle.Width = 0;
             if (first)
             {
-                span.LegendText = "Nubes (pronóstico)";
+                span.LegendText = Strings.ChartClouds;
                 first = false;
             }
         }
     }
 
     /// <summary>
-    /// Sombrea el crepúsculo: de la puesta del Sol al final del crepúsculo
-    /// astronómico y del inicio del crepúsculo matutino a la salida. Si nunca
-    /// oscurece del todo, se sombrea toda la ventana.
+    /// Shades twilight: from sunset to the end of astronomical twilight and from the start of
+    /// morning twilight to sunrise. If it never gets fully dark, the whole window is shaded.
     /// </summary>
     private void AddTwilightBands(Core.Models.NightInfo? night)
     {
@@ -520,7 +519,7 @@ public partial class MainWindow : Window
             span.LineStyle.Width = 0;
             if (first)
             {
-                span.LegendText = "Crepúsculo";
+                span.LegendText = Strings.ChartTwilight;
                 first = false;
             }
         }

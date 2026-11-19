@@ -1,16 +1,15 @@
 using AstroPlanner.Core.Algorithms;
-using FluentAssertions;
 
 namespace AstroPlanner.Core.Tests;
 
 public sealed class ObservationNightTests
 {
     [Theory]
-    [InlineData(2026, 3, 5, 2, 0, 2026, 3, 4)]   // madrugada → noche que empezó el día anterior
-    [InlineData(2026, 3, 5, 11, 59, 2026, 3, 4)] // justo antes del mediodía
-    [InlineData(2026, 3, 5, 12, 0, 2026, 3, 5)]  // desde el mediodía → noche del mismo día
+    [InlineData(2026, 3, 5, 2, 0, 2026, 3, 4)]   // small hours → the night that started the day before
+    [InlineData(2026, 3, 5, 11, 59, 2026, 3, 4)] // just before noon
+    [InlineData(2026, 3, 5, 12, 0, 2026, 3, 5)]  // from noon on → the night of the same day
     [InlineData(2026, 3, 5, 20, 0, 2026, 3, 5)]
-    [InlineData(2026, 1, 1, 1, 30, 2025, 12, 31)] // cruza el cambio de año
+    [InlineData(2026, 1, 1, 1, 30, 2025, 12, 31)] // across the new year
     public void GetNightStartLocal_ReturnsSixPmOfTheNightContainingTheTime(
         int year, int month, int day, int hour, int minute,
         int expectedYear, int expectedMonth, int expectedDay)

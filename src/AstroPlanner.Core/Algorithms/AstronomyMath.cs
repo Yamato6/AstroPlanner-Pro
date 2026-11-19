@@ -53,7 +53,7 @@ public static class AstronomyMath
         return normalized < 0 ? normalized + 360.0 : normalized;
     }
 
-    /// <summary>Distancia angular (grados) entre dos puntos del cielo (Meeus 17.1).</summary>
+    /// <summary>Angular distance (degrees) between two points of the sky (Meeus 17.1).</summary>
     public static double AngularSeparationDegrees(EquatorialCoordinates a, EquatorialCoordinates b)
     {
         ArgumentNullException.ThrowIfNull(a);

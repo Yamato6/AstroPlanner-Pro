@@ -123,7 +123,7 @@ public sealed partial class WeatherState : ObservableObject
         }
         catch (WeatherForecastException ex)
         {
-            _logger.LogInfo($"Pronóstico no disponible: {ex.Message}");
+            _logger.LogInfo($"Forecast unavailable: {ex.Message}");
             LastError = ex.Message;
             _lastFailedAttemptUtc = now;
             _lastFailedLocation = location;
@@ -151,7 +151,7 @@ public sealed partial class WeatherState : ObservableObject
         }
         catch (Exception ex)
         {
-            _logger.LogError("Error inesperado al actualizar el pronóstico.", ex);
+            _logger.LogError("Unexpected error while refreshing the forecast.", ex);
         }
     }
 

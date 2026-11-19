@@ -12,16 +12,16 @@ public enum Planet
 }
 
 /// <summary>
-/// Un planeta visto desde la Tierra en un instante.
+/// A planet seen from the Earth at a given instant.
 /// </summary>
-/// <param name="Equatorial">Coordenadas aparentes del equinoccio de la fecha.</param>
-/// <param name="DistanceAu">Distancia a la Tierra (Δ), en unidades astronómicas.</param>
-/// <param name="SunDistanceAu">Distancia al Sol (r), en unidades astronómicas.</param>
-/// <param name="ElongationDegrees">Separación angular respecto al Sol vista desde la Tierra.</param>
-/// <param name="PhaseAngleDegrees">Ángulo Sol-planeta-Tierra.</param>
-/// <param name="IlluminatedFraction">Fracción iluminada del disco (0-1).</param>
-/// <param name="Magnitude">Magnitud visual aparente.</param>
-/// <param name="ApparentDiameterArcsec">Diámetro ecuatorial aparente, en segundos de arco.</param>
+/// <param name="Equatorial">Apparent coordinates, equinox of date.</param>
+/// <param name="DistanceAu">Distance to the Earth (Δ), in astronomical units.</param>
+/// <param name="SunDistanceAu">Distance to the Sun (r), in astronomical units.</param>
+/// <param name="ElongationDegrees">Angular separation from the Sun as seen from the Earth.</param>
+/// <param name="PhaseAngleDegrees">Sun-planet-Earth angle.</param>
+/// <param name="IlluminatedFraction">Illuminated fraction of the disc (0-1).</param>
+/// <param name="Magnitude">Apparent visual magnitude.</param>
+/// <param name="ApparentDiameterArcsec">Apparent equatorial diameter, in arcseconds.</param>
 public sealed record PlanetPosition(
     Planet Planet,
     EquatorialCoordinates Equatorial,
@@ -33,17 +33,17 @@ public sealed record PlanetPosition(
     double Magnitude,
     double ApparentDiameterArcsec);
 
-/// <summary>Los planetas que se añaden al catálogo, con su nombre en español.</summary>
+/// <summary>The planets added to the catalog; for planets the id is the name.</summary>
 public static class SolarSystemCatalog
 {
     public static IReadOnlyList<CelestialObject> Planets { get; } =
     [
-        CelestialObject.CreatePlanet("Mercurio", "Mercurio", Planet.Mercury),
+        CelestialObject.CreatePlanet("Mercury", "Mercury", Planet.Mercury),
         CelestialObject.CreatePlanet("Venus", "Venus", Planet.Venus),
-        CelestialObject.CreatePlanet("Marte", "Marte", Planet.Mars),
-        CelestialObject.CreatePlanet("Júpiter", "Júpiter", Planet.Jupiter),
-        CelestialObject.CreatePlanet("Saturno", "Saturno", Planet.Saturn),
-        CelestialObject.CreatePlanet("Urano", "Urano", Planet.Uranus),
-        CelestialObject.CreatePlanet("Neptuno", "Neptuno", Planet.Neptune)
+        CelestialObject.CreatePlanet("Mars", "Mars", Planet.Mars),
+        CelestialObject.CreatePlanet("Jupiter", "Jupiter", Planet.Jupiter),
+        CelestialObject.CreatePlanet("Saturn", "Saturn", Planet.Saturn),
+        CelestialObject.CreatePlanet("Uranus", "Uranus", Planet.Uranus),
+        CelestialObject.CreatePlanet("Neptune", "Neptune", Planet.Neptune)
     ];
 }

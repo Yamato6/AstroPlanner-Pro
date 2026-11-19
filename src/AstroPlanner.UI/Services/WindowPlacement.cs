@@ -4,25 +4,25 @@ using System.Windows;
 
 namespace AstroPlanner.UI.Services;
 
-/// <summary>Tamaño, posición y estado de la ventana principal entre sesiones.</summary>
+/// <summary>Size, position and state of the main window between sessions.</summary>
 public sealed record WindowPlacement(double Left, double Top, double Width, double Height, bool IsMaximized)
 {
-    /// <summary>Lo mínimo de la barra de título que debe quedar a la vista para poder arrastrar la ventana.</summary>
+    /// <summary>How much of the title bar must stay visible for the window to be draggable.</summary>
     private const double MinVisible = 120;
 
     /// <summary>
-    /// Ajusta la ventana al escritorio actual (<paramref name="virtualScreen"/>:
-    /// todos los monitores). Si quedó fuera, p. ej. porque se desconectó un
-    /// monitor, se centra en el área de trabajo del principal y se ajusta a ella.
+    /// Fits the window to the current desktop (<paramref name="virtualScreen"/>: all monitors).
+    /// If it ended up outside, e.g. because a monitor was disconnected, it is centered on the
+    /// primary work area and fitted to it.
     /// </summary>
     public WindowPlacement FitTo(Rect virtualScreen, Rect workArea, double minWidth, double minHeight)
     {
-        // Límite por todo el escritorio, no por el monitor principal: una ventana
-        // grande en un segundo monitor más grande conserva su tamaño.
+        // Limited by the whole desktop, not by the primary monitor: a large window on a
+        // larger second monitor keeps its size.
         var width = Math.Clamp(Width, minWidth, Math.Max(minWidth, virtualScreen.Width));
         var height = Math.Clamp(Height, minHeight, Math.Max(minHeight, virtualScreen.Height));
 
-        // La barra de título (franja superior) debe verse en parte dentro del escritorio.
+        // Part of the title bar (top strip) must be inside the desktop.
         var titleBar = new Rect(Left, Top, width, 32);
         titleBar.Intersect(virtualScreen);
         var reachable = !titleBar.IsEmpty && titleBar.Width >= Math.Min(MinVisible, width) && Top >= virtualScreen.Top;
@@ -43,7 +43,7 @@ public sealed record WindowPlacement(double Left, double Top, double Width, doub
     }
 }
 
-/// <summary>Guarda la posición de la ventana en %LocalAppData%\AstroPlanner\window.json.</summary>
+/// <summary>Stores the window position in %LocalAppData%\AstroPlanner\window.json.</summary>
 public sealed class WindowPlacementStore(string? filePath = null)
 {
     private readonly string _filePath = filePath ?? AppPaths.DataFile("window.json");
@@ -60,7 +60,7 @@ public sealed class WindowPlacementStore(string? filePath = null)
         }
         catch (Exception ex) when (ex is JsonException or IOException or UnauthorizedAccessException)
         {
-            return null;   // sin posición guardada: la ventana se centra
+            return null;   // no saved position: the window is centered
         }
     }
 
@@ -72,7 +72,7 @@ public sealed class WindowPlacementStore(string? filePath = null)
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
         {
-            // No poder recordar la posición no debe impedir cerrar la app.
+            // Not being able to remember the position must not prevent closing the app.
         }
     }
 }

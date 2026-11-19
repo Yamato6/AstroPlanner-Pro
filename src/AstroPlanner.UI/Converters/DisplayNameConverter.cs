@@ -5,7 +5,7 @@ using AstroPlanner.UI.Services;
 
 namespace AstroPlanner.UI.Converters;
 
-/// <summary>Muestra en español el tipo de un objeto (ver <see cref="DisplayNames"/>).</summary>
+/// <summary>Shows the user-facing name of an object type (see <see cref="DisplayNames"/>).</summary>
 public sealed class DisplayNameConverter : IValueConverter
 {
     public object Convert(object value, Type targetType, object parameter, CultureInfo culture) =>

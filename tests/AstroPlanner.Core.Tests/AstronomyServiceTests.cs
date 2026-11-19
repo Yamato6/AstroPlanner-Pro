@@ -1,7 +1,5 @@
 using AstroPlanner.Core.Models;
 using AstroPlanner.Core.Services;
-using FluentAssertions;
-using Xunit;
 
 namespace AstroPlanner.Core.Tests;
 
@@ -9,20 +7,14 @@ public class AstronomyServiceTests
 {
     private readonly AstronomyService _service = new();
     private readonly ObserverLocation _madrid = new(40.4, -3.7);
-    private readonly CelestialObject _m42 = new(
-        "M42",
-        "Nebulosa de Orión",
-        "Orion",
-        CelestialObjectType.DiffuseNebula,
-        4.0,
-        new EquatorialCoordinates(5.59, -5.39));
+    private readonly CelestialObject _m42 = TestCatalog.M42;
 
     [Fact]
     public void GetHorizontal_MatchesCoordinateTransformer()
     {
-        var instante = new DateTime(2023, 10, 15, 22, 0, 0, DateTimeKind.Utc);
+        var instant = new DateTime(2023, 10, 15, 22, 0, 0, DateTimeKind.Utc);
 
-        var h = _service.GetHorizontal(_m42, _madrid, instante);
+        var h = _service.GetHorizontal(_m42, _madrid, instant);
 
         h.AltitudeDegrees.Should().BeInRange(-90, 90);
         h.AzimuthDegrees.Should().BeInRange(0, 360);
@@ -31,23 +23,23 @@ public class AstronomyServiceTests
     [Fact]
     public void GetAltitudeSeries_ReturnsExpectedNumberOfPoints()
     {
-        var inicio = new DateTime(2023, 10, 15, 18, 0, 0, DateTimeKind.Utc);
-        var fin = new DateTime(2023, 10, 16, 6, 0, 0, DateTimeKind.Utc);
-        var paso = TimeSpan.FromMinutes(30);
+        var start = new DateTime(2023, 10, 15, 18, 0, 0, DateTimeKind.Utc);
+        var end = new DateTime(2023, 10, 16, 6, 0, 0, DateTimeKind.Utc);
+        var interval = TimeSpan.FromMinutes(30);
 
-        var serie = _service.GetAltitudeSeries(_m42, _madrid, inicio, fin, paso).ToList();
+        var series = _service.GetAltitudeSeries(_m42, _madrid, start, end, interval).ToList();
 
-        // 18:00 a 06:00 = 12h cada 30min => 24 intervalos + punto inicial = 25 puntos.
-        serie.Should().HaveCount(25);
-        serie.Should().OnlyContain(p => p.AltitudeDegrees >= -90 && p.AltitudeDegrees <= 90);
+        // 18:00 to 06:00 = 12 h every 30 min => 24 intervals + the first point = 25 points.
+        series.Should().HaveCount(25);
+        series.Should().OnlyContain(p => p.AltitudeDegrees >= -90 && p.AltitudeDegrees <= 90);
     }
 
     [Fact]
     public void GetAltitudeSeries_InvalidStep_Throws()
     {
-        var inicio = new DateTime(2023, 10, 15, 18, 0, 0, DateTimeKind.Utc);
+        var start = new DateTime(2023, 10, 15, 18, 0, 0, DateTimeKind.Utc);
 
-        var act = () => _service.GetAltitudeSeries(_m42, _madrid, inicio, inicio.AddHours(1), TimeSpan.Zero).ToList();
+        var act = () => _service.GetAltitudeSeries(_m42, _madrid, start, start.AddHours(1), TimeSpan.Zero).ToList();
 
         act.Should().Throw<ArgumentOutOfRangeException>();
     }
@@ -59,7 +51,7 @@ public class AstronomyServiceTests
 
     private static CelestialObject ObjectAt(double raHours, double decDegrees) => new(
         "TEST",
-        "Objeto de prueba",
+        "Test object",
         "Test",
         CelestialObjectType.Unknown,
         5.0,
@@ -84,13 +76,13 @@ public class AstronomyServiceTests
 
         var events = _service.GetNightEvents(_m42, _madrid, start, start.AddHours(12), MadridZone, 20);
 
-        // Altitud de culminación = 90 - latitud + declinación = 90 - 40.4 - 5.39 ≈ 44.2°.
+        // Culmination altitude = 90 - latitude + declination = 90 - 40.4 - 5.39 ≈ 44.2°.
         events.MaximumAltitudeDegrees.Should().BeApproximately(44.2, 1.0);
         events.CulminationLocal.Should().BeAfter(start.AddHours(4)).And.BeBefore(start.AddHours(9));
         events.RiseLocal.Should().NotBeNull().And.BeBefore(events.CulminationLocal);
         events.ThresholdCrossingLocal.Should().NotBeNull().And.BeAfter(events.RiseLocal!.Value);
-        // Semiarco ≈ 5.7 h: culmina hacia la 01:15 y se pone hacia las 07:00,
-        // fuera de la ventana 18:00 → 06:00, así que no hay puesta en la noche.
+        // Semi-arc ≈ 5.7 h: it culminates around 01:15 and sets around 07:00, outside the
+        // 18:00 → 06:00 window, so there is no set during the night.
         events.SetLocal.Should().BeNull();
     }
 
@@ -110,7 +102,7 @@ public class AstronomyServiceTests
     [Fact]
     public void GetNightEvents_ObjectBelowHorizonAllNight_HasNegativeMaximum()
     {
-        // Dec -80° desde latitud 40°N: altitud máxima = 90 - 40 - 80 = -30°.
+        // Dec -80° from latitude 40°N: maximum altitude = 90 - 40 - 80 = -30°.
         var observer = new ObserverLocation(40, 0);
 
         var events = _service.GetNightEvents(

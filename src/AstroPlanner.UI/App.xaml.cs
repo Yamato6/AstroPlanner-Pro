@@ -6,15 +6,15 @@ using AstroPlanner.Core.Interfaces;
 using AstroPlanner.Core.Services;
 using AstroPlanner.Data.Repositories;
 using AstroPlanner.Online.Weather;
+using AstroPlanner.UI.Resources;
 using AstroPlanner.UI.Services;
 using AstroPlanner.UI.ViewModels;
 
 namespace AstroPlanner.UI;
 
 /// <summary>
-/// Punto de entrada de la aplicación WPF.
-/// Configura el contenedor de dependencias (Clean Architecture): Core no
-/// conoce la UI, y la UI ensambla las implementaciones.
+/// WPF entry point and composition root: Core knows nothing about the UI, and the UI
+/// assembles the implementations.
 /// </summary>
 public partial class App : Application
 {
@@ -31,23 +31,22 @@ public partial class App : Application
 
     private static void ConfigureServices(IServiceCollection services)
     {
-        // Reloj del sistema (sustituible en pruebas; lo usa el modo en vivo)
+        // System clock (replaceable in tests; used by live mode)
         services.AddSingleton(TimeProvider.System);
 
-        // Registro de errores (archivo diario en %LocalAppData%\AstroPlanner\logs)
+        // Error log (one file per day in %LocalAppData%\AstroPlanner\logs)
         services.AddSingleton<IAppLogger, FileAppLogger>();
 
-        // Datos
-        // Catálogo Messier + planetas
+        // Data: Messier catalog + planets, cities
         services.AddSingleton<ICelestialRepository>(
             new CatalogWithPlanetsRepository(new JsonCelestialRepository()));
         services.AddSingleton<ICityRepository, JsonCityRepository>();
 
-        // Servicios de aplicación (Core puro)
+        // Application services (pure Core)
         services.AddSingleton<IAstronomyService, AstronomyService>();
 
-        // Internet: un HttpClient compartido con tiempo límite e identificación
-        // (GitHub rechaza peticiones sin User-Agent).
+        // Internet: one shared HttpClient with a timeout and identification
+        // (GitHub rejects requests without a User-Agent).
         services.AddSingleton(_ =>
         {
             var http = new HttpClient { Timeout = TimeSpan.FromSeconds(15) };
@@ -58,7 +57,7 @@ public partial class App : Application
             new OpenMeteoForecastService(sp.GetRequiredService<HttpClient>(), sp.GetRequiredService<TimeProvider>()));
         services.AddSingleton<IUpdateChecker, GitHubUpdateChecker>();
 
-        // Persistencia de configuración de la UI
+        // UI persistence
         services.AddSingleton<ISettingsService, JsonSettingsService>();
         services.AddSingleton<IObservationPlanService, JsonObservationPlanService>();
         services.AddSingleton<IObservationLogService>(_ => new JsonObservationLogService());
@@ -67,7 +66,7 @@ public partial class App : Application
         services.AddSingleton<IObserverContext, ObserverContext>();
         services.AddSingleton<WeatherState>();
 
-        // ViewModels
+        // View models
         services.AddSingleton<SettingsViewModel>();
         services.AddSingleton<LogbookViewModel>();
         services.AddSingleton<TargetsViewModel>();
@@ -77,7 +76,7 @@ public partial class App : Application
         services.AddSingleton<TonightViewModel>();
         services.AddSingleton<ShellViewModel>();
 
-        // Vistas
+        // Views
         services.AddSingleton<MainWindow>();
     }
 
@@ -87,7 +86,7 @@ public partial class App : Application
 
         if (_serviceProvider is null) return;
 
-        // Si ya hay una ventana abierta, se pone delante y esta instancia termina.
+        // If a window is already open, bring it to the front and exit this instance.
         _singleInstance = SingleInstance.TryCreate();
         if (_singleInstance is { IsFirstInstance: false })
         {
@@ -97,14 +96,14 @@ public partial class App : Application
         }
 
         _logger = _serviceProvider.GetRequiredService<IAppLogger>();
-        _logger.LogInfo($"AstroPlanner {AppVersion.Current} iniciado.");
+        _logger.LogInfo($"AstroPlanner {AppVersion.Current} started.");
         DispatcherUnhandledException += OnDispatcherUnhandledException;
         AppDomain.CurrentDomain.UnhandledException += OnDomainUnhandledException;
         TaskScheduler.UnobservedTaskException += OnUnobservedTaskException;
 
         if (_singleInstance is null)
         {
-            _logger.LogInfo("No se pudo comprobar si ya había otra instancia abierta; se continúa igualmente.");
+            _logger.LogInfo("Could not check whether another instance was already open; continuing anyway.");
         }
 
         var mainWindow = _serviceProvider.GetRequiredService<MainWindow>();
@@ -117,29 +116,27 @@ public partial class App : Application
     }
 
     /// <summary>
-    /// Error no controlado en el hilo de la interfaz: se registra, se avisa al
-    /// usuario y la aplicación sigue abierta en lugar de cerrarse sin explicación.
+    /// Unhandled error on the UI thread: logged, the user is told, and the application stays
+    /// open instead of closing without explanation.
     /// </summary>
     private void OnDispatcherUnhandledException(object sender, DispatcherUnhandledExceptionEventArgs e)
     {
-        _logger?.LogError("Error no controlado en la interfaz.", e.Exception);
+        _logger?.LogError("Unhandled error in the user interface.", e.Exception);
         MessageBox.Show(
-            "Ocurrió un error inesperado. La aplicación seguirá abierta, pero si el problema "
-            + "se repite revisa el registro en:\n"
-            + _logger?.LogLocation,
-            "AstroPlanner",
+            DisplayNames.Format(Strings.UnhandledErrorMessage, _logger?.LogLocation),
+            Strings.AppName,
             MessageBoxButton.OK,
             MessageBoxImage.Error);
         e.Handled = true;
     }
 
-    /// <summary>Error fatal fuera del hilo de la interfaz: solo puede registrarse.</summary>
+    /// <summary>Fatal error outside the UI thread: it can only be logged.</summary>
     private void OnDomainUnhandledException(object sender, UnhandledExceptionEventArgs e) =>
-        _logger?.LogError("Error fatal no controlado.", e.ExceptionObject as Exception);
+        _logger?.LogError("Fatal unhandled error.", e.ExceptionObject as Exception);
 
     private void OnUnobservedTaskException(object? sender, UnobservedTaskExceptionEventArgs e)
     {
-        _logger?.LogError("Error no observado en una tarea en segundo plano.", e.Exception);
+        _logger?.LogError("Unobserved error in a background task.", e.Exception);
         e.SetObserved();
     }
 

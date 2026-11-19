@@ -1,5 +1,4 @@
 using AstroPlanner.Core.Algorithms;
-using FluentAssertions;
 
 namespace AstroPlanner.Core.Tests;
 
@@ -8,7 +7,7 @@ public sealed class TimeZoneConversionTests
     [Fact]
     public void ToUtc_MexicoCity_AppliesFixedOffsetWithoutDaylightSaving()
     {
-        // México eliminó el horario de verano en 2022: CDMX es UTC-6 todo el año.
+        // Mexico dropped daylight saving time in 2022: Mexico City is UTC-6 all year.
         var zone = TimeZoneInfo.FindSystemTimeZoneById("Central Standard Time (Mexico)");
 
         var utc = TimeZoneConversion.ToUtc(new DateTime(2026, 10, 22, 20, 0, 0), zone);
@@ -20,8 +19,8 @@ public sealed class TimeZoneConversionTests
     [Fact]
     public void ToUtc_InvalidTimeDuringSpringForward_IsShiftedOneHour()
     {
-        // En Los Ángeles, el 8/3/2026 a las 02:00 el reloj salta a las 03:00:
-        // las 02:30 no existen y se tratan como 03:30 PDT (UTC-7).
+        // In Los Angeles, on 2026-03-08 at 02:00 the clock jumps to 03:00: 02:30 does not
+        // exist and is treated as 03:30 PDT (UTC-7).
         var zone = TimeZoneInfo.FindSystemTimeZoneById("Pacific Standard Time");
 
         var utc = TimeZoneConversion.ToUtc(new DateTime(2026, 3, 8, 2, 30, 0), zone);
@@ -45,7 +44,7 @@ public sealed class TimeZoneConversionTests
     [Theory]
     [InlineData(null)]
     [InlineData("")]
-    [InlineData("Zona que no existe")]
+    [InlineData("Zone that does not exist")]
     public void FindOrLocal_UnknownId_ReturnsLocalZone(string? id)
     {
         TimeZoneConversion.FindOrLocal(id).Should().Be(TimeZoneInfo.Local);

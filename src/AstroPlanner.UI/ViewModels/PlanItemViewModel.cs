@@ -3,34 +3,39 @@ using CommunityToolkit.Mvvm.ComponentModel;
 namespace AstroPlanner.UI.ViewModels;
 
 /// <summary>
-/// Fila de "Mi plan": el objeto del catálogo (con su posición actual), la nota
-/// del usuario y la hora de culminación de la noche, que ordena el plan.
+/// Row of "My plan": the catalog object (with its current position), the user's note and
+/// tonight's culmination time, which orders the plan.
 /// </summary>
 public sealed partial class PlanItemViewModel : ObservableObject
 {
-    private readonly Action<PlanItemViewModel> _onNoteChanged;
+    /// <summary>Null while the constructor sets the initial note, so that it is not saved again.</summary>
+    private readonly Action<PlanItemViewModel>? _onNoteChanged;
 
     public PlanItemViewModel(CelestialObjectRowViewModel row, string note, Action<PlanItemViewModel> onNoteChanged)
     {
         Row = row;
-        this.note = note;
+        Note = note;
         _onNoteChanged = onNoteChanged;
     }
 
-    /// <summary>Fila del catálogo; comparte instancia con la tabla del planificador.</summary>
+    /// <summary>Catalog row; the same instance as in the targets table.</summary>
     public CelestialObjectRowViewModel Row { get; }
 
     public string Id => Row.Id;
 
-    [ObservableProperty] private string note;
+    [ObservableProperty]
+    public partial string Note { get; set; }
 
-    /// <summary>Mejor momento: máxima altitud dentro de la noche (hora local).</summary>
-    [ObservableProperty] private DateTime? culminationLocal;
+    /// <summary>Best moment: maximum altitude within the night (local time).</summary>
+    [ObservableProperty]
+    public partial DateTime? CulminationLocal { get; set; }
 
-    [ObservableProperty] private double maximumAltitudeDegrees;
+    [ObservableProperty]
+    public partial double MaximumAltitudeDegrees { get; set; }
 
-    /// <summary>Nubosidad pronosticada (%) a la hora de culminación; null sin pronóstico.</summary>
-    [ObservableProperty] private int? cloudCoverAtCulmination;
+    /// <summary>Forecast cloud cover (%) at culmination; null without a forecast.</summary>
+    [ObservableProperty]
+    public partial int? CloudCoverAtCulmination { get; set; }
 
-    partial void OnNoteChanged(string value) => _onNoteChanged(this);
+    partial void OnNoteChanged(string value) => _onNoteChanged?.Invoke(this);
 }

@@ -4,17 +4,15 @@ using AstroPlanner.Core.Models;
 using AstroPlanner.Core.Services;
 using AstroPlanner.UI.Services;
 using AstroPlanner.UI.ViewModels;
-using FluentAssertions;
 
 namespace AstroPlanner.UI.Tests;
 
 /// <summary>
-/// Funciones de la 0.6: búsqueda, filtro de magnitud, modo en vivo, Mi plan
-/// (notas, orden, CSV, impresión) y carta del cielo.
+/// Search, magnitude filter, live mode, My plan (notes, order, CSV, print) and the sky chart.
 /// </summary>
 public sealed class UsabilityTests
 {
-    // 2026-01-16 04:00 UTC = 2026-01-15 22:00 en CDMX (UTC-6).
+    // 2026-01-16 04:00 UTC = 2026-01-15 22:00 in Mexico City (UTC-6).
     private static readonly DateTimeOffset WinterNightUtc = new(2026, 1, 16, 4, 0, 0, TimeSpan.Zero);
 
     private readonly FakeSettingsService _settingsService = new(new ObserverSettings { MinimumAltitude = 20 });
@@ -30,17 +28,17 @@ public sealed class UsabilityTests
         return viewModel;
     }
 
-    // ─── Búsqueda y magnitud ────────────────────────────────────────────
+    // ─── Search and magnitude ───────────────────────────────────────────
 
     [Theory]
     [InlineData("M31", "M31", true)]
     [InlineData("m 31", "M31", true)]
     [InlineData("31", "M31", true)]
-    [InlineData("M3", "M31", false)]     // el id es exacto: M3 no encuentra M31
+    [InlineData("M3", "M31", false)]     // the id is exact: M3 does not find M31
     [InlineData("andromeda", "M31", true)]
-    [InlineData("ANDRÓMEDA", "M31", true)]
-    [InlineData("orion", "M42", true)]   // sin acento encuentra "Orión" y la constelación "Orion"
-    [InlineData("nebulosa de orion", "M42", true)]
+    [InlineData("ANDRÓMEDA", "M31", true)]   // accents and case are ignored
+    [InlineData("orion", "M42", true)]   // finds the name "Orion Nebula" and the constellation "Orion"
+    [InlineData("orion nebula", "M42", true)]
     [InlineData("hercules", "M42", false)]
     [InlineData("", "M42", true)]
     public void CatalogSearch_MatchesIdNameAndConstellationIgnoringAccents(string query, string id, bool expected)
@@ -87,7 +85,7 @@ public sealed class UsabilityTests
         viewModel.Targets.Objects.Should().HaveCount(3);
     }
 
-    // ─── Modo en vivo ───────────────────────────────────────────────────
+    // ─── Live mode ──────────────────────────────────────────────────────
 
     [Fact]
     public void SetNow_UsesTheObserverTimeZoneNotThePcOne()
@@ -120,9 +118,8 @@ public sealed class UsabilityTests
     [Fact]
     public void LiveMode_TickFromAnotherThreadIsMarshalledToTheUiContext()
     {
-        // Regresión: el temporizador real dispara en un hilo del pool. El cambio
-        // debe pasar por el contexto de la interfaz, no aplicarse en ese hilo
-        // (WPF lanzaría una excepción y la app se cerraría).
+        // Regression: the real timer fires on a pool thread. The change must go through the UI
+        // context instead of being applied on that thread (WPF would throw and the app would close).
         var clock = new ManualTimeProvider(WinterNightUtc);
         var viewModel = CreateMain(clock);
         var uiContext = new QueueingSynchronizationContext();
@@ -142,7 +139,7 @@ public sealed class UsabilityTests
         poolThread.Start();
         poolThread.Join();
 
-        viewModel.ObservationDateTime.Should().Be(new DateTime(2026, 1, 15, 22, 0, 0), "aún no se aplicó en el hilo de la interfaz");
+        viewModel.ObservationDateTime.Should().Be(new DateTime(2026, 1, 15, 22, 0, 0), "it has not been applied on the UI thread yet");
         uiContext.Pending.Should().Be(1);
 
         uiContext.RunPending();
@@ -150,7 +147,7 @@ public sealed class UsabilityTests
         viewModel.ObservationDateTime.Should().Be(new DateTime(2026, 1, 15, 22, 1, 0));
     }
 
-    /// <summary>Contexto que encola lo que se le envía, como el despachador de WPF.</summary>
+    /// <summary>Context that queues what it is posted, like the WPF dispatcher.</summary>
     private sealed class QueueingSynchronizationContext : SynchronizationContext
     {
         private readonly Queue<(SendOrPostCallback Callback, object? State)> _queue = new();
@@ -196,14 +193,14 @@ public sealed class UsabilityTests
         viewModel.ObservationDateTime.Should().Be(new DateTime(2026, 1, 15, 23, 0, 0));
     }
 
-    // ─── Mi plan ────────────────────────────────────────────────────────
+    // ─── My plan ────────────────────────────────────────────────────────
 
     [Fact]
     public async Task ObservationPlan_IsSortedByCulmination()
     {
         var viewModel = await CreateLoadedMainAsync();
 
-        // M42 culmina hacia las 22:20 y M31 al anochecer: M31 va primero aunque se agregue después.
+        // M42 culminates around 22:20 and M31 at dusk: M31 goes first although it is added later.
         foreach (var id in new[] { "M42", "M31" })
         {
             viewModel.Targets.SelectedObject = viewModel.Targets.Objects.Single(o => o.Id == id);
@@ -218,29 +215,29 @@ public sealed class UsabilityTests
     [Fact]
     public async Task ObservationPlan_NotesAreRestoredAndSaved()
     {
-        _planService.Entries = [new("M42", "usar filtro UHC")];
+        _planService.Entries = [new("M42", "use the UHC filter")];
         var viewModel = await CreateLoadedMainAsync();
 
-        viewModel.Plan.Items.Single().Note.Should().Be("usar filtro UHC");
+        viewModel.Plan.Items.Single().Note.Should().Be("use the UHC filter");
 
-        viewModel.Plan.Items.Single().Note = "ocular de 25 mm";
+        viewModel.Plan.Items.Single().Note = "25 mm eyepiece";
 
-        _planService.Entries.Should().Equal(new ObservationPlanEntry("M42", "ocular de 25 mm"));
+        _planService.Entries.Should().Equal(new ObservationPlanEntry("M42", "25 mm eyepiece"));
     }
 
     [Fact]
     public async Task PlanCsv_HasHeaderOneRowPerItemAndEscapesSeparators()
     {
-        _planService.Entries = [new("M42", "filtro UHC, ocular 25 mm"), new("M31")];
+        _planService.Entries = [new("M42", "UHC filter, 25 mm eyepiece"), new("M31")];
         var viewModel = await CreateLoadedMainAsync();
 
         var lines = viewModel.Plan.BuildCsv(CultureInfo.InvariantCulture)
             .Split(Environment.NewLine, StringSplitOptions.RemoveEmptyEntries);
 
         lines.Should().HaveCount(3);
-        lines[0].Should().StartWith("Orden,ID,Nombre");
-        lines[1].Should().StartWith("1,M31,Galaxia de Andrómeda");
-        lines[2].Should().StartWith("2,M42,").And.EndWith("\"filtro UHC, ocular 25 mm\"");
+        lines[0].Should().StartWith("Order,ID,Name");
+        lines[1].Should().StartWith("1,M31,Andromeda Galaxy");
+        lines[2].Should().StartWith("2,M42,").And.EndWith("\"UHC filter, 25 mm eyepiece\"");
     }
 
     [Fact]
@@ -251,7 +248,7 @@ public sealed class UsabilityTests
 
         var csv = viewModel.Plan.BuildCsv(CultureInfo.GetCultureInfo("es-ES"));
 
-        csv.Should().StartWith("Orden;ID;Nombre").And.Contain(";4,0;", "es-ES usa coma decimal y punto y coma como separador");
+        csv.Should().StartWith("Order;ID;Name").And.Contain(";4,0;", "es-ES uses a decimal comma and a semicolon separator");
     }
 
     [Fact]
@@ -267,8 +264,8 @@ public sealed class UsabilityTests
 
             var bytes = File.ReadAllBytes(path);
             bytes.Take(3).Should().Equal(0xEF, 0xBB, 0xBF);
-            File.ReadAllText(path).Should().Contain("Andrómeda");
-            viewModel.Plan.StatusMessage.Should().StartWith("Plan exportado");
+            File.ReadAllText(path).Should().Contain("Andromeda Galaxy");
+            viewModel.Plan.StatusMessage.Should().StartWith("Plan exported");
         }
         finally
         {
@@ -279,12 +276,12 @@ public sealed class UsabilityTests
     [Fact]
     public async Task PrintDocument_HasHeaderRowPlusOneRowPerItem()
     {
-        _planService.Entries = [new("M42", "nota"), new("M31")];
+        _planService.Entries = [new("M42", "note"), new("M31")];
         var viewModel = await CreateLoadedMainAsync();
         var items = viewModel.Plan.Items.ToList();
         var summary = viewModel.Plan.SummaryText;
 
-        // FlowDocument requiere un hilo STA, como el de la interfaz.
+        // FlowDocument needs an STA thread, like the UI one.
         var rowCount = RunOnStaThread(() =>
         {
             var document = PlanPrintDocument.Create(items, summary);
@@ -292,17 +289,17 @@ public sealed class UsabilityTests
         });
 
         rowCount.Should().Be(3);
-        summary.Should().Contain("Noche del 15/01/2026").And.Contain("Luna");
+        summary.Should().Contain("Night of 2026-01-15").And.Contain("Moon");
     }
 
-    // ─── Carta del cielo ────────────────────────────────────────────────
+    // ─── Sky chart ──────────────────────────────────────────────────────
 
     [Theory]
-    [InlineData(90, 0, 0, 0)]      // cénit en el centro
-    [InlineData(0, 0, 0, 90)]      // norte arriba, en el horizonte
-    [InlineData(0, 90, -90, 0)]    // este a la izquierda
-    [InlineData(0, 270, 90, 0)]    // oeste a la derecha
-    [InlineData(30, 180, 0, -60)]  // sur, a 30° de altura
+    [InlineData(90, 0, 0, 0)]      // zenith at the center
+    [InlineData(0, 0, 0, 90)]      // north up, on the horizon
+    [InlineData(0, 90, -90, 0)]    // east to the left
+    [InlineData(0, 270, 90, 0)]    // west to the right
+    [InlineData(30, 180, 0, -60)]  // south, 30° high
     public void SkyProjection_PutsZenithInTheCenterAndNorthUp(double altitude, double azimuth, double x, double y)
     {
         var (px, py) = SkyProjection.ToXY(altitude, azimuth);
@@ -320,7 +317,7 @@ public sealed class UsabilityTests
         var points = viewModel.Sky.GetSkyMapPoints();
 
         points.Should().OnlyContain(p => p.AltitudeDegrees > 0);
-        points.Select(p => p.Id).Should().NotContain("M13", "M13 está bajo el horizonte en esa noche");
+        points.Select(p => p.Id).Should().NotContain("M13", "M13 is below the horizon that night");
         points.Single(p => p.Id == "M31").IsInPlan.Should().BeTrue();
         points.Should().ContainSingle(p => p.IsSelected);
     }
@@ -350,6 +347,6 @@ public sealed class UsabilityTests
         thread.SetApartmentState(ApartmentState.STA);
         thread.Start();
         thread.Join();
-        return error is null ? result : throw new InvalidOperationException("Falló en el hilo STA.", error);
+        return error is null ? result : throw new InvalidOperationException("Failed on the STA thread.", error);
     }
 }

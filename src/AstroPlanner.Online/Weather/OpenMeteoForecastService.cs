@@ -8,9 +8,9 @@ using AstroPlanner.Core.Models;
 namespace AstroPlanner.Online.Weather;
 
 /// <summary>
-/// Pronóstico de nubes de Open-Meteo (https://open-meteo.com): gratuito y sin
-/// clave. Las coordenadas se envían redondeadas a 2 decimales (~1 km), que es
-/// más que suficiente para un pronóstico y evita mandar la ubicación exacta.
+/// Cloud forecast from Open-Meteo (https://open-meteo.com): free and without a key.
+/// Coordinates are sent rounded to 2 decimals (~1 km), which is more than enough for a
+/// forecast and avoids sending the exact location.
 /// </summary>
 public sealed class OpenMeteoForecastService(HttpClient http, TimeProvider? timeProvider = null) : IWeatherForecastService
 {
@@ -32,7 +32,7 @@ public sealed class OpenMeteoForecastService(HttpClient http, TimeProvider? time
             using var message = await http.GetAsync(BuildUrl(latitude, longitude), cancellationToken);
             if (!message.IsSuccessStatusCode)
             {
-                throw new WeatherForecastException($"El servicio del tiempo respondió {(int)message.StatusCode}.");
+                throw new WeatherForecastException($"The weather service answered {(int)message.StatusCode}.");
             }
 
             await using var stream = await message.Content.ReadAsStreamAsync(cancellationToken);
@@ -40,15 +40,15 @@ public sealed class OpenMeteoForecastService(HttpClient http, TimeProvider? time
         }
         catch (HttpRequestException ex)
         {
-            throw new WeatherForecastException("Sin conexión con el servicio del tiempo.", ex);
+            throw new WeatherForecastException("No connection to the weather service.", ex);
         }
         catch (TaskCanceledException ex) when (!cancellationToken.IsCancellationRequested)
         {
-            throw new WeatherForecastException("El servicio del tiempo no respondió a tiempo.", ex);
+            throw new WeatherForecastException("The weather service did not answer in time.", ex);
         }
         catch (JsonException ex)
         {
-            throw new WeatherForecastException("Respuesta del servicio del tiempo no válida.", ex);
+            throw new WeatherForecastException("Invalid response from the weather service.", ex);
         }
 
         return Parse(response, latitude, longitude, _time.GetUtcNow().UtcDateTime);
@@ -59,7 +59,7 @@ public sealed class OpenMeteoForecastService(HttpClient http, TimeProvider? time
         var hourly = response?.Hourly;
         if (hourly?.Time is not { Count: > 0 } times || hourly.CloudCover is not { } cloud || cloud.Count != times.Count)
         {
-            throw new WeatherForecastException("Respuesta del servicio del tiempo incompleta.");
+            throw new WeatherForecastException("Incomplete response from the weather service.");
         }
 
         var hours = new List<HourlyWeather>(times.Count);
@@ -69,7 +69,7 @@ public sealed class OpenMeteoForecastService(HttpClient http, TimeProvider? time
                 || !DateTime.TryParseExact(times[i], "yyyy-MM-dd'T'HH:mm", CultureInfo.InvariantCulture,
                     DateTimeStyles.AdjustToUniversal | DateTimeStyles.AssumeUniversal, out var time))
             {
-                continue; // horas sin dato: se omiten
+                continue; // hours without data are skipped
             }
 
             hours.Add(new HourlyWeather(

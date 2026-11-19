@@ -1,14 +1,13 @@
 namespace AstroPlanner.Data.Repositories;
 
 /// <summary>
-/// Origen de los catálogos JSON. Por defecto se leen de los recursos
-/// incrustados en el ensamblado, de modo que el .exe publicado funciona sin
-/// la carpeta SeedData; una ruta explícita (pruebas, catálogos propios) tiene
-/// prioridad.
+/// Source of the JSON catalogs. By default they are read from the resources embedded in the
+/// assembly, so that the published .exe works without the SeedData folder; an explicit path
+/// (tests, custom catalogs) takes precedence.
 /// </summary>
 internal static class SeedDataSource
 {
-    /// <summary>Abre <paramref name="filePath"/> o, si es null, el recurso incrustado <paramref name="fileName"/>.</summary>
+    /// <summary>Opens <paramref name="filePath"/> or, if it is null, the embedded resource <paramref name="fileName"/>.</summary>
     public static Stream Open(string fileName, string? filePath)
     {
         if (filePath is not null)
@@ -21,7 +20,7 @@ internal static class SeedDataSource
             ?? throw new FileNotFoundException($"Embedded catalog '{resourceName}' was not found.", resourceName);
     }
 
-    /// <summary>Descripción legible del origen, para mensajes de error.</summary>
+    /// <summary>Readable description of the source, for error messages.</summary>
     public static string Describe(string fileName, string? filePath) =>
-        filePath ?? $"SeedData/{fileName} (incrustado)";
+        filePath ?? $"SeedData/{fileName} (embedded)";
 }

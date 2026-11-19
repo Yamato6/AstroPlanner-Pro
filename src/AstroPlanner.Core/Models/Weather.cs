@@ -1,7 +1,7 @@
 namespace AstroPlanner.Core.Models;
 
-/// <summary>Pronóstico de una hora. Los porcentajes van de 0 a 100.</summary>
-/// <param name="TimeUtc">Inicio de la hora, en UTC.</param>
+/// <summary>Forecast for one hour. Percentages go from 0 to 100.</summary>
+/// <param name="TimeUtc">Start of the hour, in UTC.</param>
 public sealed record HourlyWeather(
     DateTime TimeUtc,
     int CloudCoverPercent,
@@ -11,9 +11,9 @@ public sealed record HourlyWeather(
     int? PrecipitationProbabilityPercent = null,
     int? RelativeHumidityPercent = null);
 
-/// <summary>Resumen de nubosidad de un intervalo (normalmente, la noche oscura).</summary>
-/// <param name="AverageCloudCoverPercent">Nubosidad media del intervalo.</param>
-/// <param name="ClearestHourUtc">Hora con menos nubes (la primera si hay empate).</param>
+/// <summary>Cloud cover summary of an interval (usually the dark night).</summary>
+/// <param name="AverageCloudCoverPercent">Average cloud cover of the interval.</param>
+/// <param name="ClearestHourUtc">Hour with the fewest clouds (the first one on a tie).</param>
 public sealed record CloudSummary(
     double AverageCloudCoverPercent,
     int MinimumCloudCoverPercent,
@@ -21,7 +21,7 @@ public sealed record CloudSummary(
     DateTime ClearestHourUtc,
     int ClearestHourCloudCoverPercent);
 
-/// <summary>Pronóstico por horas para una ubicación.</summary>
+/// <summary>Hourly forecast for a location.</summary>
 public sealed class WeatherForecast
 {
     public WeatherForecast(double latitude, double longitude, IReadOnlyList<HourlyWeather> hours, DateTime fetchedAtUtc)
@@ -38,7 +38,7 @@ public sealed class WeatherForecast
     public IReadOnlyList<HourlyWeather> Hours { get; }
     public DateTime FetchedAtUtc { get; }
 
-    /// <summary>La hora del pronóstico que contiene <paramref name="utc"/>, o null si queda fuera.</summary>
+    /// <summary>The forecast hour containing <paramref name="utc"/>, or null if it is outside the forecast.</summary>
     public HourlyWeather? At(DateTime utc)
     {
         foreach (var hour in Hours)
@@ -52,13 +52,13 @@ public sealed class WeatherForecast
         return null;
     }
 
-    /// <summary>Horas que se solapan con [<paramref name="startUtc"/>, <paramref name="endUtc"/>).</summary>
+    /// <summary>Hours overlapping [<paramref name="startUtc"/>, <paramref name="endUtc"/>).</summary>
     public IReadOnlyList<HourlyWeather> Between(DateTime startUtc, DateTime endUtc) =>
         Hours.Where(h => h.TimeUtc.AddHours(1) > startUtc && h.TimeUtc < endUtc).ToList();
 
     /// <summary>
-    /// Resumen de nubosidad del intervalo, o null si el pronóstico no lo cubre
-    /// (fechas pasadas o más allá del horizonte de pronóstico).
+    /// Cloud cover summary of the interval, or null if the forecast does not cover it (past
+    /// dates or beyond the forecast horizon).
     /// </summary>
     public CloudSummary? Summarize(DateTime startUtc, DateTime endUtc)
     {
@@ -76,18 +76,8 @@ public sealed class WeatherForecast
             clearest.TimeUtc,
             clearest.CloudCoverPercent);
     }
-
-    /// <summary>Descripción en palabras de un porcentaje de nubosidad.</summary>
-    public static string Describe(double cloudCoverPercent) => cloudCoverPercent switch
-    {
-        < 15 => "Despejado",
-        < 40 => "Poco nublado",
-        < 70 => "Parcialmente nublado",
-        < 90 => "Mayormente nublado",
-        _ => "Cubierto"
-    };
 }
 
-/// <summary>El pronóstico no se pudo obtener (sin conexión, error del servicio, respuesta inválida).</summary>
+/// <summary>The forecast could not be obtained (offline, service error, invalid response).</summary>
 public sealed class WeatherForecastException(string message, Exception? innerException = null)
     : Exception(message, innerException);

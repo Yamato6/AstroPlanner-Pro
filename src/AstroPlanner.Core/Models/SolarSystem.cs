@@ -1,12 +1,12 @@
 namespace AstroPlanner.Core.Models;
 
-/// <summary>Posición geocéntrica del Sol (equinoccio de la fecha).</summary>
+/// <summary>Geocentric position of the Sun (equinox of date).</summary>
 public sealed record SunPosition(
     double EclipticLongitudeDegrees,
     EquatorialCoordinates Equatorial,
     double DistanceKm);
 
-/// <summary>Posición geocéntrica de la Luna (equinoccio medio de la fecha).</summary>
+/// <summary>Geocentric position of the Moon (mean equinox of date).</summary>
 public sealed record MoonPosition(
     double EclipticLongitudeDegrees,
     double EclipticLatitudeDegrees,
@@ -15,11 +15,11 @@ public sealed record MoonPosition(
     double HorizontalParallaxDegrees);
 
 /// <summary>
-/// La Luna vista por un observador en un instante: posición en el cielo
-/// (topocéntrica, con refracción) y fase.
+/// The Moon seen by an observer at an instant: position in the sky (topocentric, with
+/// refraction) and phase.
 /// </summary>
-/// <param name="IlluminatedFraction">0 = Luna nueva, 1 = Luna llena.</param>
-/// <param name="IsWaxing">True entre Luna nueva y llena (creciente).</param>
+/// <param name="IlluminatedFraction">0 = new Moon, 1 = full Moon.</param>
+/// <param name="IsWaxing">True between new and full Moon (waxing).</param>
 public sealed record MoonState(
     HorizontalCoordinates Horizontal,
     EquatorialCoordinates Equatorial,
@@ -29,27 +29,27 @@ public sealed record MoonState(
     public bool IsAboveHorizon => Horizontal.AltitudeDegrees > 0;
 }
 
-/// <summary>Estado del cielo según la altura del Sol.</summary>
+/// <summary>State of the sky according to the altitude of the Sun.</summary>
 public enum SkyCondition
 {
-    /// <summary>Sol sobre el horizonte.</summary>
+    /// <summary>Sun above the horizon.</summary>
     Day,
 
-    /// <summary>Sol entre 0° y -18°: el cielo aún no está totalmente oscuro.</summary>
+    /// <summary>Sun between 0° and -18°: the sky is not fully dark yet.</summary>
     Twilight,
 
-    /// <summary>Sol por debajo de -18°: noche astronómica.</summary>
+    /// <summary>Sun below -18°: astronomical night.</summary>
     Dark
 }
 
 /// <summary>
-/// Noche de observación en hora local: la ventana va de la puesta a la salida
-/// del Sol; la noche oscura, del final al inicio del crepúsculo astronómico.
+/// Observing night in local time: the window goes from sunset to sunrise; the dark night,
+/// from the end to the start of astronomical twilight.
 /// </summary>
-/// <param name="WindowStartLocal">Puesta de Sol, o 18:00 si el Sol no se pone (día/noche polar).</param>
-/// <param name="WindowEndLocal">Salida del Sol, o 06:00 si el Sol no sale.</param>
-/// <param name="AstronomicalDuskLocal">Fin del crepúsculo vespertino (Sol a -18°); null si no oscurece del todo.</param>
-/// <param name="AstronomicalDawnLocal">Inicio del crepúsculo matutino (Sol a -18°).</param>
+/// <param name="WindowStartLocal">Sunset, or 18:00 if the Sun does not set (polar day/night).</param>
+/// <param name="WindowEndLocal">Sunrise, or 06:00 if the Sun does not rise.</param>
+/// <param name="AstronomicalDuskLocal">End of evening twilight (Sun at -18°); null if it never gets fully dark.</param>
+/// <param name="AstronomicalDawnLocal">Start of morning twilight (Sun at -18°).</param>
 public sealed record NightInfo(
     DateTime WindowStartLocal,
     DateTime WindowEndLocal,
@@ -60,6 +60,6 @@ public sealed record NightInfo(
 {
     public bool HasAstronomicalDarkness => AstronomicalDuskLocal is not null && AstronomicalDawnLocal is not null;
 
-    /// <summary>True si la ventana es la de reserva (18:00 → 06:00) por no haber puesta o salida del Sol.</summary>
+    /// <summary>True if the window is the fallback one (18:00 → 06:00) because the Sun does not set or rise.</summary>
     public bool IsFallbackWindow => SunsetLocal is null || SunriseLocal is null;
 }

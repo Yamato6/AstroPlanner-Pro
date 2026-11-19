@@ -1,14 +1,15 @@
 <Window x:Class="AstroPlanner.UI.SettingsWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="Configuración del observador"
+        xmlns:res="clr-namespace:AstroPlanner.UI.Resources"
+        Title="{x:Static res:Strings.SettingsWindowTitle}"
         Width="620"
         SizeToContent="Height"
         MinHeight="480"
         WindowStartupLocation="CenterOwner"
         Background="{StaticResource DialogBackgroundBrush}">
     <Window.Resources>
-        <!-- Colores y plantillas: Themes/Dark.xaml -->
+        <!-- Colors and templates: Themes/Dark.xaml -->
         <Style TargetType="TextBlock">
             <Setter Property="Foreground" Value="{StaticResource NightTextBrush}"/>
         </Style>
@@ -28,7 +29,7 @@
             <Setter Property="Foreground" Value="{StaticResource NightTextBrush}"/>
             <Setter Property="FontWeight" Value="Normal"/>
         </Style>
-        <!-- Con clave, no implícito (igual que en LogEntryWindow). -->
+        <!-- Keyed, not implicit (same as in LogEntryWindow). -->
         <Style x:Key="DialogButtonStyle" TargetType="Button" BasedOn="{StaticResource SecondaryButtonStyle}">
             <Setter Property="Margin" Value="0,0,8,0"/>
             <Setter Property="MinWidth" Value="90"/>
@@ -37,9 +38,9 @@
 
     <ScrollViewer VerticalScrollBarVisibility="Auto">
         <StackPanel Margin="28">
-            <TextBlock FontSize="24" FontWeight="SemiBold" Text="Configuración del observador"/>
+            <TextBlock FontSize="24" FontWeight="SemiBold" Text="{x:Static res:Strings.SettingsWindowTitle}"/>
             <TextBlock Margin="0,4,0,22" Foreground="{StaticResource NightMutedTextBrush}"
-                       Text="Elige una ciudad o introduce coordenadas personalizadas."/>
+                       Text="{x:Static res:Strings.SettingsIntro}"/>
 
             <Grid>
                 <Grid.ColumnDefinitions>
@@ -57,58 +58,58 @@
                     <RowDefinition Height="Auto"/>
                 </Grid.RowDefinitions>
 
-                <Label Grid.Row="0" Content="Ciudad"/>
+                <Label Grid.Row="0" Content="{x:Static res:Strings.SettingsCity}"/>
                 <ComboBox Grid.Row="0" Grid.Column="1"
                           ItemsSource="{Binding Cities}"
                           SelectedItem="{Binding SelectedCity}"
                           DisplayMemberPath="DisplayName"
                           IsEnabled="{Binding IsCitySelectionEnabled}"/>
 
-                <Label Grid.Row="1" Content="Latitud (°)"/>
+                <Label Grid.Row="1" Content="{x:Static res:Strings.SettingsLatitude}"/>
                 <TextBox Grid.Row="1" Grid.Column="1"
                          Text="{Binding Latitude, UpdateSourceTrigger=PropertyChanged}"
                          IsEnabled="{Binding IsManualFieldsEnabled}"/>
 
-                <Label Grid.Row="2" Content="Longitud (°)"/>
+                <Label Grid.Row="2" Content="{x:Static res:Strings.SettingsLongitude}"/>
                 <TextBox Grid.Row="2" Grid.Column="1"
                          Text="{Binding Longitude, UpdateSourceTrigger=PropertyChanged}"
                          IsEnabled="{Binding IsManualFieldsEnabled}"/>
 
-                <Label Grid.Row="3" Content="Elevación (m)"/>
+                <Label Grid.Row="3" Content="{x:Static res:Strings.SettingsElevation}"/>
                 <TextBox Grid.Row="3" Grid.Column="1"
                          Text="{Binding Elevation, UpdateSourceTrigger=PropertyChanged}"
                          IsEnabled="{Binding IsManualFieldsEnabled}"/>
 
-                <Label Grid.Row="4" Content="Zona horaria"/>
+                <Label Grid.Row="4" Content="{x:Static res:Strings.SettingsTimeZone}"/>
                 <ComboBox Grid.Row="4" Grid.Column="1"
                           ItemsSource="{Binding AvailableTimeZones}"
                           SelectedItem="{Binding SelectedTimeZone}"
                           DisplayMemberPath="Id"
                           IsEnabled="{Binding IsManualFieldsEnabled}"/>
 
-                <Label Grid.Row="5" Content="Altitud mínima (°)"/>
+                <Label Grid.Row="5" Content="{x:Static res:Strings.SettingsMinimumAltitude}"/>
                 <TextBox Grid.Row="5" Grid.Column="1"
                          Text="{Binding MinimumAltitude, UpdateSourceTrigger=PropertyChanged}"/>
 
-                <Label Grid.Row="6" Content="Magnitud máxima"
-                       ToolTip="Oculta los objetos más débiles que esta magnitud (mayor número = más débil)."/>
+                <Label Grid.Row="6" Content="{x:Static res:Strings.SettingsMaximumMagnitude}"
+                       ToolTip="{x:Static res:Strings.SettingsMaximumMagnitudeTooltip}"/>
                 <TextBox Grid.Row="6" Grid.Column="1"
                          Text="{Binding MaximumMagnitude, UpdateSourceTrigger=PropertyChanged}"/>
 
                 <Button Grid.Row="7" Grid.Column="1" HorizontalAlignment="Left" Margin="0,10,0,0"
                         Style="{StaticResource SecondaryButtonStyle}"
-                        Content="Usar coordenadas manuales"
+                        Content="{x:Static res:Strings.SettingsUseManualCoordinates}"
                         Command="{Binding UseManualLocationCommand}"/>
             </Grid>
 
-            <!-- Funciones que usan internet: se pueden desactivar -->
-            <TextBlock Margin="0,22,0,6" FontSize="15" FontWeight="SemiBold" Text="Conexión a internet"/>
+            <!-- Features that use the internet: each one can be turned off -->
+            <TextBlock Margin="0,22,0,6" FontSize="15" FontWeight="SemiBold" Text="{x:Static res:Strings.SettingsInternet}"/>
             <CheckBox Margin="0,4" IsChecked="{Binding WeatherForecastEnabled}"
-                      Content="Pronóstico de nubes (Open-Meteo)"/>
+                      Content="{x:Static res:Strings.SettingsCloudForecast}"/>
             <TextBlock Margin="23,2,0,8" Foreground="{StaticResource NightMutedTextBrush}" TextWrapping="Wrap" FontSize="12"
-                       Text="Envía tu ubicación aproximada (redondeada a ~1 km) a open-meteo.com para obtener la nubosidad por horas."/>
+                       Text="{x:Static res:Strings.SettingsCloudForecastNote}"/>
             <CheckBox Margin="0,4" IsChecked="{Binding CheckForUpdates}"
-                      Content="Buscar una versión nueva al iniciar (GitHub)"/>
+                      Content="{x:Static res:Strings.SettingsCheckForUpdates}"/>
 
             <TextBlock Margin="0,16,0,0" TextWrapping="Wrap" Foreground="{StaticResource DangerSoftBrush}">
                 <TextBlock.Style>
@@ -139,8 +140,8 @@
             </TextBlock>
 
             <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,22,0,0">
-                <Button Content="Cancelar" IsCancel="True" Click="OnCancelClicked" Style="{StaticResource DialogButtonStyle}"/>
-                <Button Content="Guardar" IsDefault="True" Click="OnSaveClicked"
+                <Button Content="{x:Static res:Strings.Cancel}" IsCancel="True" Click="OnCancelClicked" Style="{StaticResource DialogButtonStyle}"/>
+                <Button Content="{x:Static res:Strings.Save}" IsDefault="True" Click="OnSaveClicked"
                         Style="{StaticResource PrimaryButtonStyle}" Margin="0" MinWidth="90"/>
             </StackPanel>
         </StackPanel>

@@ -2,26 +2,31 @@ using System.Globalization;
 using System.Windows;
 using System.Windows.Documents;
 using System.Windows.Media;
+using AstroPlanner.UI.Resources;
 using AstroPlanner.UI.ViewModels;
 
 namespace AstroPlanner.UI.Services;
 
 /// <summary>
-/// Documento imprimible de "Mi plan": título, resumen de la noche y una tabla
-/// en el orden de observación. Negro sobre blanco para que se lea bien en papel
-/// (y con luz roja en el campo).
+/// Printable "My plan": title, night summary and a table in observing order. Black on white
+/// so that it reads well on paper (and under red light in the field).
 /// </summary>
 public static class PlanPrintDocument
 {
-    private static readonly string[] Headers =
-        ["#", "Culminación", "ID", "Nombre", "Constelación", "Mag.", "Alt. máx.", "Luna", "Notas"];
-
     private static readonly double[] ColumnWidths = [28, 74, 46, 150, 92, 40, 56, 44, 180];
+
+    private static string[] Headers =>
+    [
+        Strings.PrintColumnNumber, Strings.ColumnCulmination, Strings.ColumnId, Strings.ColumnName,
+        Strings.ColumnConstellation, Strings.ColumnMagnitude, Strings.ColumnMaximumAltitude, Strings.ColumnMoon,
+        Strings.ColumnNotes
+    ];
 
     public static FlowDocument Create(IReadOnlyList<PlanItemViewModel> items, string summary)
     {
         ArgumentNullException.ThrowIfNull(items);
 
+        var culture = CultureInfo.CurrentCulture;
         var document = new FlowDocument
         {
             FontFamily = new FontFamily("Segoe UI"),
@@ -32,7 +37,7 @@ public static class PlanPrintDocument
             Foreground = Brushes.Black
         };
 
-        document.Blocks.Add(new Paragraph(new Run("AstroPlanner — Mi plan"))
+        document.Blocks.Add(new Paragraph(new Run(Strings.PlanPrintTitle))
         {
             FontSize = 20,
             FontWeight = FontWeights.SemiBold,
@@ -59,14 +64,16 @@ public static class PlanPrintDocument
             var row = item.Row;
             group.Rows.Add(CreateRow(
             [
-                order++.ToString(CultureInfo.CurrentCulture),
-                item.CulminationLocal?.ToString("HH:mm", CultureInfo.CurrentCulture) ?? "—",
+                order++.ToString(culture),
+                item.CulminationLocal?.ToString("HH:mm", culture) ?? "—",
                 row.Id,
                 row.CommonName,
                 row.Constellation,
-                row.ApparentMagnitude.ToString("0.0", CultureInfo.CurrentCulture),
-                $"{item.MaximumAltitudeDegrees:0}°",
-                row.MoonInterferes ? $"{row.MoonSeparationDegrees:0}° !" : $"{row.MoonSeparationDegrees:0}°",
+                row.ApparentMagnitude.ToString("0.0", culture),
+                string.Create(culture, $"{item.MaximumAltitudeDegrees:0}°"),
+                row.MoonInterferes
+                    ? string.Create(culture, $"{row.MoonSeparationDegrees:0}° !")
+                    : string.Create(culture, $"{row.MoonSeparationDegrees:0}°"),
                 item.Note
             ], isHeader: false));
         }
@@ -76,7 +83,7 @@ public static class PlanPrintDocument
 
         if (items.Any(item => item.Row.MoonInterferes))
         {
-            document.Blocks.Add(new Paragraph(new Run("! La Luna, brillante y cercana, dificulta la observación."))
+            document.Blocks.Add(new Paragraph(new Run(Strings.PlanPrintMoonFootnote))
             {
                 FontSize = 9,
                 Foreground = Brushes.DimGray,

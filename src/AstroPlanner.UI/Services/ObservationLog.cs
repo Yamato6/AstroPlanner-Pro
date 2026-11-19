@@ -1,11 +1,12 @@
+using System.Globalization;
 using System.IO;
 using System.Text.Json;
 
 namespace AstroPlanner.UI.Services;
 
 /// <summary>
-/// Una observación registrada en la bitácora. Seeing, transparencia y
-/// valoración van de 1 (malo) a 5 (excelente).
+/// An observation recorded in the logbook. Seeing, transparency and rating go from 1 (poor)
+/// to 5 (excellent).
 /// </summary>
 public sealed record ObservationLogEntry(
     Guid Id,
@@ -22,19 +23,19 @@ public sealed record ObservationLogEntry(
     public string RatingStars => new string('★', Math.Clamp(Rating, 0, 5)) + new string('☆', 5 - Math.Clamp(Rating, 0, 5));
 }
 
-/// <summary>Persistencia de la bitácora de observaciones.</summary>
+/// <summary>Persistence of the observation logbook.</summary>
 public interface IObservationLogService
 {
-    /// <summary>Lee la bitácora; si no existe o es inválida, devuelve una lista vacía.</summary>
+    /// <summary>Reads the logbook; an empty list if it does not exist or is invalid.</summary>
     IReadOnlyList<ObservationLogEntry> Load();
 
-    /// <summary>Guarda la bitácora de forma atómica.</summary>
+    /// <summary>Saves the logbook atomically.</summary>
     void Save(IEnumerable<ObservationLogEntry> entries);
 }
 
 /// <summary>
-/// Implementación JSON de <see cref="IObservationLogService"/>.
-/// Archivo: %LocalAppData%\AstroPlanner\logbook.json
+/// JSON implementation of <see cref="IObservationLogService"/>.
+/// File: %LocalAppData%\AstroPlanner\logbook.json
 /// </summary>
 public sealed class JsonObservationLogService : IObservationLogService
 {
@@ -66,8 +67,8 @@ public sealed class JsonObservationLogService : IObservationLogService
         }
         catch (JsonException)
         {
-            // Archivo corrupto: se aparta (no se sobrescribe al guardar la
-            // siguiente observación) y se empieza con una bitácora vacía.
+            // Corrupt file: set it aside (so that the next saved observation does not overwrite
+            // it) and start with an empty logbook.
             PreserveCorruptFile();
             return [];
         }
@@ -83,7 +84,7 @@ public sealed class JsonObservationLogService : IObservationLogService
         AtomicFile.WriteAllText(_filePath, JsonSerializer.Serialize(entries.ToList(), Options));
     }
 
-    /// <summary>Ruta con la que se apartó el último archivo corrupto, si lo hubo.</summary>
+    /// <summary>Path the last corrupt file was moved to, if any.</summary>
     public string? PreservedCorruptFilePath { get; private set; }
 
     private void PreserveCorruptFile()
@@ -92,13 +93,14 @@ public sealed class JsonObservationLogService : IObservationLogService
         {
             var preserved = Path.Combine(
                 Path.GetDirectoryName(_filePath) ?? "",
-                $"{Path.GetFileNameWithoutExtension(_filePath)}.corrupto-{DateTime.Now:yyyyMMdd-HHmmss}.json");
+                string.Create(CultureInfo.InvariantCulture,
+                    $"{Path.GetFileNameWithoutExtension(_filePath)}.corrupt-{DateTime.Now:yyyyMMdd-HHmmss}.json"));
             File.Move(_filePath, preserved);
             PreservedCorruptFilePath = preserved;
         }
         catch (IOException)
         {
-            // Si no se puede apartar, se deja como está.
+            // If it cannot be moved, leave it as it is.
         }
     }
 }

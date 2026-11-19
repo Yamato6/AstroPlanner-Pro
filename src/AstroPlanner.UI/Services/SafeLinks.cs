@@ -4,9 +4,9 @@ using System.IO;
 namespace AstroPlanner.UI.Services;
 
 /// <summary>
-/// Apertura de enlaces y carpetas desde la interfaz. Solo se abren direcciones
-/// https de los sitios que la app enlaza: un enlace manipulado (por ejemplo, en
-/// la respuesta de GitHub) no puede lanzar un programa ni abrir otra web.
+/// Opens links and folders from the UI. Only https addresses of the sites the app links to
+/// are opened: a tampered link (e.g. in the GitHub response) cannot start a program or open
+/// another site.
 /// </summary>
 public static class SafeLinks
 {
@@ -17,7 +17,7 @@ public static class SafeLinks
         && AllowedHosts.Any(host => uri.Host.Equals(host, StringComparison.OrdinalIgnoreCase)
                                     || uri.Host.EndsWith("." + host, StringComparison.OrdinalIgnoreCase));
 
-    /// <summary>Abre el enlace en el navegador si está permitido; devuelve si se abrió.</summary>
+    /// <summary>Opens the link in the browser if it is allowed; returns whether it was opened.</summary>
     public static bool Open(Uri? uri)
     {
         if (!IsAllowed(uri))
@@ -29,7 +29,7 @@ public static class SafeLinks
         return true;
     }
 
-    /// <summary>Abre una carpeta local en el Explorador (la crea si aún no existe).</summary>
+    /// <summary>Opens a local folder in Explorer (creating it if it does not exist yet).</summary>
     public static void OpenFolder(string path)
     {
         Directory.CreateDirectory(path);

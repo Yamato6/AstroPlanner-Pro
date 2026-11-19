@@ -7,6 +7,7 @@ using CommunityToolkit.Mvvm.Input;
 using AstroPlanner.Core.Algorithms;
 using AstroPlanner.Core.Interfaces;
 using AstroPlanner.Core.Models;
+using AstroPlanner.UI.Resources;
 using AstroPlanner.UI.Services;
 
 namespace AstroPlanner.UI.ViewModels;
@@ -18,7 +19,7 @@ namespace AstroPlanner.UI.ViewModels;
 /// </summary>
 public sealed partial class TargetsViewModel : ObservableValidator
 {
-    private static readonly FilterOption AllConstellations = new("", "Todas");
+    private static readonly FilterOption AllConstellations = new("", Strings.FilterAllConstellations);
 
     private readonly ICelestialRepository _repository;
     private readonly IAstronomyService _astronomy;
@@ -67,7 +68,7 @@ public sealed partial class TargetsViewModel : ObservableValidator
     /// <summary>Type filter options: the value is the internal name, the label is translated.</summary>
     public IReadOnlyList<FilterOption> TypeFilters { get; } =
     [
-        new(DisplayNames.AllTypes, "Todos"),
+        new(DisplayNames.AllTypes, Strings.FilterAllTypes),
         .. Enum.GetValues<CelestialObjectType>().Select(type => new FilterOption(type.ToString(), DisplayNames.Of(type)))
     ];
 
@@ -81,7 +82,7 @@ public sealed partial class TargetsViewModel : ObservableValidator
 
     /// <summary>Hides objects fainter than this magnitude.</summary>
     [ObservableProperty, NotifyDataErrorInfo]
-    [Range(-2, 20, ErrorMessage = "La magnitud máxima debe estar entre -2 y 20.")]
+    [Range(-2, 20, ErrorMessageResourceType = typeof(Strings), ErrorMessageResourceName = nameof(Strings.MaximumMagnitudeRange))]
     public partial double MaximumMagnitude { get; set; } = 12;
 
     /// <summary>Search text: id, name or constellation.</summary>
@@ -114,7 +115,7 @@ public sealed partial class TargetsViewModel : ObservableValidator
     public string? InputError =>
         _context.InputError
         ?? (double.IsNaN(MaximumMagnitude) || MaximumMagnitude is < -2 or > 20
-            ? "La magnitud máxima debe estar entre -2 y 20."
+            ? Strings.MaximumMagnitudeRange
             : null);
 
     [RelayCommand]
@@ -141,8 +142,8 @@ public sealed partial class TargetsViewModel : ObservableValidator
         }
         catch (Exception ex) when (ex is IOException or InvalidDataException or JsonException)
         {
-            _logger.LogError("No se pudo cargar el catálogo Messier.", ex);
-            ErrorMessage = $"No se pudo cargar el catálogo: {ex.Message}";
+            _logger.LogError("Could not load the catalog.", ex);
+            ErrorMessage = DisplayNames.Format(Strings.CatalogLoadFailedFormat, ex.Message);
         }
         finally { IsBusy = false; }
     }

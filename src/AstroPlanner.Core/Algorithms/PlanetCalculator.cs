@@ -3,23 +3,22 @@ using AstroPlanner.Core.Models;
 namespace AstroPlanner.Core.Algorithms;
 
 /// <summary>
-/// Posiciones de los planetas a partir de los elementos orbitales keplerianos
-/// de JPL ("Approximate Positions of the Planets", E. M. Standish, tabla 1,
-/// válida 1800-2050). Error típico: ~1' en los planetas interiores, hasta
-/// ~10' en Júpiter y Saturno; suficiente para planificar. Magnitudes y fase
-/// según Meeus, "Astronomical Algorithms", cap. 41; diámetros, cap. 55.
+/// Planet positions from JPL's Keplerian orbital elements ("Approximate Positions of the
+/// Planets", E. M. Standish, table 1, valid 1800-2050). Typical error: ~1' for the inner
+/// planets, up to ~10' for Jupiter and Saturn; enough for planning. Magnitudes and phase
+/// after Meeus, "Astronomical Algorithms", ch. 41; diameters, ch. 55.
 /// </summary>
 public static class PlanetCalculator
 {
-    /// <summary>Tiempo que tarda la luz en recorrer 1 UA, en días.</summary>
+    /// <summary>Light time for 1 AU, in days.</summary>
     private const double LightTimeDaysPerAu = 0.0057755183;
 
-    /// <summary>Oblicuidad de la eclíptica J2000 (grados).</summary>
+    /// <summary>Obliquity of the J2000 ecliptic (degrees).</summary>
     private const double ObliquityJ2000 = 23.43928;
 
     /// <summary>
-    /// Elementos en J2000 y su variación por siglo: semieje (UA), excentricidad,
-    /// inclinación, longitud media, longitud del perihelio, longitud del nodo (grados).
+    /// Elements at J2000 and their rate per century: semi-major axis (AU), eccentricity,
+    /// inclination, mean longitude, longitude of perihelion, longitude of the node (degrees).
     /// </summary>
     private sealed record OrbitalElements(
         double A, double E, double I, double L, double Perihelion, double Node,
@@ -69,7 +68,7 @@ public static class PlanetCalculator
         _ => throw new ArgumentOutOfRangeException(nameof(planet))
     };
 
-    /// <summary>Diámetro ecuatorial a 1 UA, en segundos de arco (Meeus, cap. 55).</summary>
+    /// <summary>Equatorial diameter at 1 AU, in arcseconds (Meeus, ch. 55).</summary>
     private static double DiameterAtOneAu(Planet planet) => planet switch
     {
         Planet.Mercury => 6.72,
@@ -90,7 +89,7 @@ public static class PlanetCalculator
         var jd = AstronomyMath.ToJulianDate(utcDateTime);
         var earth = Heliocentric(EarthMoonBarycenter, jd);
 
-        // Corrección por tiempo de luz: se ve el planeta donde estaba cuando salió la luz.
+        // Light-time correction: the planet is seen where it was when the light left it.
         var position = Heliocentric(ElementsOf(planet), jd);
         for (var iteration = 0; iteration < 2; iteration++)
         {
@@ -103,7 +102,7 @@ public static class PlanetCalculator
         var sunDistance = Length(position);
         var earthSunDistance = Length(earth);
 
-        // Eclíptica J2000 → ecuatorial J2000 → equinoccio de la fecha.
+        // J2000 ecliptic → J2000 equatorial → equinox of date.
         var epsilon = AstronomyMath.DegreesToRadiansValue(ObliquityJ2000);
         var x = geocentric.X;
         var y = geocentric.Y * Math.Cos(epsilon) - geocentric.Z * Math.Sin(epsilon);
@@ -130,8 +129,8 @@ public static class PlanetCalculator
     }
 
     /// <summary>
-    /// Magnitud visual (Meeus 41, fórmulas del Astronomical Almanac). En Saturno
-    /// se incluye el brillo de los anillos según su inclinación (Meeus 45).
+    /// Visual magnitude (Meeus 41, Astronomical Almanac formulae). For Saturn the brightness of
+    /// the rings is included according to their tilt (Meeus 45).
     /// </summary>
     private static double Magnitude(
         Planet planet, double r, double delta, double i, (double X, double Y, double Z) geocentric, double jd)
@@ -157,8 +156,8 @@ public static class PlanetCalculator
     }
 
     /// <summary>
-    /// Inclinación de los anillos de Saturno vista desde la Tierra (B, Meeus 45):
-    /// cerca de 0° los anillos se ven de canto y Saturno es más débil.
+    /// Tilt of Saturn's rings as seen from the Earth (B, Meeus 45): near 0° the rings are seen
+    /// edge-on and Saturn is fainter.
     /// </summary>
     internal static double SaturnRingTiltDegrees((double X, double Y, double Z) geocentric, double jd)
     {
@@ -166,8 +165,8 @@ public static class PlanetCalculator
         var inclination = 28.075216 - 0.012998 * t + 0.000004 * t * t;
         var node = 169.508470 + 1.394681 * t + 0.000412 * t * t;
 
-        // Longitud y latitud eclípticas geocéntricas; la longitud se lleva al
-        // equinoccio de la fecha sumando la precesión general (~1.397° por siglo).
+        // Geocentric ecliptic longitude and latitude; the longitude is referred to the equinox of
+        // date by adding the general precession (~1.397° per century).
         var lambda = AstronomyMath.RadiansToDegreesValue(Math.Atan2(geocentric.Y, geocentric.X)) + 1.3969713 * t;
         var beta = AstronomyMath.RadiansToDegreesValue(
             Math.Atan2(geocentric.Z, Math.Sqrt(geocentric.X * geocentric.X + geocentric.Y * geocentric.Y)));
@@ -176,7 +175,7 @@ public static class PlanetCalculator
         return AstronomyMath.RadiansToDegreesValue(Math.Asin(Math.Clamp(sinB, -1.0, 1.0)));
     }
 
-    /// <summary>Posición heliocéntrica en la eclíptica J2000 (UA).</summary>
+    /// <summary>Heliocentric position in the J2000 ecliptic (AU).</summary>
     private static (double X, double Y, double Z) Heliocentric(OrbitalElements el, double jd)
     {
         var t = (jd - 2451545.0) / 36525.0;
@@ -194,7 +193,7 @@ public static class PlanetCalculator
             meanAnomaly -= 360;
         }
 
-        // Ecuación de Kepler por Newton-Raphson (en radianes).
+        // Kepler's equation by Newton-Raphson (in radians).
         var m = AstronomyMath.DegreesToRadiansValue(meanAnomaly);
         var eccentricAnomaly = m + e * Math.Sin(m);
         for (var iteration = 0; iteration < 20; iteration++)
@@ -207,7 +206,7 @@ public static class PlanetCalculator
             }
         }
 
-        // Coordenadas en el plano de la órbita y rotación a la eclíptica.
+        // Coordinates in the orbital plane and rotation to the ecliptic.
         var xOrbit = a * (Math.Cos(eccentricAnomaly) - e);
         var yOrbit = a * Math.Sqrt(1 - e * e) * Math.Sin(eccentricAnomaly);
 
@@ -229,7 +228,7 @@ public static class PlanetCalculator
 
     private static double Length((double X, double Y, double Z) v) => Math.Sqrt(v.X * v.X + v.Y * v.Y + v.Z * v.Z);
 
-    /// <summary>Ángulo (grados) opuesto al lado <paramref name="opposite"/>, por la ley del coseno.</summary>
+    /// <summary>Angle (degrees) opposite the side <paramref name="opposite"/>, by the law of cosines.</summary>
     private static double AngleFromSides(double adjacent1, double adjacent2, double opposite)
     {
         var cosine = (adjacent1 * adjacent1 + adjacent2 * adjacent2 - opposite * opposite) / (2 * adjacent1 * adjacent2);

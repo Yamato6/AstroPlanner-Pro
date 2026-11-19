@@ -6,7 +6,7 @@ using System.Windows.Interop;
 
 namespace AstroPlanner.UI.Services;
 
-/// <summary>Detalles de Windows que WPF no expone.</summary>
+/// <summary>Windows details that WPF does not expose.</summary>
 internal static class NativeWindows
 {
     private const int DwmwaUseImmersiveDarkMode = 20;
@@ -16,9 +16,9 @@ internal static class NativeWindows
     private static extern int DwmSetWindowAttribute(IntPtr hwnd, int attribute, ref int value, int size);
 
     /// <summary>
-    /// Barra de título oscura, a juego con el tema (Windows 10 20H1+ y Windows 11).
-    /// Se aplica en SourceInitialized, antes de que la ventana se pinte por
-    /// primera vez; en versiones anteriores de Windows no hace nada.
+    /// Dark title bar matching the theme (Windows 10 20H1+ and Windows 11). Applied on
+    /// SourceInitialized, before the window is painted for the first time; it does nothing on
+    /// older versions of Windows.
     /// </summary>
     public static void UseDarkTitleBar(Window window) =>
         window.SourceInitialized += (_, _) =>
@@ -30,18 +30,18 @@ internal static class NativeWindows
             Debug.WriteLineIf(!applied, "Dark title bar is not supported on this version of Windows.");
         };
 
-    /// <summary>Muestra y pone delante una ventana (p. ej. al abrir la app por segunda vez).</summary>
+    /// <summary>Shows a window and brings it to the front (e.g. when the app is opened a second time).</summary>
     public static void BringToFront(Window window)
     {
         if (window.WindowState == WindowState.Minimized)
         {
-            // Restaura al estado anterior (maximizada si lo estaba), no siempre a "normal".
+            // Restores the previous state (maximized if it was), not always "normal".
             SystemCommands.RestoreWindow(window);
         }
 
         window.Show();
         window.Activate();
-        // Truco habitual: Windows no deja robar el foco, pero sí subir la ventana un instante.
+        // Usual trick: Windows does not allow stealing the focus, but it does allow raising the window briefly.
         window.Topmost = true;
         window.Topmost = false;
         window.Focus();
@@ -49,9 +49,9 @@ internal static class NativeWindows
 }
 
 /// <summary>
-/// Una sola instancia de AstroPlanner por sesión de usuario: dos procesos
-/// escribirían a la vez el plan y la bitácora. La segunda instancia avisa a la
-/// primera (que se pone delante) y se cierra.
+/// A single instance of AstroPlanner per user session: two processes would write the plan and
+/// the logbook at the same time. The second instance notifies the first one (which comes to the
+/// front) and exits.
 /// </summary>
 internal sealed class SingleInstance : IDisposable
 {
@@ -70,9 +70,9 @@ internal sealed class SingleInstance : IDisposable
     }
 
     /// <summary>
-    /// null si no se pueden abrir los objetos con nombre (p. ej. los creó una
-    /// instancia abierta como administrador): entonces la app arranca igual,
-    /// sin la comprobación de instancia única, en lugar de cerrarse sin avisar.
+    /// Null if the named objects cannot be opened (e.g. they were created by an instance running
+    /// as administrator): the app then starts anyway, without the single-instance check, instead
+    /// of exiting silently.
     /// </summary>
     public static SingleInstance? TryCreate()
     {
@@ -97,10 +97,10 @@ internal sealed class SingleInstance : IDisposable
 
     public bool IsFirstInstance { get; }
 
-    /// <summary>Pide a la instancia que ya está abierta que se muestre.</summary>
+    /// <summary>Asks the instance that is already open to show itself.</summary>
     public void ActivateFirstInstance() => _activate.Set();
 
-    /// <summary>Llama a <paramref name="onActivate"/> (en otro hilo) cada vez que se abre una segunda instancia.</summary>
+    /// <summary>Calls <paramref name="onActivate"/> (on another thread) every time a second instance is opened.</summary>
     public void ListenForActivation(Action onActivate) =>
         _registration = ThreadPool.RegisterWaitForSingleObject(
             _activate, (_, _) => onActivate(), null, Timeout.Infinite, executeOnlyOnce: false);

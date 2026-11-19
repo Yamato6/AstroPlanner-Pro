@@ -1,10 +1,9 @@
 namespace AstroPlanner.UI.ViewModels;
 
 /// <summary>
-/// Proyección polar del cielo para la carta: el cénit en el centro y el
-/// horizonte en un círculo de radio 90 (la distancia al centro es 90° - altitud).
-/// Norte arriba y este a la izquierda, como se ve el cielo al mirar hacia arriba
-/// (igual que en un planisferio).
+/// Polar projection of the sky for the chart: the zenith at the center and the horizon on
+/// a circle of radius 90 (distance to the center = 90° - altitude). North up and east
+/// left, as the sky looks when looking up (like a planisphere).
 /// </summary>
 public static class SkyProjection
 {
@@ -18,7 +17,7 @@ public static class SkyProjection
     }
 }
 
-/// <summary>Un objeto dibujado en la carta del cielo.</summary>
+/// <summary>An object drawn on the sky chart.</summary>
 public sealed record SkyMapPoint(
     string Id,
     double AltitudeDegrees,

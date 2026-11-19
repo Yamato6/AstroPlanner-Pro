@@ -9,19 +9,18 @@ public enum CelestialObjectType
     DiffuseNebula,
     SupernovaRemnant,
     /// <summary>
-    /// Para objetos del catálogo Messier que no encajan en las categorías
-    /// estándar (ej. M40, un sistema estelar doble; M73, un agrupamiento
-    /// de estrellas sin confirmación física de cúmulo).
+    /// For Messier objects that do not fit the standard categories (e.g. M40, a double star;
+    /// M73, a group of stars that is not a confirmed physical cluster).
     /// </summary>
     Unknown,
-    /// <summary>Planeta del sistema solar: su posición y magnitud cambian con la fecha.</summary>
+    /// <summary>Planet of the Solar System: its position and magnitude change with the date.</summary>
     Planet
 }
 
 public sealed class CelestialObject
 {
-    /// <summary>Constelación que se muestra para los planetas (cambia con la fecha).</summary>
-    public const string SolarSystemConstellation = "Sistema solar";
+    /// <summary>Constellation shown for planets (their real one changes with the date).</summary>
+    public const string SolarSystemConstellation = "Solar System";
 
     public CelestialObject(
         string id,
@@ -47,8 +46,8 @@ public sealed class CelestialObject
     }
 
     /// <summary>
-    /// Crea un planeta. Sus <see cref="Coordinates"/> y <see cref="ApparentMagnitude"/>
-    /// no se usan: dependen de la fecha y las calcula <c>IAstronomyService</c>.
+    /// Creates a planet. Its <see cref="Coordinates"/> and <see cref="ApparentMagnitude"/> are
+    /// not used: they depend on the date and <c>IAstronomyService</c> calculates them.
     /// </summary>
     public static CelestialObject CreatePlanet(string id, string commonName, Planet planet) =>
         new(id, commonName, planet);
@@ -58,13 +57,13 @@ public sealed class CelestialObject
     public string Constellation { get; }
     public CelestialObjectType Type { get; }
 
-    /// <summary>Magnitud del catálogo (NaN en los planetas, cuya magnitud depende de la fecha).</summary>
+    /// <summary>Catalog magnitude (NaN for planets, whose magnitude depends on the date).</summary>
     public double ApparentMagnitude { get; }
 
-    /// <summary>Coordenadas J2000 del catálogo (sin uso en los planetas).</summary>
+    /// <summary>Catalog J2000 coordinates (unused for planets).</summary>
     public EquatorialCoordinates Coordinates { get; }
 
-    /// <summary>El planeta, o null si es un objeto de cielo profundo con coordenadas fijas.</summary>
+    /// <summary>The planet, or null for a deep-sky object with fixed coordinates.</summary>
     public Planet? Planet { get; }
 
     public bool IsPlanet => Planet is not null;

@@ -6,7 +6,9 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using AstroPlanner.Core.Algorithms;
 using AstroPlanner.Core.Interfaces;
+using AstroPlanner.UI.Resources;
 using AstroPlanner.UI.Services;
+using static AstroPlanner.UI.Services.DisplayNames;
 
 namespace AstroPlanner.UI.ViewModels;
 
@@ -92,20 +94,20 @@ public sealed partial class SessionPlanViewModel : ObservableObject
             var nightStart = ObservationNight.GetNightStartLocal(_context.ObservationDateTime);
             var parts = new List<string>
             {
-                $"Noche del {nightStart:dd/MM/yyyy} al {nightStart.AddDays(1):dd/MM/yyyy}",
+                Format(Strings.PlanSummaryNightFormat, nightStart, nightStart.AddDays(1)),
                 _context.LocationName
             };
             if (_context.Night is { HasAstronomicalDarkness: true } night)
             {
-                parts.Add($"Noche oscura {night.AstronomicalDuskLocal:HH:mm} → {night.AstronomicalDawnLocal:HH:mm}");
+                parts.Add(Format(Strings.PlanSummaryDarkNightFormat, night.AstronomicalDuskLocal, night.AstronomicalDawnLocal));
             }
 
             if (_context.Moon is { } moon)
             {
-                parts.Add($"Luna {DisplayNames.MoonIllumination(moon)} ({DisplayNames.MoonPhase(moon.IlluminatedFraction, moon.IsWaxing)})");
+                parts.Add(Format(Strings.PlanSummaryMoonFormat, MoonIllumination(moon), MoonPhase(moon.IlluminatedFraction, moon.IsWaxing)));
             }
 
-            parts.Add($"Altitud mínima {_context.MinimumAltitude:0}°");
+            parts.Add(Format(Strings.PlanSummaryMinimumAltitudeFormat, _context.MinimumAltitude));
             return string.Join(" · ", parts);
         }
     }
@@ -119,14 +121,14 @@ public sealed partial class SessionPlanViewModel : ObservableObject
         try
         {
             File.WriteAllText(filePath, BuildCsv(CultureInfo.CurrentCulture), new UTF8Encoding(true));
-            StatusMessage = $"Plan exportado a {Path.GetFileName(filePath)}.";
-            _logger.LogInfo($"Plan exportado a {filePath}.");
+            StatusMessage = Format(Strings.PlanExportedFormat, Path.GetFileName(filePath));
+            _logger.LogInfo($"Plan exported to {filePath}.");
             return true;
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
         {
-            _logger.LogError("No se pudo exportar el plan.", ex);
-            StatusMessage = $"No se pudo exportar el plan: {ex.Message}";
+            _logger.LogError("Could not export the plan.", ex);
+            StatusMessage = Format(Strings.PlanExportFailedFormat, ex.Message);
             return false;
         }
     }
@@ -155,8 +157,8 @@ public sealed partial class SessionPlanViewModel : ObservableObject
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
         {
-            _logger.LogError("No se pudo guardar el plan de observación.", ex);
-            StatusMessage = $"No se pudo guardar el plan: {ex.Message}";
+            _logger.LogError("Could not save the observation plan.", ex);
+            StatusMessage = Format(Strings.PlanSaveFailedFormat, ex.Message);
         }
     }
 

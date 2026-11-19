@@ -1,15 +1,16 @@
+using System.Globalization;
 using System.IO;
 
 namespace AstroPlanner.UI.Services;
 
 /// <summary>
-/// Implementación de <see cref="IAppLogger"/> que escribe un archivo por día:
-/// %LocalAppData%\AstroPlanner\logs\astroplanner-AAAAMMDD.log
+/// <see cref="IAppLogger"/> that writes one file per day:
+/// %LocalAppData%\AstroPlanner\logs\astroplanner-YYYYMMDD.log
 /// </summary>
 public sealed class FileAppLogger : IAppLogger
 {
     private readonly string _directory;
-    private readonly object _sync = new();
+    private readonly Lock _sync = new();
 
     public FileAppLogger(string? directory = null)
     {
@@ -18,8 +19,9 @@ public sealed class FileAppLogger : IAppLogger
 
     public string LogLocation => _directory;
 
-    /// <summary>Archivo del día actual.</summary>
-    public string CurrentFilePath => Path.Combine(_directory, $"astroplanner-{DateTime.Now:yyyyMMdd}.log");
+    /// <summary>Today's file.</summary>
+    public string CurrentFilePath =>
+        Path.Combine(_directory, string.Create(CultureInfo.InvariantCulture, $"astroplanner-{DateTime.Now:yyyyMMdd}.log"));
 
     public void LogInfo(string message) => Write("INFO", message, null);
 
@@ -27,7 +29,7 @@ public sealed class FileAppLogger : IAppLogger
 
     private void Write(string level, string message, Exception? exception)
     {
-        var line = $"{DateTime.Now:yyyy-MM-dd HH:mm:ss.fff} [{level}] {message}";
+        var line = string.Create(CultureInfo.InvariantCulture, $"{DateTime.Now:yyyy-MM-dd HH:mm:ss.fff} [{level}] {message}");
         if (exception is not null)
         {
             line += Environment.NewLine + exception;
@@ -43,7 +45,7 @@ public sealed class FileAppLogger : IAppLogger
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
         {
-            // Registrar nunca debe tumbar la aplicación.
+            // Logging must never crash the application.
         }
     }
 }

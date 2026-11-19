@@ -16,7 +16,7 @@ public sealed class JsonCelestialRepository : ICelestialRepository
         Converters = { new JsonStringEnumConverter() }
     };
 
-    /// <param name="filePath">Catálogo alternativo; null usa el incrustado en el ensamblado.</param>
+    /// <param name="filePath">Alternative catalog file; null uses the one embedded in the assembly.</param>
     public JsonCelestialRepository(string? filePath = null)
     {
         _filePath = filePath;

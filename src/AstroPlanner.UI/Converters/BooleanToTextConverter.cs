@@ -3,7 +3,7 @@ using System.Windows.Data;
 
 namespace AstroPlanner.UI.Converters;
 
-/// <summary>Muestra <see cref="TrueText"/> o <see cref="FalseText"/> según un booleano.</summary>
+/// <summary>Shows <see cref="TrueText"/> or <see cref="FalseText"/> depending on a boolean.</summary>
 public sealed class BooleanToTextConverter : IValueConverter
 {
     public string TrueText { get; set; } = "";

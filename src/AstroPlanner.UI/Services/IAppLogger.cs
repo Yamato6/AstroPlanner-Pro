@@ -1,12 +1,12 @@
 namespace AstroPlanner.UI.Services;
 
 /// <summary>
-/// Registro de eventos y errores de la aplicación, para diagnosticar fallos
-/// que el usuario no puede describir con detalle.
+/// Application event and error log, to diagnose failures the user cannot describe in detail.
+/// Never log personal data beyond rounded coordinates.
 /// </summary>
 public interface IAppLogger
 {
-    /// <summary>Dónde se guarda el registro, para indicárselo al usuario.</summary>
+    /// <summary>Where the log is stored, to tell the user.</summary>
     string LogLocation { get; }
 
     void LogInfo(string message);

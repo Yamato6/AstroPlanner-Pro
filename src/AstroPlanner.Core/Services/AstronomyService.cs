@@ -5,124 +5,124 @@ using AstroPlanner.Core.Models;
 namespace AstroPlanner.Core.Services;
 
 /// <summary>
-/// Implementación por defecto de <see cref="IAstronomyService"/>.
-/// Delega los cálculos a las clases estáticas de <c>Algorithms</c>.
-/// Vive en Core porque no depende de UI y reutiliza lógica pura ya testeada.
+/// Default <see cref="IAstronomyService"/>. Delegates the calculations to the static
+/// <c>Algorithms</c> classes. It lives in Core because it does not depend on the UI and reuses
+/// pure, tested logic.
 /// </summary>
 public sealed class AstronomyService : IAstronomyService
 {
     /// <summary>
-    /// Altitud del centro del Sol en la puesta/salida: radio aparente (16')
-    /// más refracción en el horizonte (34'), convención estándar.
+    /// Altitude of the center of the Sun at sunset/sunrise: apparent radius (16') plus
+    /// refraction at the horizon (34'), the standard convention.
     /// </summary>
     public const double SunriseSunsetAltitudeDegrees = -0.833;
 
-    /// <summary>Sol a -18°: fin/inicio del crepúsculo astronómico.</summary>
+    /// <summary>Sun at -18°: end/start of astronomical twilight.</summary>
     public const double AstronomicalTwilightAltitudeDegrees = -18.0;
 
     private static readonly TimeSpan SunSampleStep = TimeSpan.FromMinutes(10);
     private static readonly TimeSpan EventSampleStep = TimeSpan.FromMinutes(10);
 
     public HorizontalCoordinates GetHorizontal(
-        CelestialObject objeto,
-        ObserverLocation observador,
+        CelestialObject target,
+        ObserverLocation observer,
         DateTime utcDateTime)
     {
-        ArgumentNullException.ThrowIfNull(objeto);
-        ArgumentNullException.ThrowIfNull(observador);
+        ArgumentNullException.ThrowIfNull(target);
+        ArgumentNullException.ThrowIfNull(observer);
 
-        // Coordenadas de la fecha → horizonte → altitud aparente.
-        var ofDate = EquatorialOfDate(objeto, utcDateTime);
-        var geometric = CoordinateTransformer.ToHorizontal(ofDate, observador, utcDateTime);
+        // Coordinates of date → horizon → apparent altitude.
+        var ofDate = EquatorialOfDate(target, utcDateTime);
+        var geometric = CoordinateTransformer.ToHorizontal(ofDate, observer, utcDateTime);
         return geometric with { AltitudeDegrees = Refraction.ApparentAltitude(geometric.AltitudeDegrees) };
     }
 
     /// <summary>
-    /// Coordenadas ecuatoriales del equinoccio de la fecha: los planetas se
-    /// calculan para ese instante; el resto, por precesión desde el catálogo J2000.
+    /// Equatorial coordinates, equinox of date: planets are calculated for that instant; the
+    /// rest by precession from the J2000 catalog.
     /// </summary>
-    private static EquatorialCoordinates EquatorialOfDate(CelestialObject objeto, DateTime utcDateTime) =>
-        objeto.Planet is { } planet
+    private static EquatorialCoordinates EquatorialOfDate(CelestialObject target, DateTime utcDateTime) =>
+        target.Planet is { } planet
             ? PlanetCalculator.GetPosition(planet, utcDateTime).Equatorial
-            : Precession.FromJ2000(objeto.Coordinates, utcDateTime);
+            : Precession.FromJ2000(target.Coordinates, utcDateTime);
 
-    public PlanetPosition? GetPlanetPosition(CelestialObject objeto, DateTime utcDateTime)
+    public PlanetPosition? GetPlanetPosition(CelestialObject target, DateTime utcDateTime)
     {
-        ArgumentNullException.ThrowIfNull(objeto);
-        return objeto.Planet is { } planet ? PlanetCalculator.GetPosition(planet, utcDateTime) : null;
+        ArgumentNullException.ThrowIfNull(target);
+        return target.Planet is { } planet ? PlanetCalculator.GetPosition(planet, utcDateTime) : null;
     }
 
-    public double GetApparentMagnitude(CelestialObject objeto, DateTime utcDateTime) =>
-        GetPlanetPosition(objeto, utcDateTime)?.Magnitude ?? objeto.ApparentMagnitude;
+    public double GetApparentMagnitude(CelestialObject target, DateTime utcDateTime) =>
+        GetPlanetPosition(target, utcDateTime)?.Magnitude ?? target.ApparentMagnitude;
 
     public IEnumerable<(DateTime Time, double AltitudeDegrees)> GetAltitudeSeries(
-        CelestialObject objeto,
-        ObserverLocation observador,
-        DateTime inicioUtc,
-        DateTime finUtc,
-        TimeSpan paso)
+        CelestialObject target,
+        ObserverLocation observer,
+        DateTime startUtc,
+        DateTime endUtc,
+        TimeSpan interval)
     {
-        ArgumentNullException.ThrowIfNull(objeto);
-        ArgumentNullException.ThrowIfNull(observador);
+        ArgumentNullException.ThrowIfNull(target);
+        ArgumentNullException.ThrowIfNull(observer);
 
-        if (paso <= TimeSpan.Zero)
+        if (interval <= TimeSpan.Zero)
         {
-            throw new ArgumentOutOfRangeException(nameof(paso), "El paso temporal debe ser positivo.");
+            throw new ArgumentOutOfRangeException(nameof(interval), "The time interval must be positive.");
         }
 
-        for (var t = inicioUtc; t <= finUtc; t += paso)
+        for (var t = startUtc; t <= endUtc; t += interval)
         {
-            yield return (t, GetHorizontal(objeto, observador, t).AltitudeDegrees);
+            yield return (t, GetHorizontal(target, observer, t).AltitudeDegrees);
         }
     }
 
     public IReadOnlyList<(DateTime LocalTime, double AltitudeDegrees)> GetNightAltitudeSeries(
-        CelestialObject objeto,
-        ObserverLocation observador,
-        DateTime inicioLocal,
-        DateTime finLocal,
-        TimeZoneInfo zonaHoraria,
-        TimeSpan paso)
+        CelestialObject target,
+        ObserverLocation observer,
+        DateTime startLocal,
+        DateTime endLocal,
+        TimeZoneInfo timeZone,
+        TimeSpan interval)
     {
-        ArgumentNullException.ThrowIfNull(objeto);
-        ArgumentNullException.ThrowIfNull(observador);
+        ArgumentNullException.ThrowIfNull(target);
+        ArgumentNullException.ThrowIfNull(observer);
 
-        return SampleLocal(inicioLocal, finLocal, zonaHoraria, paso,
-            utc => GetHorizontal(objeto, observador, utc).AltitudeDegrees);
+        return SampleLocal(startLocal, endLocal, timeZone, interval,
+            utc => GetHorizontal(target, observer, utc).AltitudeDegrees);
     }
 
     public ObjectNightEvents GetNightEvents(
-        CelestialObject objeto,
-        ObserverLocation observador,
-        DateTime inicioLocal,
-        DateTime finLocal,
-        TimeZoneInfo zonaHoraria,
-        double altitudMinimaDegrees)
+        CelestialObject target,
+        ObserverLocation observer,
+        DateTime startLocal,
+        DateTime endLocal,
+        TimeZoneInfo timeZone,
+        double minimumAltitudeDegrees)
     {
-        var samples = GetNightAltitudeSeries(objeto, observador, inicioLocal, finLocal, zonaHoraria, EventSampleStep);
+        var samples = GetNightAltitudeSeries(target, observer, startLocal, endLocal, timeZone, EventSampleStep);
         var maximum = samples.MaxBy(sample => sample.AltitudeDegrees);
 
         return new ObjectNightEvents(
             RiseLocal: ObservationNight.FindCrossing(samples, 0, rising: true),
-            ThresholdCrossingLocal: ObservationNight.FindCrossing(samples, altitudMinimaDegrees, rising: true),
+            ThresholdCrossingLocal: ObservationNight.FindCrossing(samples, minimumAltitudeDegrees, rising: true),
             CulminationLocal: maximum.LocalTime,
             SetLocal: ObservationNight.FindCrossing(samples, 0, rising: false),
             MaximumAltitudeDegrees: maximum.AltitudeDegrees);
     }
 
-    public double GetSunAltitudeDegrees(ObserverLocation observador, DateTime utcDateTime)
+    public double GetSunAltitudeDegrees(ObserverLocation observer, DateTime utcDateTime)
     {
-        ArgumentNullException.ThrowIfNull(observador);
+        ArgumentNullException.ThrowIfNull(observer);
 
-        // Altitud geométrica del centro: las convenciones de puesta (-0.833°) y
-        // crepúsculo (-18°) ya incluyen la refracción.
+        // Geometric altitude of the center: the sunset (-0.833°) and twilight (-18°)
+        // conventions already include refraction.
         var sun = SolarSystemCalculator.GetSunPosition(utcDateTime);
-        return CoordinateTransformer.ToHorizontal(sun.Equatorial, observador, utcDateTime).AltitudeDegrees;
+        return CoordinateTransformer.ToHorizontal(sun.Equatorial, observer, utcDateTime).AltitudeDegrees;
     }
 
-    public SkyCondition GetSkyCondition(ObserverLocation observador, DateTime utcDateTime)
+    public SkyCondition GetSkyCondition(ObserverLocation observer, DateTime utcDateTime)
     {
-        var sunAltitude = GetSunAltitudeDegrees(observador, utcDateTime);
+        var sunAltitude = GetSunAltitudeDegrees(observer, utcDateTime);
         return sunAltitude switch
         {
             > SunriseSunsetAltitudeDegrees => SkyCondition.Day,
@@ -131,22 +131,22 @@ public sealed class AstronomyService : IAstronomyService
         };
     }
 
-    public NightInfo GetNightInfo(ObserverLocation observador, DateTime horaLocal, TimeZoneInfo zonaHoraria)
+    public NightInfo GetNightInfo(ObserverLocation observer, DateTime localTime, TimeZoneInfo timeZone)
     {
-        ArgumentNullException.ThrowIfNull(observador);
+        ArgumentNullException.ThrowIfNull(observer);
 
-        // Se busca de mediodía a mediodía alrededor de la noche que contiene la hora.
-        var nightDate = ObservationNight.GetNightStartLocal(horaLocal).Date;
+        // Search from noon to noon around the night that contains the time.
+        var nightDate = ObservationNight.GetNightStartLocal(localTime).Date;
         var noon = nightDate.AddHours(12);
-        var samples = SampleLocal(noon, noon.AddDays(1), zonaHoraria, SunSampleStep,
-            utc => GetSunAltitudeDegrees(observador, utc));
+        var samples = SampleLocal(noon, noon.AddDays(1), timeZone, SunSampleStep,
+            utc => GetSunAltitudeDegrees(observer, utc));
 
         var sunset = ObservationNight.FindCrossing(samples, SunriseSunsetAltitudeDegrees, rising: false);
         var sunrise = ObservationNight.FindCrossing(samples, SunriseSunsetAltitudeDegrees, rising: true);
         var dusk = ObservationNight.FindCrossing(samples, AstronomicalTwilightAltitudeDegrees, rising: false);
         var dawn = ObservationNight.FindCrossing(samples, AstronomicalTwilightAltitudeDegrees, rising: true);
 
-        // Sin puesta o salida (día o noche polar) se usa la ventana fija 18:00 → 06:00.
+        // Without sunset or sunrise (polar day or night) the fixed 18:00 → 06:00 window is used.
         var hasSunWindow = sunset is not null && sunrise is not null && sunrise > sunset;
         var start = hasSunWindow ? sunset!.Value : nightDate.AddHours(ObservationNight.StartHour);
         var end = hasSunWindow ? sunrise!.Value : start + ObservationNight.Duration;
@@ -160,15 +160,15 @@ public sealed class AstronomyService : IAstronomyService
             AstronomicalDawnLocal: dusk is not null && dawn is not null && dawn > dusk ? dawn : null);
     }
 
-    public MoonState GetMoon(ObserverLocation observador, DateTime utcDateTime)
+    public MoonState GetMoon(ObserverLocation observer, DateTime utcDateTime)
     {
-        ArgumentNullException.ThrowIfNull(observador);
+        ArgumentNullException.ThrowIfNull(observer);
 
         var moon = SolarSystemCalculator.GetMoonPosition(utcDateTime);
         var sun = SolarSystemCalculator.GetSunPosition(utcDateTime);
-        var geocentric = CoordinateTransformer.ToHorizontal(moon.Equatorial, observador, utcDateTime);
+        var geocentric = CoordinateTransformer.ToHorizontal(moon.Equatorial, observer, utcDateTime);
 
-        // Paralaje: vista desde la superficie la Luna aparece hasta ~1° más baja.
+        // Parallax: seen from the surface the Moon appears up to ~1° lower.
         var topocentricAltitude = geocentric.AltitudeDegrees
             - moon.HorizontalParallaxDegrees * Math.Cos(geocentric.AltitudeDegrees * Math.PI / 180.0);
 
@@ -179,55 +179,54 @@ public sealed class AstronomyService : IAstronomyService
             IsWaxing: SolarSystemCalculator.IsMoonWaxing(moon, sun));
     }
 
-    public double GetMoonSeparationDegrees(CelestialObject objeto, MoonState luna, DateTime utcDateTime)
+    public double GetMoonSeparationDegrees(CelestialObject target, MoonState moon, DateTime utcDateTime)
     {
-        ArgumentNullException.ThrowIfNull(objeto);
-        ArgumentNullException.ThrowIfNull(luna);
+        ArgumentNullException.ThrowIfNull(target);
+        ArgumentNullException.ThrowIfNull(moon);
 
-        // Ambas en coordenadas de la fecha para que sean comparables.
-        return AstronomyMath.AngularSeparationDegrees(EquatorialOfDate(objeto, utcDateTime), luna.Equatorial);
+        // Both in coordinates of date so that they are comparable.
+        return AstronomyMath.AngularSeparationDegrees(EquatorialOfDate(target, utcDateTime), moon.Equatorial);
     }
 
     public IReadOnlyList<(DateTime LocalTime, double AltitudeDegrees)> GetMoonAltitudeSeries(
-        ObserverLocation observador,
-        DateTime inicioLocal,
-        DateTime finLocal,
-        TimeZoneInfo zonaHoraria,
-        TimeSpan paso)
+        ObserverLocation observer,
+        DateTime startLocal,
+        DateTime endLocal,
+        TimeZoneInfo timeZone,
+        TimeSpan interval)
     {
-        ArgumentNullException.ThrowIfNull(observador);
+        ArgumentNullException.ThrowIfNull(observer);
 
-        return SampleLocal(inicioLocal, finLocal, zonaHoraria, paso,
-            utc => GetMoon(observador, utc).Horizontal.AltitudeDegrees);
+        return SampleLocal(startLocal, endLocal, timeZone, interval,
+            utc => GetMoon(observer, utc).Horizontal.AltitudeDegrees);
     }
 
     /// <summary>
-    /// Muestrea <paramref name="altitudeAt"/> en hora local de inicio a fin
-    /// (ambos incluidos). El muestreo es en hora local para que el eje del
-    /// gráfico sea regular; cada punto se convierte a UTC por separado, lo que
-    /// respeta el horario de verano.
+    /// Samples <paramref name="altitudeAt"/> in local time from start to end (both included).
+    /// Sampling is in local time so that the chart axis is regular; each point is converted
+    /// to UTC separately, which honors daylight saving time.
     /// </summary>
     private static List<(DateTime LocalTime, double AltitudeDegrees)> SampleLocal(
         DateTime startLocal,
         DateTime endLocal,
         TimeZoneInfo timeZone,
-        TimeSpan step,
+        TimeSpan interval,
         Func<DateTime, double> altitudeAt)
     {
         ArgumentNullException.ThrowIfNull(timeZone);
 
-        if (step <= TimeSpan.Zero)
+        if (interval <= TimeSpan.Zero)
         {
-            throw new ArgumentOutOfRangeException(nameof(step), "El paso temporal debe ser positivo.");
+            throw new ArgumentOutOfRangeException(nameof(interval), "The time interval must be positive.");
         }
 
         if (endLocal < startLocal)
         {
-            throw new ArgumentOutOfRangeException(nameof(endLocal), "El fin debe ser posterior al inicio.");
+            throw new ArgumentOutOfRangeException(nameof(endLocal), "The end must not be before the start.");
         }
 
         var points = new List<(DateTime LocalTime, double AltitudeDegrees)>();
-        for (var local = startLocal; local < endLocal; local += step)
+        for (var local = startLocal; local < endLocal; local += interval)
         {
             points.Add((local, altitudeAt(TimeZoneConversion.ToUtc(local, timeZone))));
         }

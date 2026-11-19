@@ -1,15 +1,14 @@
 namespace AstroPlanner.UI.Services;
 
 /// <summary>
-/// Persistencia de la configuración del observador.
-/// Interfaz en UI/Services porque es una preocupación de presentación
-/// (dónde y cómo guardar), no de dominio.
+/// Persistence of the observer settings. The interface lives in UI/Services because where and
+/// how settings are stored is a presentation concern, not a domain one.
 /// </summary>
 public interface ISettingsService
 {
-    /// <summary>Lee la configuración guardada; si no existe, devuelve valores por defecto.</summary>
+    /// <summary>Reads the saved settings; defaults if there are none.</summary>
     ObserverSettings Load();
 
-    /// <summary>Guarda la configuración de forma atómica (escribe temporal y renombra).</summary>
+    /// <summary>Saves the settings atomically (writes a temporary file and renames it).</summary>
     void Save(ObserverSettings settings);
 }

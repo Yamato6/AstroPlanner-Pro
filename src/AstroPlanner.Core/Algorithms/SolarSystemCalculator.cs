@@ -3,10 +3,9 @@ using AstroPlanner.Core.Models;
 namespace AstroPlanner.Core.Algorithms;
 
 /// <summary>
-/// Posiciones del Sol y la Luna con fórmulas de baja precisión, suficientes
-/// para planificar: Sol ~0.01° (Meeus, cap. 25), Luna ~0.3° (Astronomical
-/// Almanac, "low precision formulae"). Se usa UT en lugar de TT (ΔT ≈ 70 s),
-/// lo que añade un error despreciable a esta escala.
+/// Positions of the Sun and the Moon with low-precision formulae, enough for planning:
+/// Sun ~0.01° (Meeus, ch. 25), Moon ~0.3° (Astronomical Almanac, "low precision formulae").
+/// UT is used instead of TT (ΔT ≈ 70 s), a negligible error at this scale.
 /// </summary>
 public static class SolarSystemCalculator
 {
@@ -19,7 +18,7 @@ public static class SolarSystemCalculator
     private static double CenturiesSinceJ2000(DateTime utcDateTime) =>
         (AstronomyMath.ToJulianDate(utcDateTime) - 2451545.0) / 36525.0;
 
-    /// <summary>Oblicuidad media de la eclíptica (grados).</summary>
+    /// <summary>Mean obliquity of the ecliptic (degrees).</summary>
     private static double MeanObliquity(double t) => 23.4392911 - 0.0130042 * t;
 
     public static SunPosition GetSunPosition(DateTime utcDateTime)
@@ -38,7 +37,7 @@ public static class SolarSystemCalculator
         var trueAnomaly = meanAnomaly + center;
         var distanceAu = 1.000001018 * (1 - eccentricity * eccentricity) / (1 + eccentricity * Cos(trueAnomaly));
 
-        // Longitud aparente: corrige nutación y aberración (Meeus 25.8).
+        // Apparent longitude: corrects nutation and aberration (Meeus 25.8).
         var omega = 125.04 - 1934.136 * t;
         var apparentLongitude = AstronomyMath.NormalizeDegrees(trueLongitude - 0.00569 - 0.00478 * Sin(omega));
         var obliquity = MeanObliquity(t) + 0.00256 * Cos(omega);
@@ -78,15 +77,15 @@ public static class SolarSystemCalculator
     }
 
     /// <summary>
-    /// Fracción iluminada del disco lunar (0 = nueva, 1 = llena) a partir del
-    /// ángulo de fase (Meeus, cap. 48).
+    /// Illuminated fraction of the lunar disc (0 = new, 1 = full) from the phase angle
+    /// (Meeus, ch. 48).
     /// </summary>
     public static double GetMoonIlluminatedFraction(MoonPosition moon, SunPosition sun)
     {
         ArgumentNullException.ThrowIfNull(moon);
         ArgumentNullException.ThrowIfNull(sun);
 
-        // Elongación geocéntrica Luna-Sol.
+        // Geocentric Moon-Sun elongation.
         var cosElongation = Cos(moon.EclipticLatitudeDegrees)
             * Cos(moon.EclipticLongitudeDegrees - sun.EclipticLongitudeDegrees);
         var elongation = Math.Acos(Math.Clamp(cosElongation, -1.0, 1.0));
@@ -98,7 +97,7 @@ public static class SolarSystemCalculator
         return (1 + Math.Cos(phaseAngle)) / 2;
     }
 
-    /// <summary>True si la Luna está creciendo (entre Luna nueva y llena).</summary>
+    /// <summary>True while the Moon is waxing (between new and full Moon).</summary>
     public static bool IsMoonWaxing(MoonPosition moon, SunPosition sun) =>
         AstronomyMath.NormalizeDegrees(moon.EclipticLongitudeDegrees - sun.EclipticLongitudeDegrees) < 180;
 

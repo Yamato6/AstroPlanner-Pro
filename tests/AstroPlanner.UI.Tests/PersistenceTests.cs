@@ -1,9 +1,8 @@
 using AstroPlanner.UI.Services;
-using FluentAssertions;
 
 namespace AstroPlanner.UI.Tests;
 
-/// <summary>Persistencia en JSON de la configuración, el plan y el registro, sobre una carpeta temporal.</summary>
+/// <summary>JSON persistence of settings, plan and log, in a temporary folder.</summary>
 public sealed class PersistenceTests : IDisposable
 {
     private readonly string _directory = Path.Combine(Path.GetTempPath(), "AstroPlannerTests", Guid.NewGuid().ToString("N"));
@@ -26,7 +25,7 @@ public sealed class PersistenceTests : IDisposable
     [Fact]
     public void SettingsService_CorruptFile_ReturnsDefaults()
     {
-        File.WriteAllText(PathFor("settings.json"), "{ esto no es json");
+        File.WriteAllText(PathFor("settings.json"), "{ this is not json");
 
         var settings = new JsonSettingsService(PathFor("settings.json")).Load();
 
@@ -52,7 +51,7 @@ public sealed class PersistenceTests : IDisposable
         var loaded = service.Load();
 
         loaded.Should().BeEquivalentTo(saved);
-        File.Exists(PathFor("sub/settings.json.tmp")).Should().BeFalse("la escritura atómica renombra el temporal");
+        File.Exists(PathFor("sub/settings.json.tmp")).Should().BeFalse("the atomic write renames the temporary file");
     }
 
     [Fact]
@@ -70,18 +69,18 @@ public sealed class PersistenceTests : IDisposable
     {
         var service = new JsonObservationPlanService(PathFor("plan.json"));
 
-        service.Save([new("M42", "filtro UHC"), new("M31"), new("M13", "con \"comillas\"")]);
+        service.Save([new("M42", "UHC filter"), new("M31"), new("M13", "with \"quotes\"")]);
 
         service.Load().Should().Equal(
-            new ObservationPlanEntry("M42", "filtro UHC"),
+            new ObservationPlanEntry("M42", "UHC filter"),
             new ObservationPlanEntry("M31", ""),
-            new ObservationPlanEntry("M13", "con \"comillas\""));
+            new ObservationPlanEntry("M13", "with \"quotes\""));
     }
 
     [Fact]
     public void PlanService_ReadsLegacyListOfIds()
     {
-        // Formato de las versiones 0.3-0.5: solo ids, sin notas.
+        // Format of versions 0.3-0.5: ids only, no notes.
         File.WriteAllText(PathFor("plan.json"), "[ \"M31\", \"M42\" ]");
 
         var entries = new JsonObservationPlanService(PathFor("plan.json")).Load();
@@ -94,11 +93,11 @@ public sealed class PersistenceTests : IDisposable
     {
         var logger = new FileAppLogger(PathFor("logs"));
 
-        logger.LogError("Fallo de prueba", new InvalidOperationException("detalle interno"));
+        logger.LogError("Test failure", new InvalidOperationException("internal detail"));
 
         var text = File.ReadAllText(logger.CurrentFilePath);
-        text.Should().Contain("[ERROR] Fallo de prueba")
+        text.Should().Contain("[ERROR] Test failure")
             .And.Contain("InvalidOperationException")
-            .And.Contain("detalle interno");
+            .And.Contain("internal detail");
     }
 }

@@ -3,9 +3,8 @@ using System.IO;
 namespace AstroPlanner.UI.Services;
 
 /// <summary>
-/// Escritura atómica de archivos de datos del usuario: se escribe un temporal
-/// y se renombra, para no dejar el archivo corrupto si la app se cierra a
-/// mitad de la operación.
+/// Atomic write of user data files: write a temporary file and rename it, so that a crash
+/// half-way never leaves a corrupt file behind.
 /// </summary>
 internal static class AtomicFile
 {

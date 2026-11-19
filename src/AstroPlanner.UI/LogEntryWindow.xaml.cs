@@ -1,4 +1,5 @@
 using System.Windows;
+using AstroPlanner.UI.Resources;
 using AstroPlanner.UI.Services;
 using AstroPlanner.UI.ViewModels;
 
@@ -20,7 +21,7 @@ public partial class LogEntryWindow : Window
         draft.Validate();
         if (draft.HasErrors || draft.ObservedAtLocal is null)
         {
-            ErrorText.Text = "Revisa la hora: escríbela como HH:mm (por ejemplo 22:30).";
+            ErrorText.Text = Strings.LogTimeInvalid;
             ErrorText.Visibility = Visibility.Visible;
             return;
         }

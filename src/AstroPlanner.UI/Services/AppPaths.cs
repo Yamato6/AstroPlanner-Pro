@@ -3,8 +3,8 @@ using System.IO;
 namespace AstroPlanner.UI.Services;
 
 /// <summary>
-/// Carpeta de datos del usuario: %LocalAppData%\AstroPlanner (configuración,
-/// plan, bitácora y registros). El instalador nunca la borra.
+/// User data folder: %LocalAppData%\AstroPlanner (settings, plan, logbook and logs).
+/// The installer never deletes it.
 /// </summary>
 public static class AppPaths
 {

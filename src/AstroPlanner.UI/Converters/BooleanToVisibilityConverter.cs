@@ -5,8 +5,8 @@ using System.Windows.Data;
 namespace AstroPlanner.UI.Converters;
 
 /// <summary>
-/// Como el BooleanToVisibilityConverter de WPF, pero con <see cref="Invert"/>
-/// para ocultar un elemento cuando el valor es true.
+/// Like WPF's BooleanToVisibilityConverter, but with <see cref="Invert"/> to hide an element
+/// when the value is true.
 /// </summary>
 public sealed class BooleanToVisibilityConverter : IValueConverter
 {

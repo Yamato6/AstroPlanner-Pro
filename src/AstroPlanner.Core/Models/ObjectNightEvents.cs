@@ -1,9 +1,9 @@
 namespace AstroPlanner.Core.Models;
 
 /// <summary>
-/// Eventos de un objeto durante una noche de observación, en hora local.
-/// Cada hora es null si el evento no ocurre dentro de la ventana nocturna
-/// (p. ej. un objeto circumpolar no sale ni se pone).
+/// Events of an object during an observing night, in local time. Each time is null if the
+/// event does not happen inside the night window (e.g. a circumpolar object neither rises nor
+/// sets).
 /// </summary>
 public sealed record ObjectNightEvents(
     DateTime? RiseLocal,

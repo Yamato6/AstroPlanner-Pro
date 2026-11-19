@@ -4,10 +4,10 @@ using System.Text.Json;
 namespace AstroPlanner.UI.Services;
 
 /// <summary>
-/// Implementación basada en JSON de <see cref="IObservationPlanService"/>.
-/// Archivo: %LocalAppData%\AstroPlanner\plan.json
-/// Formato actual: [{"id":"M31","note":"..."}]. También lee el formato de la
-/// 0.3-0.5, una lista de ids (["M31","M42"]), para no perder planes existentes.
+/// JSON implementation of <see cref="IObservationPlanService"/>.
+/// File: %LocalAppData%\AstroPlanner\plan.json
+/// Current format: [{"id":"M31","note":"..."}]. It also reads the 0.3-0.5 format, a list of
+/// ids (["M31","M42"]), so that existing plans are not lost.
 /// </summary>
 public sealed class JsonObservationPlanService : IObservationPlanService
 {
@@ -45,7 +45,7 @@ public sealed class JsonObservationPlanService : IObservationPlanService
             {
                 var entry = element.ValueKind switch
                 {
-                    // Formato anterior: solo el id.
+                    // Old format: the id only.
                     JsonValueKind.String => new ObservationPlanEntry(element.GetString()!),
                     JsonValueKind.Object => element.Deserialize<ObservationPlanEntry>(Options),
                     _ => null
@@ -61,7 +61,7 @@ public sealed class JsonObservationPlanService : IObservationPlanService
         }
         catch (JsonException)
         {
-            // Archivo corrupto: se empieza con un plan vacío.
+            // Corrupt file: start with an empty plan.
             return [];
         }
         catch (IOException)
