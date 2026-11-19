@@ -27,16 +27,12 @@ public sealed class LogbookAndPlanetUiTests : IDisposable
     private static ObservationLogEntry Entry(string id, DateTime when, int rating = 4) =>
         new(Guid.NewGuid(), id, id, when, "CDMX", "Dobson 8\"", 3, 4, rating, "");
 
-    private static async Task<MainViewModel> CreateLoadedMainAsync(LogbookViewModel logbook, params CelestialObject[] extra)
+    private static async Task<ShellViewModel> CreateLoadedMainAsync(LogbookViewModel logbook, params CelestialObject[] extra)
     {
-        var viewModel = new MainViewModel(
-            new FakeCelestialRepository([TestCatalog.M42, TestCatalog.M31, TestCatalog.M13, .. extra]),
-            new AstronomyService(),
-            new FakePlanService(),
-            new NullLogger(),
-            new SettingsViewModel(new FakeSettingsService(new ObserverSettings()), new FakeCityRepository(), new NullLogger()),
-            logbook,
-            new ManualTimeProvider(WinterNightUtc));
+        var viewModel = TestShell.Create(
+            [TestCatalog.M42, TestCatalog.M31, TestCatalog.M13, .. extra],
+            logbook: logbook,
+            time: new ManualTimeProvider(WinterNightUtc));
         await viewModel.LoadCommand.ExecuteAsync(null);
         return viewModel;
     }
@@ -168,18 +164,18 @@ public sealed class LogbookAndPlanetUiTests : IDisposable
         var logbook = CreateLogbook();
         var viewModel = await CreateLoadedMainAsync(logbook);
 
-        viewModel.Objects.Single(o => o.Id == "M42").IsObserved.Should().BeTrue();
-        viewModel.Objects.Single(o => o.Id == "M31").IsObserved.Should().BeFalse();
-        viewModel.ObservedSummaryText.Should().Be("Messier observados: 1 / 110");
+        viewModel.Targets.Objects.Single(o => o.Id == "M42").IsObserved.Should().BeTrue();
+        viewModel.Targets.Objects.Single(o => o.Id == "M31").IsObserved.Should().BeFalse();
+        viewModel.Tonight.ObservedSummaryText.Should().Be("Messier observados: 1 / 110");
 
-        viewModel.SelectedObject = viewModel.Objects.Single(o => o.Id == "M31");
-        var draft = viewModel.CreateLogDraftForSelected()!;
+        viewModel.Targets.SelectedObject = viewModel.Targets.Objects.Single(o => o.Id == "M31");
+        var draft = viewModel.Detail.CreateLogDraft()!;
         draft.ObjectId.Should().Be("M31");
         draft.ObservedAtLocal.Should().Be(new DateTime(2026, 1, 15, 22, 0, 0));
         logbook.Add(draft);
 
-        viewModel.Objects.Single(o => o.Id == "M31").IsObserved.Should().BeTrue();
-        viewModel.ObservedSummaryText.Should().Be("Messier observados: 2 / 110");
+        viewModel.Targets.Objects.Single(o => o.Id == "M31").IsObserved.Should().BeTrue();
+        viewModel.Tonight.ObservedSummaryText.Should().Be("Messier observados: 2 / 110");
     }
 
     // ─── Planetas en el planificador ────────────────────────────────────
@@ -190,25 +186,25 @@ public sealed class LogbookAndPlanetUiTests : IDisposable
         var jupiter = SolarSystemCatalog.Planets.Single(p => p.Planet == Planet.Jupiter);
         var viewModel = await CreateLoadedMainAsync(CreateLogbook(), jupiter);
 
-        var row = viewModel.Objects.Single(o => o.Id == "Júpiter");
+        var row = viewModel.Targets.Objects.Single(o => o.Id == "Júpiter");
         row.IsPlanet.Should().BeTrue();
         row.ApparentMagnitude.Should().BeApproximately(-2.7, 0.3, "Júpiter estaba en oposición el 10/1/2026");
         row.MoonInterferes.Should().BeFalse("la Luna no oculta a un planeta brillante");
 
-        viewModel.SelectedObject = row;
-        var detail = viewModel.SelectedObservation!;
+        viewModel.Targets.SelectedObject = row;
+        var detail = viewModel.Detail.Observation!;
         detail.IsPlanet.Should().BeTrue();
         detail.Magnitude.Should().BeApproximately(row.ApparentMagnitude, 0.01);
         detail.Planet!.ApparentDiameterArcsec.Should().BeGreaterThan(40);
 
-        viewModel.TypeFilter = nameof(CelestialObjectType.Planet);
-        viewModel.Objects.Should().ContainSingle().Which.Id.Should().Be("Júpiter");
+        viewModel.Targets.TypeFilter = nameof(CelestialObjectType.Planet);
+        viewModel.Targets.Objects.Should().ContainSingle().Which.Id.Should().Be("Júpiter");
 
-        viewModel.TypeFilter = "All";
-        viewModel.SearchText = "jupiter";
-        viewModel.Objects.Should().ContainSingle().Which.Id.Should().Be("Júpiter");
+        viewModel.Targets.TypeFilter = "All";
+        viewModel.Targets.SearchText = "jupiter";
+        viewModel.Targets.Objects.Should().ContainSingle().Which.Id.Should().Be("Júpiter");
 
-        viewModel.SearchText = "";
-        viewModel.GetSkyMapPoints().Single(p => p.Id == "Júpiter").IsPlanet.Should().BeTrue();
+        viewModel.Targets.SearchText = "";
+        viewModel.Sky.GetSkyMapPoints().Single(p => p.Id == "Júpiter").IsPlanet.Should().BeTrue();
     }
 }

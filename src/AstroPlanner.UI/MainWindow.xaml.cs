@@ -18,7 +18,7 @@ namespace AstroPlanner.UI;
 /// </summary>
 public partial class MainWindow : Window
 {
-    private MainViewModel? _viewModel;
+    private ShellViewModel? _viewModel;
 
     public MainWindow()
     {
@@ -28,7 +28,7 @@ public partial class MainWindow : Window
         SkyPlot.UserInputProcessor.IsEnabled = false;
         SkyPlot.SizeChanged += (_, _) =>
         {
-            if (_viewModel is not null) UpdateSkyMap(_viewModel);
+            if (_viewModel is not null) UpdateSkyMap(_viewModel.Sky);
         };
         DataContextChanged += OnDataContextChanged;
         Loaded += OnLoaded;
@@ -36,17 +36,19 @@ public partial class MainWindow : Window
 
     private void OnDataContextChanged(object sender, DependencyPropertyChangedEventArgs e)
     {
-        // Desuscribirse del ViewModel anterior (si lo hubiera).
+        // Unsubscribe from the previous view model (if any).
         if (_viewModel is not null)
         {
-            _viewModel.PropertyChanged -= OnViewModelPropertyChanged;
+            _viewModel.Detail.PropertyChanged -= OnDetailPropertyChanged;
+            _viewModel.Sky.PropertyChanged -= OnSkyPropertyChanged;
         }
 
-        _viewModel = e.NewValue as MainViewModel;
+        _viewModel = e.NewValue as ShellViewModel;
 
         if (_viewModel is not null)
         {
-            _viewModel.PropertyChanged += OnViewModelPropertyChanged;
+            _viewModel.Detail.PropertyChanged += OnDetailPropertyChanged;
+            _viewModel.Sky.PropertyChanged += OnSkyPropertyChanged;
         }
     }
 
@@ -55,8 +57,8 @@ public partial class MainWindow : Window
         if (_viewModel is null) return;
         await _viewModel.Settings.LoadCitiesCommand.ExecuteAsync(null);
         await _viewModel.LoadCommand.ExecuteAsync(null);
-        UpdateChart(_viewModel);
-        UpdateSkyMap(_viewModel);
+        UpdateChart(_viewModel.Detail);
+        UpdateSkyMap(_viewModel.Sky);
         await _viewModel.CheckForUpdatesAsync(AppVersion.Current);
     }
 
@@ -173,31 +175,21 @@ public partial class MainWindow : Window
         }
     }
 
-    private void OnViewModelPropertyChanged(object? sender, PropertyChangedEventArgs e)
+    private void OnDetailPropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
-        if (_viewModel is null) return;
-
-        // El gráfico depende del objeto seleccionado, del instante, del
-        // observador, de la zona horaria y del umbral de altitud.
-        if (e.PropertyName is nameof(MainViewModel.SelectedObject)
-            or nameof(MainViewModel.ObservationDateTime)
-            or nameof(MainViewModel.Latitude)
-            or nameof(MainViewModel.Longitude)
-            or nameof(MainViewModel.Elevation)
-            or nameof(MainViewModel.TimeZoneId)
-            or nameof(MainViewModel.MinimumAltitude))
+        // The chart depends on the selected object, the time, the observer, the time zone,
+        // the minimum altitude and the forecast: the detail bumps ChartVersion for all of them.
+        if (e.PropertyName is nameof(ObjectDetailViewModel.ChartVersion) && _viewModel is not null)
         {
-            UpdateChart(_viewModel);
+            UpdateChart(_viewModel.Detail);
         }
+    }
 
-        if (e.PropertyName is nameof(MainViewModel.WeatherVersion))
+    private void OnSkyPropertyChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName is nameof(SkyViewModel.MapVersion) && _viewModel is not null)
         {
-            UpdateChart(_viewModel);
-        }
-
-        if (e.PropertyName is nameof(MainViewModel.SkyMapVersion))
-        {
-            UpdateSkyMap(_viewModel);
+            UpdateSkyMap(_viewModel.Sky);
         }
     }
 
@@ -211,7 +203,7 @@ public partial class MainWindow : Window
     private void OnExportPlanClicked(object sender, RoutedEventArgs e)
     {
         CommitFocusedTextBox();
-        if (_viewModel is null || _viewModel.ObservationPlan.Count == 0) return;
+        if (_viewModel is null || _viewModel.Plan.Items.Count == 0) return;
 
         var dialog = new Microsoft.Win32.SaveFileDialog
         {
@@ -222,13 +214,13 @@ public partial class MainWindow : Window
 
         if (dialog.ShowDialog(this) == true)
         {
-            _viewModel.ExportObservationPlan(dialog.FileName);
+            _viewModel.Plan.Export(dialog.FileName);
         }
     }
 
     private void OnLogObservationClicked(object sender, RoutedEventArgs e)
     {
-        if (_viewModel?.CreateLogDraftForSelected() is not { } draft) return;
+        if (_viewModel?.Detail.CreateLogDraft() is not { } draft) return;
 
         var window = new LogEntryWindow(draft) { Owner = this };
         if (window.ShowDialog() == true)
@@ -257,12 +249,12 @@ public partial class MainWindow : Window
     private void OnPrintPlanClicked(object sender, RoutedEventArgs e)
     {
         CommitFocusedTextBox();
-        if (_viewModel is null || _viewModel.ObservationPlan.Count == 0) return;
+        if (_viewModel is null || _viewModel.Plan.Items.Count == 0) return;
 
         var dialog = new PrintDialog();
         if (dialog.ShowDialog() != true) return;
 
-        var document = PlanPrintDocument.Create(_viewModel.ObservationPlan.ToList(), _viewModel.PlanSummaryText);
+        var document = PlanPrintDocument.Create(_viewModel.Plan.Items.ToList(), _viewModel.Plan.SummaryText);
         document.PageWidth = dialog.PrintableAreaWidth;
         document.PageHeight = dialog.PrintableAreaHeight;
         dialog.PrintDocument(((IDocumentPaginatorSource)document).DocumentPaginator, "AstroPlanner - Mi plan");
@@ -277,7 +269,7 @@ public partial class MainWindow : Window
         var scale = SkyPlot.DisplayScale;
         var coordinates = SkyPlot.Plot.GetCoordinates(
             new ScottPlot.Pixel((float)(position.X * scale), (float)(position.Y * scale)));
-        _viewModel.SelectNearestOnSkyMap(coordinates.X, coordinates.Y);
+        _viewModel.Sky.SelectNearestOnSkyMap(coordinates.X, coordinates.Y);
     }
 
     /// <summary>Color del tema (Themes/Dark.xaml) para ScottPlot: los gráficos comparten la paleta de la interfaz.</summary>
@@ -290,7 +282,7 @@ public partial class MainWindow : Window
     /// Carta polar del cielo: círculos de altitud cada 30°, puntos cardinales,
     /// objetos sobre el horizonte (tamaño según magnitud), Mi plan, selección y Luna.
     /// </summary>
-    private void UpdateSkyMap(MainViewModel viewModel)
+    private void UpdateSkyMap(SkyViewModel viewModel)
     {
         var plot = SkyPlot.Plot;
         plot.Clear();
@@ -391,12 +383,12 @@ public partial class MainWindow : Window
         SkyPlot.Refresh();
     }
 
-    private void UpdateChart(MainViewModel viewModel)
+    private void UpdateChart(ObjectDetailViewModel viewModel)
     {
         var points = viewModel.GetNightAltitudeCurve();
 
         // Con una entrada inválida se conserva la última curva, igual que la tabla.
-        if (points.Count == 0 && viewModel.ValidationMessage is not null)
+        if (points.Count == 0 && viewModel.InputError is not null)
         {
             return;
         }
@@ -479,7 +471,7 @@ public partial class MainWindow : Window
     /// Nubosidad pronosticada por horas: una franja gris por hora, más opaca
     /// cuanto más nublado. Sin pronóstico no se dibuja nada.
     /// </summary>
-    private void AddCloudBands(MainViewModel viewModel)
+    private void AddCloudBands(ObjectDetailViewModel viewModel)
     {
         var first = true;
         foreach (var (start, end, cloud) in viewModel.GetNightCloudCover())

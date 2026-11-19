@@ -2,13 +2,13 @@ using AstroPlanner.Core.Models;
 
 namespace AstroPlanner.UI.Services;
 
-/// <summary>Opción de un filtro: <see cref="Value"/> es lo que se filtra y <see cref="Label"/>, lo que se muestra.</summary>
+/// <summary>Option of a filter: <see cref="Value"/> is what is filtered, <see cref="Label"/> what is shown.</summary>
 public sealed record FilterOption(string Value, string Label);
 
-/// <summary>Nombres en español de los valores internos que se muestran al usuario.</summary>
+/// <summary>User-facing names of internal values.</summary>
 public static class DisplayNames
 {
-    /// <summary>Valor del filtro de tipo que no filtra nada.</summary>
+    /// <summary>Value of the type filter that filters nothing.</summary>
     public const string AllTypes = "All";
 
     public static string Of(CelestialObjectType type) => type switch
@@ -22,4 +22,18 @@ public static class DisplayNames
         CelestialObjectType.Planet => "Planeta",
         _ => "Otro"
     };
+
+    /// <summary>Name of the lunar phase from the illuminated fraction.</summary>
+    public static string MoonPhase(double illuminatedFraction, bool isWaxing) => illuminatedFraction switch
+    {
+        < 0.03 => "Luna nueva",
+        > 0.97 => "Luna llena",
+        < 0.47 => isWaxing ? "Creciente" : "Menguante",
+        <= 0.53 => isWaxing ? "Cuarto creciente" : "Cuarto menguante",
+        _ => isWaxing ? "Gibosa creciente" : "Gibosa menguante"
+    };
+
+    /// <summary>Illuminated fraction as a percentage, e.g. "87 %"; "—" without a Moon.</summary>
+    public static string MoonIllumination(MoonState? moon) =>
+        moon is null ? "—" : $"{moon.IlluminatedFraction * 100:0} %";
 }

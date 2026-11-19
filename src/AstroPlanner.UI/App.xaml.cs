@@ -63,10 +63,19 @@ public partial class App : Application
         services.AddSingleton<IObservationPlanService, JsonObservationPlanService>();
         services.AddSingleton<IObservationLogService>(_ => new JsonObservationLogService());
 
+        // Shared observing state and forecast
+        services.AddSingleton<IObserverContext, ObserverContext>();
+        services.AddSingleton<WeatherState>();
+
         // ViewModels
         services.AddSingleton<SettingsViewModel>();
         services.AddSingleton<LogbookViewModel>();
-        services.AddSingleton<MainViewModel>();
+        services.AddSingleton<TargetsViewModel>();
+        services.AddSingleton<SessionPlanViewModel>();
+        services.AddSingleton<ObjectDetailViewModel>();
+        services.AddSingleton<SkyViewModel>();
+        services.AddSingleton<TonightViewModel>();
+        services.AddSingleton<ShellViewModel>();
 
         // Vistas
         services.AddSingleton<MainWindow>();
@@ -99,7 +108,7 @@ public partial class App : Application
         }
 
         var mainWindow = _serviceProvider.GetRequiredService<MainWindow>();
-        mainWindow.DataContext = _serviceProvider.GetRequiredService<MainViewModel>();
+        mainWindow.DataContext = _serviceProvider.GetRequiredService<ShellViewModel>();
         mainWindow.RememberPlacement(new WindowPlacementStore());
         mainWindow.Show();
 

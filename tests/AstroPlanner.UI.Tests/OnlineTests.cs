@@ -56,19 +56,15 @@ public sealed class OnlineTests
         return new WeatherForecast(latitude, longitude, hours, fetchedAtUtc);
     }
 
-    private static MainViewModel CreateMain(
+    private static ShellViewModel CreateMain(
         ManualTimeProvider clock, IWeatherForecastService? weather, IUpdateChecker? updates = null,
         ObserverSettings? settings = null, FakePlanService? plan = null) =>
-        new(
-            new FakeCelestialRepository([TestCatalog.M42, TestCatalog.M31, TestCatalog.M13]),
-            new AstronomyService(),
-            plan ?? new FakePlanService(),
-            new NullLogger(),
-            new SettingsViewModel(new FakeSettingsService(settings ?? new ObserverSettings()), new FakeCityRepository(), new NullLogger()),
-            new LogbookViewModel(new FakeLogService(), new NullLogger()),
-            clock,
-            weather,
-            updates);
+        TestShell.Create(
+            plan: plan,
+            settings: new FakeSettingsService(settings ?? new ObserverSettings()),
+            time: clock,
+            weather: weather,
+            updates: updates);
 
     // ─── Pronóstico en el ViewModel ─────────────────────────────────────
 
@@ -81,14 +77,14 @@ public sealed class OnlineTests
         var viewModel = CreateMain(clock, weather, plan: plan);
         await viewModel.LoadCommand.ExecuteAsync(null);
 
-        viewModel.CloudCoverText.Should().MatchRegex(@"^\d+ %$");
-        viewModel.CloudDetailText.Should().Contain("mejor 00:00").And.Contain("(5 %)");
-        viewModel.GetNightCloudCover().Should().NotBeEmpty()
-            .And.OnlyContain(h => h.StartLocal >= viewModel.Night!.WindowStartLocal && h.EndLocal <= viewModel.Night.WindowEndLocal);
+        viewModel.Tonight.CloudCoverText.Should().MatchRegex(@"^\d+ %$");
+        viewModel.Tonight.CloudDetailText.Should().Contain("mejor 00:00").And.Contain("(5 %)");
+        viewModel.Detail.GetNightCloudCover().Should().NotBeEmpty()
+            .And.OnlyContain(h => h.StartLocal >= viewModel.Observer.Night!.WindowStartLocal && h.EndLocal <= viewModel.Observer.Night.WindowEndLocal);
 
-        var m42 = viewModel.ObservationPlan.Single();
+        var m42 = viewModel.Plan.Items.Single();
         m42.CloudCoverAtCulmination.Should().Be(80, "M42 culmina hacia las 22:20 local (04:20 UTC), hora nublada");
-        viewModel.SelectedObservation!.CloudCoverAtCulmination.Should().NotBeNull();
+        viewModel.Detail.Observation!.CloudCoverAtCulmination.Should().NotBeNull();
     }
 
     [Fact]
@@ -102,19 +98,19 @@ public sealed class OnlineTests
 
         // Cambiar la hora o filtrar no vuelve a consultar.
         viewModel.ShiftObservationTimeCommand.Execute("60");
-        viewModel.SearchText = "m42";
+        viewModel.Targets.SearchText = "m42";
         weather.Calls.Should().Be(callsAfterLoad);
 
         // Pasada una hora, sí.
         clock.UtcNow = clock.UtcNow.AddMinutes(61);
-        await viewModel.RefreshWeatherAsync();
+        await viewModel.Weather.RefreshAsync();
         weather.Calls.Should().Be(callsAfterLoad + 1);
 
         // Otra ubicación (más de ~1 km): se pide el pronóstico nuevo al recalcular,
         // y después vuelve a usarse la caché.
-        viewModel.Latitude = 20.6597;
+        viewModel.Observer.Latitude = 20.6597;
         weather.Calls.Should().Be(callsAfterLoad + 2);
-        await viewModel.RefreshWeatherAsync();
+        await viewModel.Weather.RefreshAsync();
         weather.Calls.Should().Be(callsAfterLoad + 2);
     }
 
@@ -129,8 +125,8 @@ public sealed class OnlineTests
         var viewModel = CreateMain(clock, weather);
         await viewModel.LoadCommand.ExecuteAsync(null);
 
-        viewModel.CloudCoverText.Should().Be("—");
-        viewModel.CloudDetailText.Should().Contain("Sin conexión");
+        viewModel.Tonight.CloudCoverText.Should().Be("—");
+        viewModel.Tonight.CloudDetailText.Should().Contain("Sin conexión");
         var calls = weather.Calls;
 
         viewModel.ShiftObservationTimeCommand.Execute("60");
@@ -138,8 +134,8 @@ public sealed class OnlineTests
 
         weather.FailWith = null;
         clock.UtcNow = clock.UtcNow.AddMinutes(6);
-        await viewModel.RefreshWeatherAsync();
-        viewModel.CloudCoverText.Should().EndWith("%");
+        await viewModel.Weather.RefreshAsync();
+        viewModel.Tonight.CloudCoverText.Should().EndWith("%");
     }
 
     [Fact]
@@ -149,11 +145,11 @@ public sealed class OnlineTests
         var weather = new CountingWeatherService((lat, lon) => CdmxForecast(clock.UtcNow.UtcDateTime, lat, lon));
         var viewModel = CreateMain(clock, weather, settings: new ObserverSettings { WeatherForecastEnabled = false });
         await viewModel.LoadCommand.ExecuteAsync(null);
-        await viewModel.RefreshWeatherAsync(force: true);
+        await viewModel.Weather.RefreshAsync(force: true);
 
         weather.Calls.Should().Be(0);
-        viewModel.CloudDetailText.Should().Contain("desactivado");
-        viewModel.GetNightCloudCover().Should().BeEmpty();
+        viewModel.Tonight.CloudDetailText.Should().Contain("desactivado");
+        viewModel.Detail.GetNightCloudCover().Should().BeEmpty();
     }
 
     // ─── Aviso de versión nueva ─────────────────────────────────────────

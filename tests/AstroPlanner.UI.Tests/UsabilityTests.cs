@@ -20,16 +20,10 @@ public sealed class UsabilityTests
     private readonly FakeSettingsService _settingsService = new(new ObserverSettings { MinimumAltitude = 20 });
     private readonly FakePlanService _planService = new();
 
-    private MainViewModel CreateMain(TimeProvider? time = null) => new(
-        new FakeCelestialRepository([TestCatalog.M42, TestCatalog.M31, TestCatalog.M13]),
-        new AstronomyService(),
-        _planService,
-        new NullLogger(),
-        new SettingsViewModel(_settingsService, new FakeCityRepository(), new NullLogger()),
-        new LogbookViewModel(new FakeLogService(), new NullLogger()),
-        time);
+    private ShellViewModel CreateMain(TimeProvider? time = null) =>
+        TestShell.Create(plan: _planService, settings: _settingsService, time: time);
 
-    private async Task<MainViewModel> CreateLoadedMainAsync()
+    private async Task<ShellViewModel> CreateLoadedMainAsync()
     {
         var viewModel = CreateMain(new ManualTimeProvider(WinterNightUtc));
         await viewModel.LoadCommand.ExecuteAsync(null);
@@ -61,12 +55,12 @@ public sealed class UsabilityTests
     {
         var viewModel = await CreateLoadedMainAsync();
 
-        viewModel.SearchText = "andrómeda";
-        viewModel.Objects.Select(o => o.Id).Should().Equal("M31");
-        viewModel.SelectedObject!.Id.Should().Be("M31");
+        viewModel.Targets.SearchText = "andrómeda";
+        viewModel.Targets.Objects.Select(o => o.Id).Should().Equal("M31");
+        viewModel.Targets.SelectedObject!.Id.Should().Be("M31");
 
-        viewModel.SearchText = "";
-        viewModel.Objects.Should().HaveCount(3);
+        viewModel.Targets.SearchText = "";
+        viewModel.Targets.Objects.Should().HaveCount(3);
     }
 
     [Fact]
@@ -74,23 +68,23 @@ public sealed class UsabilityTests
     {
         var viewModel = await CreateLoadedMainAsync();
 
-        viewModel.MaximumMagnitude = 5.0;
+        viewModel.Targets.MaximumMagnitude = 5.0;
 
-        viewModel.Objects.Select(o => o.Id).Should().BeEquivalentTo(["M42", "M31"]);
+        viewModel.Targets.Objects.Select(o => o.Id).Should().BeEquivalentTo(["M42", "M31"]);
     }
 
     [Fact]
     public async Task ResetFilters_ClearsSearchAndRestoresSavedMagnitude()
     {
         var viewModel = await CreateLoadedMainAsync();
-        viewModel.SearchText = "m42";
-        viewModel.MaximumMagnitude = 3;
+        viewModel.Targets.SearchText = "m42";
+        viewModel.Targets.MaximumMagnitude = 3;
 
-        viewModel.ResetFiltersCommand.Execute(null);
+        viewModel.Targets.ResetFiltersCommand.Execute(null);
 
-        viewModel.SearchText.Should().BeEmpty();
-        viewModel.MaximumMagnitude.Should().Be(12);
-        viewModel.Objects.Should().HaveCount(3);
+        viewModel.Targets.SearchText.Should().BeEmpty();
+        viewModel.Targets.MaximumMagnitude.Should().Be(12);
+        viewModel.Targets.Objects.Should().HaveCount(3);
     }
 
     // ─── Modo en vivo ───────────────────────────────────────────────────
@@ -212,13 +206,13 @@ public sealed class UsabilityTests
         // M42 culmina hacia las 22:20 y M31 al anochecer: M31 va primero aunque se agregue después.
         foreach (var id in new[] { "M42", "M31" })
         {
-            viewModel.SelectedObject = viewModel.Objects.Single(o => o.Id == id);
-            viewModel.AddSelectedToObservationPlanCommand.Execute(null);
+            viewModel.Targets.SelectedObject = viewModel.Targets.Objects.Single(o => o.Id == id);
+            viewModel.Detail.AddToPlanCommand.Execute(null);
         }
 
-        viewModel.ObservationPlan.Select(item => item.Id).Should().Equal("M31", "M42");
-        viewModel.ObservationPlan.Select(item => item.CulminationLocal).Should().BeInAscendingOrder();
-        viewModel.ObservationPlan.Should().OnlyContain(item => item.CulminationLocal >= viewModel.Night!.WindowStartLocal);
+        viewModel.Plan.Items.Select(item => item.Id).Should().Equal("M31", "M42");
+        viewModel.Plan.Items.Select(item => item.CulminationLocal).Should().BeInAscendingOrder();
+        viewModel.Plan.Items.Should().OnlyContain(item => item.CulminationLocal >= viewModel.Observer.Night!.WindowStartLocal);
     }
 
     [Fact]
@@ -227,9 +221,9 @@ public sealed class UsabilityTests
         _planService.Entries = [new("M42", "usar filtro UHC")];
         var viewModel = await CreateLoadedMainAsync();
 
-        viewModel.ObservationPlan.Single().Note.Should().Be("usar filtro UHC");
+        viewModel.Plan.Items.Single().Note.Should().Be("usar filtro UHC");
 
-        viewModel.ObservationPlan.Single().Note = "ocular de 25 mm";
+        viewModel.Plan.Items.Single().Note = "ocular de 25 mm";
 
         _planService.Entries.Should().Equal(new ObservationPlanEntry("M42", "ocular de 25 mm"));
     }
@@ -240,7 +234,7 @@ public sealed class UsabilityTests
         _planService.Entries = [new("M42", "filtro UHC, ocular 25 mm"), new("M31")];
         var viewModel = await CreateLoadedMainAsync();
 
-        var lines = viewModel.BuildObservationPlanCsv(CultureInfo.InvariantCulture)
+        var lines = viewModel.Plan.BuildCsv(CultureInfo.InvariantCulture)
             .Split(Environment.NewLine, StringSplitOptions.RemoveEmptyEntries);
 
         lines.Should().HaveCount(3);
@@ -255,7 +249,7 @@ public sealed class UsabilityTests
         _planService.Entries = [new("M42")];
         var viewModel = await CreateLoadedMainAsync();
 
-        var csv = viewModel.BuildObservationPlanCsv(CultureInfo.GetCultureInfo("es-ES"));
+        var csv = viewModel.Plan.BuildCsv(CultureInfo.GetCultureInfo("es-ES"));
 
         csv.Should().StartWith("Orden;ID;Nombre").And.Contain(";4,0;", "es-ES usa coma decimal y punto y coma como separador");
     }
@@ -269,12 +263,12 @@ public sealed class UsabilityTests
 
         try
         {
-            viewModel.ExportObservationPlan(path).Should().BeTrue();
+            viewModel.Plan.Export(path).Should().BeTrue();
 
             var bytes = File.ReadAllBytes(path);
             bytes.Take(3).Should().Equal(0xEF, 0xBB, 0xBF);
             File.ReadAllText(path).Should().Contain("Andrómeda");
-            viewModel.PlanStatusMessage.Should().StartWith("Plan exportado");
+            viewModel.Plan.StatusMessage.Should().StartWith("Plan exportado");
         }
         finally
         {
@@ -287,8 +281,8 @@ public sealed class UsabilityTests
     {
         _planService.Entries = [new("M42", "nota"), new("M31")];
         var viewModel = await CreateLoadedMainAsync();
-        var items = viewModel.ObservationPlan.ToList();
-        var summary = viewModel.PlanSummaryText;
+        var items = viewModel.Plan.Items.ToList();
+        var summary = viewModel.Plan.SummaryText;
 
         // FlowDocument requiere un hilo STA, como el de la interfaz.
         var rowCount = RunOnStaThread(() =>
@@ -323,7 +317,7 @@ public sealed class UsabilityTests
         _planService.Entries = [new("M31")];
         var viewModel = await CreateLoadedMainAsync();
 
-        var points = viewModel.GetSkyMapPoints();
+        var points = viewModel.Sky.GetSkyMapPoints();
 
         points.Should().OnlyContain(p => p.AltitudeDegrees > 0);
         points.Select(p => p.Id).Should().NotContain("M13", "M13 está bajo el horizonte en esa noche");
@@ -335,13 +329,13 @@ public sealed class UsabilityTests
     public async Task SkyMap_ClickSelectsTheNearestObjectOrNothing()
     {
         var viewModel = await CreateLoadedMainAsync();
-        var m31 = viewModel.GetSkyMapPoints().Single(p => p.Id == "M31");
+        var m31 = viewModel.Sky.GetSkyMapPoints().Single(p => p.Id == "M31");
 
-        viewModel.SelectNearestOnSkyMap(m31.Position.X + 1, m31.Position.Y - 1).Should().BeTrue();
-        viewModel.SelectedObject!.Id.Should().Be("M31");
+        viewModel.Sky.SelectNearestOnSkyMap(m31.Position.X + 1, m31.Position.Y - 1).Should().BeTrue();
+        viewModel.Targets.SelectedObject!.Id.Should().Be("M31");
 
-        viewModel.SelectNearestOnSkyMap(500, 500).Should().BeFalse();
-        viewModel.SelectedObject!.Id.Should().Be("M31");
+        viewModel.Sky.SelectNearestOnSkyMap(500, 500).Should().BeFalse();
+        viewModel.Targets.SelectedObject!.Id.Should().Be("M31");
     }
 
     private static T RunOnStaThread<T>(Func<T> action)

@@ -153,7 +153,7 @@
                 </StackPanel>
                 <StackPanel Grid.Column="2" Margin="0,0,14,0">
                     <TextBlock Foreground="{StaticResource TabTextBrush}" Text="Zona horaria"/>
-                    <TextBlock Foreground="White" Text="{Binding TimeZoneId}"/>
+                    <TextBlock Foreground="White" Text="{Binding Observer.TimeZoneId}"/>
                 </StackPanel>
                 <StackPanel Grid.Column="3">
                     <TextBlock Foreground="{StaticResource TabTextBrush}" Text="Ubicación activa"/>
@@ -163,7 +163,7 @@
                 <StackPanel Grid.Column="4" Orientation="Horizontal" VerticalAlignment="Center">
                     <Button Style="{StaticResource SecondaryButtonStyle}" Content="Configuración" Click="OnSettingsClicked"
                             ToolTip="Ubicación, zona horaria y preferencias (Ctrl+,)"/>
-                    <Button Style="{StaticResource SecondaryButtonStyle}" Command="{Binding ResetFiltersCommand}" Content="Restablecer"
+                    <Button Style="{StaticResource SecondaryButtonStyle}" Command="{Binding Targets.ResetFiltersCommand}" Content="Restablecer"
                             ToolTip="Quita la búsqueda y los filtros, y recupera la altitud y magnitud guardadas"/>
                     <Button Style="{StaticResource PrimaryButtonStyle}" Content="Ahora" Command="{Binding SetNowCommand}"
                             ToolTip="Pone la hora actual de la ubicación del observador (F5)"/>
@@ -181,15 +181,15 @@
             <Border Background="{StaticResource NightCardBrush}" CornerRadius="7" Padding="14" Margin="0,0,6,0">
                 <StackPanel>
                     <TextBlock Foreground="{StaticResource NightMutedTextBrush}" Text="Objetos del catálogo"/>
-                    <TextBlock Foreground="White" FontSize="24" FontWeight="SemiBold" Text="{Binding CatalogCount}"/>
-                    <TextBlock Foreground="{StaticResource NightMutedTextBrush}" FontSize="12" Text="{Binding ObservedSummaryText}"
+                    <TextBlock Foreground="White" FontSize="24" FontWeight="SemiBold" Text="{Binding Targets.CatalogCount}"/>
+                    <TextBlock Foreground="{StaticResource NightMutedTextBrush}" FontSize="12" Text="{Binding Tonight.ObservedSummaryText}"
                                ToolTip="Objetos Messier con al menos una observación en la bitácora"/>
                 </StackPanel>
             </Border>
             <Border Background="{StaticResource NightCardBrush}" CornerRadius="7" Padding="14" Margin="6,0">
                 <StackPanel>
                     <TextBlock Foreground="{StaticResource NightMutedTextBrush}" Text="Objetos visibles"/>
-                    <TextBlock Foreground="{StaticResource SuccessSoftBrush}" FontSize="24" FontWeight="SemiBold" Text="{Binding VisibleObjectsCount}"/>
+                    <TextBlock Foreground="{StaticResource SuccessSoftBrush}" FontSize="24" FontWeight="SemiBold" Text="{Binding Targets.VisibleObjectsCount}"/>
                 </StackPanel>
             </Border>
             <!-- Noche oscura: fin → inicio del crepúsculo astronómico (Sol a -18°) -->
@@ -197,25 +197,25 @@
                     ToolTip="Noche oscura: el Sol está más de 18° bajo el horizonte.">
                 <StackPanel>
                     <TextBlock Foreground="{StaticResource NightMutedTextBrush}" Text="Noche oscura"/>
-                    <TextBlock Foreground="{StaticResource DarknessBrush}" FontSize="24" FontWeight="SemiBold" Text="{Binding DarkNightText}"/>
-                    <TextBlock Foreground="{StaticResource NightMutedTextBrush}" FontSize="12" Text="{Binding SunTimesText}" TextTrimming="CharacterEllipsis"/>
+                    <TextBlock Foreground="{StaticResource DarknessBrush}" FontSize="24" FontWeight="SemiBold" Text="{Binding Tonight.DarkNightText}"/>
+                    <TextBlock Foreground="{StaticResource NightMutedTextBrush}" FontSize="12" Text="{Binding Tonight.SunTimesText}" TextTrimming="CharacterEllipsis"/>
                 </StackPanel>
             </Border>
             <Border Background="{StaticResource NightCardBrush}" CornerRadius="7" Padding="14" Margin="6,0"
                     ToolTip="Fase y altura de la Luna a la hora elegida.">
                 <StackPanel>
                     <TextBlock Foreground="{StaticResource NightMutedTextBrush}" Text="Luna"/>
-                    <TextBlock Foreground="{StaticResource MoonBrush}" FontSize="24" FontWeight="SemiBold" Text="{Binding MoonIlluminationText}"/>
-                    <TextBlock Foreground="{StaticResource NightMutedTextBrush}" FontSize="12" Text="{Binding MoonDetailText}" TextTrimming="CharacterEllipsis"/>
+                    <TextBlock Foreground="{StaticResource MoonBrush}" FontSize="24" FontWeight="SemiBold" Text="{Binding Tonight.MoonIlluminationText}"/>
+                    <TextBlock Foreground="{StaticResource NightMutedTextBrush}" FontSize="12" Text="{Binding Tonight.MoonDetailText}" TextTrimming="CharacterEllipsis"/>
                 </StackPanel>
             </Border>
             <!-- Pronóstico de nubes durante la noche oscura (Open-Meteo) -->
             <Border Background="{StaticResource NightCardBrush}" CornerRadius="7" Padding="14" Margin="6,0"
-                    ToolTip="{Binding CloudDetailText}">
+                    ToolTip="{Binding Tonight.CloudDetailText}">
                 <StackPanel>
                     <TextBlock Foreground="{StaticResource NightMutedTextBrush}" Text="Nubes esta noche"/>
-                    <TextBlock Foreground="{StaticResource LabelTextBrush}" FontSize="24" FontWeight="SemiBold" Text="{Binding CloudCoverText}"/>
-                    <TextBlock Foreground="{StaticResource NightMutedTextBrush}" FontSize="12" Text="{Binding CloudDetailText}" TextTrimming="CharacterEllipsis"/>
+                    <TextBlock Foreground="{StaticResource LabelTextBrush}" FontSize="24" FontWeight="SemiBold" Text="{Binding Tonight.CloudCoverText}"/>
+                    <TextBlock Foreground="{StaticResource NightMutedTextBrush}" FontSize="12" Text="{Binding Tonight.CloudDetailText}" TextTrimming="CharacterEllipsis"/>
                     <!-- Atribución exigida por la licencia CC BY 4.0 de Open-Meteo -->
                     <TextBlock FontSize="10" Margin="0,2,0,0" Foreground="{StaticResource PlaceholderTextBrush}">
                         <Run Text="Datos:"/>
@@ -227,7 +227,7 @@
                 <StackPanel>
                     <TextBlock Foreground="{StaticResource NightMutedTextBrush}" Text="Altitud mínima"/>
                     <TextBlock Foreground="{StaticResource WarningBrush}" FontSize="24" FontWeight="SemiBold">
-                        <Run Text="{Binding MinimumAltitude, StringFormat={}{0:0.#}}"/><Run Text="°"/>
+                        <Run Text="{Binding Observer.MinimumAltitude, StringFormat={}{0:0.#}}"/><Run Text="°"/>
                     </TextBlock>
                 </StackPanel>
             </Border>
@@ -263,7 +263,7 @@
                                 <Grid Width="210" Margin="0,0,12,6">
                                     <TextBox x:Name="SearchBox" Padding="22,3,4,3" Background="{StaticResource SurfaceBrush}"
                                              AutomationProperties.Name="Buscar"
-                                             Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}"
+                                             Text="{Binding Targets.SearchText, UpdateSourceTrigger=PropertyChanged}"
                                              ToolTip="Busca por id (M31), nombre (Andrómeda) o constelación (Orión). Ctrl+F"/>
                                     <TextBlock Text="⌕" Foreground="{StaticResource NightMutedTextBrush}" Margin="7,0,0,1" VerticalAlignment="Center" IsHitTestVisible="False"/>
                                     <TextBlock Text="Buscar M31, Andrómeda, Orión…" Foreground="{StaticResource PlaceholderTextBrush}" Margin="24,0,0,0"
@@ -285,42 +285,42 @@
                                     <ComboBox Style="{StaticResource DarkComboBoxStyle}"
                                               Width="160" Margin="0,0,12,0" MaxDropDownHeight="320"
                                               AutomationProperties.Name="Tipo de objeto"
-                                              ItemsSource="{Binding TypeFilters}"
+                                              ItemsSource="{Binding Targets.TypeFilters}"
                                               DisplayMemberPath="Label" TextSearch.TextPath="Label"
-                                              SelectedValuePath="Value" SelectedValue="{Binding TypeFilter}"/>
+                                              SelectedValuePath="Value" SelectedValue="{Binding Targets.TypeFilter}"/>
                                     <TextBlock Style="{StaticResource FilterLabelStyle}" Text="Constelación"/>
                                     <ComboBox Style="{StaticResource DarkComboBoxStyle}"
                                               Width="150" MaxDropDownHeight="320"
                                               AutomationProperties.Name="Constelación"
-                                              ItemsSource="{Binding ConstellationFilters}"
+                                              ItemsSource="{Binding Targets.ConstellationFilters}"
                                               DisplayMemberPath="Label" TextSearch.TextPath="Label"
-                                              SelectedValuePath="Value" SelectedValue="{Binding ConstellationFilter}"/>
+                                              SelectedValuePath="Value" SelectedValue="{Binding Targets.ConstellationFilter}"/>
                                 </StackPanel>
                                 <StackPanel Orientation="Horizontal" Margin="0,0,0,6">
                                     <TextBlock Style="{StaticResource FilterLabelStyle}" Text="Alt. mín. (°)"
                                                ToolTip="Altitud mínima sobre el horizonte para considerar visible un objeto"/>
                                     <TextBox Width="50" Margin="0,0,12,0" AutomationProperties.Name="Altitud mínima"
-                                             Text="{Binding MinimumAltitude, UpdateSourceTrigger=PropertyChanged}"/>
+                                             Text="{Binding Observer.MinimumAltitude, UpdateSourceTrigger=PropertyChanged}"/>
                                     <TextBlock Style="{StaticResource FilterLabelStyle}" Text="Mag. máx."
                                                ToolTip="Oculta los objetos más débiles (mayor número = más débil)"/>
                                     <TextBox Width="44" Margin="0,0,12,0" AutomationProperties.Name="Magnitud máxima"
-                                             Text="{Binding MaximumMagnitude, UpdateSourceTrigger=PropertyChanged}"/>
+                                             Text="{Binding Targets.MaximumMagnitude, UpdateSourceTrigger=PropertyChanged}"/>
                                     <CheckBox VerticalAlignment="Center" Content="Solo visibles"
-                                              IsChecked="{Binding OnlyVisible}"/>
+                                              IsChecked="{Binding Targets.OnlyVisible}"/>
                                 </StackPanel>
                             </WrapPanel>
 
                             <!-- Estado / errores -->
                             <StackPanel Grid.Row="1" Margin="0,0,0,6">
                                 <TextBlock Foreground="{StaticResource DangerBrush}" TextWrapping="Wrap"
-                                           Text="{Binding ErrorMessage}"/>
+                                           Text="{Binding Targets.ErrorMessage}"/>
                                 <!-- Aviso de entrada inválida; la tabla conserva el último cálculo válido -->
                                 <TextBlock Foreground="{StaticResource DangerBrush}" TextWrapping="Wrap" FontWeight="SemiBold"
-                                           Text="{Binding ValidationMessage}">
+                                           Text="{Binding Targets.ValidationMessage}">
                                     <TextBlock.Style>
                                         <Style TargetType="TextBlock">
                                             <Style.Triggers>
-                                                <DataTrigger Binding="{Binding ValidationMessage}" Value="{x:Null}">
+                                                <DataTrigger Binding="{Binding Targets.ValidationMessage}" Value="{x:Null}">
                                                     <Setter Property="Visibility" Value="Collapsed"/>
                                                 </DataTrigger>
                                             </Style.Triggers>
@@ -329,11 +329,11 @@
                                 </TextBlock>
                                 <!-- Aviso de día o crepúsculo a la hora elegida -->
                                 <TextBlock Foreground="{StaticResource WarningBrush}" TextWrapping="Wrap" FontWeight="SemiBold"
-                                           Text="{Binding SkyBanner}">
+                                           Text="{Binding Tonight.SkyBanner}">
                                     <TextBlock.Style>
                                         <Style TargetType="TextBlock">
                                             <Style.Triggers>
-                                                <DataTrigger Binding="{Binding SkyBanner}" Value="{x:Null}">
+                                                <DataTrigger Binding="{Binding Tonight.SkyBanner}" Value="{x:Null}">
                                                     <Setter Property="Visibility" Value="Collapsed"/>
                                                 </DataTrigger>
                                             </Style.Triggers>
@@ -341,14 +341,14 @@
                                     </TextBlock.Style>
                                 </TextBlock>
                                 <TextBlock Foreground="{StaticResource NightMutedTextBrush}" TextWrapping="Wrap">
-                                    <Run Text="Mostrando "/><Run Text="{Binding Objects.Count, Mode=OneWay}"/><Run Text=" objetos"/>
+                                    <Run Text="Mostrando "/><Run Text="{Binding Targets.Objects.Count, Mode=OneWay}"/><Run Text=" objetos"/>
                                 </TextBlock>
                             </StackPanel>
 
                             <!-- Tabla de resultados -->
                             <DataGrid Grid.Row="2" Style="{StaticResource NightDataGridStyle}"
-                                      ItemsSource="{Binding Objects}"
-                                      SelectedItem="{Binding SelectedObject}">
+                                      ItemsSource="{Binding Targets.Objects}"
+                                      SelectedItem="{Binding Targets.SelectedObject}">
                                 <DataGrid.Columns>
                                     <DataGridTextColumn Header="✓" Binding="{Binding IsObserved, Converter={StaticResource ObservedMarkConverter}}" Width="26"
                                                         ElementStyle="{StaticResource ObservedCellStyle}"/>
@@ -382,7 +382,7 @@
                                 <RowDefinition Height="*"/>
                             </Grid.RowDefinitions>
                             <TextBlock Grid.Row="0" FontSize="18" FontWeight="SemiBold"
-                                       Text="{Binding ChartTitle}"/>
+                                       Text="{Binding Detail.ChartTitle}"/>
                             <ScottPlot:WpfPlot x:Name="AltitudePlot" Grid.Row="1" Margin="0,8,0,0"/>
                         </Grid>
                     </Border>
@@ -413,8 +413,8 @@
                         <TextBlock Foreground="{StaticResource WarningBrush}" Text="- - Altitud mínima"/>
                         <TextBlock Margin="0,10,0,0" Foreground="{StaticResource NightMutedTextBrush}" TextWrapping="Wrap"
                                    Text="La carta respeta los filtros y la búsqueda del Planificador. Haz clic en un objeto para seleccionarlo."/>
-                        <TextBlock Margin="0,14,0,0" FontWeight="SemiBold" Text="{Binding SelectedObject.Id, StringFormat=Seleccionado: {0}}"/>
-                        <TextBlock Foreground="{StaticResource NightMutedTextBrush}" Text="{Binding SelectedObject.CommonName}" TextWrapping="Wrap"/>
+                        <TextBlock Margin="0,14,0,0" FontWeight="SemiBold" Text="{Binding Targets.SelectedObject.Id, StringFormat=Seleccionado: {0}}"/>
+                        <TextBlock Foreground="{StaticResource NightMutedTextBrush}" Text="{Binding Targets.SelectedObject.CommonName}" TextWrapping="Wrap"/>
                     </StackPanel>
                 </Grid>
             </TabItem>
@@ -429,7 +429,7 @@
                             <Style TargetType="TextBlock">
                                 <Setter Property="Visibility" Value="Collapsed"/>
                                 <Style.Triggers>
-                                    <DataTrigger Binding="{Binding HasSelectedObject}" Value="False">
+                                    <DataTrigger Binding="{Binding Detail.HasSelection}" Value="False">
                                         <Setter Property="Visibility" Value="Visible"/>
                                     </DataTrigger>
                                 </Style.Triggers>
@@ -442,13 +442,13 @@
                             <Style TargetType="Border">
                                 <Setter Property="Visibility" Value="Visible"/>
                                 <Style.Triggers>
-                                    <DataTrigger Binding="{Binding HasSelectedObject}" Value="False">
+                                    <DataTrigger Binding="{Binding Detail.HasSelection}" Value="False">
                                         <Setter Property="Visibility" Value="Collapsed"/>
                                     </DataTrigger>
                                 </Style.Triggers>
                             </Style>
                         </Border.Style>
-                        <Grid DataContext="{Binding SelectedObservation}">
+                        <Grid DataContext="{Binding Detail.Observation}">
                             <Grid.RowDefinitions>
                                 <RowDefinition Height="Auto"/>
                                 <RowDefinition Height="Auto"/>
@@ -500,10 +500,10 @@
                                 <TextBlock Text="{Binding CloudCoverAtCulmination, StringFormat=Nubes a la culminación: {0} %, TargetNullValue='Nubes a la culminación: sin pronóstico'}"/>
                                 <StackPanel Orientation="Horizontal" Margin="0,14,0,0">
                                     <Button Style="{StaticResource PrimaryButtonStyle}" Content="Agregar al plan"
-                                            Command="{Binding DataContext.AddSelectedToObservationPlanCommand, RelativeSource={RelativeSource AncestorType=Window}}"/>
+                                            Command="{Binding DataContext.Detail.AddToPlanCommand, RelativeSource={RelativeSource AncestorType=Window}}"/>
                                     <Button Style="{StaticResource SecondaryButtonStyle}" Content="Quitar del plan"
-                                            Command="{Binding DataContext.RemoveSelectedFromObservationPlanCommand, RelativeSource={RelativeSource AncestorType=Window}}"
-                                            IsEnabled="{Binding DataContext.IsSelectedObjectInObservationPlan, RelativeSource={RelativeSource AncestorType=Window}}"/>
+                                            Command="{Binding DataContext.Detail.RemoveFromPlanCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                            IsEnabled="{Binding DataContext.Detail.IsInPlan, RelativeSource={RelativeSource AncestorType=Window}}"/>
                                 </StackPanel>
                                 <Button Style="{StaticResource SecondaryButtonStyle}" Content="Registrar observación…"
                                         HorizontalAlignment="Left" Margin="0,8,0,0"
@@ -535,7 +535,7 @@
                         <StackPanel VerticalAlignment="Center">
                             <TextBlock Foreground="{StaticResource NightMutedTextBrush}" TextWrapping="Wrap"
                                        Text="Ordenado por hora de culminación: el orden en que conviene observar. Escribe tus notas en la columna Notas."/>
-                            <TextBlock Foreground="{StaticResource SuccessSoftBrush}" Text="{Binding PlanStatusMessage}" TextWrapping="Wrap"/>
+                            <TextBlock Foreground="{StaticResource SuccessSoftBrush}" Text="{Binding Plan.StatusMessage}" TextWrapping="Wrap"/>
                         </StackPanel>
                     </DockPanel>
 
@@ -546,7 +546,7 @@
                             <Style TargetType="TextBlock">
                                 <Setter Property="Visibility" Value="Collapsed"/>
                                 <Style.Triggers>
-                                    <DataTrigger Binding="{Binding ObservationPlan.Count}" Value="0">
+                                    <DataTrigger Binding="{Binding Plan.Items.Count}" Value="0">
                                         <Setter Property="Visibility" Value="Visible"/>
                                     </DataTrigger>
                                 </Style.Triggers>
@@ -558,14 +558,14 @@
                         <Border.Style>
                             <Style TargetType="Border">
                                 <Style.Triggers>
-                                    <DataTrigger Binding="{Binding ObservationPlan.Count}" Value="0">
+                                    <DataTrigger Binding="{Binding Plan.Items.Count}" Value="0">
                                         <Setter Property="Visibility" Value="Collapsed"/>
                                     </DataTrigger>
                                 </Style.Triggers>
                             </Style>
                         </Border.Style>
                         <DataGrid Style="{StaticResource NightDataGridStyle}"
-                                  ItemsSource="{Binding ObservationPlan}">
+                                  ItemsSource="{Binding Plan.Items}">
                             <DataGrid.Columns>
                                 <DataGridTextColumn Header="Culminación" Binding="{Binding CulminationLocal, StringFormat=HH:mm}" Width="88"/>
                                 <DataGridTextColumn Header="ID" Binding="{Binding Row.Id}" Width="55"/>
@@ -591,7 +591,7 @@
                                     <DataGridTemplateColumn.CellTemplate>
                                         <DataTemplate>
                                             <Button Style="{StaticResource GridButtonStyle}" Content="Quitar"
-                                                    Command="{Binding DataContext.RemoveFromObservationPlanCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                                    Command="{Binding DataContext.Plan.RemoveCommand, RelativeSource={RelativeSource AncestorType=Window}}"
                                                     CommandParameter="{Binding}"/>
                                         </DataTemplate>
                                     </DataGridTemplateColumn.CellTemplate>

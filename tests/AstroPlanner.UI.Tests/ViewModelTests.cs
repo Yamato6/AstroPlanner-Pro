@@ -1,5 +1,5 @@
 using AstroPlanner.Core.Models;
-using AstroPlanner.Core.Services;
+using AstroPlanner.Core.Algorithms;
 using AstroPlanner.UI.Services;
 using AstroPlanner.UI.ViewModels;
 using FluentAssertions;
@@ -22,15 +22,9 @@ public sealed class ViewModelTests
     private SettingsViewModel CreateSettings() =>
         new(_settingsService, new FakeCityRepository(), new NullLogger());
 
-    private async Task<MainViewModel> CreateLoadedMainAsync()
+    private async Task<ShellViewModel> CreateLoadedMainAsync()
     {
-        var viewModel = new MainViewModel(
-            new FakeCelestialRepository([M42, M31, M13]),
-            new AstronomyService(),
-            _planService,
-            new NullLogger(),
-            CreateSettings(),
-            new LogbookViewModel(new FakeLogService(), new NullLogger()));
+        var viewModel = TestShell.Create([M42, M31, M13], _planService, _settingsService);
         // Noche de invierno en CDMX: M42 alta, M13 bajo el horizonte.
         viewModel.ObservationDateTime = new DateTime(2026, 1, 15, 22, 0, 0);
         await viewModel.LoadCommand.ExecuteAsync(null);
@@ -42,12 +36,12 @@ public sealed class ViewModelTests
     {
         var viewModel = await CreateLoadedMainAsync();
 
-        viewModel.CatalogCount.Should().Be(3);
-        viewModel.Objects.Should().HaveCount(3);
-        viewModel.Objects.Select(o => o.AltitudeDegrees).Should().BeInDescendingOrder();
-        viewModel.SelectedObject.Should().BeSameAs(viewModel.Objects[0]);
-        viewModel.SelectedObservation.Should().NotBeNull();
-        viewModel.ValidationMessage.Should().BeNull();
+        viewModel.Targets.CatalogCount.Should().Be(3);
+        viewModel.Targets.Objects.Should().HaveCount(3);
+        viewModel.Targets.Objects.Select(o => o.AltitudeDegrees).Should().BeInDescendingOrder();
+        viewModel.Targets.SelectedObject.Should().BeSameAs(viewModel.Targets.Objects[0]);
+        viewModel.Detail.Observation.Should().NotBeNull();
+        viewModel.Targets.ValidationMessage.Should().BeNull();
     }
 
     [Fact]
@@ -55,8 +49,8 @@ public sealed class ViewModelTests
     {
         var viewModel = await CreateLoadedMainAsync();
 
-        var row = viewModel.SelectedObject!;
-        var detail = viewModel.SelectedObservation!;
+        var row = viewModel.Targets.SelectedObject!;
+        var detail = viewModel.Detail.Observation!;
 
         detail.Coordinates.AltitudeDegrees.Should().BeApproximately(row.AltitudeDegrees, 1e-9);
         detail.Coordinates.AzimuthDegrees.Should().BeApproximately(row.AzimuthDegrees, 1e-9);
@@ -67,24 +61,24 @@ public sealed class ViewModelTests
     {
         var viewModel = await CreateLoadedMainAsync();
 
-        viewModel.OnlyVisible = true;
+        viewModel.Targets.OnlyVisible = true;
 
-        viewModel.Objects.Should().NotBeEmpty().And.OnlyContain(o => o.IsVisible);
-        viewModel.Objects.Should().NotContain(o => o.Id == "M13");
+        viewModel.Targets.Objects.Should().NotBeEmpty().And.OnlyContain(o => o.IsVisible);
+        viewModel.Targets.Objects.Should().NotContain(o => o.Id == "M13");
     }
 
     [Fact]
     public async Task ResetFilters_RestoresSavedMinimumAltitude()
     {
         var viewModel = await CreateLoadedMainAsync();
-        viewModel.MinimumAltitude = 60;
-        viewModel.TypeFilter = nameof(CelestialObjectType.Galaxy);
+        viewModel.Observer.MinimumAltitude = 60;
+        viewModel.Targets.TypeFilter = nameof(CelestialObjectType.Galaxy);
 
-        viewModel.ResetFiltersCommand.Execute(null);
+        viewModel.Targets.ResetFiltersCommand.Execute(null);
 
-        viewModel.MinimumAltitude.Should().Be(35);
-        viewModel.TypeFilter.Should().Be("All");
-        viewModel.Objects.Should().HaveCount(3);
+        viewModel.Observer.MinimumAltitude.Should().Be(35);
+        viewModel.Targets.TypeFilter.Should().Be("All");
+        viewModel.Targets.Objects.Should().HaveCount(3);
     }
 
     [Fact]
@@ -92,34 +86,34 @@ public sealed class ViewModelTests
     {
         var viewModel = await CreateLoadedMainAsync();
 
-        viewModel.TypeFilters[0].Should().Be(new FilterOption("All", "Todos"));
-        viewModel.TypeFilters.Should().Contain(new FilterOption("GlobularCluster", "Cúmulo globular"));
-        viewModel.ConstellationFilters[0].Should().Be(new FilterOption("", "Todas"));
+        viewModel.Targets.TypeFilters[0].Should().Be(new FilterOption("All", "Todos"));
+        viewModel.Targets.TypeFilters.Should().Contain(new FilterOption("GlobularCluster", "Cúmulo globular"));
+        viewModel.Targets.ConstellationFilters[0].Should().Be(new FilterOption("", "Todas"));
 
         // Elegir una constelación y volver a "Todas" desde la propia lista.
-        var constellation = viewModel.ConstellationFilters[1].Value;
-        viewModel.ConstellationFilter = constellation;
-        viewModel.Objects.Should().OnlyContain(o => o.Constellation == constellation);
-        viewModel.ConstellationFilter = viewModel.ConstellationFilters[0].Value;
-        viewModel.Objects.Should().HaveCount(3);
+        var constellation = viewModel.Targets.ConstellationFilters[1].Value;
+        viewModel.Targets.ConstellationFilter = constellation;
+        viewModel.Targets.Objects.Should().OnlyContain(o => o.Constellation == constellation);
+        viewModel.Targets.ConstellationFilter = viewModel.Targets.ConstellationFilters[0].Value;
+        viewModel.Targets.Objects.Should().HaveCount(3);
     }
 
     [Fact]
     public async Task InvalidMinimumAltitude_ShowsWarningAndKeepsLastTable()
     {
         var viewModel = await CreateLoadedMainAsync();
-        var before = viewModel.Objects.ToList();
+        var before = viewModel.Targets.Objects.ToList();
 
-        viewModel.MinimumAltitude = 120;
+        viewModel.Observer.MinimumAltitude = 120;
 
-        viewModel.ValidationMessage.Should().Contain("altitud mínima");
-        viewModel.HasErrors.Should().BeTrue();
-        viewModel.Objects.Should().Equal(before);
+        viewModel.Targets.ValidationMessage.Should().Contain("altitud mínima");
+        viewModel.Observer.HasErrors.Should().BeTrue();
+        viewModel.Targets.Objects.Should().Equal(before);
 
-        viewModel.MinimumAltitude = 30;
+        viewModel.Observer.MinimumAltitude = 30;
 
-        viewModel.ValidationMessage.Should().BeNull();
-        viewModel.HasErrors.Should().BeFalse();
+        viewModel.Targets.ValidationMessage.Should().BeNull();
+        viewModel.Observer.HasErrors.Should().BeFalse();
     }
 
     [Fact]
@@ -130,13 +124,13 @@ public sealed class ViewModelTests
         viewModel.ObservationDateTime = new DateTime(2026, 1, 15, 2, 0, 0);
 
         // La noche en curso va de la puesta del 14 a la salida del Sol del 15.
-        var night = viewModel.Night!;
+        var night = viewModel.Observer.Night!;
         night.WindowStartLocal.Date.Should().Be(new DateTime(2026, 1, 14));
         night.WindowEndLocal.Date.Should().Be(new DateTime(2026, 1, 15));
 
-        var culmination = viewModel.SelectedObservation!.BestObservationTimeLocal!.Value;
+        var culmination = viewModel.Detail.Observation!.BestObservationTimeLocal!.Value;
         culmination.Should().BeOnOrAfter(night.WindowStartLocal).And.BeOnOrBefore(night.WindowEndLocal);
-        viewModel.GetNightAltitudeCurve()[0].LocalTime.Should().Be(night.WindowStartLocal);
+        viewModel.Detail.GetNightAltitudeCurve()[0].LocalTime.Should().Be(night.WindowStartLocal);
     }
 
     [Fact]
@@ -145,10 +139,10 @@ public sealed class ViewModelTests
         var viewModel = await CreateLoadedMainAsync();
 
         // CDMX, 15/1/2026: puesta ≈ 18:16, salida ≈ 07:13 (UTC-6).
-        viewModel.Night!.SunsetLocal.Should().BeCloseTo(new DateTime(2026, 1, 15, 18, 16, 0), TimeSpan.FromMinutes(5));
-        viewModel.Night.SunriseLocal.Should().BeCloseTo(new DateTime(2026, 1, 16, 7, 13, 0), TimeSpan.FromMinutes(5));
-        viewModel.DarkNightText.Should().MatchRegex(@"^\d\d:\d\d → \d\d:\d\d$");
-        viewModel.ChartTitle.Should().Contain("→");
+        viewModel.Observer.Night!.SunsetLocal.Should().BeCloseTo(new DateTime(2026, 1, 15, 18, 16, 0), TimeSpan.FromMinutes(5));
+        viewModel.Observer.Night.SunriseLocal.Should().BeCloseTo(new DateTime(2026, 1, 16, 7, 13, 0), TimeSpan.FromMinutes(5));
+        viewModel.Tonight.DarkNightText.Should().MatchRegex(@"^\d\d:\d\d → \d\d:\d\d$");
+        viewModel.Detail.ChartTitle.Should().Contain("→");
     }
 
     [Fact]
@@ -157,12 +151,12 @@ public sealed class ViewModelTests
         var viewModel = await CreateLoadedMainAsync();
 
         viewModel.ObservationDateTime = new DateTime(2026, 1, 15, 13, 0, 0);
-        viewModel.SkyCondition.Should().Be(SkyCondition.Day);
-        viewModel.SkyBanner.Should().StartWith("Es de día");
+        viewModel.Tonight.SkyCondition.Should().Be(SkyCondition.Day);
+        viewModel.Tonight.SkyBanner.Should().StartWith("Es de día");
 
         viewModel.ObservationDateTime = new DateTime(2026, 1, 15, 23, 0, 0);
-        viewModel.SkyCondition.Should().Be(SkyCondition.Dark);
-        viewModel.SkyBanner.Should().BeNull();
+        viewModel.Tonight.SkyCondition.Should().Be(SkyCondition.Dark);
+        viewModel.Tonight.SkyBanner.Should().BeNull();
     }
 
     [Fact]
@@ -170,10 +164,10 @@ public sealed class ViewModelTests
     {
         var viewModel = await CreateLoadedMainAsync();
 
-        viewModel.Moon.Should().NotBeNull();
-        viewModel.MoonIlluminationText.Should().EndWith("%");
-        viewModel.Objects.Should().OnlyContain(o => o.MoonSeparationDegrees >= 0 && o.MoonSeparationDegrees <= 180);
-        viewModel.SelectedObservation!.MoonSeparationDegrees.Should().NotBeNull();
+        viewModel.Tonight.Moon.Should().NotBeNull();
+        viewModel.Tonight.MoonIlluminationText.Should().EndWith("%");
+        viewModel.Targets.Objects.Should().OnlyContain(o => o.MoonSeparationDegrees >= 0 && o.MoonSeparationDegrees <= 180);
+        viewModel.Detail.Observation!.MoonSeparationDegrees.Should().NotBeNull();
     }
 
     [Theory]
@@ -184,7 +178,7 @@ public sealed class ViewModelTests
     [InlineData(0.99, false, "Luna llena")]
     public void DescribeMoonPhase_NamesThePhase(double fraction, bool waxing, string expected)
     {
-        MainViewModel.DescribeMoonPhase(fraction, waxing).Should().Be(expected);
+        DisplayNames.MoonPhase(fraction, waxing).Should().Be(expected);
     }
 
     [Fact]
@@ -194,10 +188,10 @@ public sealed class ViewModelTests
         var brightLow = brightHigh with { Horizontal = new HorizontalCoordinates(-5, 180) };
         var dim = brightHigh with { IlluminatedFraction = 0.1 };
 
-        MainViewModel.MoonInterferes(brightHigh, 15).Should().BeTrue();
-        MainViewModel.MoonInterferes(brightHigh, 45).Should().BeFalse();
-        MainViewModel.MoonInterferes(brightLow, 15).Should().BeFalse();
-        MainViewModel.MoonInterferes(dim, 15).Should().BeFalse();
+        MoonInterference.Interferes(brightHigh, 15).Should().BeTrue();
+        MoonInterference.Interferes(brightHigh, 45).Should().BeFalse();
+        MoonInterference.Interferes(brightLow, 15).Should().BeFalse();
+        MoonInterference.Interferes(dim, 15).Should().BeFalse();
     }
 
     [Fact]
@@ -206,15 +200,15 @@ public sealed class ViewModelTests
         _planService.Entries = [new("M31", "con filtro"), new("M999")];
         var viewModel = await CreateLoadedMainAsync();
 
-        viewModel.ObservationPlan.Select(o => o.Id).Should().Equal("M31");
+        viewModel.Plan.Items.Select(o => o.Id).Should().Equal("M31");
 
-        viewModel.SelectedObject = viewModel.Objects.Single(o => o.Id == "M42");
-        viewModel.AddSelectedToObservationPlanCommand.Execute(null);
+        viewModel.Targets.SelectedObject = viewModel.Targets.Objects.Single(o => o.Id == "M42");
+        viewModel.Detail.AddToPlanCommand.Execute(null);
 
         _planService.Ids.Should().Equal("M31", "M42");
-        viewModel.IsSelectedObjectInObservationPlan.Should().BeTrue();
+        viewModel.Detail.IsInPlan.Should().BeTrue();
 
-        viewModel.RemoveFromObservationPlanCommand.Execute(viewModel.ObservationPlan[0]);
+        viewModel.Plan.RemoveCommand.Execute(viewModel.Plan.Items[0]);
 
         _planService.Ids.Should().Equal("M42");
     }
