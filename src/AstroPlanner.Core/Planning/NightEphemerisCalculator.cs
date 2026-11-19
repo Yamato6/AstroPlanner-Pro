@@ -51,6 +51,9 @@ public sealed class NightEphemerisCalculator(IAstronomyService astronomy)
 
     private const double DegreesToRadians = Math.PI / 180.0;
 
+    /// <summary>Below the minimum altitude by more than this, the horizon mask is not evaluated.</summary>
+    private const double AzimuthMarginDegrees = 10.0;
+
     private readonly IAstronomyService _astronomy = astronomy ?? throw new ArgumentNullException(nameof(astronomy));
 
     /// <summary>Ephemerides of <paramref name="targets"/> (same order) for the night of <paramref name="request"/>.</summary>
@@ -100,7 +103,10 @@ public sealed class NightEphemerisCalculator(IAstronomyService astronomy)
             var altitude = Math.Asin(sinAltitude) / DegreesToRadians;
             altitudes[k] = Refraction.ApparentAltitude(altitude);
 
-            if (night.NeedsAzimuth)
+            // The horizon only matters near or above the minimum altitude; far below it the
+            // azimuth is not needed (NaN = use the minimum altitude alone).
+            azimuths[k] = double.NaN;
+            if (night.NeedsAzimuth && altitudes[k] >= request.MinimumAltitudeDegrees - AzimuthMarginDegrees)
             {
                 // Azimuth measured from north towards east, as in CoordinateTransformer.
                 var azimuth = Math.Atan2(
@@ -158,7 +164,7 @@ public sealed class NightEphemerisCalculator(IAstronomyService astronomy)
         var margins = new double[night.Count];
         for (var k = 0; k < night.Count; k++)
         {
-            var threshold = night.NeedsAzimuth
+            var threshold = night.NeedsAzimuth && !double.IsNaN(azimuths[k])
                 ? Math.Max(request.MinimumAltitudeDegrees, mask!.AltitudeAt(azimuths[k]))
                 : request.MinimumAltitudeDegrees;
             margins[k] = altitudes[k] - threshold;

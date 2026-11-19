@@ -28,9 +28,14 @@ jobs:
       - name: Verify the catalog database
         run: dotnet run --project tools/AstroPlanner.DataBuilder -c Release --no-build -- verify
 
+      # Timing budgets (spec §14) are measured without coverage instrumentation, which
+      # slows tight numeric loops several times.
+      - name: Performance tests
+        run: dotnet test AstroPlanner.slnx -c Release --no-build --filter "Category=Performance"
+
       - name: Test with coverage
         run: >
-          dotnet test AstroPlanner.slnx -c Release --no-build
+          dotnet test AstroPlanner.slnx -c Release --no-build --filter "Category!=Performance"
           --logger "trx;LogFileName=results.trx"
           --collect "XPlat Code Coverage"
           --results-directory TestResults

@@ -326,6 +326,7 @@ public sealed class CatalogFeatureTests
     // ─── Performance (spec §14, M1 DoD) ─────────────────────────────────
 
     [Fact]
+    [Trait("Category", "Performance")]
     public async Task FifteenThousandObjects_FilterInLessThan200Milliseconds()
     {
         var random = new Random(7);

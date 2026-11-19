@@ -136,6 +136,7 @@ public sealed class NightEphemerisCalculatorTests
     }
 
     [Fact]
+    [Trait("Category", "Performance")]
     public void FifteenThousandObjects_TakeLessThanOneSecond()
     {
         // DoD of M1: the night ephemerides of the whole catalog in < 1 s.
@@ -147,8 +148,8 @@ public sealed class NightEphemerisCalculatorTests
         var mask = new HorizonMask([new HorizonPoint(0, 10), new HorizonPoint(180, 25)]);
         _calculator.Calculate(catalog.Take(100).ToList(), Request(mask: mask));
 
-        // Best of three runs: the budget is about the code, not about a busy CI runner that is
-        // also running other test assemblies (with coverage instrumentation) at the same time.
+        // Best of three runs, to leave out JIT and scheduling noise. CI runs the Performance
+        // tests in a step of their own, without coverage instrumentation.
         var best = TimeSpan.MaxValue;
         IReadOnlyList<NightEphemeris> all = [];
         for (var run = 0; run < 3; run++)
