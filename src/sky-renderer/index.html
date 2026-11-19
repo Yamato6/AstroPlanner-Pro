@@ -1,0 +1,19 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <!-- Strict CSP (spec §5.4): own scripts only, data only from the local data host, no eval. -->
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'self' https://data.astroplanner; base-uri 'none'; form-action 'none'"
+    />
+    <title>AstroPlanner sky</title>
+  </head>
+  <body>
+    <canvas id="sky"></canvas>
+    <canvas id="overlay"></canvas>
+    <div id="tooltip" hidden></div>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

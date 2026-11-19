@@ -21,6 +21,8 @@ coverage-report/
 
 # Node / sky renderer
 node_modules/
+# Sky renderer build output (packed into the exe by the UI build)
+src/sky-renderer/dist/
 
 # OS and editor temp files
 .DS_Store
