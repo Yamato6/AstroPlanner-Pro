@@ -1,0 +1,93 @@
+<Window x:Class="AstroPlanner.UI.LogEntryWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:res="clr-namespace:AstroPlanner.UI.Resources"
+        Title="{x:Static res:Strings.LogEntryWindowTitle}"
+        Width="620"
+        SizeToContent="Height"
+        ResizeMode="NoResize"
+        WindowStartupLocation="CenterOwner"
+        Background="{StaticResource DialogBackgroundBrush}">
+    <Window.Resources>
+        <!-- Colors and templates: Themes/Dark.xaml -->
+        <Style TargetType="TextBlock">
+            <Setter Property="Foreground" Value="{StaticResource NightTextBrush}"/>
+        </Style>
+        <Style TargetType="Label">
+            <Setter Property="Foreground" Value="{StaticResource LabelTextBrush}"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+        </Style>
+        <Style TargetType="TextBox" BasedOn="{StaticResource DarkTextBoxStyle}">
+            <Setter Property="Margin" Value="0,4,0,4"/>
+            <Setter Property="Padding" Value="7,5"/>
+        </Style>
+        <Style TargetType="ComboBox" BasedOn="{StaticResource DarkComboBoxStyle}">
+            <Setter Property="Margin" Value="0,4,12,4"/>
+            <Setter Property="Width" Value="60"/>
+        </Style>
+        <!-- Keyed, not implicit: an implicit Button style would also reach the calendar
+             button inside the DatePicker and make it wider. -->
+        <Style x:Key="DialogButtonStyle" TargetType="Button" BasedOn="{StaticResource SecondaryButtonStyle}">
+            <Setter Property="Margin" Value="0,0,8,0"/>
+            <Setter Property="MinWidth" Value="90"/>
+        </Style>
+    </Window.Resources>
+
+    <StackPanel Margin="28">
+        <TextBlock FontSize="22" FontWeight="SemiBold" Text="{Binding Title}"/>
+        <TextBlock Margin="0,4,0,18" Foreground="{StaticResource NightMutedTextBrush}" TextWrapping="Wrap"
+                   Text="{x:Static res:Strings.LogEntryIntro}"/>
+
+        <Grid>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="130"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
+
+            <Label Grid.Row="0" Content="{x:Static res:Strings.LogEntryDateTime}"/>
+            <StackPanel Grid.Row="0" Grid.Column="1" Orientation="Horizontal">
+                <DatePicker Width="140" Margin="0,4,8,4" Style="{StaticResource DarkDatePickerStyle}"
+                            AutomationProperties.Name="{x:Static res:Strings.LogEntryDateName}" SelectedDate="{Binding ObservedDate}"/>
+                <TextBox Width="70" Text="{Binding ObservedTime, UpdateSourceTrigger=PropertyChanged}"
+                         ToolTip="{x:Static res:Strings.LogEntryTimeTooltip}"/>
+            </StackPanel>
+
+            <Label Grid.Row="1" Content="{x:Static res:Strings.LogEntryLocation}"/>
+            <TextBox Grid.Row="1" Grid.Column="1" Text="{Binding Location, UpdateSourceTrigger=PropertyChanged}"/>
+
+            <Label Grid.Row="2" Content="{x:Static res:Strings.LogEntryEquipment}"/>
+            <TextBox Grid.Row="2" Grid.Column="1" Text="{Binding Equipment, UpdateSourceTrigger=PropertyChanged}"
+                     ToolTip="{x:Static res:Strings.LogEntryEquipmentTooltip}"/>
+
+            <Label Grid.Row="3" Content="{x:Static res:Strings.LogEntryConditions}"/>
+            <StackPanel Grid.Row="3" Grid.Column="1" Orientation="Horizontal">
+                <TextBlock Text="{x:Static res:Strings.LogEntrySeeing}" VerticalAlignment="Center" Margin="0,0,6,0"/>
+                <ComboBox ItemsSource="{Binding Scale}" SelectedItem="{Binding Seeing}"/>
+                <TextBlock Text="{x:Static res:Strings.LogEntryTransparency}" VerticalAlignment="Center" Margin="0,0,6,0"/>
+                <ComboBox ItemsSource="{Binding Scale}" SelectedItem="{Binding Transparency}"/>
+                <TextBlock Text="{x:Static res:Strings.LogEntryRating}" VerticalAlignment="Center" Margin="0,0,6,0"/>
+                <ComboBox ItemsSource="{Binding Scale}" SelectedItem="{Binding Rating}"/>
+            </StackPanel>
+
+            <Label Grid.Row="4" Content="{x:Static res:Strings.LogEntryNotes}" VerticalAlignment="Top" Margin="0,4,0,0"/>
+            <TextBox Grid.Row="4" Grid.Column="1" Height="90" TextWrapping="Wrap" AcceptsReturn="True"
+                     VerticalScrollBarVisibility="Auto"
+                     Text="{Binding Notes, UpdateSourceTrigger=PropertyChanged}"/>
+        </Grid>
+
+        <TextBlock x:Name="ErrorText" Margin="0,12,0,0" Foreground="{StaticResource DangerSoftBrush}" TextWrapping="Wrap" Visibility="Collapsed"/>
+
+        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,20,0,0">
+            <Button Content="{x:Static res:Strings.Cancel}" IsCancel="True" Style="{StaticResource DialogButtonStyle}"/>
+            <Button Content="{x:Static res:Strings.Save}" IsDefault="True" Click="OnSaveClicked"
+                    Style="{StaticResource PrimaryButtonStyle}" Margin="0" MinWidth="90"/>
+        </StackPanel>
+    </StackPanel>
+</Window>

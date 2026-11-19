@@ -1,0 +1,67 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- WPF application and composition root: the only project allowed to reference every layer. -->
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <UseWPF>true</UseWPF>
+    <!-- NU1701: SkiaSharp.Views.WPF (a ScottPlot.WPF dependency) only declares .NET Framework
+         but works on modern .NET; known ScottPlot warning. -->
+    <NoWarn>$(NoWarn);NU1701</NoWarn>
+
+    <AssemblyName>AstroPlannerPro</AssemblyName>
+    <RootNamespace>AstroPlanner.UI</RootNamespace>
+    <ApplicationIcon>Assets\AstroPlanner.ico</ApplicationIcon>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+
+    <!-- CI replaces the version with the tag's (e.g. 2.0.0-rc.1). -->
+    <Version>2.0.0-dev</Version>
+    <AssemblyTitle>AstroPlanner Pro</AssemblyTitle>
+    <Description>Astrophotography planner: what to shoot tonight, when, with which gear and how likely it is to work.</Description>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\AstroPlanner.Core\AstroPlanner.Core.csproj" />
+    <ProjectReference Include="..\AstroPlanner.Data\AstroPlanner.Data.csproj" />
+    <ProjectReference Include="..\AstroPlanner.Online\AstroPlanner.Online.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="CommunityToolkit.Mvvm" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" />
+    <PackageReference Include="ScottPlot.WPF" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Resource Include="Assets\AstroPlanner.png" />
+  </ItemGroup>
+
+  <!-- UI strings live in Resources/Strings.resx (embedded as AstroPlanner.UI.Resources.Strings).
+       A strongly typed class, AstroPlanner.UI.Resources.Strings, is generated before every
+       compilation, including WPF's temporary markup assembly, so that both C# code and XAML
+       ({x:Static res:Strings.Key}) can use it. The Visual Studio custom tool is not needed. -->
+  <Target Name="GenerateStringsClass" BeforeTargets="CoreCompile">
+    <PropertyGroup>
+      <StringsDesignerFile>$([System.IO.Path]::GetFullPath('$(MSBuildProjectDirectory)\$(IntermediateOutputPath)Strings.Designer.cs'))</StringsDesignerFile>
+    </PropertyGroup>
+    <GenerateResource Sources="Resources\Strings.resx"
+                      OutputResources="$(IntermediateOutputPath)StringsClass.resources"
+                      StronglyTypedLanguage="CSharp"
+                      StronglyTypedNamespace="AstroPlanner.UI.Resources"
+                      StronglyTypedClassName="Strings"
+                      StronglyTypedManifestPrefix="AstroPlanner.UI.Resources"
+                      StronglyTypedFileName="$(StringsDesignerFile)"
+                      PublicClass="true"
+                      ExecuteAsTool="false" />
+    <ItemGroup>
+      <!-- Whatever its spelling (relative or absolute), keep a single copy of the generated file. -->
+      <Compile Remove="@(Compile)" Condition="'%(Filename)%(Extension)' == 'Strings.Designer.cs'" />
+      <Compile Include="$(StringsDesignerFile)" />
+    </ItemGroup>
+  </Target>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="AstroPlanner.UI.Tests" />
+  </ItemGroup>
+
+</Project>

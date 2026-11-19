@@ -1,0 +1,315 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- UI strings (English). Formats use .NET composite formatting: {0}, {0:HH:mm}, {0:0.0}... -->
+<root>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>2.0</value></resheader>
+  <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <data name="AppName" xml:space="preserve"><value>AstroPlanner Pro</value></data>
+  <data name="AppTagline" xml:space="preserve"><value>Observation planner</value></data>
+  <data name="MainWindowTitle" xml:space="preserve"><value>AstroPlanner Pro - Observation planner</value></data>
+  <data name="UnhandledErrorMessage" xml:space="preserve"><value>An unexpected error occurred. The application will stay open, but if the problem happens again check the log in:
+{0}</value></data>
+  <data name="LatitudeRange" xml:space="preserve"><value>Latitude must be between -90 and 90°.</value></data>
+  <data name="LongitudeRange" xml:space="preserve"><value>Longitude must be between -180 and 180°.</value></data>
+  <data name="ElevationRange" xml:space="preserve"><value>Elevation must be between -500 and 9000 m.</value></data>
+  <data name="MinimumAltitudeRange" xml:space="preserve"><value>Minimum altitude must be between 0 and 90°.</value></data>
+  <data name="MaximumMagnitudeRange" xml:space="preserve"><value>Maximum magnitude must be between -2 and 20.</value></data>
+  <data name="LatitudeRangeCheckSettings" xml:space="preserve"><value>Latitude must be between -90 and 90°. Check the settings.</value></data>
+  <data name="LongitudeRangeCheckSettings" xml:space="preserve"><value>Longitude must be between -180 and 180°. Check the settings.</value></data>
+  <data name="LogTimeFormat" xml:space="preserve"><value>Write the time as HH:mm (for example 22:30).</value></data>
+  <data name="LogTimeInvalid" xml:space="preserve"><value>Check the time: write it as HH:mm (for example 22:30).</value></data>
+  <data name="TypeGalaxy" xml:space="preserve"><value>Galaxy</value></data>
+  <data name="TypeOpenCluster" xml:space="preserve"><value>Open cluster</value></data>
+  <data name="TypeGlobularCluster" xml:space="preserve"><value>Globular cluster</value></data>
+  <data name="TypePlanetaryNebula" xml:space="preserve"><value>Planetary nebula</value></data>
+  <data name="TypeDiffuseNebula" xml:space="preserve"><value>Diffuse nebula</value></data>
+  <data name="TypeSupernovaRemnant" xml:space="preserve"><value>Supernova remnant</value></data>
+  <data name="TypePlanet" xml:space="preserve"><value>Planet</value></data>
+  <data name="TypeOther" xml:space="preserve"><value>Other</value></data>
+  <data name="FilterAllTypes" xml:space="preserve"><value>All</value></data>
+  <data name="FilterAllConstellations" xml:space="preserve"><value>All</value></data>
+  <data name="MoonNew" xml:space="preserve"><value>New moon</value></data>
+  <data name="MoonFull" xml:space="preserve"><value>Full moon</value></data>
+  <data name="MoonWaxingCrescent" xml:space="preserve"><value>Waxing crescent</value></data>
+  <data name="MoonWaningCrescent" xml:space="preserve"><value>Waning crescent</value></data>
+  <data name="MoonFirstQuarter" xml:space="preserve"><value>First quarter</value></data>
+  <data name="MoonLastQuarter" xml:space="preserve"><value>Last quarter</value></data>
+  <data name="MoonWaxingGibbous" xml:space="preserve"><value>Waxing gibbous</value></data>
+  <data name="MoonWaningGibbous" xml:space="preserve"><value>Waning gibbous</value></data>
+  <data name="PercentFormat" xml:space="preserve"><value>{0:0}%</value></data>
+  <data name="MoonDetailAboveFormat" xml:space="preserve"><value>{0} · {1:0}° high</value></data>
+  <data name="MoonDetailBelowFormat" xml:space="preserve"><value>{0} · below the horizon</value></data>
+  <data name="MoonWarningFormat" xml:space="preserve"><value>The Moon ({0:0}% lit) is {1:0}° away: its glare makes observing harder.</value></data>
+  <data name="MoonLabelFormat" xml:space="preserve"><value>Moon {0}</value></data>
+  <data name="MoonLegendFormat" xml:space="preserve"><value>Moon ({0})</value></data>
+  <data name="StatusVisible" xml:space="preserve"><value>Visible</value></data>
+  <data name="StatusNotVisible" xml:space="preserve"><value>Not visible</value></data>
+  <data name="StatusBelowThreshold" xml:space="preserve"><value>Below minimum altitude</value></data>
+  <data name="DarkNightNone" xml:space="preserve"><value>No dark night</value></data>
+  <data name="DarkNightRangeFormat" xml:space="preserve"><value>{0:HH:mm} → {1:HH:mm}</value></data>
+  <data name="SunFallbackWindow" xml:space="preserve"><value>The Sun does not set or rise: window 18:00 → 06:00</value></data>
+  <data name="SunTimesFormat" xml:space="preserve"><value>Sunset {0:HH:mm} · Sunrise {1:HH:mm}</value></data>
+  <data name="BannerNeverDark" xml:space="preserve"><value>On this date and place the Sun never gets below -18°: the sky is never fully dark.</value></data>
+  <data name="BannerDaytimeDarkAtFormat" xml:space="preserve"><value>It is daytime at this hour. The dark night starts at {0:HH:mm}.</value></data>
+  <data name="BannerDaytime" xml:space="preserve"><value>It is daytime at this hour.</value></data>
+  <data name="BannerTwilightFormat" xml:space="preserve"><value>Twilight: the sky is not dark yet (dark night from {0:HH:mm} to {1:HH:mm}).</value></data>
+  <data name="ObservedSummaryFormat" xml:space="preserve"><value>Messier observed: {0}</value></data>
+  <data name="CloudsDisabled" xml:space="preserve"><value>Forecast disabled in Settings</value></data>
+  <data name="CloudsNoForecast" xml:space="preserve"><value>No forecast</value></data>
+  <data name="CloudsNoForecastReasonFormat" xml:space="preserve"><value>No forecast: {0}</value></data>
+  <data name="CloudsSummaryFormat" xml:space="preserve"><value>{0} · best {1:HH:mm} ({2}%)</value></data>
+  <data name="CloudsNoForecastForDate" xml:space="preserve"><value>No forecast for this date (up to 7 days ahead)</value></data>
+  <data name="CloudsFetching" xml:space="preserve"><value>Fetching the forecast…</value></data>
+  <data name="CloudClear" xml:space="preserve"><value>Clear</value></data>
+  <data name="CloudMostlyClear" xml:space="preserve"><value>Mostly clear</value></data>
+  <data name="CloudPartlyCloudy" xml:space="preserve"><value>Partly cloudy</value></data>
+  <data name="CloudMostlyCloudy" xml:space="preserve"><value>Mostly cloudy</value></data>
+  <data name="CloudOvercast" xml:space="preserve"><value>Overcast</value></data>
+  <data name="LocationManual" xml:space="preserve"><value>Manual coordinates</value></data>
+  <data name="LocationSelectCity" xml:space="preserve"><value>Select a city</value></data>
+  <data name="UpdateAvailableFormat" xml:space="preserve"><value>A new version of AstroPlanner Pro is available: {0}.</value></data>
+  <data name="UpdateNotNow" xml:space="preserve"><value>Not now</value></data>
+  <data name="UpdateDownload" xml:space="preserve"><value>Download</value></data>
+  <data name="HeaderLocalDateTime" xml:space="preserve"><value>Local date and time</value></data>
+  <data name="HeaderObservationDate" xml:space="preserve"><value>Observation date</value></data>
+  <data name="HeaderHour" xml:space="preserve"><value>Hour</value></data>
+  <data name="HeaderMinute" xml:space="preserve"><value>Minute</value></data>
+  <data name="HeaderOneHourEarlier" xml:space="preserve"><value>−1 h</value></data>
+  <data name="HeaderOneHourEarlierTooltip" xml:space="preserve"><value>One hour earlier</value></data>
+  <data name="HeaderOneHourLater" xml:space="preserve"><value>+1 h</value></data>
+  <data name="HeaderOneHourLaterTooltip" xml:space="preserve"><value>One hour later</value></data>
+  <data name="HeaderTimeZone" xml:space="preserve"><value>Time zone</value></data>
+  <data name="HeaderActiveLocation" xml:space="preserve"><value>Active location</value></data>
+  <data name="HeaderSettings" xml:space="preserve"><value>Settings</value></data>
+  <data name="HeaderSettingsTooltip" xml:space="preserve"><value>Location, time zone and preferences (Ctrl+,)</value></data>
+  <data name="HeaderReset" xml:space="preserve"><value>Reset</value></data>
+  <data name="HeaderResetTooltip" xml:space="preserve"><value>Clears the search and the filters, and restores the saved altitude and magnitude</value></data>
+  <data name="HeaderNow" xml:space="preserve"><value>Now</value></data>
+  <data name="HeaderNowTooltip" xml:space="preserve"><value>Sets the current time at the observer's location (F5)</value></data>
+  <data name="HeaderLive" xml:space="preserve"><value>Live</value></data>
+  <data name="HeaderLiveTooltip" xml:space="preserve"><value>Follows the current time and refreshes everything every minute. Turns off when you choose another time.</value></data>
+  <data name="HeaderAboutTooltip" xml:space="preserve"><value>About AstroPlanner Pro (F1)</value></data>
+  <data name="HeaderAboutName" xml:space="preserve"><value>About AstroPlanner Pro</value></data>
+  <data name="CardCatalogObjects" xml:space="preserve"><value>Catalog objects</value></data>
+  <data name="CardObservedTooltip" xml:space="preserve"><value>Messier objects with at least one observation in the logbook</value></data>
+  <data name="CardVisibleObjects" xml:space="preserve"><value>Visible objects</value></data>
+  <data name="CardDarkNight" xml:space="preserve"><value>Dark night</value></data>
+  <data name="CardDarkNightTooltip" xml:space="preserve"><value>Dark night: the Sun is more than 18° below the horizon.</value></data>
+  <data name="CardMoon" xml:space="preserve"><value>Moon</value></data>
+  <data name="CardMoonTooltip" xml:space="preserve"><value>Phase and altitude of the Moon at the chosen time.</value></data>
+  <data name="CardClouds" xml:space="preserve"><value>Clouds tonight</value></data>
+  <data name="CardDataAttribution" xml:space="preserve"><value>Data:</value></data>
+  <data name="CardMinimumAltitude" xml:space="preserve"><value>Minimum altitude</value></data>
+  <data name="TabPlanner" xml:space="preserve"><value>Planner</value></data>
+  <data name="SearchName" xml:space="preserve"><value>Search</value></data>
+  <data name="SearchTooltip" xml:space="preserve"><value>Search by id (M31), name (Andromeda) or constellation (Orion). Ctrl+F</value></data>
+  <data name="SearchPlaceholder" xml:space="preserve"><value>Search M31, Andromeda, Orion…</value></data>
+  <data name="FilterType" xml:space="preserve"><value>Type</value></data>
+  <data name="FilterTypeName" xml:space="preserve"><value>Object type</value></data>
+  <data name="FilterConstellation" xml:space="preserve"><value>Constellation</value></data>
+  <data name="FilterMinimumAltitude" xml:space="preserve"><value>Min. alt. (°)</value></data>
+  <data name="FilterMinimumAltitudeTooltip" xml:space="preserve"><value>Minimum altitude above the horizon for an object to count as visible</value></data>
+  <data name="FilterMinimumAltitudeName" xml:space="preserve"><value>Minimum altitude</value></data>
+  <data name="FilterMaximumMagnitude" xml:space="preserve"><value>Max. mag.</value></data>
+  <data name="FilterMaximumMagnitudeTooltip" xml:space="preserve"><value>Hides fainter objects (higher number = fainter)</value></data>
+  <data name="FilterMaximumMagnitudeName" xml:space="preserve"><value>Maximum magnitude</value></data>
+  <data name="FilterOnlyVisible" xml:space="preserve"><value>Visible only</value></data>
+  <data name="ShowingObjectsFormat" xml:space="preserve"><value>Showing {0} objects</value></data>
+  <data name="CatalogLoadFailedFormat" xml:space="preserve"><value>Could not load the catalog: {0}</value></data>
+  <data name="ColumnObserved" xml:space="preserve"><value>✓</value></data>
+  <data name="ColumnId" xml:space="preserve"><value>ID</value></data>
+  <data name="ColumnName" xml:space="preserve"><value>Name</value></data>
+  <data name="ColumnConstellation" xml:space="preserve"><value>Constellation</value></data>
+  <data name="ColumnType" xml:space="preserve"><value>Type</value></data>
+  <data name="ColumnMagnitude" xml:space="preserve"><value>Mag.</value></data>
+  <data name="ColumnAltitude" xml:space="preserve"><value>Altitude</value></data>
+  <data name="ColumnAzimuth" xml:space="preserve"><value>Azimuth</value></data>
+  <data name="ColumnMoon" xml:space="preserve"><value>Moon</value></data>
+  <data name="ColumnStatus" xml:space="preserve"><value>Status</value></data>
+  <data name="ColumnCulmination" xml:space="preserve"><value>Culmination</value></data>
+  <data name="ColumnMaximumAltitude" xml:space="preserve"><value>Max. alt.</value></data>
+  <data name="ColumnClouds" xml:space="preserve"><value>Clouds</value></data>
+  <data name="ColumnNotes" xml:space="preserve"><value>Notes</value></data>
+  <data name="ColumnDate" xml:space="preserve"><value>Date</value></data>
+  <data name="ColumnLocation" xml:space="preserve"><value>Location</value></data>
+  <data name="ColumnEquipment" xml:space="preserve"><value>Equipment</value></data>
+  <data name="ColumnSeeing" xml:space="preserve"><value>Seeing</value></data>
+  <data name="ColumnTransparency" xml:space="preserve"><value>Transp.</value></data>
+  <data name="ColumnRating" xml:space="preserve"><value>Rating</value></data>
+  <data name="ObservedTooltip" xml:space="preserve"><value>Already observed (it is in your logbook)</value></data>
+  <data name="MoonDistanceTooltip" xml:space="preserve"><value>Angular distance to the Moon</value></data>
+  <data name="MoonInterferesTooltip" xml:space="preserve"><value>The Moon, bright and close, makes observing harder</value></data>
+  <data name="SplitterTooltip" xml:space="preserve"><value>Drag to change the width</value></data>
+  <data name="ChartTitle" xml:space="preserve"><value>Altitude during the night</value></data>
+  <data name="ChartTitleRangeFormat" xml:space="preserve"><value>Altitude during the night ({0:HH:mm} → {1:HH:mm})</value></data>
+  <data name="ChartChosenTime" xml:space="preserve"><value>Chosen time</value></data>
+  <data name="ChartAltitude" xml:space="preserve"><value>Altitude</value></data>
+  <data name="ChartMinimumAltitude" xml:space="preserve"><value>Minimum altitude</value></data>
+  <data name="ChartLocalTime" xml:space="preserve"><value>Local time</value></data>
+  <data name="ChartAltitudeAxis" xml:space="preserve"><value>Altitude (°)</value></data>
+  <data name="ChartClouds" xml:space="preserve"><value>Clouds (forecast)</value></data>
+  <data name="ChartTwilight" xml:space="preserve"><value>Twilight</value></data>
+  <data name="TabSky" xml:space="preserve"><value>Sky</value></data>
+  <data name="SkyTitle" xml:space="preserve"><value>The sky at the chosen time</value></data>
+  <data name="SkyExplanation" xml:space="preserve"><value>The center is the zenith and the edge is the horizon. North up and east left, as when looking up.</value></data>
+  <data name="SkyLegend" xml:space="preserve"><value>Legend</value></data>
+  <data name="SkyLegendVisible" xml:space="preserve"><value>●  Visible (above the minimum altitude)</value></data>
+  <data name="SkyLegendBelow" xml:space="preserve"><value>●  Below the minimum altitude</value></data>
+  <data name="SkyLegendInPlan" xml:space="preserve"><value>●  In My plan</value></data>
+  <data name="SkyLegendSelected" xml:space="preserve"><value>◯  Selected object</value></data>
+  <data name="SkyLegendMoon" xml:space="preserve"><value>●  Moon</value></data>
+  <data name="SkyLegendPlanet" xml:space="preserve"><value>◆  Planet</value></data>
+  <data name="SkyLegendMinimumAltitude" xml:space="preserve"><value>- - Minimum altitude</value></data>
+  <data name="SkyFiltersNote" xml:space="preserve"><value>The chart follows the Planner's filters and search. Click an object to select it.</value></data>
+  <data name="SkySelectedFormat" xml:space="preserve"><value>Selected: {0}</value></data>
+  <data name="SkyNorth" xml:space="preserve"><value>N</value></data>
+  <data name="SkyEast" xml:space="preserve"><value>E</value></data>
+  <data name="SkySouth" xml:space="preserve"><value>S</value></data>
+  <data name="SkyWest" xml:space="preserve"><value>W</value></data>
+  <data name="TabDetail" xml:space="preserve"><value>Object detail</value></data>
+  <data name="DetailEmpty" xml:space="preserve"><value>Select an object in the Planner to see its details.</value></data>
+  <data name="DetailTypeFormat" xml:space="preserve"><value>Type: {0}</value></data>
+  <data name="DetailAstronomicalInfo" xml:space="preserve"><value>Astronomical information</value></data>
+  <data name="DetailConstellationFormat" xml:space="preserve"><value>Constellation: {0}</value></data>
+  <data name="DetailMagnitudeFormat" xml:space="preserve"><value>Magnitude: {0:0.0}</value></data>
+  <data name="DetailMaximumAltitudeFormat" xml:space="preserve"><value>Maximum altitude: {0:0.0}°</value></data>
+  <data name="DetailDistanceFormat" xml:space="preserve"><value>Distance from Earth: {0:0.00} AU</value></data>
+  <data name="DetailApparentSizeFormat" xml:space="preserve"><value>Apparent size: {0:0.0}″</value></data>
+  <data name="DetailPhaseFormat" xml:space="preserve"><value>Phase (illuminated): {0:0%}</value></data>
+  <data name="DetailElongationFormat" xml:space="preserve"><value>Distance from the Sun in the sky: {0:0}°</value></data>
+  <data name="DetailCurrentPosition" xml:space="preserve"><value>Current position</value></data>
+  <data name="DetailAltitudeFormat" xml:space="preserve"><value>Altitude: {0:0.0}°</value></data>
+  <data name="DetailAzimuthFormat" xml:space="preserve"><value>Azimuth: {0:0.0}°</value></data>
+  <data name="DetailStatusFormat" xml:space="preserve"><value>Status: {0}</value></data>
+  <data name="DetailMoonDistanceFormat" xml:space="preserve"><value>Distance to the Moon: {0:0}°</value></data>
+  <data name="DetailNightEvents" xml:space="preserve"><value>Tonight's events</value></data>
+  <data name="DetailRiseFormat" xml:space="preserve"><value>Rise: {0:HH:mm}</value></data>
+  <data name="DetailRiseNone" xml:space="preserve"><value>Rise: —</value></data>
+  <data name="DetailThresholdFormat" xml:space="preserve"><value>Above minimum altitude: {0:HH:mm}</value></data>
+  <data name="DetailThresholdNone" xml:space="preserve"><value>Above minimum altitude: —</value></data>
+  <data name="DetailCulminationFormat" xml:space="preserve"><value>Culmination: {0:HH:mm}</value></data>
+  <data name="DetailSetFormat" xml:space="preserve"><value>Set: {0:HH:mm}</value></data>
+  <data name="DetailSetNone" xml:space="preserve"><value>Set: —</value></data>
+  <data name="DetailCloudsFormat" xml:space="preserve"><value>Clouds at culmination: {0}%</value></data>
+  <data name="DetailCloudsNone" xml:space="preserve"><value>Clouds at culmination: no forecast</value></data>
+  <data name="DetailAddToPlan" xml:space="preserve"><value>Add to plan</value></data>
+  <data name="DetailRemoveFromPlan" xml:space="preserve"><value>Remove from plan</value></data>
+  <data name="DetailLogObservation" xml:space="preserve"><value>Log observation…</value></data>
+  <data name="DetailLogObservationTooltip" xml:space="preserve"><value>Record in the logbook that you observed this object</value></data>
+  <data name="TabPlan" xml:space="preserve"><value>My plan</value></data>
+  <data name="PlanExportCsv" xml:space="preserve"><value>Export CSV…</value></data>
+  <data name="PlanExportTooltip" xml:space="preserve"><value>Saves the plan as CSV to open it in Excel (Ctrl+E)</value></data>
+  <data name="PlanPrint" xml:space="preserve"><value>Print…</value></data>
+  <data name="PlanPrintTooltip" xml:space="preserve"><value>Prints the plan or saves it as PDF with Microsoft Print to PDF (Ctrl+P)</value></data>
+  <data name="PlanExplanation" xml:space="preserve"><value>Ordered by culmination time: the best order to observe. Type your notes in the Notes column.</value></data>
+  <data name="PlanEmpty" xml:space="preserve"><value>Your plan is empty. Add objects from the Object detail tab.</value></data>
+  <data name="PlanNoteName" xml:space="preserve"><value>Note</value></data>
+  <data name="PlanNoteTooltip" xml:space="preserve"><value>Note for this object (saved when you leave the field)</value></data>
+  <data name="PlanRemove" xml:space="preserve"><value>Remove</value></data>
+  <data name="PlanExportedFormat" xml:space="preserve"><value>Plan exported to {0}.</value></data>
+  <data name="PlanExportFailedFormat" xml:space="preserve"><value>Could not export the plan: {0}</value></data>
+  <data name="PlanSaveFailedFormat" xml:space="preserve"><value>Could not save the plan: {0}</value></data>
+  <data name="PlanExportDialogTitle" xml:space="preserve"><value>Export My plan</value></data>
+  <data name="PlanPrintJobName" xml:space="preserve"><value>AstroPlanner Pro - My plan</value></data>
+  <data name="PlanPrintTitle" xml:space="preserve"><value>AstroPlanner Pro — My plan</value></data>
+  <data name="PlanPrintMoonFootnote" xml:space="preserve"><value>! The Moon, bright and close, makes observing harder.</value></data>
+  <data name="PlanSummaryNightFormat" xml:space="preserve"><value>Night of {0:yyyy-MM-dd} to {1:yyyy-MM-dd}</value></data>
+  <data name="PlanSummaryDarkNightFormat" xml:space="preserve"><value>Dark night {0:HH:mm} → {1:HH:mm}</value></data>
+  <data name="PlanSummaryMoonFormat" xml:space="preserve"><value>Moon {0} ({1})</value></data>
+  <data name="PlanSummaryMinimumAltitudeFormat" xml:space="preserve"><value>Minimum altitude {0:0}°</value></data>
+  <data name="CsvFileFilter" xml:space="preserve"><value>CSV files (*.csv)|*.csv</value></data>
+  <data name="CsvOrder" xml:space="preserve"><value>Order</value></data>
+  <data name="CsvId" xml:space="preserve"><value>ID</value></data>
+  <data name="CsvName" xml:space="preserve"><value>Name</value></data>
+  <data name="CsvConstellation" xml:space="preserve"><value>Constellation</value></data>
+  <data name="CsvType" xml:space="preserve"><value>Type</value></data>
+  <data name="CsvMagnitude" xml:space="preserve"><value>Magnitude</value></data>
+  <data name="CsvCulmination" xml:space="preserve"><value>Culmination</value></data>
+  <data name="CsvMaximumAltitude" xml:space="preserve"><value>Max. altitude (°)</value></data>
+  <data name="CsvMoonDistance" xml:space="preserve"><value>Distance to the Moon (°)</value></data>
+  <data name="CsvMoonInterferes" xml:space="preserve"><value>Moon interferes</value></data>
+  <data name="CsvNotes" xml:space="preserve"><value>Notes</value></data>
+  <data name="CsvDate" xml:space="preserve"><value>Date</value></data>
+  <data name="CsvTime" xml:space="preserve"><value>Time</value></data>
+  <data name="CsvLocation" xml:space="preserve"><value>Location</value></data>
+  <data name="CsvEquipment" xml:space="preserve"><value>Equipment</value></data>
+  <data name="CsvSeeing" xml:space="preserve"><value>Seeing (1-5)</value></data>
+  <data name="CsvTransparency" xml:space="preserve"><value>Transparency (1-5)</value></data>
+  <data name="CsvRating" xml:space="preserve"><value>Rating (1-5)</value></data>
+  <data name="Yes" xml:space="preserve"><value>Yes</value></data>
+  <data name="No" xml:space="preserve"><value>No</value></data>
+  <data name="PrintColumnNumber" xml:space="preserve"><value>#</value></data>
+  <data name="TabLogbook" xml:space="preserve"><value>Logbook</value></data>
+  <data name="LogbookExportTooltip" xml:space="preserve"><value>Saves the logbook as CSV to open it in Excel</value></data>
+  <data name="LogbookMessierMarathon" xml:space="preserve"><value>Messier marathon</value></data>
+  <data name="LogbookMessierProgressName" xml:space="preserve"><value>Messier marathon progress</value></data>
+  <data name="LogbookExplanation" xml:space="preserve"><value>Log observations from the Object detail tab. Observed objects are marked with ✓ in the Planner.</value></data>
+  <data name="LogbookEmpty" xml:space="preserve"><value>No observations logged yet.</value></data>
+  <data name="LogbookDelete" xml:space="preserve"><value>Delete</value></data>
+  <data name="LogbookExportDialogTitle" xml:space="preserve"><value>Export logbook</value></data>
+  <data name="LogbookAddedFormat" xml:space="preserve"><value>Observation of {0} logged.</value></data>
+  <data name="LogbookDeletedFormat" xml:space="preserve"><value>Observation of {0} deleted.</value></data>
+  <data name="LogbookExportedFormat" xml:space="preserve"><value>Logbook exported to {0}.</value></data>
+  <data name="LogbookExportFailedFormat" xml:space="preserve"><value>Could not export the logbook: {0}</value></data>
+  <data name="LogbookSaveFailedFormat" xml:space="preserve"><value>Could not save the logbook: {0}</value></data>
+  <data name="LogEntryWindowTitle" xml:space="preserve"><value>Log observation</value></data>
+  <data name="LogEntryIntro" xml:space="preserve"><value>Record the observation in your logbook. Seeing, transparency and rating: 1 = poor, 5 = excellent.</value></data>
+  <data name="LogEntryDateTime" xml:space="preserve"><value>Date and time</value></data>
+  <data name="LogEntryDateName" xml:space="preserve"><value>Date</value></data>
+  <data name="LogEntryTimeTooltip" xml:space="preserve"><value>Local time, HH:mm</value></data>
+  <data name="LogEntryLocation" xml:space="preserve"><value>Location</value></data>
+  <data name="LogEntryEquipment" xml:space="preserve"><value>Equipment</value></data>
+  <data name="LogEntryEquipmentTooltip" xml:space="preserve"><value>Telescope, eyepiece, filter… (remembered for next time)</value></data>
+  <data name="LogEntryConditions" xml:space="preserve"><value>Conditions</value></data>
+  <data name="LogEntrySeeing" xml:space="preserve"><value>Seeing</value></data>
+  <data name="LogEntryTransparency" xml:space="preserve"><value>Transparency</value></data>
+  <data name="LogEntryRating" xml:space="preserve"><value>Rating</value></data>
+  <data name="LogEntryNotes" xml:space="preserve"><value>Notes</value></data>
+  <data name="Cancel" xml:space="preserve"><value>Cancel</value></data>
+  <data name="Save" xml:space="preserve"><value>Save</value></data>
+  <data name="Close" xml:space="preserve"><value>Close</value></data>
+  <data name="SettingsWindowTitle" xml:space="preserve"><value>Observer settings</value></data>
+  <data name="SettingsIntro" xml:space="preserve"><value>Choose a city or enter custom coordinates.</value></data>
+  <data name="SettingsCity" xml:space="preserve"><value>City</value></data>
+  <data name="SettingsLatitude" xml:space="preserve"><value>Latitude (°)</value></data>
+  <data name="SettingsLongitude" xml:space="preserve"><value>Longitude (°)</value></data>
+  <data name="SettingsElevation" xml:space="preserve"><value>Elevation (m)</value></data>
+  <data name="SettingsTimeZone" xml:space="preserve"><value>Time zone</value></data>
+  <data name="SettingsMinimumAltitude" xml:space="preserve"><value>Minimum altitude (°)</value></data>
+  <data name="SettingsMaximumMagnitude" xml:space="preserve"><value>Maximum magnitude</value></data>
+  <data name="SettingsMaximumMagnitudeTooltip" xml:space="preserve"><value>Hides objects fainter than this magnitude (higher number = fainter).</value></data>
+  <data name="SettingsUseManualCoordinates" xml:space="preserve"><value>Use manual coordinates</value></data>
+  <data name="SettingsInternet" xml:space="preserve"><value>Internet connection</value></data>
+  <data name="SettingsCloudForecast" xml:space="preserve"><value>Cloud forecast (Open-Meteo)</value></data>
+  <data name="SettingsCloudForecastNote" xml:space="preserve"><value>Sends your approximate location (rounded to ~1 km) to open-meteo.com to get the hourly cloud cover.</value></data>
+  <data name="SettingsCheckForUpdates" xml:space="preserve"><value>Check for a new version at startup (GitHub)</value></data>
+  <data name="SettingsCitiesLoadFailedFormat" xml:space="preserve"><value>Could not load the city list: {0}</value></data>
+  <data name="SettingsManualModeOn" xml:space="preserve"><value>Manual mode on.</value></data>
+  <data name="SettingsSaved" xml:space="preserve"><value>Settings saved.</value></data>
+  <data name="SettingsSaveFailedFormat" xml:space="preserve"><value>Could not save: {0}</value></data>
+  <data name="SettingsDefaultsLoaded" xml:space="preserve"><value>Defaults loaded (not saved).</value></data>
+  <data name="AboutWindowTitle" xml:space="preserve"><value>About AstroPlanner Pro</value></data>
+  <data name="AboutVersion" xml:space="preserve"><value>Version</value></data>
+  <data name="AboutDescription" xml:space="preserve"><value>Astronomical observation planner: which Messier objects and planets are visible tonight from your location, when they culminate, how much the Moon gets in the way and how many clouds are forecast.</value></data>
+  <data name="AboutCredits" xml:space="preserve"><value>Credits</value></data>
+  <data name="AboutCloudForecast" xml:space="preserve"><value>Cloud forecast:</value></data>
+  <data name="AboutCloudForecastLicense" xml:space="preserve"><value>(data under the CC BY 4.0 license)</value></data>
+  <data name="AboutAlgorithms" xml:space="preserve"><value>Astronomical algorithms:</value></data>
+  <data name="AboutAlgorithmsText" xml:space="preserve"><value>Jean Meeus, “Astronomical Algorithms” (2nd ed.), and approximate orbital elements from JPL (NASA).</value></data>
+  <data name="AboutLibraries" xml:space="preserve"><value>Libraries:</value></data>
+  <data name="AboutLibrariesText" xml:space="preserve"><value>.NET and WPF, ScottPlot, CommunityToolkit.Mvvm and Microsoft.Extensions.DependencyInjection.</value></data>
+  <data name="AboutYourData" xml:space="preserve"><value>Your data</value></data>
+  <data name="AboutYourDataText" xml:space="preserve"><value>Settings, plan, logbook and logs are stored only on this computer. Uninstalling AstroPlanner Pro does not delete them.</value></data>
+  <data name="AboutOpenFolder" xml:space="preserve"><value>Open folder</value></data>
+  <data name="AboutLicense" xml:space="preserve"><value>License</value></data>
+  <data name="AboutLicenseText" xml:space="preserve"><value>© 2026 Yamato6. Free software under the MIT license.</value></data>
+  <data name="AboutRepositoryText" xml:space="preserve"><value>github.com/Yamato6/AstroPlanner-Pro</value></data>
+  <data name="AboutShortcuts" xml:space="preserve"><value>Keyboard shortcuts</value></data>
+  <data name="ShortcutSearch" xml:space="preserve"><value>Search</value></data>
+  <data name="ShortcutNow" xml:space="preserve"><value>Current time</value></data>
+  <data name="ShortcutSettings" xml:space="preserve"><value>Settings</value></data>
+  <data name="ShortcutPrint" xml:space="preserve"><value>Print the plan</value></data>
+  <data name="ShortcutExport" xml:space="preserve"><value>Export the plan to CSV</value></data>
+  <data name="ShortcutAbout" xml:space="preserve"><value>This window</value></data>
+</root>

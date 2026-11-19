@@ -1,0 +1,21 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- Recorded/stubbed HTTP responses only: tests never touch the real network. -->
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\AstroPlanner.Online\AstroPlanner.Online.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Include="..\Shared\ManualTimeProvider.cs" Link="Shared\ManualTimeProvider.cs" />
+    <Compile Include="..\Shared\StubHttpHandler.cs" Link="Shared\StubHttpHandler.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Using Include="AstroPlanner.Testing" />
+  </ItemGroup>
+
+</Project>

@@ -1,6 +1,18 @@
 <Solution>
-  <Project Path="AstroPlanner.Core/AstroPlanner.Core.csproj" />
-  <Project Path="AstroPlanner.Data/AstroPlanner.Data.csproj" />
-  <Project Path="AstroPlanner.Tests/AstroPlanner.Tests.csproj" />
-  <Project Path="AstroPlanner.UI/AstroPlanner.UI.csproj" />
+  <Folder Name="/src/">
+    <Project Path="src/AstroPlanner.Core/AstroPlanner.Core.csproj" />
+    <Project Path="src/AstroPlanner.Data/AstroPlanner.Data.csproj" />
+    <Project Path="src/AstroPlanner.Online/AstroPlanner.Online.csproj" />
+    <Project Path="src/AstroPlanner.UI/AstroPlanner.UI.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/AstroPlanner.Core.Tests/AstroPlanner.Core.Tests.csproj" />
+    <Project Path="tests/AstroPlanner.Data.Tests/AstroPlanner.Data.Tests.csproj" />
+    <Project Path="tests/AstroPlanner.Online.Tests/AstroPlanner.Online.Tests.csproj" />
+    <Project Path="tests/AstroPlanner.UI.Tests/AstroPlanner.UI.Tests.csproj" />
+  </Folder>
+  <Folder Name="/Solution Items/">
+    <File Path="Directory.Build.props" />
+    <File Path="Directory.Packages.props" />
+  </Folder>
 </Solution>

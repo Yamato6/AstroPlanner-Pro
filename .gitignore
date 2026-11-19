@@ -5,7 +5,7 @@
 *.userosscache
 *.sln.docstates
 
-# Compilación y archivos generados de .NET
+# .NET build output
 [Bb]in/
 [Oo]bj/
 artifacts/
@@ -13,22 +13,29 @@ TestResults/
 *.nupkg
 *.snupkg
 
-# Cobertura y perfiles de rendimiento
+# Coverage and profiling
 coverage/
+coverage-report/
 *.coverage
 *.coveragexml
 
-# Archivos temporales del sistema y del editor
+# Node / sky renderer
+node_modules/
+
+# OS and editor temp files
 .DS_Store
 Thumbs.db
 *.tmp
 *.temp
 
-# Configuración local y secretos
+# Local configuration and secrets
 appsettings.Local.json
 appsettings.*.Local.json
 *.pfx
 *.publishsettings
 
-# Restos del proyecto antiguo que no forma parte de la solución actual
+# Raw data sources (multi-GB downloads; see data/SOURCES.md). Never commit them.
+data/raw/
+
+# Leftovers of the pre-1.0 project that are not part of the solution
 /AstroPlanner/
