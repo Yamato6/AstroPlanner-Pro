@@ -1,0 +1,18 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\AstroPlanner.Core\AstroPlanner.Core.csproj" />
+  </ItemGroup>
+
+  <!-- Embedded catalogs: the published .exe does not depend on the SeedData folder. -->
+  <ItemGroup>
+    <None Remove="SeedData\*.json" />
+    <EmbeddedResource Include="SeedData\messier_objects.json" LogicalName="SeedData/messier_objects.json" />
+    <EmbeddedResource Include="SeedData\cities.json" LogicalName="SeedData/cities.json" />
+  </ItemGroup>
+
+</Project>

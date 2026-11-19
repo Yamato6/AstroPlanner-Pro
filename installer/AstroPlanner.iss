@@ -46,7 +46,7 @@ DisableProgramGroupPage=yes
 UsePreviousAppDir=yes
 
 LicenseFile=..\LICENSE
-SetupIconFile=..\AstroPlanner.UI\Assets\AstroPlanner.ico
+SetupIconFile=..\src\AstroPlanner.UI\Assets\AstroPlanner.ico
 UninstallDisplayIcon={app}\{#MyAppExeName}
 UninstallDisplayName={#MyAppName}
 WizardStyle=modern

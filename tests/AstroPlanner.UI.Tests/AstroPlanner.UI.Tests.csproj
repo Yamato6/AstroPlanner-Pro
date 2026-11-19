@@ -1,0 +1,25 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <!-- net10.0-windows to test the WPF view models and services of AstroPlanner.UI. -->
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <!-- NU1701: SkiaSharp.Views.WPF, inherited from AstroPlanner.UI (see its project file). -->
+    <NoWarn>$(NoWarn);NU1701</NoWarn>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\AstroPlanner.Core\AstroPlanner.Core.csproj" />
+    <ProjectReference Include="..\..\src\AstroPlanner.Data\AstroPlanner.Data.csproj" />
+    <ProjectReference Include="..\..\src\AstroPlanner.Online\AstroPlanner.Online.csproj" />
+    <ProjectReference Include="..\..\src\AstroPlanner.UI\AstroPlanner.UI.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Include="..\Shared\*.cs" Link="Shared\%(Filename)%(Extension)" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Using Include="AstroPlanner.Testing" />
+  </ItemGroup>
+
+</Project>

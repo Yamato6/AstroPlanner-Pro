@@ -1,0 +1,43 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- WPF application and composition root: the only project allowed to reference every layer. -->
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <UseWPF>true</UseWPF>
+    <!-- NU1701: SkiaSharp.Views.WPF (a ScottPlot.WPF dependency) only declares .NET Framework
+         but works on modern .NET; known ScottPlot warning. -->
+    <NoWarn>$(NoWarn);NU1701</NoWarn>
+
+    <AssemblyName>AstroPlanner</AssemblyName>
+    <RootNamespace>AstroPlanner.UI</RootNamespace>
+    <ApplicationIcon>Assets\AstroPlanner.ico</ApplicationIcon>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+
+    <!-- CI replaces the version with the tag's (e.g. 2.0.0-rc.1). -->
+    <Version>1.0.0</Version>
+    <AssemblyTitle>AstroPlanner</AssemblyTitle>
+    <Description>Astronomical observation planner: Messier catalog, planets, Moon and cloud forecast.</Description>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\AstroPlanner.Core\AstroPlanner.Core.csproj" />
+    <ProjectReference Include="..\AstroPlanner.Data\AstroPlanner.Data.csproj" />
+    <ProjectReference Include="..\AstroPlanner.Online\AstroPlanner.Online.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="CommunityToolkit.Mvvm" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" />
+    <PackageReference Include="ScottPlot.WPF" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Resource Include="Assets\AstroPlanner.png" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="AstroPlanner.UI.Tests" />
+  </ItemGroup>
+
+</Project>
