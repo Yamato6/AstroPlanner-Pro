@@ -36,6 +36,12 @@ public sealed partial class TargetsViewModel : ObservableValidator, IDisposable
     private NightKey? _nightKey;
     private bool _isFiltering;
 
+    /// <summary>
+    /// Object selected from elsewhere (the sky view) that does not pass the filters: it stays in
+    /// the table until another object is selected, so that the grid and the detail can show it.
+    /// </summary>
+    private CelestialObjectRowViewModel? _pinned;
+
     public TargetsViewModel(
         ICelestialRepository repository,
         IAstronomyService astronomy,
@@ -230,8 +236,40 @@ public sealed partial class TargetsViewModel : ObservableValidator, IDisposable
     {
         if (!_isFiltering)
         {
+            if (_pinned is not null && !ReferenceEquals(value, _pinned))
+            {
+                _pinned = null;
+            }
+
             SelectionOrTableChanged?.Invoke(this, EventArgs.Empty);
         }
+    }
+
+    /// <summary>
+    /// Selects the object with this id (any catalog object, even one hidden by the filters,
+    /// which is then kept in the table). Returns false when the id is unknown.
+    /// </summary>
+    public bool SelectById(string id)
+    {
+        var row = _allObjects.FirstOrDefault(item => string.Equals(item.Id, id, StringComparison.OrdinalIgnoreCase));
+        if (row is null)
+        {
+            return false;
+        }
+
+        if (ReferenceEquals(row, SelectedObject))
+        {
+            return true;
+        }
+
+        if (!Objects.Contains(row))
+        {
+            _pinned = row;
+            ApplyFilter();
+        }
+
+        SelectedObject = row;
+        return true;
     }
 
     /// <summary>Recalculates every position for the current observer and time, then filters again.</summary>
@@ -371,6 +409,11 @@ public sealed partial class TargetsViewModel : ObservableValidator, IDisposable
                 && CatalogSearch.Matches(item, query))
             .OrderByDescending(item => item.AltitudeDegrees)
             .ToList();
+
+        if (_pinned is not null && !filtered.Contains(_pinned))
+        {
+            filtered.Insert(0, _pinned);
+        }
 
         _isFiltering = true;
         try

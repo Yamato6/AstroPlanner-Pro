@@ -65,6 +65,7 @@ public partial class App : Application
         // User data: app.db (settings, locations, plan, logbook), migrated on first use
         services.AddSingleton(_ => new AppDatabase(AppPaths.DataFile("app.db")));
         services.AddSingleton<ISettingsService, SqliteSettingsService>();
+        services.AddSingleton<ISkyViewStore, SqliteSkyViewStore>();
         services.AddSingleton<IObservationPlanService, SqlitePlanService>();
         services.AddSingleton<IObservationLogService, SqliteLogbookService>();
         services.AddSingleton<ILocationRepository, SqliteLocationRepository>();

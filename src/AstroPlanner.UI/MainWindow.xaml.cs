@@ -9,6 +9,7 @@ using System.Windows.Navigation;
 using System.Windows.Threading;
 using AstroPlanner.UI.Resources;
 using AstroPlanner.UI.Services;
+using AstroPlanner.UI.Sky;
 using AstroPlanner.UI.ViewModels;
 
 namespace AstroPlanner.UI;
@@ -19,10 +20,13 @@ namespace AstroPlanner.UI;
 /// </summary>
 public partial class MainWindow : Window
 {
+    private readonly IAppLogger _logger;
     private ShellViewModel? _viewModel;
+    private bool _skyStarted;
 
-    public MainWindow()
+    public MainWindow(IAppLogger logger)
     {
+        _logger = logger;
         InitializeComponent();
         NativeWindows.UseDarkTitleBar(this);
         AltitudePlot.UserInputProcessor.IsEnabled = false;
@@ -33,6 +37,52 @@ public partial class MainWindow : Window
         };
         DataContextChanged += OnDataContextChanged;
         Loaded += OnLoaded;
+        Tabs.SelectionChanged += OnTabsSelectionChanged;
+        SkyHostView.Unavailable += (_, reason) => _viewModel?.Sky.UseFallback(reason);
+    }
+
+    /// <summary>
+    /// Command-line switches for the renderer benchmark (docs/sky-renderer.md):
+    /// --sky-benchmark runs a 10 s camera sweep and logs the frame statistics;
+    /// --sky-stars=N draws the star catalogue N times (stress test).
+    /// </summary>
+    private static string SkyQuery()
+    {
+        var args = Environment.GetCommandLineArgs();
+        var parameters = new List<string>();
+        if (args.Contains("--sky-benchmark", StringComparer.OrdinalIgnoreCase))
+        {
+            parameters.Add("bench=1");
+        }
+
+        var stars = args.FirstOrDefault(a => a.StartsWith("--sky-stars=", StringComparison.OrdinalIgnoreCase));
+        if (stars is not null && int.TryParse(stars["--sky-stars=".Length..], NumberStyles.Integer, CultureInfo.InvariantCulture, out var multiplier))
+        {
+            parameters.Add(string.Create(CultureInfo.InvariantCulture, $"stars={Math.Clamp(multiplier, 1, 8)}"));
+        }
+
+        return parameters.Count == 0 ? "" : "?" + string.Join('&', parameters);
+    }
+
+    private void OnTabsSelectionChanged(object sender, SelectionChangedEventArgs e)
+    {
+        if (ReferenceEquals(e.OriginalSource, Tabs) && Tabs.SelectedItem == SkyTab)
+        {
+            StartSky();
+        }
+    }
+
+    /// <summary>WebView2 starts the first time the Sky tab is shown (it costs memory and ~1 s).</summary>
+    private async void StartSky()
+    {
+        if (_skyStarted || _viewModel is null)
+        {
+            return;
+        }
+
+        _skyStarted = true;
+        _viewModel.Sky.Attach(SkyHostView);
+        await SkyHostView.StartAsync(_logger, SkyQuery());
     }
 
     private void OnDataContextChanged(object sender, DependencyPropertyChangedEventArgs e)
@@ -42,6 +92,8 @@ public partial class MainWindow : Window
         {
             _viewModel.Detail.PropertyChanged -= OnDetailPropertyChanged;
             _viewModel.Sky.PropertyChanged -= OnSkyPropertyChanged;
+            _viewModel.Sky.FocusSearchRequested -= OnSkyFocusSearch;
+            _viewModel.Sky.OpenDetailsRequested -= OnSkyOpenDetails;
         }
 
         _viewModel = e.NewValue as ShellViewModel;
@@ -50,6 +102,8 @@ public partial class MainWindow : Window
         {
             _viewModel.Detail.PropertyChanged += OnDetailPropertyChanged;
             _viewModel.Sky.PropertyChanged += OnSkyPropertyChanged;
+            _viewModel.Sky.FocusSearchRequested += OnSkyFocusSearch;
+            _viewModel.Sky.OpenDetailsRequested += OnSkyOpenDetails;
         }
     }
 
@@ -60,6 +114,11 @@ public partial class MainWindow : Window
         await _viewModel.LoadCommand.ExecuteAsync(null);
         UpdateChart(_viewModel.Detail);
         UpdateSkyMap(_viewModel.Sky);
+        if (SkyQuery().Length > 0)
+        {
+            Tabs.SelectedItem = SkyTab;
+        }
+
         await _viewModel.CheckForUpdatesAsync(AppVersion.Current);
     }
 
@@ -153,6 +212,13 @@ public partial class MainWindow : Window
             case Key.F1 when none:
                 ShowAbout();
                 break;
+            // Sky tab (when the focus is not in a text box; inside the renderer it sends them itself).
+            case Key.Space when none && Tabs.SelectedItem == SkyTab && Keyboard.FocusedElement is not TextBox:
+                _viewModel?.Sky.TogglePlayCommand.Execute(null);
+                break;
+            case Key.OemQuestion or Key.Divide when none && Tabs.SelectedItem == SkyTab && Keyboard.FocusedElement is not TextBox:
+                OnSkyFocusSearch(this, EventArgs.Empty);
+                break;
             default:
                 return;
         }
@@ -185,6 +251,18 @@ public partial class MainWindow : Window
             UpdateChart(_viewModel.Detail);
         }
     }
+
+    private void OnSkyFocusSearch(object? sender, EventArgs e)
+    {
+        Tabs.SelectedItem = SkyTab;
+        Dispatcher.BeginInvoke(() =>
+        {
+            SkySearchBox.Focus();
+            SkySearchBox.SelectAll();
+        }, DispatcherPriority.Input);
+    }
+
+    private void OnSkyOpenDetails(object? sender, EventArgs e) => Tabs.SelectedItem = DetailTab;
 
     private void OnSkyPropertyChanged(object? sender, PropertyChangedEventArgs e)
     {

@@ -36,6 +36,33 @@ public sealed class SqliteSettingsService(AppDatabase database) : ISettingsServi
     }
 }
 
+/// <summary>Sky view layers, limits and camera, stored as JSON under the "sky" key.</summary>
+public sealed class SqliteSkyViewStore(AppDatabase database) : ISkyViewStore
+{
+    private const string Key = "sky";
+    private readonly AppDatabase _database = database ?? throw new ArgumentNullException(nameof(database));
+
+    public SkyViewSettings Load()
+    {
+        try
+        {
+            return SettingsTable.Read(_database, Key) is { } json
+                ? JsonSerializer.Deserialize<SkyViewSettings>(json) ?? new SkyViewSettings()
+                : new SkyViewSettings();
+        }
+        catch (JsonException)
+        {
+            return new SkyViewSettings();
+        }
+    }
+
+    public void Save(SkyViewSettings settings)
+    {
+        ArgumentNullException.ThrowIfNull(settings);
+        SettingsTable.Write(_database, Key, JsonSerializer.Serialize(settings));
+    }
+}
+
 /// <summary>Small key/value access to the settings table, also used for app flags.</summary>
 public static class SettingsTable
 {

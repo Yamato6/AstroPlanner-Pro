@@ -167,6 +167,50 @@
   <data name="SkyEast" xml:space="preserve"><value>E</value></data>
   <data name="SkySouth" xml:space="preserve"><value>S</value></data>
   <data name="SkyWest" xml:space="preserve"><value>W</value></data>
+  <data name="SkyLayerStars" xml:space="preserve"><value>Stars</value></data>
+  <data name="SkyLayerConstellationLines" xml:space="preserve"><value>Constellation lines</value></data>
+  <data name="SkyLayerConstellationNames" xml:space="preserve"><value>Constellation names</value></data>
+  <data name="SkyLayerConstellationBoundaries" xml:space="preserve"><value>Constellation boundaries</value></data>
+  <data name="SkyLayerMilkyWay" xml:space="preserve"><value>Milky Way</value></data>
+  <data name="SkyLayerDeepSky" xml:space="preserve"><value>Deep-sky objects</value></data>
+  <data name="SkyLayerBodies" xml:space="preserve"><value>Sun, Moon and planets</value></data>
+  <data name="SkyLayerLabels" xml:space="preserve"><value>Labels</value></data>
+  <data name="SkyLayerAltAzGrid" xml:space="preserve"><value>Alt-az grid</value></data>
+  <data name="SkyLayerEquatorialGrid" xml:space="preserve"><value>Equatorial grid</value></data>
+  <data name="SkyLayerEcliptic" xml:space="preserve"><value>Ecliptic</value></data>
+  <data name="SkyLayerMeridian" xml:space="preserve"><value>Meridian</value></data>
+  <data name="SkyLayerGround" xml:space="preserve"><value>Ground and horizon</value></data>
+  <data name="SkyNothingSelected" xml:space="preserve"><value>Click an object in the sky to select it.</value></data>
+  <data name="SkyRendererNoRuntime" xml:space="preserve"><value>The 3D sky needs the Microsoft Edge WebView2 Runtime, which is not installed. Showing the 2D chart instead.</value></data>
+  <data name="SkyRendererNotBuilt" xml:space="preserve"><value>This build does not include the 3D sky renderer. Showing the 2D chart instead.</value></data>
+  <data name="SkySun" xml:space="preserve"><value>Sun</value></data>
+  <data name="SkyMoon" xml:space="preserve"><value>Moon</value></data>
+  <data name="SkySearchNotFoundFormat" xml:space="preserve"><value>Nothing found for "{0}".</value></data>
+  <data name="SkyTimeHeader" xml:space="preserve"><value>Sky time</value></data>
+  <data name="SkyPlay" xml:space="preserve"><value>▶ Play</value></data>
+  <data name="SkyPause" xml:space="preserve"><value>❚❚ Pause</value></data>
+  <data name="SkyPlayTooltip" xml:space="preserve"><value>Animate the sky at the chosen speed (Space)</value></data>
+  <data name="SkyNow" xml:space="preserve"><value>Now</value></data>
+  <data name="SkyRateFormat" xml:space="preserve"><value>×{0}</value></data>
+  <data name="SkyRateLabel" xml:space="preserve"><value>Speed</value></data>
+  <data name="SkyStepBackDay" xml:space="preserve"><value>−1 d</value></data>
+  <data name="SkyStepBackHour" xml:space="preserve"><value>−1 h</value></data>
+  <data name="SkyStepBackTenMinutes" xml:space="preserve"><value>−10 m</value></data>
+  <data name="SkyStepBackMinute" xml:space="preserve"><value>−1 m</value></data>
+  <data name="SkyStepForwardMinute" xml:space="preserve"><value>+1 m</value></data>
+  <data name="SkyStepForwardTenMinutes" xml:space="preserve"><value>+10 m</value></data>
+  <data name="SkyStepForwardHour" xml:space="preserve"><value>+1 h</value></data>
+  <data name="SkyStepForwardDay" xml:space="preserve"><value>+1 d</value></data>
+  <data name="SkyLayersHeader" xml:space="preserve"><value>Layers</value></data>
+  <data name="SkyStarLimit" xml:space="preserve"><value>Faintest star (magnitude)</value></data>
+  <data name="SkyShowStats" xml:space="preserve"><value>Show frame rate</value></data>
+  <data name="SkySearchHeader" xml:space="preserve"><value>Find</value></data>
+  <data name="SkySearchButton" xml:space="preserve"><value>Find</value></data>
+  <data name="SkySearchTooltip" xml:space="preserve"><value>Id or name: M31, NGC 7000, C14, Orion Nebula, Jupiter (shortcut: /)</value></data>
+  <data name="SkyCenterOnSelection" xml:space="preserve"><value>Center on selection</value></data>
+  <data name="SkyOpenDetails" xml:space="preserve"><value>Open details</value></data>
+  <data name="SkyHelp" xml:space="preserve"><value>Drag to look around, scroll to zoom, click to select. Space plays or pauses.</value></data>
+  <data name="SkyHoverFormat" xml:space="preserve"><value>Pointer: {0}</value></data>
   <data name="TabDetail" xml:space="preserve"><value>Object detail</value></data>
   <data name="DetailEmpty" xml:space="preserve"><value>Select an object in the Planner to see its details.</value></data>
   <data name="DetailTypeFormat" xml:space="preserve"><value>Type: {0}</value></data>
@@ -298,7 +342,7 @@
   <data name="AboutAlgorithms" xml:space="preserve"><value>Astronomical algorithms:</value></data>
   <data name="AboutAlgorithmsText" xml:space="preserve"><value>Jean Meeus, “Astronomical Algorithms” (2nd ed.), and approximate orbital elements from JPL (NASA).</value></data>
   <data name="AboutLibraries" xml:space="preserve"><value>Libraries:</value></data>
-  <data name="AboutLibrariesText" xml:space="preserve"><value>.NET and WPF, ScottPlot, CommunityToolkit.Mvvm, Microsoft.Extensions.DependencyInjection and Microsoft.Data.Sqlite (SQLite).</value></data>
+  <data name="AboutLibrariesText" xml:space="preserve"><value>.NET and WPF, ScottPlot, CommunityToolkit.Mvvm, Microsoft.Extensions.DependencyInjection, Microsoft.Data.Sqlite (SQLite) and Microsoft Edge WebView2; the sky is drawn with three.js and zod (MIT).</value></data>
   <data name="AboutYourData" xml:space="preserve"><value>Your data</value></data>
   <data name="AboutYourDataText" xml:space="preserve"><value>Settings, plan, logbook and logs are stored only on this computer. Uninstalling AstroPlanner Pro does not delete them.</value></data>
   <data name="AboutOpenFolder" xml:space="preserve"><value>Open folder</value></data>
@@ -385,5 +429,5 @@
   <data name="DatabaseOpenFailedFormat" xml:space="preserve"><value>Your AstroPlanner Pro data could not be opened: {0}\n\nThe app will close without changing it.</value></data>
   <data name="DatabaseCorruptFormat" xml:space="preserve"><value>Your AstroPlanner Pro data file was damaged. It was kept as\n{0}\nand a new, empty one was created.</value></data>
   <data name="AboutCatalogs" xml:space="preserve"><value>Catalogs:</value></data>
-  <data name="AboutCatalogsText" xml:space="preserve"><value>OpenNGC by Mattia Verga (NGC, IC, Messier and Caldwell objects) and the HYG database v4.4 by David Nash / astronexus.net (stars), both under CC BY-SA 4.0; IAU constellation boundaries from Roman (1987), CDS catalogue VI/42, as distributed with astropy (BSD-3-Clause). Full notices in THIRD_PARTY_NOTICES.md.</value></data>
+  <data name="AboutCatalogsText" xml:space="preserve"><value>OpenNGC by Mattia Verga (NGC, IC, Messier and Caldwell objects) and the HYG database v4.4 by David Nash / astronexus.net (stars), both under CC BY-SA 4.0; IAU constellation boundaries from Roman (1987), CDS catalogue VI/42, as distributed with astropy (BSD-3-Clause); constellation lines and Milky Way outline from d3-celestial by Olaf Frohn (BSD-3-Clause). Full notices in THIRD_PARTY_NOTICES.md.</value></data>
 </root>
