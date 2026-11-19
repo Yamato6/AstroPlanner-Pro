@@ -50,8 +50,18 @@ public sealed class HorizonMask : IEquatable<HorizonMask>
 
         var azimuth = ((azimuthDegrees % 360.0) + 360.0) % 360.0;
 
-        // Find the segment [previous, next] that contains the azimuth, wrapping around 360°.
-        var nextIndex = Array.FindIndex(_points, p => p.AzimuthDegrees >= azimuth);
+        // Find the segment [previous, next] that contains the azimuth, wrapping around 360°
+        // (a plain loop: this runs millions of times per night for the whole catalog).
+        var nextIndex = -1;
+        for (var index = 0; index < _points.Length; index++)
+        {
+            if (_points[index].AzimuthDegrees >= azimuth)
+            {
+                nextIndex = index;
+                break;
+            }
+        }
+
         HorizonPoint previous, next;
         double span, offset;
         if (nextIndex is 0 or -1)
