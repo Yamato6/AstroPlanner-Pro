@@ -20,12 +20,28 @@ jobs:
         with:
           dotnet-version: 10.0.x
 
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: src/sky-renderer/.nvmrc
+          cache: npm
+          cache-dependency-path: src/sky-renderer/package-lock.json
+
+      # Sky renderer (spec §12): lint, type-check + build, tests (contract and projection
+      # cross-check share tests/fixtures/bridge with the C# suite). The UI build embeds dist/.
+      - name: Sky renderer
+        working-directory: src/sky-renderer
+        run: |
+          npm ci --no-audit --no-fund
+          npm run lint
+          npm run build
+          npm test
+
       - name: Build (warnings are errors)
         run: dotnet build AstroPlanner.slnx -c Release -warnaserror
 
       # The committed catalogs.sqlite must pass the sanity checks (no download: sources are
       # only fetched by developers, see docs/data-pipeline.md).
-      - name: Verify the catalog database
+      - name: Verify the catalog database and the sky data
         run: dotnet run --project tools/AstroPlanner.DataBuilder -c Release --no-build -- verify
 
       # Timing budgets (spec §14) are measured without coverage instrumentation, which
@@ -80,6 +96,12 @@ jobs:
       - uses: actions/setup-dotnet@v6
         with:
           dotnet-version: 10.0.x
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: src/sky-renderer/.nvmrc
+          cache: npm
+          cache-dependency-path: src/sky-renderer/package-lock.json
 
       - name: Version from the tag
         id: version
