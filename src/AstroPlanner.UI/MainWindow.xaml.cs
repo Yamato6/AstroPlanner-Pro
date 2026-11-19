@@ -210,7 +210,7 @@ public partial class MainWindow : Window
         {
             Title = Strings.PlanExportDialogTitle,
             Filter = Strings.CsvFileFilter,
-            FileName = string.Create(CultureInfo.InvariantCulture, $"AstroPlanner-plan-{_viewModel.ObservationDate:yyyy-MM-dd}.csv")
+            FileName = string.Create(CultureInfo.InvariantCulture, $"AstroPlannerPro-plan-{_viewModel.ObservationDate:yyyy-MM-dd}.csv")
         };
 
         if (dialog.ShowDialog(this) == true)
@@ -238,7 +238,7 @@ public partial class MainWindow : Window
         {
             Title = Strings.LogbookExportDialogTitle,
             Filter = Strings.CsvFileFilter,
-            FileName = string.Create(CultureInfo.InvariantCulture, $"AstroPlanner-logbook-{DateTime.Now:yyyy-MM-dd}.csv")
+            FileName = string.Create(CultureInfo.InvariantCulture, $"AstroPlannerPro-logbook-{DateTime.Now:yyyy-MM-dd}.csv")
         };
 
         if (dialog.ShowDialog(this) == true)

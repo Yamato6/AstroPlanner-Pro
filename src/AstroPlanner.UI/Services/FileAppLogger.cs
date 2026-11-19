@@ -5,7 +5,7 @@ namespace AstroPlanner.UI.Services;
 
 /// <summary>
 /// <see cref="IAppLogger"/> that writes one file per day:
-/// %LocalAppData%\AstroPlanner\logs\astroplanner-YYYYMMDD.log
+/// %LocalAppData%\AstroPlannerPro\logs\astroplannerpro-YYYYMMDD.log
 /// </summary>
 public sealed class FileAppLogger : IAppLogger
 {
@@ -21,7 +21,7 @@ public sealed class FileAppLogger : IAppLogger
 
     /// <summary>Today's file.</summary>
     public string CurrentFilePath =>
-        Path.Combine(_directory, string.Create(CultureInfo.InvariantCulture, $"astroplanner-{DateTime.Now:yyyyMMdd}.log"));
+        Path.Combine(_directory, string.Create(CultureInfo.InvariantCulture, $"astroplannerpro-{DateTime.Now:yyyyMMdd}.log"));
 
     public void LogInfo(string message) => Write("INFO", message, null);
 

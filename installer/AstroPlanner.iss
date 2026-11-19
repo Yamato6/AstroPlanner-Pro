@@ -1,12 +1,12 @@
-﻿; Instalador de AstroPlanner (Inno Setup 6).
+﻿; AstroPlanner Pro installer (Inno Setup 6).
 ;
-; Lo genera el CI en cada tag v*:
-;   iscc /DMyAppVersion=1.0.0 /DPublishDir=..\publish /DOutputDir=..\dist installer\AstroPlanner.iss
+; Built by CI on every v* tag:
+;   iscc /DMyAppVersion=2.0.0 /DPublishDir=..\publish /DOutputDir=..\dist installer\AstroPlanner.iss
 ;
-; Se instala para el usuario actual, sin pedir permisos de administrador, en
-; %LocalAppData%\Programs\AstroPlanner. Los datos del usuario (configuración,
-; plan, bitácora) viven en %LocalAppData%\AstroPlanner y no se tocan al
-; desinstalar ni al actualizar.
+; Installs for the current user, without administrator rights, in
+; %LocalAppData%\Programs\AstroPlanner Pro. User data (settings, plan, logbook) lives in
+; %LocalAppData%\AstroPlannerPro and is never touched on uninstall or upgrade.
+; AstroPlanner v1 has its own AppId and data folder: both apps can be installed side by side.
 
 #ifndef MyAppVersion
   #define MyAppVersion "0.0.0-dev"
@@ -18,14 +18,16 @@
   #define OutputDir "..\dist"
 #endif
 
-#define MyAppName "AstroPlanner"
+#define MyAppName "AstroPlanner Pro"
+#define MyAppFileName "AstroPlannerPro"
 #define MyAppPublisher "Yamato6"
-#define MyAppURL "https://github.com/Yamato6/AstroPlanner"
-#define MyAppExeName "AstroPlanner.exe"
+#define MyAppURL "https://github.com/Yamato6/AstroPlanner-Pro"
+#define MyAppExeName "AstroPlannerPro.exe"
 
 [Setup]
-; AppId fijo: las versiones futuras se instalan encima de esta y no se duplican.
-AppId={{8C3E5D2A-6F41-4B7E-9A0C-2D7B1E4F6A93}
+; Fixed AppId: future versions install over this one instead of side by side.
+; (Different from AstroPlanner v1's {8C3E5D2A-...}.)
+AppId={{A0E582E8-976D-4B28-ADF2-923F8052053C}
 AppName={#MyAppName}
 AppVersion={#MyAppVersion}
 AppVerName={#MyAppName} {#MyAppVersion}
@@ -36,7 +38,7 @@ AppUpdatesURL={#MyAppURL}/releases
 AppCopyright=© 2026 {#MyAppPublisher}
 VersionInfoVersion={#Copy(MyAppVersion, 1, Pos("-", MyAppVersion + "-") - 1)}
 VersionInfoProductName={#MyAppName}
-VersionInfoDescription=Instalador de {#MyAppName}
+VersionInfoDescription={#MyAppName} installer
 
 PrivilegesRequired=lowest
 PrivilegesRequiredOverridesAllowed=dialog
@@ -59,14 +61,13 @@ MinVersion=10.0.17763
 Compression=lzma2/max
 SolidCompression=yes
 OutputDir={#OutputDir}
-OutputBaseFilename={#MyAppName}_{#MyAppVersion}_Setup
+OutputBaseFilename={#MyAppFileName}_{#MyAppVersion}_Setup
 
-; Si AstroPlanner está abierto, se ofrece cerrarlo para poder actualizar.
+; If the app is running, offer to close it so that it can be updated.
 CloseApplications=yes
 RestartApplications=no
 
 [Languages]
-Name: "spanish"; MessagesFile: "compiler:Languages\Spanish.isl"
 Name: "english"; MessagesFile: "compiler:Default.isl"
 
 [Tasks]
@@ -77,11 +78,11 @@ Source: "{#PublishDir}\{#MyAppExeName}"; DestDir: "{app}"; Flags: ignoreversion
 Source: "..\LICENSE"; DestDir: "{app}"; DestName: "LICENSE.txt"; Flags: ignoreversion
 
 [Icons]
-Name: "{group}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; Comment: "Planificador de observaciones astronómicas"
+Name: "{group}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; Comment: "Astrophotography planner"
 Name: "{group}\{cm:UninstallProgram,{#MyAppName}}"; Filename: "{uninstallexe}"
 Name: "{autodesktop}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; Tasks: desktopicon
 
 [Run]
 Filename: "{app}\{#MyAppExeName}"; Description: "{cm:LaunchProgram,{#MyAppName}}"; Flags: nowait postinstall skipifsilent
 
-; Nada en [UninstallDelete]: la carpeta de datos del usuario se conserva a propósito.
+; Nothing in [UninstallDelete]: the user data folder is kept on purpose.

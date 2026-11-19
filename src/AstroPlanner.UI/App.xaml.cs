@@ -34,7 +34,7 @@ public partial class App : Application
         // System clock (replaceable in tests; used by live mode)
         services.AddSingleton(TimeProvider.System);
 
-        // Error log (one file per day in %LocalAppData%\AstroPlanner\logs)
+        // Error log (one file per day in %LocalAppData%\AstroPlannerPro\logs)
         services.AddSingleton<IAppLogger, FileAppLogger>();
 
         // Data: Messier catalog + planets, cities
@@ -50,7 +50,8 @@ public partial class App : Application
         services.AddSingleton(_ =>
         {
             var http = new HttpClient { Timeout = TimeSpan.FromSeconds(15) };
-            http.DefaultRequestHeaders.UserAgent.ParseAdd($"AstroPlanner/{AppVersion.Current}");
+            http.DefaultRequestHeaders.UserAgent.ParseAdd($"AstroPlannerPro/{AppVersion.Current}");
+            http.DefaultRequestHeaders.UserAgent.ParseAdd("(+https://github.com/Yamato6/AstroPlanner-Pro)");
             return http;
         });
         services.AddSingleton<IWeatherForecastService>(sp =>
@@ -96,7 +97,7 @@ public partial class App : Application
         }
 
         _logger = _serviceProvider.GetRequiredService<IAppLogger>();
-        _logger.LogInfo($"AstroPlanner {AppVersion.Current} started.");
+        _logger.LogInfo($"AstroPlanner Pro {AppVersion.Current} started.");
         DispatcherUnhandledException += OnDispatcherUnhandledException;
         AppDomain.CurrentDomain.UnhandledException += OnDomainUnhandledException;
         TaskScheduler.UnobservedTaskException += OnUnobservedTaskException;

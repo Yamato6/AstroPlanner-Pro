@@ -35,7 +35,7 @@ public interface IObservationLogService
 
 /// <summary>
 /// JSON implementation of <see cref="IObservationLogService"/>.
-/// File: %LocalAppData%\AstroPlanner\logbook.json
+/// File: %LocalAppData%\AstroPlannerPro\logbook.json
 /// </summary>
 public sealed class JsonObservationLogService : IObservationLogService
 {

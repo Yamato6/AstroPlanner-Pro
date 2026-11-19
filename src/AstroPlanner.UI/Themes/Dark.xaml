@@ -1,5 +1,5 @@
 <!--
-    AstroPlanner dark theme: every color and style shared by the windows. The implicit
+    AstroPlanner Pro dark theme: every color and style shared by the windows. The implicit
     styles in this file are for controls only (Button, TextBox, ToolTip…); the TextBlock one
     lives in each window, because at application level it would also affect the text inside
     templates and printing.

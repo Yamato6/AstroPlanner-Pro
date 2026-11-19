@@ -49,14 +49,14 @@ internal static class NativeWindows
 }
 
 /// <summary>
-/// A single instance of AstroPlanner per user session: two processes would write the plan and
+/// A single instance of AstroPlanner Pro per user session: two processes would write the plan and
 /// the logbook at the same time. The second instance notifies the first one (which comes to the
 /// front) and exits.
 /// </summary>
 internal sealed class SingleInstance : IDisposable
 {
-    private const string MutexName = @"Local\AstroPlanner.SingleInstance.6F1C2B7E";
-    private const string EventName = @"Local\AstroPlanner.Activate.6F1C2B7E";
+    private const string MutexName = @"Local\AstroPlannerPro.SingleInstance.6BBEFD10";
+    private const string EventName = @"Local\AstroPlannerPro.Activate.6BBEFD10";
 
     private readonly Mutex _mutex;
     private readonly EventWaitHandle _activate;

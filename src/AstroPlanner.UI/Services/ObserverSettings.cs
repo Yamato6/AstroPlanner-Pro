@@ -3,7 +3,7 @@ using AstroPlanner.Core.Models;
 namespace AstroPlanner.UI.Services;
 
 /// <summary>
-/// Persisted observer settings, stored as JSON in %LocalAppData%\AstroPlanner\settings.json.
+/// Persisted observer settings, stored as JSON in %LocalAppData%\AstroPlannerPro\settings.json.
 /// </summary>
 public sealed class ObserverSettings
 {

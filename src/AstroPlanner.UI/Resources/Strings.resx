@@ -5,9 +5,9 @@
   <resheader name="version"><value>2.0</value></resheader>
   <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
   <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
-  <data name="AppName" xml:space="preserve"><value>AstroPlanner</value></data>
+  <data name="AppName" xml:space="preserve"><value>AstroPlanner Pro</value></data>
   <data name="AppTagline" xml:space="preserve"><value>Observation planner</value></data>
-  <data name="MainWindowTitle" xml:space="preserve"><value>AstroPlanner - Observation planner</value></data>
+  <data name="MainWindowTitle" xml:space="preserve"><value>AstroPlanner Pro - Observation planner</value></data>
   <data name="UnhandledErrorMessage" xml:space="preserve"><value>An unexpected error occurred. The application will stay open, but if the problem happens again check the log in:
 {0}</value></data>
   <data name="LatitudeRange" xml:space="preserve"><value>Latitude must be between -90 and 90°.</value></data>
@@ -68,7 +68,7 @@
   <data name="CloudOvercast" xml:space="preserve"><value>Overcast</value></data>
   <data name="LocationManual" xml:space="preserve"><value>Manual coordinates</value></data>
   <data name="LocationSelectCity" xml:space="preserve"><value>Select a city</value></data>
-  <data name="UpdateAvailableFormat" xml:space="preserve"><value>A new version of AstroPlanner is available: {0}.</value></data>
+  <data name="UpdateAvailableFormat" xml:space="preserve"><value>A new version of AstroPlanner Pro is available: {0}.</value></data>
   <data name="UpdateNotNow" xml:space="preserve"><value>Not now</value></data>
   <data name="UpdateDownload" xml:space="preserve"><value>Download</value></data>
   <data name="HeaderLocalDateTime" xml:space="preserve"><value>Local date and time</value></data>
@@ -89,8 +89,8 @@
   <data name="HeaderNowTooltip" xml:space="preserve"><value>Sets the current time at the observer's location (F5)</value></data>
   <data name="HeaderLive" xml:space="preserve"><value>Live</value></data>
   <data name="HeaderLiveTooltip" xml:space="preserve"><value>Follows the current time and refreshes everything every minute. Turns off when you choose another time.</value></data>
-  <data name="HeaderAboutTooltip" xml:space="preserve"><value>About AstroPlanner (F1)</value></data>
-  <data name="HeaderAboutName" xml:space="preserve"><value>About AstroPlanner</value></data>
+  <data name="HeaderAboutTooltip" xml:space="preserve"><value>About AstroPlanner Pro (F1)</value></data>
+  <data name="HeaderAboutName" xml:space="preserve"><value>About AstroPlanner Pro</value></data>
   <data name="CardCatalogObjects" xml:space="preserve"><value>Catalog objects</value></data>
   <data name="CardObservedTooltip" xml:space="preserve"><value>Messier objects with at least one observation in the logbook</value></data>
   <data name="CardVisibleObjects" xml:space="preserve"><value>Visible objects</value></data>
@@ -211,8 +211,8 @@
   <data name="PlanExportFailedFormat" xml:space="preserve"><value>Could not export the plan: {0}</value></data>
   <data name="PlanSaveFailedFormat" xml:space="preserve"><value>Could not save the plan: {0}</value></data>
   <data name="PlanExportDialogTitle" xml:space="preserve"><value>Export My plan</value></data>
-  <data name="PlanPrintJobName" xml:space="preserve"><value>AstroPlanner - My plan</value></data>
-  <data name="PlanPrintTitle" xml:space="preserve"><value>AstroPlanner — My plan</value></data>
+  <data name="PlanPrintJobName" xml:space="preserve"><value>AstroPlanner Pro - My plan</value></data>
+  <data name="PlanPrintTitle" xml:space="preserve"><value>AstroPlanner Pro — My plan</value></data>
   <data name="PlanPrintMoonFootnote" xml:space="preserve"><value>! The Moon, bright and close, makes observing harder.</value></data>
   <data name="PlanSummaryNightFormat" xml:space="preserve"><value>Night of {0:yyyy-MM-dd} to {1:yyyy-MM-dd}</value></data>
   <data name="PlanSummaryDarkNightFormat" xml:space="preserve"><value>Dark night {0:HH:mm} → {1:HH:mm}</value></data>
@@ -289,7 +289,7 @@
   <data name="SettingsSaved" xml:space="preserve"><value>Settings saved.</value></data>
   <data name="SettingsSaveFailedFormat" xml:space="preserve"><value>Could not save: {0}</value></data>
   <data name="SettingsDefaultsLoaded" xml:space="preserve"><value>Defaults loaded (not saved).</value></data>
-  <data name="AboutWindowTitle" xml:space="preserve"><value>About AstroPlanner</value></data>
+  <data name="AboutWindowTitle" xml:space="preserve"><value>About AstroPlanner Pro</value></data>
   <data name="AboutVersion" xml:space="preserve"><value>Version</value></data>
   <data name="AboutDescription" xml:space="preserve"><value>Astronomical observation planner: which Messier objects and planets are visible tonight from your location, when they culminate, how much the Moon gets in the way and how many clouds are forecast.</value></data>
   <data name="AboutCredits" xml:space="preserve"><value>Credits</value></data>
@@ -300,11 +300,11 @@
   <data name="AboutLibraries" xml:space="preserve"><value>Libraries:</value></data>
   <data name="AboutLibrariesText" xml:space="preserve"><value>.NET and WPF, ScottPlot, CommunityToolkit.Mvvm and Microsoft.Extensions.DependencyInjection.</value></data>
   <data name="AboutYourData" xml:space="preserve"><value>Your data</value></data>
-  <data name="AboutYourDataText" xml:space="preserve"><value>Settings, plan, logbook and logs are stored only on this computer. Uninstalling AstroPlanner does not delete them.</value></data>
+  <data name="AboutYourDataText" xml:space="preserve"><value>Settings, plan, logbook and logs are stored only on this computer. Uninstalling AstroPlanner Pro does not delete them.</value></data>
   <data name="AboutOpenFolder" xml:space="preserve"><value>Open folder</value></data>
   <data name="AboutLicense" xml:space="preserve"><value>License</value></data>
   <data name="AboutLicenseText" xml:space="preserve"><value>© 2026 Yamato6. Free software under the MIT license.</value></data>
-  <data name="AboutRepositoryText" xml:space="preserve"><value>github.com/Yamato6/AstroPlanner</value></data>
+  <data name="AboutRepositoryText" xml:space="preserve"><value>github.com/Yamato6/AstroPlanner-Pro</value></data>
   <data name="AboutShortcuts" xml:space="preserve"><value>Keyboard shortcuts</value></data>
   <data name="ShortcutSearch" xml:space="preserve"><value>Search</value></data>
   <data name="ShortcutNow" xml:space="preserve"><value>Current time</value></data>

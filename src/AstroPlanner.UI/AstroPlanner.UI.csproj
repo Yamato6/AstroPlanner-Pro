@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
   <!-- WPF application and composition root: the only project allowed to reference every layer. -->
   <PropertyGroup>
@@ -9,15 +9,15 @@
          but works on modern .NET; known ScottPlot warning. -->
     <NoWarn>$(NoWarn);NU1701</NoWarn>
 
-    <AssemblyName>AstroPlanner</AssemblyName>
+    <AssemblyName>AstroPlannerPro</AssemblyName>
     <RootNamespace>AstroPlanner.UI</RootNamespace>
     <ApplicationIcon>Assets\AstroPlanner.ico</ApplicationIcon>
     <ApplicationManifest>app.manifest</ApplicationManifest>
 
     <!-- CI replaces the version with the tag's (e.g. 2.0.0-rc.1). -->
-    <Version>1.0.0</Version>
-    <AssemblyTitle>AstroPlanner</AssemblyTitle>
-    <Description>Astronomical observation planner: Messier catalog, planets, Moon and cloud forecast.</Description>
+    <Version>2.0.0-dev</Version>
+    <AssemblyTitle>AstroPlanner Pro</AssemblyTitle>
+    <Description>Astrophotography planner: what to shoot tonight, when, with which gear and how likely it is to work.</Description>
   </PropertyGroup>
 
   <ItemGroup>

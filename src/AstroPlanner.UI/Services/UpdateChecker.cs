@@ -23,7 +23,7 @@ public interface IUpdateChecker
 /// </summary>
 public sealed class GitHubUpdateChecker(HttpClient http, IAppLogger logger) : IUpdateChecker
 {
-    public const string ReleasesUrl = "https://api.github.com/repos/Yamato6/AstroPlanner/releases?per_page=20";
+    public const string ReleasesUrl = "https://api.github.com/repos/Yamato6/AstroPlanner-Pro/releases?per_page=20";
 
     public async Task<UpdateInfo?> CheckAsync(AppVersion current, CancellationToken cancellationToken = default)
     {

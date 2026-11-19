@@ -5,7 +5,7 @@ namespace AstroPlanner.UI.Services;
 
 /// <summary>
 /// JSON implementation of <see cref="IObservationPlanService"/>.
-/// File: %LocalAppData%\AstroPlanner\plan.json
+/// File: %LocalAppData%\AstroPlannerPro\plan.json
 /// Current format: [{"id":"M31","note":"..."}]. It also reads the 0.3-0.5 format, a list of
 /// ids (["M31","M42"]), so that existing plans are not lost.
 /// </summary>

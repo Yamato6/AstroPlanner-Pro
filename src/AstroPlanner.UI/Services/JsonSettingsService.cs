@@ -5,7 +5,7 @@ namespace AstroPlanner.UI.Services;
 
 /// <summary>
 /// JSON implementation of <see cref="ISettingsService"/>.
-/// File: %LocalAppData%\AstroPlanner\settings.json
+/// File: %LocalAppData%\AstroPlannerPro\settings.json
 /// </summary>
 public sealed class JsonSettingsService : ISettingsService
 {

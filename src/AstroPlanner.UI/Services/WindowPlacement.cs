@@ -43,7 +43,7 @@ public sealed record WindowPlacement(double Left, double Top, double Width, doub
     }
 }
 
-/// <summary>Stores the window position in %LocalAppData%\AstroPlanner\window.json.</summary>
+/// <summary>Stores the window position in %LocalAppData%\AstroPlannerPro\window.json.</summary>
 public sealed class WindowPlacementStore(string? filePath = null)
 {
     private readonly string _filePath = filePath ?? AppPaths.DataFile("window.json");
