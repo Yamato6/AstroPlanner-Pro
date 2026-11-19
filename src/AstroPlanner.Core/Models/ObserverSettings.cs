@@ -1,9 +1,10 @@
-using AstroPlanner.Core.Models;
+using AstroPlanner.Core.Algorithms;
 
-namespace AstroPlanner.UI.Services;
+namespace AstroPlanner.Core.Models;
 
 /// <summary>
-/// Persisted observer settings, stored as JSON in %LocalAppData%\AstroPlannerPro\settings.json.
+/// Persisted observer settings (stored in app.db). The location fields hold the active
+/// observing site; <see cref="ActiveLocationId"/> links it to a saved <see cref="Location"/>.
 /// </summary>
 public sealed class ObserverSettings
 {
@@ -14,18 +15,19 @@ public sealed class ObserverSettings
     public double ElevationMeters { get; set; } = 2240;
 
     /// <summary>
-    /// System time zone id (e.g. "Romance Standard Time"). Used to convert the local date and
-    /// time chosen by the user to UTC before the astronomical calculations.
+    /// System time zone id (Windows, e.g. "Romance Standard Time"; IANA ids are accepted too).
+    /// Used to convert the local date and time chosen by the user to UTC before the
+    /// astronomical calculations.
     /// </summary>
     public string TimeZoneId { get; set; } = "Central Standard Time (Mexico)";
+
+    /// <summary>Saved location the fields above come from; null for an unsaved site.</summary>
+    public string? ActiveLocationId { get; set; }
 
     /// <summary>Minimum altitude (degrees) for an object to count as visible.</summary>
     public double MinimumAltitude { get; set; } = 20;
 
-    /// <summary>
-    /// Faintest magnitude shown. The faintest Messier object is ~10.2, so the default (12)
-    /// hides none.
-    /// </summary>
+    /// <summary>Faintest magnitude shown.</summary>
     public double MaximumMagnitude { get; set; } = 12;
 
     /// <summary>Fetch the cloud forecast from Open-Meteo (sends the location rounded to ~1 km).</summary>
@@ -37,20 +39,6 @@ public sealed class ObserverSettings
     public ObserverLocation ToObserverLocation() =>
         new(LatitudeDegrees, LongitudeDegrees, ElevationMeters);
 
-    public TimeZoneInfo GetTimeZone()
-    {
-        try
-        {
-            return TimeZoneInfo.FindSystemTimeZoneById(TimeZoneId);
-        }
-        catch (TimeZoneNotFoundException)
-        {
-            // The saved id no longer exists (e.g. after an OS change): use the local zone.
-            return TimeZoneInfo.Local;
-        }
-        catch (InvalidTimeZoneException)
-        {
-            return TimeZoneInfo.Local;
-        }
-    }
+    /// <summary>The saved time zone; the local one if the id no longer exists (e.g. after an OS change).</summary>
+    public TimeZoneInfo GetTimeZone() => TimeZoneConversion.FindOrLocal(TimeZoneId);
 }

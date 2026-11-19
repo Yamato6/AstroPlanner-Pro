@@ -7,7 +7,8 @@
     "latitudeDegrees": 19.4326,
     "longitudeDegrees": -99.1332,
     "elevationMeters": 2240,
-    "timeZoneId": "Central Standard Time (Mexico)"
+    "timeZoneId": "Central Standard Time (Mexico)",
+    "ianaTimeZoneId": "America/Mexico_City"
   },
   {
     "id": "guadalajara",
@@ -17,7 +18,8 @@
     "latitudeDegrees": 20.6597,
     "longitudeDegrees": -103.3496,
     "elevationMeters": 1566,
-    "timeZoneId": "Central Standard Time (Mexico)"
+    "timeZoneId": "Central Standard Time (Mexico)",
+    "ianaTimeZoneId": "America/Mexico_City"
   },
   {
     "id": "monterrey",
@@ -27,7 +29,8 @@
     "latitudeDegrees": 25.6866,
     "longitudeDegrees": -100.3161,
     "elevationMeters": 537,
-    "timeZoneId": "Central Standard Time (Mexico)"
+    "timeZoneId": "Central Standard Time (Mexico)",
+    "ianaTimeZoneId": "America/Mexico_City"
   },
   {
     "id": "puebla",
@@ -37,7 +40,8 @@
     "latitudeDegrees": 19.0414,
     "longitudeDegrees": -98.2063,
     "elevationMeters": 2147,
-    "timeZoneId": "Central Standard Time (Mexico)"
+    "timeZoneId": "Central Standard Time (Mexico)",
+    "ianaTimeZoneId": "America/Mexico_City"
   },
   {
     "id": "toluca",
@@ -47,7 +51,8 @@
     "latitudeDegrees": 19.2826,
     "longitudeDegrees": -99.6557,
     "elevationMeters": 2660,
-    "timeZoneId": "Central Standard Time (Mexico)"
+    "timeZoneId": "Central Standard Time (Mexico)",
+    "ianaTimeZoneId": "America/Mexico_City"
   },
   {
     "id": "merida",
@@ -57,7 +62,8 @@
     "latitudeDegrees": 20.9674,
     "longitudeDegrees": -89.5926,
     "elevationMeters": 10,
-    "timeZoneId": "Central Standard Time (Mexico)"
+    "timeZoneId": "Central Standard Time (Mexico)",
+    "ianaTimeZoneId": "America/Mexico_City"
   },
   {
     "id": "cancun",
@@ -67,7 +73,8 @@
     "latitudeDegrees": 21.1619,
     "longitudeDegrees": -86.8515,
     "elevationMeters": 10,
-    "timeZoneId": "Eastern Standard Time (Mexico)"
+    "timeZoneId": "Eastern Standard Time (Mexico)",
+    "ianaTimeZoneId": "America/Cancun"
   },
   {
     "id": "oaxaca",
@@ -77,7 +84,8 @@
     "latitudeDegrees": 17.0732,
     "longitudeDegrees": -96.7266,
     "elevationMeters": 1555,
-    "timeZoneId": "Central Standard Time (Mexico)"
+    "timeZoneId": "Central Standard Time (Mexico)",
+    "ianaTimeZoneId": "America/Mexico_City"
   },
   {
     "id": "tijuana",
@@ -87,7 +95,8 @@
     "latitudeDegrees": 32.5149,
     "longitudeDegrees": -117.0382,
     "elevationMeters": 20,
-    "timeZoneId": "Pacific Standard Time (Mexico)"
+    "timeZoneId": "Pacific Standard Time (Mexico)",
+    "ianaTimeZoneId": "America/Tijuana"
   },
   {
     "id": "hermosillo",
@@ -97,7 +106,8 @@
     "latitudeDegrees": 29.0729,
     "longitudeDegrees": -110.9559,
     "elevationMeters": 210,
-    "timeZoneId": "Mountain Standard Time (Mexico)"
+    "timeZoneId": "US Mountain Standard Time",
+    "ianaTimeZoneId": "America/Hermosillo"
   },
   {
     "id": "aguascalientes",
@@ -107,6 +117,7 @@
     "latitudeDegrees": 21.8853,
     "longitudeDegrees": -102.2916,
     "elevationMeters": 1888,
-    "timeZoneId": "Central Standard Time (Mexico)"
+    "timeZoneId": "Central Standard Time (Mexico)",
+    "ianaTimeZoneId": "America/Mexico_City"
   }
 ]

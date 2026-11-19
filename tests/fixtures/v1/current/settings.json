@@ -1,0 +1,12 @@
+{
+  "CityId": "aguascalientes",
+  "IsManualLocation": false,
+  "LatitudeDegrees": 21.8853,
+  "LongitudeDegrees": -102.2916,
+  "ElevationMeters": 1888,
+  "TimeZoneId": "Central Standard Time (Mexico)",
+  "MinimumAltitude": 25,
+  "MaximumMagnitude": 10,
+  "WeatherForecastEnabled": false,
+  "CheckForUpdates": true
+}
