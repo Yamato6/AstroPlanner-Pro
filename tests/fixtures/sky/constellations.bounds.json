@@ -1,0 +1,2 @@
+{"type":"FeatureCollection","features":[
+{"type":"Feature","id":"And","properties":{"rank":"1"},"geometry":{"type":"Polygon","coordinates":[[[-15.5,35.2],[-15.6,53.2],[-8.5,53.2],[-8.5,35.2]]]}}]}
