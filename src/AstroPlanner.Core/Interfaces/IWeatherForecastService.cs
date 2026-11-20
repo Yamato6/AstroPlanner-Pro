@@ -11,3 +11,11 @@ public interface IWeatherForecastService
     /// <exception cref="WeatherForecastException">If it could not be obtained.</exception>
     Task<WeatherForecast> GetForecastAsync(double latitude, double longitude, CancellationToken cancellationToken = default);
 }
+
+/// <summary>Seeing and transparency forecast (7Timer! ASTRO).</summary>
+public interface IAstroForecastService
+{
+    /// <summary>Forecast for the next days at the location.</summary>
+    /// <exception cref="WeatherForecastException">If it could not be obtained.</exception>
+    Task<AstroForecast> GetForecastAsync(double latitude, double longitude, CancellationToken cancellationToken = default);
+}

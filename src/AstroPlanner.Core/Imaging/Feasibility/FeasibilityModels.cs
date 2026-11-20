@@ -1,5 +1,6 @@
 using AstroPlanner.Core.Models;
 using AstroPlanner.Core.SkyQuality;
+using AstroPlanner.Core.Weather;
 
 namespace AstroPlanner.Core.Imaging.Feasibility;
 
@@ -64,7 +65,11 @@ public enum FeasibilityFactor
     /// <summary>Value = seeing FWHM in pixels, Value2 = image scale (″/px); Sampling = verdict.</summary>
     Sampling,
     /// <summary>The catalog has no magnitude/surface brightness: Value = the assumed mag/arcsec².</summary>
-    AssumedBrightness
+    AssumedBrightness,
+    /// <summary>Forecast seeing (7Timer!): Value = FWHM (″).</summary>
+    Seeing,
+    /// <summary>Forecast transparency (7Timer!): Value = mag/air mass, Value2 = extinction added to the site's k.</summary>
+    Transparency
 }
 
 public enum ReasonImpact
@@ -167,6 +172,25 @@ public sealed record FeasibilityRequest(
     WeatherForecast? Weather = null)
 {
     public FeasibilityConstants Constants { get; init; } = FeasibilityConstants.Default;
+
+    /// <summary>Forecast seeing and transparency of the night; null (or empty) = the constants' defaults.</summary>
+    public NightConditions? Conditions { get; init; }
+
+    /// <summary>
+    /// The constants with the night's forecast applied (spec §9.2): the forecast seeing replaces
+    /// <see cref="FeasibilityConstants.SeeingArcsec"/>, and the haze above 7Timer's clearest class
+    /// (<see cref="FeasibilityConstants.ClearTransparency"/>) is added to the site's extinction.
+    /// </summary>
+    public FeasibilityConstants EffectiveConstants =>
+        Conditions is not { } n ? Constants : Constants with
+        {
+            SeeingArcsec = n.SeeingArcsec ?? Constants.SeeingArcsec,
+            ExtinctionCoefficient = Constants.ExtinctionCoefficient + HazeExtinction
+        };
+
+    /// <summary>Extinction added by the forecast transparency, mag/air mass (0 without forecast).</summary>
+    public double HazeExtinction =>
+        Conditions?.TransparencyMagnitudesPerAirmass is { } t ? Math.Max(0, t - Constants.ClearTransparency) : 0;
 }
 
 /// <summary>
@@ -237,6 +261,12 @@ public sealed record FeasibilityConstants
     /// <summary>Usable hours from which the time is a plus, and under which it is a minus.</summary>
     public double ComfortableHours { get; init; } = 3;
     public double ShortHours { get; init; } = 1;
+
+    /// <summary>
+    /// 7Timer! transparency (mag/air mass) that counts as clear: its best class is "&lt; 0.3". Only the
+    /// excess over it is added to the site's extinction coefficient.
+    /// </summary>
+    public double ClearTransparency { get; init; } = 0.3;
 
     /// <summary>Sampling step of the night.</summary>
     public TimeSpan Step { get; init; } = TimeSpan.FromMinutes(5);
