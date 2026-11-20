@@ -12,7 +12,8 @@ namespace AstroPlanner.DataBuilder;
 ///   download        fetch the pinned sources into data/raw (verifies SHA-256)
 ///   build-catalogs  data/raw + data/curated → data/build/catalogs.sqlite and data/build/sky/
 ///   build-sky       data/build/catalogs.sqlite + d3-celestial GeoJSON → data/build/sky/*.bin|json (renderer data)
-///   verify          sanity checks of data/build/catalogs.sqlite and data/build/sky
+///   build-lp-grid   data/raw/World_Atlas_2015.tif (by hand) → data/build/lp/*.bin.gz (light-pollution grids)
+///   verify          sanity checks of data/build/catalogs.sqlite, data/build/sky and data/build/lp
 ///   all             download, build-catalogs, build-sky and verify, in order
 /// Option: --root &lt;repository root&gt; (default: the folder containing AstroPlanner.slnx).
 /// </summary>
@@ -38,6 +39,9 @@ internal static class Program
                 case "build-sky":
                     BuildSky(paths);
                     return 0;
+                case "build-lp-grid":
+                    BuildLightPollution(paths);
+                    return 0;
                 case "verify":
                     return Verify(paths);
                 case "all":
@@ -46,7 +50,7 @@ internal static class Program
                     BuildSky(paths);
                     return Verify(paths);
                 default:
-                    Console.WriteLine("Usage: AstroPlanner.DataBuilder download | build-catalogs | build-sky | verify | all [--root <repo>]");
+                    Console.WriteLine("Usage: AstroPlanner.DataBuilder download | build-catalogs | build-sky | build-lp-grid | verify | all [--root <repo>]");
                     return command == "help" ? 0 : 2;
             }
         }
@@ -126,10 +130,32 @@ internal static class Program
         Console.WriteLine(result.Report);
     }
 
+    private static void BuildLightPollution(RepositoryPaths paths)
+    {
+        var source = DataSources.WorldAtlas;
+        var tiff = paths.Raw(source.RelativePath);
+        if (!File.Exists(tiff))
+        {
+            throw new IOException($"{source.RelativePath} not found in data/raw: download {source.Url} by hand and unzip it there (see data/SOURCES.md).");
+        }
+
+        Console.WriteLine($"checking  {source.RelativePath} (SHA-256 of 3 GB, takes a few seconds)");
+        if (Sha256(tiff) != source.Sha256)
+        {
+            throw new InvalidDataException($"{source.RelativePath}: SHA-256 does not match the pinned {source.Sha256}.");
+        }
+
+        var result = LightPollutionGridBuilder.Build(tiff, paths.Build("lp"), LightPollutionGridBuilder.Mexico,
+            LightPollutionGridBuilder.WorldFileName, LightPollutionGridBuilder.WorldFactor);
+        File.WriteAllText(paths.Build(Path.Combine("lp", "lp-report.txt")), result.Report, new UTF8Encoding(false));
+        Console.WriteLine(result.Report);
+    }
+
     private static int Verify(RepositoryPaths paths)
     {
         var failures = CatalogVerifier.Verify(paths.Build(CatalogSchema.FileName), CatalogVerifier.FullBuild)
             .Concat(SkyDataBuilder.Verify(paths.Build("sky"), CatalogVerifier.FullBuild.MinimumStars, CatalogVerifier.FullBuild.MinimumObjects))
+            .Concat(LightPollutionGridBuilder.Verify(paths.Build("lp"), LightPollutionGridBuilder.FullBuildCheckpoints))
             .ToList();
         foreach (var failure in failures)
         {

@@ -7,8 +7,8 @@ internal sealed record DataSource(string RelativePath, Uri Url, string Sha256, s
 /// <summary>
 /// The pinned sources of the catalogs (spec §7.1). Every URL points to a tag or commit and is
 /// verified with SHA-256, so a build is reproducible. Keep in sync with data/SOURCES.md.
-/// The World Atlas 2015 light-pollution data is downloaded by hand (see SOURCES.md) and
-/// processed in M3.
+/// The World Atlas 2015 light-pollution GeoTIFF (<see cref="WorldAtlas"/>) is downloaded and
+/// unzipped by hand (653 MB zip, 3 GB GeoTIFF; see SOURCES.md) and only checked by build-lp-grid.
 /// </summary>
 internal static class DataSources
 {
@@ -40,6 +40,14 @@ internal static class DataSources
         new("d3-celestial/mw.json", new Uri(D3CelestialBase + "mw.json"),
             "aee221a7a0e879418e685de00c3e68fbdfac5667c0a8aab74929ef9cf4aab4fb", "v0.7.32", "BSD-3-Clause"),
     ];
+
+    /// <summary>
+    /// World Atlas 2015 artificial sky brightness (Falchi et al. 2016), the GeoTIFF inside the zip
+    /// at <see cref="DataSource.Url"/>. Not part of <see cref="All"/>: never downloaded automatically.
+    /// </summary>
+    public static readonly DataSource WorldAtlas = new(
+        "World_Atlas_2015.tif", new Uri("https://datapub.gfz.de/download/10.5880.GFZ.1.4.2016.001/World_Atlas_2015.zip"),
+        "9725566ed4fcf1a8fa311654143bb024c4fe2a792b85356be99adce07e1e83c1", "2015 (published 2016)", "CC BY-NC 4.0");
 
     public static IEnumerable<DataSource> All => new[] { OpenNgc, OpenNgcAddendum, Hyg }.Concat(D3Celestial);
 }
