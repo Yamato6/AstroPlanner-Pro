@@ -6,6 +6,39 @@ versions follow [Semantic Versioning](https://semver.org/). Versions up to 1.0.0
 
 ## [Unreleased] — 2.0.0
 
+### M2 — Live sky (part 2: 2D charts, camera frame, sky brightness, horizon editor)
+
+#### Added
+- **All-sky chart** (key `2`): zenithal equidistant projection, north up, east left (the v1
+  convention), with the horizon circle, the minimum altitude and the cardinal points.
+- **Finder chart**: gnomonic, centred on the selected object, north up, east left, star names and
+  magnitudes, compass, scale bar and center coordinates; drag to pan, scroll to zoom (0.5°–60°).
+  *Finder chart* in the Sky panel, the object detail and next to the planner's altitude chart.
+- **Export PNG** of the current view (finder charts to print or take to the field).
+- **Camera field-of-view overlay** (key `F`): the sensor rectangle at its true angular size (Core
+  `OpticsMath`: 2·atan(W/2f)), drawn in every view, following the selection; drag it, rotate it
+  with Shift + scroll; sensor presets or typed sizes, focal length and rotation (until equipment
+  profiles arrive in M3). Default: the owner's Canon APS-C on the 650 mm telescope.
+- **Sky brightness rendering**: Core `SkyBrightness` (SQM ↔ luminance, naked-eye limiting
+  magnitude, Bortle for display, a documented twilight and moonlight heuristic) and
+  `SkyAppearanceCalculator` sample the zenith brightness like the body tracks; the renderer tints
+  the sky (brighter toward the horizon), hides faint stars and deep-sky objects and fades the Milky
+  Way. A layer turns it off. The Sky panel shows the zenith brightness now and the site's SQM.
+- **Horizon profile editor** in Locations: points by azimuth with a live preview chart, validated
+  (range, duplicates), saved with the site; the profile is drawn in the sky as a ground silhouette
+  and hides what is behind it.
+- **Measured sky brightness (SQM) per site**, typed in Locations (shown with an approximate Bortle
+  class); migration `0002_location_sqm` adds it to `app.db`. The atlas fills it in from M3.
+- Protocol: `setFov`, `setSkyAppearance`, `fovChanged`; `setViewMode` now switches the projection;
+  layer `skyBrightness`. Golden samples regenerated; `fovChanged` is validated on both sides.
+- Benchmark switches `--sky-resolution=WxH` and `--sky-mode=dome|allSky|finder` (`SkyLaunchOptions`,
+  only well-formed values reach the URL). Results on the development desktop (RX 6600, no vsync):
+  ≥ 1,280 fps at 1080p and 1440p in every mode, with 83k and 167k stars; first frame ≤ 0.2 s.
+  Not measured on an integrated GPU (see `docs/sky-renderer.md`).
+
+#### Changed
+- The keys `1`, `2` and `F` work in the Sky tab, also while the renderer has the focus.
+- Locations show the SQM column; the hint no longer promises the editor for later.
 ### M2 — Live sky (part 1: renderer, bridge and 3D dome)
 
 #### Added

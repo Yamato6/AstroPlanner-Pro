@@ -5,7 +5,8 @@ hosted in WebView2 (spec §4.2, §5.3, §5.4). It draws; it does not compute ast
 position comes from `AstroPlanner.Core`, so the sky, the tables and the charts always agree.
 
 ```
-AstroPlanner.Core        SkyFrame (J2000 → horizontal matrix), MovingBodyCalculator (Sun, Moon, planets)
+AstroPlanner.Core        SkyFrame (J2000 → horizontal matrix), MovingBodyCalculator (Sun, Moon, planets),
+                         SkyAppearanceCalculator + SkyQuality/SkyBrightness, Imaging/OpticsMath (camera field)
 AstroPlanner.SkyBridge   protocol DTOs, SkyMessageCodec (encode / decode + validate), SkyBridgeMapper
 AstroPlanner.UI          SkyViewModel (state, clock, selection), SkyHost (WebView2 + security), SkyAssets
 src/sky-renderer         three.js scene, shaders, overlay, picking; speaks only the protocol
@@ -44,6 +45,52 @@ The renderer interpolates linearly, normalizes and applies `H(t)`: positions are
 samples, and the tracks are regenerated when the sky time leaves them. The Moon's phase uses the
 phase angle and the position angle of the bright limb (Meeus 48, tested against example 48.a).
 
+## Views (§4.2)
+
+One scene, three projections chosen by a uniform in the vertex shader (`skyClip` in
+`render/shaders.ts`, mirrored for the overlay and picking by `render/projection.ts`):
+
+| Mode | Projection | Interaction |
+|---|---|---|
+| `dome` (key `1`) | perspective camera at the observer, ground and cardinal points | drag to look around, scroll = field of view 1°–120° |
+| `allSky` (key `2`) | zenithal equidistant: r = (90° − alt)/90° · R, north up, **east left** (v1) | click to select |
+| `finder` | gnomonic around a J2000 direction, celestial north up, east left (homogeneous w = cos distance, so the GPU clips the far side) | drag to pan, scroll = 0.5°–60° |
+
+The finder is equatorial (no horizon, no refraction, no alt-az lines); it labels named stars and
+magnitudes (recomputed only when the chart moves), and draws a compass, a scale bar and the center
+coordinates. *Finder chart* (Sky panel, object detail, planner) centres it on the selection with
+three times the camera field (10° without the overlay). *Export PNG* saves what WebView2 shows
+(`CapturePreviewAsync`). The mode is remembered; `viewChanged` is only sent from the dome.
+
+**Camera field of view** (key `F`). The sensor rectangle is a flat tan(w/2) × tan(h/2) rectangle
+in the tangent plane at its center, its top at position angle *rotation* from north through east,
+with w = 2·atan(W/2f) from Core `OpticsMath` (spec §8.2). Its edges are sampled so they curve
+correctly in the dome and the all-sky chart. It follows the selection; dragging moves it (the sky
+point under the pointer stays under it), Shift + scroll rotates it (1°, Ctrl 5°); the renderer
+reports the result with `fovChanged`, which C# keeps without echoing it back. Until equipment
+profiles arrive (M3) the sensor and focal length are typed in the Sky panel.
+
+**Sky brightness.** `SkyAppearanceCalculator` samples, like the body tracks (±12 h, every 10 min),
+the zenith brightness in mag/arcsec² = site + twilight + Moon added in linear units, and the
+naked-eye limiting magnitude NELM = 7.93 − 5·log10(10^(4.316 − SQM/5) + 1). This is a **display
+heuristic**, not the photometric model of the feasibility engine (Krisciunas & Schaefer, M3):
+
+- site: the SQM typed for the active location, else a natural sky of 22.0;
+- twilight: 4.0 (Sun ≥ 10°), 7.0 (0°), 12.0 (−6°), 17.5 (−12°), 23.0 (−18°), linear in between,
+  nothing below −18°;
+- Moon: 18.0 for a full Moon at the zenith, fainter by the Moon's magnitude change with phase angle
+  (Allen) and by sin(altitude), nothing when it is down.
+
+The renderer interpolates the samples and maps them to presentation only: the background (zenith
+color, ~1.2 mag brighter toward the horizon), the faintest star (NELM + 2, plus the zoom bonus),
+the deep-sky limit (minus the magnitudes lost against a dark sky) and the Milky Way opacity (full
+at SQM ≥ 21, gone at ≤ 19). The *Sky brightness* layer turns it off.
+
+**Horizon profile.** The site's profile (Core `HorizonMask`, edited in Locations) comes with
+`setObserver`; the renderer interpolates it exactly like `HorizonMask.AltitudeAt` and draws it as
+an opaque silhouette (dome and all-sky) after the sky layers, and hides the labels, bodies and
+picks behind it.
+
 ## Protocol (§5.4)
 
 JSON messages `{"v": 1, "type": "…", "payload": {…}}` over `PostWebMessageAsJson` /
@@ -61,14 +108,17 @@ TypeScript (zod) schemas: `src/sky-renderer/src/bridge/schema.ts`.
 | `setHighlights` | ids of the session plan |
 | `selectObject` | selection (also renderer → C#) |
 | `centerOn` | turn the view to a J2000 direction (optionally change the FOV) |
-| `setViewMode`, `setTheme` | dome / all-sky / finder (2D modes in M2b); dark / night |
+| `setViewMode`, `setTheme` | dome / all-sky / finder; dark / night |
+| `setFov` | camera frame: visible, width and height (degrees), rotation, center (J2000, or null = middle of the view), label |
+| `setSkyAppearance` | sampled zenith brightness and limiting magnitude (start, step, two arrays) |
 
 | Renderer → C# | |
 |---|---|
 | `ready` | renderer version, WebGL version; C# then sends the whole state |
 | `firstFrame` | ms from navigation start to the first frame (logged) |
 | `selectObject`, `hover` | picks; DSO and planet picks select the object in Targets (kept in the table even if filtered out) |
-| `viewChanged` | camera, saved so that the next session opens where you left it |
+| `viewChanged` | dome camera, saved so that the next session opens where you left it |
+| `fovChanged` | the camera frame was dragged or rotated: center (unit vector) and rotation in [0°, 360°) |
 | `stats` | fps, p95 frame time, size, star count (overlay, benchmark) |
 | `shortcut` | Space, `1`, `2`, `F`, `/` pressed while the renderer has the focus |
 | `error` | uncaught renderer errors (logged) |
@@ -92,6 +142,20 @@ decoder and zod. Change a message on both sides and regenerate the samples in th
 - Messages are accepted only from the app origin, are size-limited (16 KB) and validated
   field by field (`SkyMessageCodec.Decode`: unknown types, extra or missing fields, out-of-range
   numbers → dropped). The renderer validates what it receives and what it sends with zod.
+
+**Security review (M2b).** What M2b adds to the attack surface, and how it is held:
+
+- `fovChanged` is the only new message the renderer sends: zod checks it before sending, and
+  `SkyMessageCodec.Decode` rejects anything but a finite unit vector (±0.001) and a rotation in
+  [0°, 360°) (golden `invalid/fov-*.json` on both sides).
+- The new page parameters (`res`, `mode`) come only from the command line, through
+  `SkyLaunchOptions`, which lets through known switches with well-formed values only (tested);
+  the renderer parses them again (`WxH` up to 7680×4320, three mode names).
+- *Export PNG* writes only to the path the user picks in the save dialog; nothing is read back.
+- No new hosts, scripts, fonts or remote resources: the CSP, the navigation filter
+  (`SkyHost.IsAllowedNavigation`, tested for other hosts, schemes, ports, `file:` and
+  `javascript:`) and the `NewWindowRequested` handler (always handled; only `SafeLinks` URLs
+  open, in the browser) are unchanged.
 
 ## Static data (`build-sky`)
 
@@ -127,17 +191,30 @@ checks for the runtime in M6.
 The renderer draws stars as one `Points` object and lines as `LineSegments`, all positioned by
 the vertex shader, so the CPU work per frame is one matrix plus the label overlay.
 
-Benchmark: `AstroPlannerPro.exe --sky-benchmark [--sky-stars=N]` opens the Sky tab, sweeps the
-camera 360° for 10 s with vsync and the frame cap off, and logs the average fps and the
-95th-percentile frame time (`--sky-stars=2` draws the catalogue twice, ~167k stars).
+Benchmark: `AstroPlannerPro.exe --sky-benchmark [--sky-stars=N] [--sky-resolution=WxH]
+[--sky-mode=dome|allSky|finder]` opens the Sky tab, sweeps the view 360° for 10 s with vsync and
+the frame cap off, and logs the average fps and the 95th-percentile frame time. `--sky-stars=2`
+draws the catalogue twice (~167k stars, the stress test); `--sky-resolution` renders at that size
+whatever the window (the canvas is scaled to fit).
 
-| Machine | Stars | Viewport | Result |
-|---|---|---|---|
-| Desktop, Ryzen 7 5700 + Radeon RX 6600, WebView2 157 | 83,476 | 1234×603 | 1,530 fps, p95 0.9 ms; first frame 0.14 s after navigation |
-| same | 166,952 | 1234×603 | 1,602 fps, p95 0.8 ms |
+Development desktop: Ryzen 7 5700 (no integrated GPU) + Radeon RX 6600, WebView2 157, sky
+brightness and labels on:
 
-Not yet measured on an integrated GPU (spec §4.2 asks for ≥ 60 fps at 1080p there); the 1080p
-and stress runs are part of M2b.
+| Mode | Stars | Resolution | fps | p95 frame | First frame |
+|---|---|---|---|---|---|
+| dome | 83,476 | 1920×1080 | 1,517 | 0.9 ms | 0.13 s |
+| all-sky | 83,476 | 1920×1080 | 1,287 | 1.0 ms | 0.11 s |
+| finder | 83,476 | 1920×1080 | 1,536 | 1.0 ms | 0.13 s |
+| dome | 166,952 | 1920×1080 | 1,526 | 0.9 ms | 0.12 s |
+| dome | 166,952 | 2560×1440 | 1,554 | 0.9 ms | 0.11 s |
+| all-sky | 166,952 | 2560×1440 | 1,294 | 1.0 ms | 0.19 s |
+
+The budget (spec §4.2: ≥ 60 fps with 100k stars at 1080p on an integrated GPU, ≤ 2 s to the first
+frame) is met here with a wide margin, but **it has not been measured on an integrated GPU**: no
+such machine was available (the owner's decision for M2). The work per frame is one matrix, the
+label overlay and two draw calls for the stars and lines, so integrated GPUs are expected to be
+limited by fill rate, not by the star count; anyone with one can run the switches above and add a
+row.
 
 ## Development
 
