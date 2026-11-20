@@ -1,6 +1,14 @@
 // Entry point: wires the bridge, the clock, the dome view and the input handling.
 import { createBridge } from './bridge/bridge';
-import type { HostMessage, Layers, MovingBody, Observer } from './bridge/schema';
+import type {
+  Fov,
+  HostMessage,
+  Layers,
+  MovingBody,
+  Observer,
+  SkyAppearance,
+  ViewMode,
+} from './bridge/schema';
 import { loadSkyData } from './data/loader';
 import type { FrameTransform, Mat3, RefractionModel, Vec3 } from './math/frame';
 import { SkyView, type Selection } from './render/sky';
@@ -15,6 +23,22 @@ const BENCHMARK_MS = 10_000;
 const params = new URLSearchParams(window.location.search);
 const benchmark = params.get('bench') === '1';
 const starMultiplier = Math.min(8, Math.max(1, Number(params.get('stars') ?? '1') || 1));
+/** Benchmark: render at a fixed resolution ("1920x1080") and/or in a given mode. */
+const fixedSize = parseSize(params.get('res'));
+const benchmarkMode = ((): ViewMode | null => {
+  const mode = params.get('mode');
+  return mode === 'dome' || mode === 'allSky' || mode === 'finder' ? mode : null;
+})();
+
+function parseSize(value: string | null): { width: number; height: number } | null {
+  const match = /^(\d{3,4})x(\d{3,4})$/.exec(value ?? '');
+  if (!match) {
+    return null;
+  }
+  const width = Number(match[1]);
+  const height = Number(match[2]);
+  return width <= 7680 && height <= 4320 ? { width, height } : null;
+}
 
 function element<T extends HTMLElement>(selector: string, type: new () => T): T {
   const found = document.querySelector(selector);
@@ -43,6 +67,9 @@ const state: {
   selection: Selection | null;
   showStats: boolean;
   pendingCenter: { vector: Vec3; fov: number | null } | null;
+  appearance: SkyAppearance | null;
+  fov: Fov | null;
+  mode: ViewMode;
 } = {
   refraction: null,
   layers: null,
@@ -53,6 +80,9 @@ const state: {
   selection: null,
   showStats: false,
   pendingCenter: null,
+  appearance: null,
+  fov: null,
+  mode: 'dome',
 };
 
 let view: SkyView | null = null;
@@ -80,21 +110,26 @@ async function initialize(message: Extract<HostMessage, { type: 'init' }>): Prom
   state.refraction = message.payload.refraction;
   state.layers = message.payload.layers;
   state.showStats = message.payload.showStats || benchmark;
+  state.mode = message.payload.viewMode;
   document.body.classList.toggle('night', message.payload.theme === 'night');
 
   const data = await loadSkyData(message.payload.dataBaseUrl);
-  const created = new SkyView(canvas, overlay, data, message.payload.layers, starMultiplier);
+  const created = new SkyView(canvas, overlay, data, message.payload.layers, starMultiplier, fixedSize);
   created.setRefraction(message.payload.refraction);
   created.showStats = state.showStats;
+  created.onFovChanged = scheduleFovChanged;
   if (state.frame) created.setFrame(state.frame);
   if (state.observer) created.setObserver(state.observer);
   created.setBodies(state.bodies);
   created.setHighlights(state.plan);
   created.setSelection(state.selection);
+  if (state.appearance) created.setAppearance(state.appearance);
+  if (state.fov) created.setFov(state.fov);
   view = created;
   resize();
+  created.render(clock.now());
+  created.setMode(benchmarkMode ?? state.mode);
   if (state.pendingCenter) {
-    created.render(clock.now());
     created.centerOn(state.pendingCenter.vector, state.pendingCenter.fov);
     state.pendingCenter = null;
   }
@@ -158,7 +193,18 @@ function handle(message: HostMessage): void {
       break;
     }
     case 'setViewMode':
-      // The all-sky and finder charts arrive in M2b; the dome is the only mode for now.
+      state.mode = message.payload.mode;
+      if (!benchmarkMode) {
+        view?.setMode(message.payload.mode);
+      }
+      break;
+    case 'setFov':
+      state.fov = message.payload;
+      view?.setFov(message.payload);
+      break;
+    case 'setSkyAppearance':
+      state.appearance = message.payload;
+      view?.setAppearance(message.payload);
       break;
     case 'setTheme':
       document.body.classList.toggle('night', message.payload.theme === 'night');
@@ -186,9 +232,11 @@ function loop(now: number): void {
   if (benchmark && !benchmarkDone) {
     benchmarkStart ??= now;
     const elapsed = now - benchmarkStart;
-    current.azimuth = ((elapsed / BENCHMARK_MS) * 360) % 360;
+    const turn = ((elapsed / BENCHMARK_MS) * 2 * Math.PI) % (2 * Math.PI);
+    current.azimuth = (turn * 180) / Math.PI;
     current.altitude = 30;
     current.fov = 90;
+    current.finderCenter = [Math.cos(turn), Math.sin(turn), 0.3];
     if (elapsed >= BENCHMARK_MS) {
       sendStats(current, true);
       benchmarkDone = true;
@@ -215,7 +263,7 @@ function loop(now: number): void {
   }
 
   if (state.showStats) {
-    current.statsText = `${stats.fps.toFixed(0)} fps · p95 ${stats.p95FrameMs.toFixed(1)} ms · ${current.starsDrawn} stars`;
+    current.statsText = `${stats.fps.toFixed(0)} fps · p95 ${stats.p95FrameMs.toFixed(1)} ms · ${current.starsDrawn} stars · ${current.mode}`;
     if (now - lastStatsMs > STATS_INTERVAL_MS && !benchmark) {
       lastStatsMs = now;
       sendStats(current, false);
@@ -228,8 +276,8 @@ function sendStats(current: SkyView, isBenchmark: boolean): void {
     fps: Math.round(stats.fps * 10) / 10,
     p95FrameMs: Math.round(stats.p95FrameMs * 100) / 100,
     frames: stats.frames,
-    width: Math.round(window.innerWidth * window.devicePixelRatio),
-    height: Math.round(window.innerHeight * window.devicePixelRatio),
+    width: current.renderer.domElement.width,
+    height: current.renderer.domElement.height,
     stars: current.starsDrawn,
     benchmark: isBenchmark,
   });
@@ -247,7 +295,7 @@ let viewTimer: number | undefined;
 function scheduleViewChanged(): void {
   window.clearTimeout(viewTimer);
   viewTimer = window.setTimeout(() => {
-    if (view) {
+    if (view?.mode === 'dome') {
       const v = view.view();
       bridge.send('viewChanged', {
         mode: 'dome',
@@ -259,10 +307,30 @@ function scheduleViewChanged(): void {
   }, 600);
 }
 
-let drag: { x: number; y: number; moved: number } | null = null;
+let fovTimer: number | undefined;
+function scheduleFovChanged(center: Vec3, rotationDegrees: number): void {
+  window.clearTimeout(fovTimer);
+  fovTimer = window.setTimeout(() => {
+    const length = Math.hypot(center[0], center[1], center[2]) || 1;
+    bridge.send('fovChanged', {
+      x: center[0] / length,
+      y: center[1] / length,
+      z: center[2] / length,
+      rotationDegrees: ((rotationDegrees % 360) + 360) % 360,
+    });
+  }, 250);
+}
+
+/** A drag pans the view, or moves the field-of-view rectangle when it starts inside it. */
+let drag: { x: number; y: number; moved: number; fov: boolean } | null = null;
 
 overlay.addEventListener('pointerdown', (event) => {
-  drag = { x: event.clientX, y: event.clientY, moved: 0 };
+  drag = {
+    x: event.clientX,
+    y: event.clientY,
+    moved: 0,
+    fov: view?.fovContains(event.clientX, event.clientY) ?? false,
+  };
   overlay.setPointerCapture(event.pointerId);
 });
 
@@ -270,12 +338,17 @@ overlay.addEventListener('pointermove', (event) => {
   if (drag && view) {
     const dx = event.clientX - drag.x;
     const dy = event.clientY - drag.y;
-    drag = { x: event.clientX, y: event.clientY, moved: drag.moved + Math.abs(dx) + Math.abs(dy) };
-    view.pan(dx, dy);
-    scheduleViewChanged();
+    if (drag.fov) {
+      view.moveFov(drag.x, drag.y, event.clientX, event.clientY);
+    } else {
+      view.pan(dx, dy, event.clientX, event.clientY);
+      scheduleViewChanged();
+    }
+    drag = { ...drag, x: event.clientX, y: event.clientY, moved: drag.moved + Math.abs(dx) + Math.abs(dy) };
     return;
   }
   scheduleHover(event.clientX, event.clientY);
+  overlay.classList.toggle('over-fov', view?.fovContains(event.clientX, event.clientY) ?? false);
 });
 
 overlay.addEventListener('pointerup', (event) => {
@@ -297,6 +370,11 @@ overlay.addEventListener(
   'wheel',
   (event) => {
     event.preventDefault();
+    if (event.shiftKey && view?.fovCenter) {
+      // Shift + wheel rotates the field-of-view rectangle (1° per notch, 5° with Ctrl).
+      view.rotateFov(Math.sign(event.deltaY || event.deltaX) * (event.ctrlKey ? 5 : 1));
+      return;
+    }
     view?.zoom(Math.exp(event.deltaY * 0.0012));
     scheduleViewChanged();
   },
