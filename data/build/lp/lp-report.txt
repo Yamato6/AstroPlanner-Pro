@@ -1,0 +1,4 @@
+# light-pollution grids (World Atlas 2015, artificial zenith brightness, mcd/m²)
+source: 43200 × 17406 cells of 30″, north 85.054167°, west -180°
+mexico-30s.bin.gz: 2281 × 3841 cells of 30″, N 33.0042 S 13.9959 W -118 E -85.9917, 1,734,438 bytes
+world-5m.bin.gz: 1741 × 4320 cells of 300″, N 85.0542 S -60.0291 W -180 E 179.9999, 1,355,187 bytes

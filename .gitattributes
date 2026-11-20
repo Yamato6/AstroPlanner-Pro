@@ -16,3 +16,4 @@
 *.ico     binary
 *.sqlite  binary
 *.bin     binary
+*.gz      binary

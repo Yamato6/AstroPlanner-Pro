@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <TargetFramework>net10.0</TargetFramework>
@@ -23,6 +23,9 @@
     <EmbeddedResource Include="SeedData\cities.json" LogicalName="SeedData/cities.json" />
     <EmbeddedResource Include="..\..\data\build\catalogs.sqlite" LogicalName="Catalogs/catalogs.sqlite" />
     <EmbeddedResource Include="Storage\Migrations\*.sql" LogicalName="Migrations/%(Filename)%(Extension)" />
+    <!-- Light-pollution grids (World Atlas 2015, CC BY-NC 4.0), built by build-lp-grid. WithCulture=false:
+         otherwise MSBuild reads ".bin" as a culture name (Bini) and moves them to a satellite assembly. -->
+    <EmbeddedResource Include="..\..\data\build\lp\*.bin.gz" LogicalName="LightPollution/%(Filename)%(Extension)" WithCulture="false" />
   </ItemGroup>
 
 </Project>

@@ -77,7 +77,8 @@ lists M102 as a duplicate of M101; the app keeps the usual identification, as v1
 | Source | Falchi, F. et al. (2016), "The new world atlas of artificial night sky brightness", *Science Advances* 2, e1600377. Data: GFZ Data Services, **DOI 10.5880/GFZ.1.4.2016.001** |
 | Files | `https://datapub.gfz.de/download/10.5880.GFZ.1.4.2016.001/World_Atlas_2015.zip` (653 MB; `World_Atlas_2015.tif` ≈ 2.9 GB unzipped) — downloaded by hand into `data/raw/`, never committed |
 | License | **CC BY-NC 4.0** — see the evidence below |
-| Used for | From M3: compact light-pollution grids (Mexico 30″, world 5′) and the zenith sky brightness of each site. Nothing is built or shipped from it yet. |
+| SHA-256 | `World_Atlas_2015.tif`: `9725566ed4fcf1a8fa311654143bb024c4fe2a792b85356be99adce07e1e83c1` (3 012 927 014 bytes; checked by `build-lp-grid`) |
+| Used for | Since M3: the compact grids `data/build/lp/mexico-30s.bin.gz` (30″) and `world-5m.bin.gz` (5′), 3.1 MB in total and embedded in the app (docs/data-pipeline.md), giving the zenith sky brightness of each site. Only these derived grids are distributed. |
 
 **License evidence (checked 2026-11-19).** The `README.txt` inside the 2016 zip says further
 distribution is prohibited. The DOI landing page at GFZ returned HTTP 404, so the authoritative
