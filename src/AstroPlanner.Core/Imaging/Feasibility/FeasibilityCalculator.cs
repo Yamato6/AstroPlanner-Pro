@@ -60,76 +60,17 @@ public sealed class FeasibilityCalculator(IAstronomyService astronomy)
 
         var c = request.Constants;
         var rig = request.Rig;
-        var middleUtc = night.TimesUtc.Length > 0 ? night.TimesUtc[night.TimesUtc.Length / 2] : DateTime.UtcNow;
-
-        // --- Position of date ---------------------------------------------------------------
-        var planet = target.IsPlanet ? _astronomy.GetPlanetPosition(target, middleUtc) : null;
-        var ofDate = planet?.Equatorial ?? Precession.Precess(target.Coordinates, Precession.J2000JulianDate, night.MiddleJulianDate);
+        var p = Prepare(target, request, night);
+        var (ofDate, scale, surfaceRate, sampling) = (p.OfDate, p.ScaleArcsecPerPixel, p.SurfaceRate, p.Sampling);
+        var (majorArcmin, minorArcmin, pointLike, assumed, surfaceBrightness) =
+            (p.MajorArcmin, p.MinorArcmin, p.PointLike, p.Assumed, p.SurfaceBrightness);
         var (tx, ty, tz) = NightSkySamples.UnitVector(ofDate);
-
-        // --- Photometry and optics (spec §8.5) ------------------------------------------------
-        var scale = rig.ImageScaleArcsecPerPixel;
-        var areaCm2 = Math.PI * Math.Pow(rig.ApertureMm / 20.0, 2);
-        var band = rig.Camera.Color == SensorColor.Color ? c.ColorBandFactor : c.MonoBandFactor;
-        var throughput = rig.Optic.Transmission * rig.Camera.QuantumEfficiency * band;
-        // Electrons per second per pixel of a surface of 1 mag/arcsec² = 0 (scaled by 10^(−0.4·SB) below).
-        var surfaceRate = c.PhotonZeroPoint * areaCm2 * throughput * scale * scale;
-        var sampling = OpticsMath.SamplingFor(c.SeeingArcsec, scale);
-
-        // Size: the catalogued axes, or the planet's disc; none = a point (stars).
-        var majorArcmin = planet is not null ? planet.ApparentDiameterArcsec / 60 : target.MajorAxisArcmin ?? 0;
-        var minorArcmin = planet is not null ? majorArcmin : target.MinorAxisArcmin is > 0 ? target.MinorAxisArcmin.Value : majorArcmin;
-        var pointLike = !(majorArcmin > 0) || target.Type is CelestialObjectType.Star or CelestialObjectType.DoubleStar;
-        var magnitude = planet?.Magnitude ?? target.ApparentMagnitude;
-        var assumed = false;
-        double surfaceBrightness;
-        if (pointLike)
-        {
-            if (!double.IsFinite(magnitude))
-            {
-                magnitude = 12;
-                assumed = true;
-            }
-
-            // Half the light in the seeing core of π/4·FWHM² pixels, expressed as an equivalent
-            // surface brightness so that both cases share the per-pixel rate below.
-            var fwhmPixels = Math.Max(1, sampling.FwhmPixels);
-            var corePixels = Math.Max(1, Math.PI / 4 * fwhmPixels * fwhmPixels);
-            surfaceBrightness = magnitude + 2.5 * Math.Log10(2 * corePixels * scale * scale);
-        }
-        else
-        {
-            var major = majorArcmin;
-            var minor = minorArcmin;
-            double mean;
-            if (double.IsFinite(magnitude))
-            {
-                // Mean V surface brightness over the catalogued ellipse.
-                mean = magnitude + 2.5 * Math.Log10(Math.PI / 4 * major * minor * 3600);
-            }
-            else if (target.SurfaceBrightness is { } catalogued)
-            {
-                mean = catalogued;
-            }
-            else
-            {
-                mean = c.AssumedSurfaceBrightness;
-                assumed = true;
-            }
-
-            // A planet's disc is evenly lit; nebulae and galaxies are brighter inside.
-            surfaceBrightness = planet is not null ? mean : mean - c.CoreBrighteningMagnitudes;
-        }
 
         var framing = Frame(majorArcmin, minorArcmin, rig, scale, pointLike, c);
         var (mountLimit, mountSource) = ExposureLimits.MountLimit(rig, ofDate.DeclinationDegrees);
 
         // --- Walk the night ------------------------------------------------------------------
-        var raDegrees = ofDate.RightAscensionHours * 15.0;
-        var declination = ofDate.DeclinationDegrees * DegreesToRadians;
-        var sinDec = Math.Sin(declination);
-        var cosDec = Math.Cos(declination);
-        var mask = request.HorizonMask is { IsFlat: false } m ? m : null;
+        var track = new Track(ofDate, request, night);
         var includeTwilight = request.Darkness == DarknessDefinition.Nautical;
 
         var anyDark = false;
@@ -142,21 +83,9 @@ public sealed class FeasibilityCalculator(IAstronomyService astronomy)
 
         for (var k = 0; k < night.Count; k++)
         {
-            var hourAngle = (night.LocalSiderealTimeDegrees[k] - raDegrees) * DegreesToRadians;
-            var sinAltitude = Math.Clamp(night.SinLatitude * sinDec + night.CosLatitude * cosDec * Math.Cos(hourAngle), -1, 1);
-            var altitude = Refraction.ApparentAltitude(Math.Asin(sinAltitude) / DegreesToRadians, night.RefractionScale);
+            var (_, altitude, usable) = track.At(k);
             maximumAltitude = Math.Max(maximumAltitude, altitude);
             anyDark |= night.IsDark[k];
-
-            var threshold = request.MinimumAltitudeDegrees;
-            if (mask is not null && altitude >= threshold - AzimuthMarginDegrees)
-            {
-                var azimuth = Math.Atan2(-cosDec * Math.Sin(hourAngle),
-                    sinDec * night.CosLatitude - cosDec * Math.Cos(hourAngle) * night.SinLatitude) / DegreesToRadians;
-                threshold = Math.Max(threshold, mask.AltitudeAt(AstronomyMath.NormalizeDegrees(azimuth)));
-            }
-
-            var usable = night.IsDark[k] && altitude >= threshold && night.DurationsSeconds[k] > 0;
             if (!usable)
             {
                 if (runStart >= 0)
@@ -329,6 +258,170 @@ public sealed class FeasibilityCalculator(IAstronomyService astronomy)
         }
 
         DateTime Local(DateTime utc) => TimeZoneConversion.ToLocal(utc, request.TimeZone);
+    }
+
+    /// <summary>
+    /// The target sample by sample on an already sampled night: altitude, hour angle, whether it
+    /// can be imaged, and how fast it gathers signal-to-noise there — what the session scheduler
+    /// (<see cref="Planning.SessionScheduler"/>) needs to place it in the night.
+    /// </summary>
+    public TargetNightProfile Profile(CelestialObject target, FeasibilityRequest request, NightSkySamples night)
+    {
+        ArgumentNullException.ThrowIfNull(target);
+        ArgumentNullException.ThrowIfNull(request);
+        ArgumentNullException.ThrowIfNull(night);
+
+        var c = request.Constants;
+        var p = Prepare(target, request, night);
+        var (tx, ty, tz) = NightSkySamples.UnitVector(p.OfDate);
+        var track = new Track(p.OfDate, request, night);
+        var includeTwilight = request.Darkness == DarknessDefinition.Nautical;
+        var altitudes = new double[night.Count];
+        var hourAngles = new double[night.Count];
+        var usable = new bool[night.Count];
+        var quality = new double[night.Count];
+        for (var k = 0; k < night.Count; k++)
+        {
+            var (hourAngle, altitude, isUsable) = track.At(k);
+            altitudes[k] = altitude;
+            hourAngles[k] = Math.IEEERemainder(hourAngle / DegreesToRadians, 360.0);
+            usable[k] = isUsable;
+            if (!isUsable)
+            {
+                continue;
+            }
+
+            var separation = night.MoonSeparationDegrees(k, tx, ty, tz);
+            var sky = SkyBackground.At(request.ZenithSqm, altitude, night.SunAltitudeDegrees[k], includeTwilight,
+                night.MoonAltitudeDegrees[k], night.MoonPhaseAngleDegrees[k], separation, c.ExtinctionCoefficient, c.BrighteningPerAirmass);
+            var extinction = c.ExtinctionCoefficient * Math.Min(Airmass.KastenYoung(altitude), 40);
+            var signal = p.SurfaceRate * Math.Pow(10, -0.4 * (p.SurfaceBrightness + extinction));
+            var background = p.SurfaceRate * Math.Pow(10, -0.4 * sky.TotalSqm);
+            // SNR² gathered per second (shot-noise limited), scaled by the clear fraction.
+            quality[k] = signal * signal / (signal + background) * (1 - night.CloudFraction[k]);
+        }
+
+        return new TargetNightProfile(altitudes, hourAngles, usable, quality);
+    }
+
+    /// <summary>Altitude and "can be imaged" of a fixed position, sample by sample.</summary>
+    private sealed class Track
+    {
+        private readonly NightSkySamples _night;
+        private readonly HorizonMask? _mask;
+        private readonly double _minimumAltitude;
+        private readonly double _raDegrees;
+        private readonly double _sinDec;
+        private readonly double _cosDec;
+
+        public Track(EquatorialCoordinates ofDate, FeasibilityRequest request, NightSkySamples night)
+        {
+            _night = night;
+            _mask = request.HorizonMask is { IsFlat: false } m ? m : null;
+            _minimumAltitude = request.MinimumAltitudeDegrees;
+            _raDegrees = ofDate.RightAscensionHours * 15.0;
+            var declination = ofDate.DeclinationDegrees * DegreesToRadians;
+            _sinDec = Math.Sin(declination);
+            _cosDec = Math.Cos(declination);
+        }
+
+        /// <returns>Hour angle (radians, unnormalised), apparent altitude (°) and whether sample k is usable.</returns>
+        public (double HourAngle, double Altitude, bool Usable) At(int k)
+        {
+            var night = _night;
+            var hourAngle = (night.LocalSiderealTimeDegrees[k] - _raDegrees) * DegreesToRadians;
+            var sinAltitude = Math.Clamp(night.SinLatitude * _sinDec + night.CosLatitude * _cosDec * Math.Cos(hourAngle), -1, 1);
+            var altitude = Refraction.ApparentAltitude(Math.Asin(sinAltitude) / DegreesToRadians, night.RefractionScale);
+
+            var threshold = _minimumAltitude;
+            if (_mask is not null && altitude >= threshold - AzimuthMarginDegrees)
+            {
+                var azimuth = Math.Atan2(-_cosDec * Math.Sin(hourAngle),
+                    _sinDec * night.CosLatitude - _cosDec * Math.Cos(hourAngle) * night.SinLatitude) / DegreesToRadians;
+                threshold = Math.Max(threshold, _mask.AltitudeAt(AstronomyMath.NormalizeDegrees(azimuth)));
+            }
+
+            return (hourAngle, altitude, night.IsDark[k] && altitude >= threshold && night.DurationsSeconds[k] > 0);
+        }
+    }
+
+    /// <summary>Position of date, photometry and size of a target: what does not change during the night.</summary>
+    private sealed record Prepared(
+        EquatorialCoordinates OfDate,
+        double ScaleArcsecPerPixel,
+        double SurfaceRate,
+        Sampling Sampling,
+        double MajorArcmin,
+        double MinorArcmin,
+        bool PointLike,
+        bool Assumed,
+        double SurfaceBrightness);
+
+    private Prepared Prepare(CelestialObject target, FeasibilityRequest request, NightSkySamples night)
+    {
+        var c = request.Constants;
+        var rig = request.Rig;
+        var middleUtc = night.TimesUtc.Length > 0 ? night.TimesUtc[night.TimesUtc.Length / 2] : DateTime.UtcNow;
+
+        // --- Position of date ---------------------------------------------------------------
+        var planet = target.IsPlanet ? _astronomy.GetPlanetPosition(target, middleUtc) : null;
+        var ofDate = planet?.Equatorial ?? Precession.Precess(target.Coordinates, Precession.J2000JulianDate, night.MiddleJulianDate);
+
+        // --- Photometry and optics (spec §8.5) ------------------------------------------------
+        var scale = rig.ImageScaleArcsecPerPixel;
+        var areaCm2 = Math.PI * Math.Pow(rig.ApertureMm / 20.0, 2);
+        var band = rig.Camera.Color == SensorColor.Color ? c.ColorBandFactor : c.MonoBandFactor;
+        var throughput = rig.Optic.Transmission * rig.Camera.QuantumEfficiency * band;
+        // Electrons per second per pixel of a surface of 1 mag/arcsec² = 0 (scaled by 10^(−0.4·SB) below).
+        var surfaceRate = c.PhotonZeroPoint * areaCm2 * throughput * scale * scale;
+        var sampling = OpticsMath.SamplingFor(c.SeeingArcsec, scale);
+
+        // Size: the catalogued axes, or the planet's disc; none = a point (stars).
+        var majorArcmin = planet is not null ? planet.ApparentDiameterArcsec / 60 : target.MajorAxisArcmin ?? 0;
+        var minorArcmin = planet is not null ? majorArcmin : target.MinorAxisArcmin is > 0 ? target.MinorAxisArcmin.Value : majorArcmin;
+        var pointLike = !(majorArcmin > 0) || target.Type is CelestialObjectType.Star or CelestialObjectType.DoubleStar;
+        var magnitude = planet?.Magnitude ?? target.ApparentMagnitude;
+        var assumed = false;
+        double surfaceBrightness;
+        if (pointLike)
+        {
+            if (!double.IsFinite(magnitude))
+            {
+                magnitude = 12;
+                assumed = true;
+            }
+
+            // Half the light in the seeing core of π/4·FWHM² pixels, expressed as an equivalent
+            // surface brightness so that both cases share the per-pixel rate below.
+            var fwhmPixels = Math.Max(1, sampling.FwhmPixels);
+            var corePixels = Math.Max(1, Math.PI / 4 * fwhmPixels * fwhmPixels);
+            surfaceBrightness = magnitude + 2.5 * Math.Log10(2 * corePixels * scale * scale);
+        }
+        else
+        {
+            var major = majorArcmin;
+            var minor = minorArcmin;
+            double mean;
+            if (double.IsFinite(magnitude))
+            {
+                // Mean V surface brightness over the catalogued ellipse.
+                mean = magnitude + 2.5 * Math.Log10(Math.PI / 4 * major * minor * 3600);
+            }
+            else if (target.SurfaceBrightness is { } catalogued)
+            {
+                mean = catalogued;
+            }
+            else
+            {
+                mean = c.AssumedSurfaceBrightness;
+                assumed = true;
+            }
+
+            // A planet's disc is evenly lit; nebulae and galaxies are brighter inside.
+            surfaceBrightness = planet is not null ? mean : mean - c.CoreBrighteningMagnitudes;
+        }
+
+        return new Prepared(ofDate, scale, surfaceRate, sampling, majorArcmin, minorArcmin, pointLike, assumed, surfaceBrightness);
     }
 
     private static FramingAssessment Frame(double majorArcmin, double minorArcmin, RigSetup rig, double scale, bool pointLike, FeasibilityConstants c)
