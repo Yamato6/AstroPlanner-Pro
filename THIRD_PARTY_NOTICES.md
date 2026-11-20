@@ -63,6 +63,12 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 Weather data by [Open-Meteo.com](https://open-meteo.com/), under CC BY 4.0, fetched at run time.
 
+### Seeing and transparency — 7Timer!
+
+Astronomical forecast by [7Timer!](https://www.7timer.info/) (Ye, Q.-Z. 2011, *PASP* 123, 113),
+fetched at run time. Its data is free to use and redistribute for non-commercial purposes;
+AstroPlanner Pro is free.
+
 ## Sky data (shipped since M2)
 
 ### d3-celestial — BSD-3-Clause
@@ -119,6 +125,8 @@ the About window.
 | .NET, WPF, Microsoft.Extensions.DependencyInjection, Microsoft.Data.Sqlite | MIT |
 | SQLitePCLRaw (bundled SQLite) | Apache-2.0; SQLite itself is public domain |
 | CommunityToolkit.Mvvm | MIT |
+| Microsoft.Extensions.Http, Microsoft.Extensions.Http.Resilience | MIT |
+| Polly (via Microsoft.Extensions.Http.Resilience) | BSD-3-Clause — Copyright © App vNext |
 | ScottPlot, SkiaSharp | MIT |
 | PDFsharp 6.2.4 (session plan PDF) | MIT — © empira Software GmbH (PDFsharp Team). Pinned on purpose: PDFsharp 6.5.0 and later are AGPL-3.0-only and are not used |
 | System.Security.Cryptography.Pkcs, Microsoft.Extensions.Logging.Abstractions (PDFsharp dependencies) | MIT |

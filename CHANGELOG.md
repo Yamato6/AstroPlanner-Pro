@@ -6,6 +6,30 @@ versions follow [Semantic Versioning](https://semver.org/). Versions up to 1.0.0
 
 ## [Unreleased] — 2.0.0
 
+### M4 — Online enrichment (part 1: forecasts, cache and toggles)
+
+#### Added
+- **Seeing and transparency** from 7Timer! ASTRO (3-hour steps, 3 days). The forecast seeing
+  replaces the fixed 2.5″ of the feasibility model, and the haze over 7Timer!'s clearest class is
+  added to the site's extinction. Both appear as reasons in "Why this verdict?" (see
+  `docs/feasibility-model.md` §11).
+- **Dew and wind**: Open-Meteo now also gives temperature, dew point, wind and gusts. *Tonight*
+  has a card with the seeing, transparency, dew margin and gusts, plus warnings for dew (from what
+  time) and wind (with a gust limit by mount: camera on a tripod or telescope).
+- **Disk cache** of online answers (`%LocalAppData%\AstroPlannerPro\cache`, 200 MB, least
+  recently used first out). A fresh answer avoids the request. When a service cannot be reached,
+  the last answer is used whatever its age and marked "as of HH:mm, offline".
+- **Online status** dot in the top bar (online, offline with saved data, off), with one line per
+  service in its tooltip.
+- **Settings → Internet**: a toggle for 7Timer!, a line under each service saying what it sends,
+  and *Clear cache* with its size.
+- One named HttpClient per service with the standard resilience pipeline: 2 retries with backoff,
+  a circuit breaker, and 15 s in all.
+
+#### Changed
+- An offline answer from the cache is not retried before 5 minutes, like a failure.
+- The top bar's location column trims its text instead of overlapping the rig selector.
+
 ### M3 — Equipment & feasibility (part 2: session planner)
 
 #### Added

@@ -65,7 +65,10 @@
   above your minimum altitude and your local horizon, computed for the whole catalog in the
   background.
 - 🌙 **The real night**: sunset and sunrise, astronomical darkness, Moon phase and a warning when its glare gets in the way.
-- ☁️ **Hourly clouds**: Open-Meteo forecast and the clearest hour of the night.
+- ☁️ **Tonight's conditions**: hourly clouds (Open-Meteo), seeing and transparency (7Timer!) and
+  warnings for dew (air close to its dew point) and wind (gusts too strong for your mount). The
+  forecast seeing and haze refine the verdicts. Forecasts are kept on disk, so offline you see the
+  last one, marked with its time.
 - 🌠 **Live sky**: a GPU-rendered sky dome (three.js in WebView2) with 83k stars, constellations,
   the Milky Way, 13k deep-sky objects and the Sun, Moon (with its phase) and planets, all
   positioned by the same tested astronomy core as the tables. Play time at up to ×3600, step by
@@ -89,8 +92,8 @@
   for import (the v1 files are only read).
 - ⏱️ **Live mode**: follows the clock and refreshes everything every minute.
 
-It works offline; the internet is only used for the cloud forecast and the new-version notice, and both
-can be turned off.
+It works offline; the internet is only used for the forecasts and the new-version notice, each of
+which can be turned off.
 
 ## Where it is going (v2.0)
 
@@ -121,10 +124,15 @@ can be installed side by side.
 
 AstroPlanner Pro has no accounts and collects no data. It only connects to:
 
-- **open-meteo.com**, for the forecast, sending your location **rounded to ~1 km**;
-- **api.github.com**, to check for a new version.
+- **api.open-meteo.com**, for clouds, dew point and wind, sending your location **rounded to
+  ~1 km**;
+- **www.7timer.info**, for seeing and transparency, also sending your location **rounded to
+  ~1 km**;
+- **api.github.com**, to check for a new version (nothing about you is sent).
 
-Both can be turned off in **Settings → Internet connection**.
+Each one can be turned off in **Settings → Internet connection**, where the saved answers (kept in
+`%LocalAppData%\AstroPlannerPro\cache` for offline use) can be cleared. The dot in the top bar
+shows whether the services are online, offline (showing saved data) or off.
 
 ## For developers
 
