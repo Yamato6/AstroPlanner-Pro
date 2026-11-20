@@ -47,7 +47,11 @@ public sealed class BridgeContractTests
             [SkyMessageTypes.SelectObject] = SkyMessageCodec.SelectObject(new SelectionPayload(SkyObjectKinds.DeepSky, "M42")),
             [SkyMessageTypes.CenterOn] = SkyMessageCodec.CenterOn(SkyBridgeMapper.CenterOn(new EquatorialCoordinates(5.5881, -5.3911), 30)),
             [SkyMessageTypes.SetViewMode] = SkyMessageCodec.SetViewMode(new ViewModePayload(SkyViewModes.AllSky)),
-            [SkyMessageTypes.SetTheme] = SkyMessageCodec.SetTheme(new ThemePayload("dark"))
+            [SkyMessageTypes.SetTheme] = SkyMessageCodec.SetTheme(new ThemePayload("dark")),
+            [SkyMessageTypes.SetFov] = SkyMessageCodec.SetFov(new FovPayload(true, 3.3652, 2.2483, 15,
+                SkyBridgeMapper.ToVector(SkyFrame.FromEquatorial(new EquatorialCoordinates(5.5881, -5.3911))), "APS-C · 400 mm")),
+            [SkyMessageTypes.SetSkyAppearance] = SkyMessageCodec.SetSkyAppearance(SkyBridgeMapper.Appearance(
+                Aguascalientes, Utc, TimeSpan.FromMinutes(30), TimeSpan.FromMinutes(10), siteSqm: 21.3))
         };
     }
 
@@ -186,6 +190,28 @@ public sealed class BridgeContractTests
         payload.Bodies[2].Name.Should().Be("MERCURY");
         payload.Bodies.Should().AllSatisfy(b => b.Track.Vectors.Should().HaveCount(145 * 3));
         payload.Bodies[0].Track.StartUtc.Should().Be("2026-03-19T14:00:00.000Z");
+    }
+
+    [Fact]
+    public void Appearance_CoversTheWindow_FromDaylightToADarkNight()
+    {
+        var payload = SkyBridgeMapper.Appearance(Aguascalientes, Utc, TimeSpan.FromHours(12), TimeSpan.FromMinutes(10), siteSqm: null);
+
+        payload.StartUtc.Should().Be("2026-03-19T14:00:00.000Z");
+        payload.StepSeconds.Should().Be(600);
+        payload.ZenithSqm.Should().HaveCount(145);
+        payload.LimitingMagnitude.Should().HaveCount(145);
+        payload.ZenithSqm.Max().Should().BeApproximately(22.0, 0.05, "new Moon: the night is as dark as a natural sky");
+        payload.ZenithSqm.Min().Should().BeLessThan(6, "the window starts in daylight");
+    }
+
+    [Fact]
+    public void Decode_FovChanged_ChecksTheVectorAndTheRotation()
+    {
+        SkyMessageCodec.Decode("""{"v":1,"type":"fovChanged","payload":{"x":0,"y":0.6,"z":0.8,"rotationDegrees":359.5}}""", out _)!
+            .Payload.Should().Be(new FovChangedPayload(0, 0.6, 0.8, 359.5));
+        SkyMessageCodec.Decode("""{"v":1,"type":"fovChanged","payload":{"x":0,"y":0,"z":0,"rotationDegrees":0}}""", out _).Should().BeNull();
+        SkyMessageCodec.Decode("""{"v":1,"type":"fovChanged","payload":{"x":1,"y":0,"z":0,"rotationDegrees":-1}}""", out _).Should().BeNull();
     }
 
     private static readonly JsonSerializerOptions Indented = new() { WriteIndented = true };

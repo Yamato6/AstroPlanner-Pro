@@ -1,4 +1,4 @@
-﻿<p align="center">
+<p align="center">
   <img src="src/AstroPlanner.UI/Assets/AstroPlanner.png" width="96" alt="AstroPlanner Pro icon">
 </p>
 
@@ -18,14 +18,20 @@
 
 > **Status: work in progress (v2.0 under development).** AstroPlanner Pro is based on
 > [AstroPlanner v1](https://github.com/Yamato6/AstroPlanner), whose full history it keeps.
-> Milestones M0 (English, .NET 10, new architecture) and M1 (data foundation: the full NGC/IC
-> catalog, saved sites, refined events, v1 import) are done. The roadmap (live 2D/3D sky,
-> equipment and capture-feasibility model, online enrichment, comets and satellites) is in the
-> [specification](ASTROPLANNER_PRO_SPEC.md).
+> Milestones M0 (English, .NET 10, new architecture), M1 (data foundation: the full NGC/IC
+> catalog, saved sites, refined events, v1 import) and M2 (the live 2D/3D sky) are done. The
+> roadmap (equipment and capture-feasibility model, online enrichment, comets and satellites) is
+> in the [specification](ASTROPLANNER_PRO_SPEC.md).
 
 ![The planner: the NGC/IC catalog with sizes, tonight's maximum altitude and best window, the dark night, Moon, clouds and the altitude of the selected object](docs/screenshots/planner.png)
 
 ![The live sky: looking north from Mexico City, with constellations, Messier objects, the Milky Way outline and the frame-rate overlay](docs/screenshots/sky.png)
+
+![The all-sky chart: the whole sky above the horizon, zenith in the middle, north up and east left, with the camera frame on M42](docs/screenshots/sky-allsky.png)
+
+![A finder chart of M42: gnomonic, north up, east left, star magnitudes, the 650 mm camera frame and a scale bar](docs/screenshots/sky-finder.png)
+
+![The 3D sky with the site's horizon profile (trees and buildings) drawn as a silhouette](docs/screenshots/sky-horizon.png)
 
 ## What it does today
 
@@ -42,8 +48,14 @@
   the Milky Way, 13k deep-sky objects and the Sun, Moon (with its phase) and planets, all
   positioned by the same tested astronomy core as the tables. Play time at up to ×3600, step by
   minutes to days, find any object, click to select it and open its details.
-- 📍 **Saved sites**: home, dark sites… each with its IANA and Windows time zone and a horizon
-  profile (its editor arrives with the 2D charts).
+- 🗺️ **All-sky and finder charts**: the whole sky as on v1's chart (north up, east left), and a
+  finder chart of any object (gnomonic, star magnitudes, scale bar) exported as PNG.
+- 📷 **Camera frame**: your sensor and focal length drawn on the sky at its true size; drag it,
+  rotate it, it follows the selection.
+- 🌆 **Sky brightness**: twilight, moonlight and your site's light pollution (SQM) tint the sky
+  and hide the faint stars, so you see how washed-out the night will be.
+- 📍 **Saved sites**: home, dark sites… each with its IANA and Windows time zone, a horizon
+  profile (trees, buildings) edited by azimuth, and its measured sky brightness (SQM).
 - 📋 **My plan**: tonight's list in the best observing order, with notes, as CSV or printed.
 - 📓 **Logbook**: record what you observe and track your Messier marathon and Caldwell progress.
 - ↪️ **Import from AstroPlanner v1**: on first run, your v1 settings, plan and logbook are offered
@@ -92,8 +104,8 @@ Both can be turned off in **Settings → Internet connection**.
 ```bash
 dotnet build AstroPlanner.slnx -warnaserror
 dotnet run --project src/AstroPlanner.UI
-dotnet test AstroPlanner.slnx          # ~460 tests, no network
-cd src/sky-renderer && npm ci && npm test   # renderer: ~130 Vitest tests (the UI build runs npm itself)
+dotnet test AstroPlanner.slnx          # ~500 tests, no network
+cd src/sky-renderer && npm ci && npm test   # renderer: ~150 Vitest tests (the UI build runs npm itself)
 dotnet run --project tools/AstroPlanner.DataBuilder -- all   # rebuild the catalogs (downloads the sources)
 ```
 

@@ -7,6 +7,9 @@ uniform mat3 uFrame;
 uniform vec4 uRefraction;      // a, b, c, d of Saemundsson's formula
 uniform float uRefractionMin;  // below this true altitude no refraction is applied
 uniform float uApplyRefraction;
+uniform float uMode;           // 0 dome (perspective camera), 1 all-sky, 2 finder (gnomonic)
+uniform mat3 uFinder;          // finder: rows east, north, center (J2000)
+uniform vec2 uChartScale;      // all-sky: clip units per horizon radius; finder: per unit of tan(angle)
 
 varying float vAltitude;
 
@@ -24,7 +27,23 @@ vec3 apparentWorld(vec3 j2000) {
   return vec3(n.y, n.z, -n.x);
 }
 
-vec4 toClip(vec3 world) {
+// Clip position of a J2000 direction in the current view mode (mirrors render/projection.ts).
+vec4 skyClip(vec3 j2000) {
+  if (uMode > 1.5) {
+    // Gnomonic: w = cos(distance from the center), so the GPU clips the far hemisphere itself.
+    vec3 p = uFinder * j2000;
+    vAltitude = 90.0;
+    return vec4(-p.x * uChartScale.x, p.y * uChartScale.y, 0.0, p.z);
+  }
+  vec3 world = apparentWorld(j2000);
+  if (uMode > 0.5) {
+    // Zenithal equidistant, north up, east left.
+    vec2 northEast = vec2(-world.z, world.x);
+    float horizontal = length(northEast);
+    vec2 direction = horizontal > 1e-9 ? northEast / horizontal : vec2(1.0, 0.0);
+    float r = (90.0 - vAltitude) / 90.0;
+    return vec4(-direction.y * r * uChartScale.x, direction.x * r * uChartScale.y, 0.0, 1.0);
+  }
   return projectionMatrix * viewMatrix * vec4(world, 1.0);
 }
 `;
@@ -40,12 +59,12 @@ attribute float magnitude;
 attribute vec3 starColor;
 uniform float uLimit;
 uniform float uPixelRatio;
+uniform float uStarScale;  // finder chart: larger, firmer dots
 varying vec3 vColor;
 varying float vAlpha;
 
 void main() {
-  vec3 world = apparentWorld(position);
-  gl_Position = toClip(world);
+  gl_Position = skyClip(position);
   if (magnitude > uLimit) {
     gl_PointSize = 0.0;
     vAlpha = 0.0;
@@ -53,8 +72,9 @@ void main() {
   }
   // Relative flux above the limit drives size and brightness.
   float flux = pow(10.0, -0.4 * (magnitude - uLimit));
-  gl_PointSize = clamp(1.3 * pow(flux, 0.17), 1.3, 9.0) * uPixelRatio;
-  vAlpha = clamp(0.3 * pow(flux, 0.3), 0.3, 1.0);
+  gl_PointSize = clamp(1.3 * pow(flux, 0.17), 1.3, 9.0) * uStarScale * uPixelRatio;
+  float minimumAlpha = uStarScale > 1.0 ? 0.65 : 0.3;
+  vAlpha = clamp(0.3 * pow(flux, 0.3), minimumAlpha, 1.0);
   vColor = starColor;
 }
 `;
@@ -80,7 +100,7 @@ varying float vGroup;
 
 void main() {
   vGroup = group;
-  gl_Position = toClip(apparentWorld(position));
+  gl_Position = skyClip(position);
 }
 `;
 
@@ -116,14 +136,13 @@ varying float vAngle;
 varying float vHighlight;
 varying float vSize;
 
-vec2 screen(vec3 world) {
-  vec4 clip = toClip(world);
+vec2 screen(vec3 j2000) {
+  vec4 clip = skyClip(j2000);
   return clip.xy / clip.w * 0.5 * uViewport;
 }
 
 void main() {
-  vec3 world = apparentWorld(position);
-  gl_Position = toClip(world);
+  gl_Position = skyClip(position);
   vHighlight = highlight;
   vShape = shape;
 
@@ -139,14 +158,14 @@ void main() {
   // Screen directions of celestial north and east at this point, to orient the ellipse.
   vec3 north = normalize(vec3(0.0, 0.0, 1.0) - position * position.z + vec3(1e-9));
   vec3 east = normalize(cross(vec3(0.0, 0.0, 1.0), position) + vec3(1e-9));
-  vec2 here = screen(world);
-  vec2 n = normalize(screen(apparentWorld(normalize(position + north * 1e-3))) - here);
-  vec2 e = normalize(screen(apparentWorld(normalize(position + east * 1e-3))) - here);
+  vec2 here = screen(position);
+  vec2 n = normalize(screen(normalize(position + north * 1e-3)) - here);
+  vec2 e = normalize(screen(normalize(position + east * 1e-3)) - here);
   float pa = positionAngle < 0.0 ? 0.0 : radians(positionAngle);
   vec2 axis = cos(pa) * n + sin(pa) * e;
   vAngle = atan(axis.y, axis.x);
   vRatio = majorAxis > 0.0 ? clamp(minorAxis / majorAxis, 0.15, 1.0) : 1.0;
-  apparentWorld(position); // the offsets above overwrote vAltitude
+  skyClip(position); // the offsets above overwrote vAltitude
 
   float size = clamp(sizePx, 9.0, 480.0) + (highlight > 1.5 ? 10.0 : 0.0);
   vSize = size * uPixelRatio;
@@ -207,5 +226,65 @@ varying vec3 vWorld;
 void main() {
   float depth = clamp(-normalize(vWorld).y * 6.0, 0.0, 1.0);
   gl_FragColor = vec4(mix(uHorizon, uGround, depth), 1.0);
+}
+`;
+
+// Sky backdrop of the dome: an upper hemisphere colored from the zenith to the (brighter) horizon.
+export const skyDomeVertex = /* glsl */ `
+varying vec3 vWorld;
+void main() {
+  vWorld = position;
+  gl_Position = projectionMatrix * viewMatrix * vec4(position, 1.0);
+}
+`;
+
+const skyGradient = /* glsl */ `
+uniform vec3 uZenithColor;
+uniform vec3 uHorizonColor;
+vec3 skyGradient(float sinAltitude) {
+  return mix(uHorizonColor, uZenithColor, pow(clamp(sinAltitude, 0.0, 1.0), 0.35));
+}
+`;
+
+export const skyDomeFragment = /* glsl */ `
+${skyGradient}
+varying vec3 vWorld;
+void main() {
+  gl_FragColor = vec4(skyGradient(normalize(vWorld).y), 1.0);
+}
+`;
+
+// Sky backdrop of the all-sky chart: a disc in clip space, r = 1 at the horizon.
+export const skyDiscVertex = /* glsl */ `
+uniform vec2 uChartScale;
+varying float vRadius;
+void main() {
+  vRadius = length(position.xy);
+  gl_Position = vec4(position.x * uChartScale.x, position.y * uChartScale.y, 0.0, 1.0);
+}
+`;
+
+export const skyDiscFragment = /* glsl */ `
+${skyGradient}
+varying float vRadius;
+void main() {
+  gl_FragColor = vec4(skyGradient(sin((1.0 - vRadius) * 1.5707963)), 1.0);
+}
+`;
+
+// Horizon profile: opaque ground drawn over the sky (positions in north/east/up).
+export const silhouetteVertex = /* glsl */ `
+${common}
+void main() {
+  gl_Position = skyClip(position);
+}
+`;
+
+export const silhouetteFragment = /* glsl */ `
+uniform vec3 uGround;
+uniform vec3 uHorizon;
+varying float vAltitude;
+void main() {
+  gl_FragColor = vec4(mix(uHorizon, uGround, clamp(1.0 - vAltitude / 25.0, 0.0, 1.0) * 0.6), 1.0);
 }
 `;

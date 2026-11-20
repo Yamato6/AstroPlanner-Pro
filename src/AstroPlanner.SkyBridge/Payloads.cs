@@ -19,6 +19,8 @@ public static class SkyMessageTypes
     public const string CenterOn = "centerOn";
     public const string SetViewMode = "setViewMode";
     public const string SetTheme = "setTheme";
+    public const string SetFov = "setFov";
+    public const string SetSkyAppearance = "setSkyAppearance";
 
     // Both directions
     public const string SelectObject = "selectObject";
@@ -30,6 +32,7 @@ public static class SkyMessageTypes
     public const string ViewChanged = "viewChanged";
     public const string Stats = "stats";
     public const string Shortcut = "shortcut";
+    public const string FovChanged = "fovChanged";
     public const string Error = "error";
 }
 
@@ -83,6 +86,7 @@ public sealed record SkyLayers(
     bool Bodies = true,
     bool Labels = true,
     bool Ground = true,
+    bool SkyBrightness = true,
     double StarLimitMagnitude = 8.5,
     double DeepSkyLimitMagnitude = 12.0);
 
@@ -154,6 +158,34 @@ public sealed record ViewModePayload(string Mode);
 
 public sealed record ThemePayload(string Theme);
 
+/// <summary>A J2000 direction (unit vector).</summary>
+public sealed record VectorDto(double X, double Y, double Z);
+
+/// <summary>
+/// Camera field-of-view overlay: the sensor rectangle projected on the sky. <c>rotationDegrees</c>
+/// is the position angle of the image's "up" side, from celestial north through east (0 = north
+/// up). A null center puts it at the middle of the current view (the renderer then reports it
+/// with <c>fovChanged</c>).
+/// </summary>
+public sealed record FovPayload(
+    bool Visible,
+    double WidthDegrees,
+    double HeightDegrees,
+    double RotationDegrees,
+    VectorDto? Center,
+    string Label);
+
+/// <summary>
+/// Sampled sky brightness (Core <c>SkyAppearanceCalculator</c>), interpolated by the renderer like
+/// the body tracks: zenith brightness (mag/arcsec²) and naked-eye limiting magnitude every
+/// <c>stepSeconds</c> from <c>startUtc</c>.
+/// </summary>
+public sealed record SkyAppearancePayload(
+    string StartUtc,
+    double StepSeconds,
+    IReadOnlyList<double> ZenithSqm,
+    IReadOnlyList<double> LimitingMagnitude);
+
 /// <summary>Renderer started: versions and capabilities.</summary>
 public sealed record ReadyPayload(string RendererVersion, int WebGlVersion);
 
@@ -163,12 +195,15 @@ public sealed record FirstFramePayload(double Milliseconds);
 /// <summary>Object under the pointer (null id = nothing).</summary>
 public sealed record HoverPayload(string? Kind, string? Id, string? Label);
 
-/// <summary>Camera of the dome view, so that it can be restored.</summary>
+/// <summary>Camera of the dome view, so that it can be restored (sent in the dome mode only).</summary>
 public sealed record ViewChangedPayload(string Mode, double AzimuthDegrees, double AltitudeDegrees, double FovDegrees);
 
 /// <summary>Frame statistics (periodic, or the result of a benchmark run).</summary>
 public sealed record StatsPayload(double Fps, double P95FrameMs, int Frames, int Width, int Height, int Stars, bool Benchmark);
 
 public sealed record ShortcutPayload(string Action);
+
+/// <summary>The user dragged or rotated the field-of-view overlay: its new center (J2000) and rotation.</summary>
+public sealed record FovChangedPayload(double X, double Y, double Z, double RotationDegrees);
 
 public sealed record ErrorPayload(string Message);

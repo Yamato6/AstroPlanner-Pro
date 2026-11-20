@@ -188,5 +188,13 @@ public sealed class SkyHost : Border, ISkyChannel, IDisposable
         _webView.CoreWebView2?.PostWebMessageAsJson(json);
     }
 
+    /// <summary>Saves what the renderer shows as a PNG file.</summary>
+    public async Task CapturePngAsync(string path)
+    {
+        var core = _webView.CoreWebView2 ?? throw new InvalidOperationException("The sky renderer is not running.");
+        await using var file = File.Create(path);
+        await core.CapturePreviewAsync(CoreWebView2CapturePreviewImageFormat.Png, file).ConfigureAwait(true);
+    }
+
     public void Dispose() => _webView.Dispose();
 }

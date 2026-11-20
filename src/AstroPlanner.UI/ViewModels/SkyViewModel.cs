@@ -3,8 +3,10 @@ using System.Globalization;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using AstroPlanner.Core.Algorithms;
+using AstroPlanner.Core.Imaging;
 using AstroPlanner.Core.Models;
 using AstroPlanner.Core.Sky;
+using AstroPlanner.Core.SkyQuality;
 using AstroPlanner.SkyBridge;
 using AstroPlanner.UI.Resources;
 using AstroPlanner.UI.Services;
@@ -23,6 +25,12 @@ public sealed partial class SkyLayerToggle(string key, string name, bool isEnabl
     public partial bool IsEnabled { get; set; } = isEnabled;
 
     partial void OnIsEnabledChanged(bool value) => changed();
+}
+
+/// <summary>A camera sensor size offered in the field-of-view settings.</summary>
+public sealed record SensorPreset(string Name, double WidthMm, double HeightMm)
+{
+    public override string ToString() => Name;
 }
 
 /// <summary>
@@ -64,6 +72,9 @@ public sealed partial class SkyViewModel : ObservableObject, IDisposable
     private string? _sentSelectionId;
     private ITimer? _resyncTimer;
     private SynchronizationContext? _uiContext;
+    private readonly bool _initialized;
+    private Vector3d? _fovCenter;
+    private bool _applyingRendererFov;
 
     public SkyViewModel(
         IObserverContext context,
@@ -98,14 +109,28 @@ public sealed partial class SkyViewModel : ObservableObject, IDisposable
             Toggle("equatorialGrid", Strings.SkyLayerEquatorialGrid, _settings.EquatorialGrid),
             Toggle("ecliptic", Strings.SkyLayerEcliptic, _settings.Ecliptic),
             Toggle("meridian", Strings.SkyLayerMeridian, _settings.Meridian),
-            Toggle("ground", Strings.SkyLayerGround, _settings.Ground)
+            Toggle("ground", Strings.SkyLayerGround, _settings.Ground),
+            Toggle("skyBrightness", Strings.SkyLayerSkyBrightness, _settings.SkyBrightness)
         ];
+
+        ViewMode = _settings.ViewMode is SkyViewModes.AllSky or SkyViewModes.Finder ? _settings.ViewMode : SkyViewModes.Dome;
+        SensorWidthMm = _settings.SensorWidthMm;
+        SensorHeightMm = _settings.SensorHeightMm;
+        FocalLengthMm = _settings.FocalLengthMm;
+        FovRotationDegrees = _settings.FovRotationDegrees;
+        IsFovVisible = _settings.FovVisible;
+        SelectedSensorPreset = SensorPresets.FirstOrDefault(p => p.WidthMm == SensorWidthMm && p.HeightMm == SensorHeightMm);
+        _initialized = true;
 
         _targets.SelectionOrTableChanged += (_, _) =>
         {
             MapVersion++;
-            SendSelectionIfChanged();
+            var changed = SendSelectionIfChanged();
             OnPropertyChanged(nameof(SelectedText));
+            if (changed)
+            {
+                FollowSelection();
+            }
         };
         _plan.Changed += (_, _) =>
         {
@@ -375,6 +400,7 @@ public sealed partial class SkyViewModel : ObservableObject, IDisposable
 
         SendTime();
         OnPropertyChanged(nameof(SkyTimeText));
+        UpdateSkyBrightnessText();
     }
 
     /// <summary>When paused, the sky shows the observer context time (running at ×1 if that is "now").</summary>
@@ -403,6 +429,13 @@ public sealed partial class SkyViewModel : ObservableObject, IDisposable
 
     private void OnContextPropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
+        if (e.PropertyName == nameof(IObserverContext.ZenithSqm))
+        {
+            SendAppearance(_clock.UtcNow);
+            UpdateSkyBrightnessText();
+            return;
+        }
+
         if (e.PropertyName == nameof(IObserverContext.ObservationDateTime) && IsPlaying)
         {
             // The user picked a time in the top bar: stop the animation there.
@@ -482,6 +515,9 @@ public sealed partial class SkyViewModel : ObservableObject, IDisposable
             case ShortcutPayload shortcut:
                 OnShortcut(shortcut.Action);
                 break;
+            case FovChangedPayload fov:
+                OnRendererFovChanged(fov);
+                break;
             case ErrorPayload error:
                 _logger.LogError("Sky renderer: " + error.Message);
                 break;
@@ -498,7 +534,15 @@ public sealed partial class SkyViewModel : ObservableObject, IDisposable
             case SkyShortcuts.FocusSearch:
                 FocusSearchRequested?.Invoke(this, EventArgs.Empty);
                 break;
-            // viewDome / viewAllSky / toggleFov arrive with the 2D charts and the FOV overlay (M2b).
+            case SkyShortcuts.ViewDome:
+                SetViewMode(SkyViewModes.Dome);
+                break;
+            case SkyShortcuts.ViewAllSky:
+                SetViewMode(SkyViewModes.AllSky);
+                break;
+            case SkyShortcuts.ToggleFov:
+                IsFovVisible = !IsFovVisible;
+                break;
         }
     }
 
@@ -544,12 +588,18 @@ public sealed partial class SkyViewModel : ObservableObject, IDisposable
     private void SendAll()
     {
         Send(SkyMessageCodec.Init(new InitPayload(
-            $"https://{SkyHost.DataHost}/", RefractionModel.Standard, Layers(), SkyViewModes.Dome, "dark", ShowStats)));
+            $"https://{SkyHost.DataHost}/", RefractionModel.Standard, Layers(), ViewMode, "dark", ShowStats)));
         SendSiteAndTime();
         Send(SkyMessageCodec.CenterOn(CenterOnView()));
         SendHighlights();
         _sentSelectionId = null;
         SendSelectionIfChanged();
+        _fovCenter ??= SelectedDirection();
+        SendFov();
+        if (ViewMode == SkyViewModes.Finder)
+        {
+            CenterFinder();
+        }
     }
 
     private void SendSiteAndTime()
@@ -565,6 +615,7 @@ public sealed partial class SkyViewModel : ObservableObject, IDisposable
         SendFrame(utc);
         SendBodies(utc);
         SendTime();
+        UpdateSkyBrightnessText();
     }
 
     private void SendFrame(DateTime utc)
@@ -588,6 +639,19 @@ public sealed partial class SkyViewModel : ObservableObject, IDisposable
         _tracksCenterUtc = utc;
         Send(SkyMessageCodec.MovingBodies(SkyBridgeMapper.MovingBodies(
             _context.Observer, utc, TrackHalfWindow, TrackStep, BodyDisplayName)));
+        SendAppearance(utc);
+    }
+
+    /// <summary>Sky brightness over the same window as the body tracks (they are refreshed together).</summary>
+    private void SendAppearance(DateTime utc)
+    {
+        if (!_rendererReady || _context.InputError is not null)
+        {
+            return;
+        }
+
+        Send(SkyMessageCodec.SetSkyAppearance(SkyBridgeMapper.Appearance(
+            _context.Observer, utc, TrackHalfWindow, TrackStep, _context.ZenithSqm)));
     }
 
     private string BodyDisplayName(string id) =>
@@ -599,13 +663,14 @@ public sealed partial class SkyViewModel : ObservableObject, IDisposable
     private void SendHighlights() =>
         Send(SkyMessageCodec.SetHighlights(new HighlightsPayload([.. _plan.Items.Select(item => item.Id)])));
 
-    private void SendSelectionIfChanged()
+    /// <summary>Sends the Targets selection when it changed; true if it did.</summary>
+    private bool SendSelectionIfChanged()
     {
         var selected = _targets.SelectedObject;
         var id = selected?.Id;
         if (id == _sentSelectionId || !_rendererReady)
         {
-            return;
+            return false;
         }
 
         _sentSelectionId = id;
@@ -618,6 +683,7 @@ public sealed partial class SkyViewModel : ObservableObject, IDisposable
             ? new SelectionPayload(null, null)
             : new SelectionPayload(selected.IsPlanet ? SkyObjectKinds.Body : SkyObjectKinds.DeepSky, selected.Id)));
         OnPropertyChanged(nameof(HasCatalogSelection));
+        return true;
     }
 
     /// <summary>Restores the last camera (azimuth/altitude → J2000 direction at the sky time).</summary>
@@ -672,23 +738,304 @@ public sealed partial class SkyViewModel : ObservableObject, IDisposable
 
     private void CenterOn(CelestialObject target, double? fovDegrees)
     {
-        if (target.Planet is not null)
+        if (DirectionOf(target) is { } v)
         {
-            var utc = _clock.UtcNow;
-            var body = MovingBodyCalculator.GetBodies(_context.Observer, utc).FirstOrDefault(b => b.Id == target.Id);
-            if (body is null)
-            {
-                return;
-            }
+            var direction = SkyBridgeMapper.ToVector(v);
+            Send(SkyMessageCodec.CenterOn(new CenterOnPayload(direction.X, direction.Y, direction.Z, fovDegrees)));
+        }
+    }
 
-            var v = SkyFrame.Compute(_context.Observer, utc).J2000ToHorizontalAt(utc).Transpose()
-                .Transform(SkyFrame.FromHorizontal(body.Horizontal));
-            Send(SkyMessageCodec.CenterOn(new CenterOnPayload(v.X, v.Y, v.Z, fovDegrees)));
+    /// <summary>
+    /// J2000-frame direction of a catalog object at the sky time; for a planet, its topocentric
+    /// position rotated back like the body tracks (null if Core does not know it).
+    /// </summary>
+    private Vector3d? DirectionOf(CelestialObject target)
+    {
+        if (target.Planet is null)
+        {
+            return SkyFrame.FromEquatorial(target.Coordinates);
+        }
+
+        var utc = _clock.UtcNow;
+        var body = MovingBodyCalculator.GetBodies(_context.Observer, utc).FirstOrDefault(b => b.Id == target.Id);
+        return body is null
+            ? null
+            : SkyFrame.Compute(_context.Observer, utc).J2000ToHorizontalAt(utc).Transpose().Transform(SkyFrame.FromHorizontal(body.Horizontal));
+    }
+
+    private Vector3d? SelectedDirection() =>
+        _targets.SelectedObject is { } selected && _context.InputError is null ? DirectionOf(selected.Target) : null;
+
+    // ---- view modes (3D dome, all-sky chart, finder chart) -----------------------------------------
+
+    /// <summary>Raised when an action elsewhere (Detail, Targets) wants the Sky tab shown.</summary>
+    public event EventHandler? ShowSkyRequested;
+
+    /// <summary>Current renderer mode, as a protocol name (<see cref="SkyViewModes"/>).</summary>
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(IsDomeMode), nameof(IsAllSkyMode), nameof(IsFinderMode))]
+    public partial string ViewMode { get; private set; } = SkyViewModes.Dome;
+
+    public bool IsDomeMode
+    {
+        get => ViewMode == SkyViewModes.Dome;
+        set { if (value) SetViewMode(SkyViewModes.Dome); }
+    }
+
+    public bool IsAllSkyMode
+    {
+        get => ViewMode == SkyViewModes.AllSky;
+        set { if (value) SetViewMode(SkyViewModes.AllSky); }
+    }
+
+    public bool IsFinderMode
+    {
+        get => ViewMode == SkyViewModes.Finder;
+        set { if (value) SetViewMode(SkyViewModes.Finder); }
+    }
+
+    /// <summary>
+    /// Field of the finder chart: three times the camera field when the overlay is on (so that
+    /// the frame and its surroundings show), else the remembered field.
+    /// </summary>
+    public double FinderFovDegrees => IsFovVisible && CameraFov is { } fov
+        ? Math.Clamp(3 * Math.Max(fov.WidthDegrees, fov.HeightDegrees), 1, 60)
+        : Math.Clamp(_settings.FinderFovDegrees, 1, 60);
+
+    private void SetViewMode(string mode)
+    {
+        if (mode == ViewMode)
+        {
+            return;
+        }
+
+        ViewMode = mode;
+        _settings.ViewMode = mode;
+        SaveSettings();
+        Send(SkyMessageCodec.SetViewMode(new ViewModePayload(mode)));
+        if (mode == SkyViewModes.Finder)
+        {
+            CenterFinder();
+        }
+    }
+
+    /// <summary>The finder chart is centred on the selected object, else on the camera field.</summary>
+    private void CenterFinder()
+    {
+        if ((SelectedDirection() ?? _fovCenter) is { } center)
+        {
+            var v = SkyBridgeMapper.ToVector(center);
+            Send(SkyMessageCodec.CenterOn(new CenterOnPayload(v.X, v.Y, v.Z, FinderFovDegrees)));
+        }
+    }
+
+    /// <summary>Finder chart of the selected object ("Open finder chart" in Detail and Targets).</summary>
+    [RelayCommand]
+    private void OpenFinderChart()
+    {
+        ShowSkyRequested?.Invoke(this, EventArgs.Empty);
+        if (ViewMode == SkyViewModes.Finder)
+        {
+            CenterFinder();
         }
         else
         {
-            Send(SkyMessageCodec.CenterOn(SkyBridgeMapper.CenterOn(target.Coordinates, fovDegrees)));
+            SetViewMode(SkyViewModes.Finder);
         }
+    }
+
+    /// <summary>A new selection moves the camera field onto it and recentres the finder chart.</summary>
+    private void FollowSelection()
+    {
+        if (SelectedDirection() is not { } direction)
+        {
+            return;
+        }
+
+        _fovCenter = direction;
+        if (IsFovVisible)
+        {
+            SendFov();
+        }
+
+        if (ViewMode == SkyViewModes.Finder)
+        {
+            CenterFinder();
+        }
+    }
+
+    /// <summary>File name offered when the view is exported as PNG.</summary>
+    public string SuggestedImageFileName()
+    {
+        var subject = ViewMode == SkyViewModes.Finder && _targets.SelectedObject is { } selected
+            ? "-" + string.Concat(selected.Id.Split(System.IO.Path.GetInvalidFileNameChars().Append(' ').ToArray()))
+            : "";
+        return string.Create(CultureInfo.InvariantCulture,
+            $"AstroPlannerPro-{ViewMode}{subject}-{TimeZoneInfo.ConvertTimeFromUtc(_clock.UtcNow, _context.TimeZone):yyyy-MM-dd-HHmm}.png");
+    }
+
+    // ---- camera field-of-view overlay ---------------------------------------------------------------
+
+    public IReadOnlyList<SensorPreset> SensorPresets { get; } =
+    [
+        new(Strings.SensorFullFrame, 36.0, 24.0),
+        new(Strings.SensorApsCNikonSony, 23.5, 15.6),
+        new(Strings.SensorApsCCanon, 22.3, 14.9),
+        new(Strings.SensorMicroFourThirds, 17.3, 13.0),
+        new(Strings.SensorOneInch, 13.2, 8.8),
+        new(Strings.SensorImx571, 23.5, 15.7),
+        new(Strings.SensorImx533, 11.3, 11.3),
+        new(Strings.SensorImx585, 11.1, 6.3)
+    ];
+
+    [ObservableProperty]
+    public partial bool IsFovVisible { get; set; }
+
+    partial void OnIsFovVisibleChanged(bool value) => OnFovSettingsChanged();
+
+    [ObservableProperty]
+    public partial SensorPreset? SelectedSensorPreset { get; set; }
+
+    partial void OnSelectedSensorPresetChanged(SensorPreset? value)
+    {
+        if (value is not null)
+        {
+            SensorWidthMm = value.WidthMm;
+            SensorHeightMm = value.HeightMm;
+        }
+    }
+
+    [ObservableProperty]
+    public partial double SensorWidthMm { get; set; }
+
+    partial void OnSensorWidthMmChanged(double value) => OnFovSettingsChanged();
+
+    [ObservableProperty]
+    public partial double SensorHeightMm { get; set; }
+
+    partial void OnSensorHeightMmChanged(double value) => OnFovSettingsChanged();
+
+    [ObservableProperty]
+    public partial double FocalLengthMm { get; set; }
+
+    partial void OnFocalLengthMmChanged(double value) => OnFovSettingsChanged();
+
+    /// <summary>Position angle of the image's top, from north through east (0 = north up).</summary>
+    [ObservableProperty]
+    public partial double FovRotationDegrees { get; set; }
+
+    partial void OnFovRotationDegreesChanged(double value) => OnFovSettingsChanged();
+
+    /// <summary>Field of the camera, or null while the sizes typed are not valid.</summary>
+    public FieldOfView? CameraFov =>
+        SensorWidthMm is > 0 and <= 100 && SensorHeightMm is > 0 and <= 100 && FocalLengthMm is >= 1 and <= 20000
+            ? OpticsMath.FieldOfView(SensorWidthMm, SensorHeightMm, FocalLengthMm)
+            : null;
+
+    /// <summary>"1.96° × 1.31°" (arcminutes below one degree), or a hint when the sizes are invalid.</summary>
+    public string FovText => CameraFov is { } fov ? FormatFov(fov) : Strings.SkyFovInvalid;
+
+    /// <summary>Center of the camera field (J2000), e.g. "RA 05h 35.3m · Dec −05° 23′".</summary>
+    public string? FovCenterText => IsFovVisible && _fovCenter is { } center ? FormatCenter(SkyFrame.ToEquatorial(center)) : null;
+
+    private static string FormatFov(FieldOfView fov) =>
+        Math.Max(fov.WidthDegrees, fov.HeightDegrees) < 1
+            ? DisplayNames.Format(Strings.SkyFovArcminFormat, fov.WidthDegrees * 60, fov.HeightDegrees * 60)
+            : DisplayNames.Format(Strings.SkyFovFormat, fov.WidthDegrees, fov.HeightDegrees);
+
+    private static string FormatCenter(EquatorialCoordinates c)
+    {
+        var raMinutes = Math.Round(c.RightAscensionHours * 60, 1);
+        var decMinutes = (int)Math.Round(Math.Abs(c.DeclinationDegrees) * 60);
+        return DisplayNames.Format(Strings.SkyFovCenterFormat,
+            (int)(raMinutes / 60) % 24, raMinutes % 60, c.DeclinationDegrees < 0 ? "−" : "+", decMinutes / 60, decMinutes % 60);
+    }
+
+    private void OnFovSettingsChanged()
+    {
+        if (!_initialized)
+        {
+            return;
+        }
+
+        if (SelectedSensorPreset is { } preset && (preset.WidthMm != SensorWidthMm || preset.HeightMm != SensorHeightMm))
+        {
+            SelectedSensorPreset = null;
+        }
+
+        _settings.FovVisible = IsFovVisible;
+        _settings.SensorWidthMm = SensorWidthMm;
+        _settings.SensorHeightMm = SensorHeightMm;
+        _settings.FocalLengthMm = FocalLengthMm;
+        _settings.FovRotationDegrees = FovRotationDegrees;
+        SaveSettings();
+        OnPropertyChanged(nameof(CameraFov));
+        OnPropertyChanged(nameof(FovText));
+        OnPropertyChanged(nameof(FovCenterText));
+        if (!_applyingRendererFov)
+        {
+            _fovCenter ??= SelectedDirection();
+            SendFov();
+        }
+    }
+
+    private void SendFov()
+    {
+        if (!_rendererReady)
+        {
+            return;
+        }
+
+        if (!IsFovVisible || CameraFov is not { } fov)
+        {
+            Send(SkyMessageCodec.SetFov(new FovPayload(false, 1, 1, 0, null, "")));
+            return;
+        }
+
+        var rotation = ((FovRotationDegrees % 360) + 360) % 360;
+        var label = DisplayNames.Format(Strings.SkyFovLabelFormat, FocalLengthMm, FormatFov(fov));
+        Send(SkyMessageCodec.SetFov(new FovPayload(true, fov.WidthDegrees, fov.HeightDegrees, rotation >= 360 ? 0 : rotation,
+            _fovCenter is { } center ? SkyBridgeMapper.ToVector(center) : null, label)));
+    }
+
+    /// <summary>The user dragged or rotated the frame in the renderer: remember it without echoing it back.</summary>
+    private void OnRendererFovChanged(FovChangedPayload fov)
+    {
+        _fovCenter = new Vector3d(fov.X, fov.Y, fov.Z);
+        _applyingRendererFov = true;
+        try
+        {
+            FovRotationDegrees = Math.Round(fov.RotationDegrees, 1);
+        }
+        finally
+        {
+            _applyingRendererFov = false;
+        }
+
+        OnPropertyChanged(nameof(FovCenterText));
+    }
+
+    // ---- sky brightness -----------------------------------------------------------------------------
+
+    /// <summary>Zenith sky brightness at the sky time (site + twilight + Moon), for the side panel.</summary>
+    [ObservableProperty]
+    public partial string? SkyBrightnessText { get; private set; }
+
+    /// <summary>Where the site's dark-sky brightness comes from (manual SQM or a natural sky).</summary>
+    public string SiteSqmText => _context.ZenithSqm is { } sqm
+        ? DisplayNames.Format(Strings.SkySiteSqmFormat, sqm, SkyBrightness.BortleFromSqm(sqm))
+        : Strings.SkySiteSqmUnknown;
+
+    private void UpdateSkyBrightnessText()
+    {
+        OnPropertyChanged(nameof(SiteSqmText));
+        if (_context.InputError is not null)
+        {
+            return;
+        }
+
+        var now = SkyAppearanceCalculator.At(_context.Observer, _clock.UtcNow, _context.ZenithSqm);
+        SkyBrightnessText = DisplayNames.Format(Strings.SkyBrightnessFormat, now.ZenithSqm, now.LimitingMagnitude);
     }
 
     // ---- layers -----------------------------------------------------------------------------------
@@ -709,6 +1056,7 @@ public sealed partial class SkyViewModel : ObservableObject, IDisposable
         Bodies: Layer("bodies"),
         Labels: Layer("labels"),
         Ground: Layer("ground"),
+        SkyBrightness: Layer("skyBrightness"),
         StarLimitMagnitude: Math.Clamp(StarLimitMagnitude, 3, 9.5),
         DeepSkyLimitMagnitude: _settings.DeepSkyLimitMagnitude);
 
@@ -733,6 +1081,7 @@ public sealed partial class SkyViewModel : ObservableObject, IDisposable
         _settings.Bodies = layers.Bodies;
         _settings.Labels = layers.Labels;
         _settings.Ground = layers.Ground;
+        _settings.SkyBrightness = layers.SkyBrightness;
         _settings.StarLimitMagnitude = layers.StarLimitMagnitude;
         SaveSettings();
         Send(SkyMessageCodec.SetLayers(layers));

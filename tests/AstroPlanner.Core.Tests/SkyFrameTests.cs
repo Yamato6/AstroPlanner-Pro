@@ -215,6 +215,20 @@ public sealed class SkyFrameTests
             .Should().Throw<ArgumentOutOfRangeException>();
     }
 
+    [Theory]
+    [InlineData(5.5881, -5.3911)]
+    [InlineData(23.99, 89.5)]
+    [InlineData(0, 0)]
+    [InlineData(12.5, -63.1)]
+    public void ToEquatorial_InvertsFromEquatorial(double raHours, double decDegrees)
+    {
+        var back = SkyFrame.ToEquatorial(SkyFrame.FromEquatorial(new EquatorialCoordinates(raHours, decDegrees)));
+
+        back.RightAscensionHours.Should().BeApproximately(raHours, 1e-9);
+        back.DeclinationDegrees.Should().BeApproximately(decDegrees, 1e-9);
+        SkyFrame.ToEquatorial(new Vector3d(0, 0, 2)).DeclinationDegrees.Should().BeApproximately(90, 1e-12);
+    }
+
     /// <summary>Angle between two vectors, in degrees.</summary>
     private static double AngleBetween(Vector3d a, Vector3d b)
     {

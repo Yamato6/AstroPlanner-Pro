@@ -38,6 +38,7 @@ export const layersSchema = z.strictObject({
   bodies: z.boolean(),
   labels: z.boolean(),
   ground: z.boolean(),
+  skyBrightness: z.boolean(),
   starLimitMagnitude: z.number().min(-2).max(12),
   deepSkyLimitMagnitude: z.number().min(-2).max(20),
 });
@@ -106,6 +107,27 @@ const centerOnPayload = z.strictObject({
 });
 const viewModePayload = z.strictObject({ mode: viewMode });
 const themePayload = z.strictObject({ theme: z.enum(['dark', 'night']) });
+const vectorSchema = z.strictObject({
+  x: z.number().min(-1.000001).max(1.000001),
+  y: z.number().min(-1.000001).max(1.000001),
+  z: z.number().min(-1.000001).max(1.000001),
+});
+const fovPayload = z.strictObject({
+  visible: z.boolean(),
+  widthDegrees: z.number().gt(0).max(180),
+  heightDegrees: z.number().gt(0).max(180),
+  rotationDegrees: z.number().min(0).lt(360),
+  center: vectorSchema.nullable(),
+  label: z.string().max(MAX_TEXT),
+});
+const skyAppearancePayload = z
+  .strictObject({
+    startUtc: utc,
+    stepSeconds: z.number().positive(),
+    zenithSqm: z.array(z.number().min(-5).max(30)).min(1).max(2000),
+    limitingMagnitude: z.array(z.number().min(-30).max(10)).min(1).max(2000),
+  })
+  .refine((p) => p.zenithSqm.length === p.limitingMagnitude.length, 'one limiting magnitude per sample');
 
 function envelope<T extends string, P extends z.ZodType>(type: T, payload: P) {
   return z.strictObject({ v: z.literal(PROTOCOL_VERSION), type: z.literal(type), payload });
@@ -124,6 +146,8 @@ export const hostMessageSchema = z.discriminatedUnion('type', [
   envelope('centerOn', centerOnPayload),
   envelope('setViewMode', viewModePayload),
   envelope('setTheme', themePayload),
+  envelope('setFov', fovPayload),
+  envelope('setSkyAppearance', skyAppearancePayload),
 ]);
 
 export type HostMessage = z.infer<typeof hostMessageSchema>;
@@ -132,6 +156,8 @@ export type MovingBody = z.infer<typeof movingBodySchema>;
 export type Observer = z.infer<typeof observerPayload>;
 export type Selection = z.infer<typeof selectionPayload>;
 export type ViewMode = z.infer<typeof viewMode>;
+export type Fov = z.infer<typeof fovPayload>;
+export type SkyAppearance = z.infer<typeof skyAppearancePayload>;
 
 // ---- renderer → C# -------------------------------------------------------------------------
 
@@ -173,6 +199,17 @@ export const rendererMessageSchema = z.discriminatedUnion('type', [
   envelope(
     'shortcut',
     z.strictObject({ action: z.enum(['togglePause', 'viewDome', 'viewAllSky', 'toggleFov', 'focusSearch']) }),
+  ),
+  envelope(
+    'fovChanged',
+    z
+      .strictObject({
+        x: z.number(),
+        y: z.number(),
+        z: z.number(),
+        rotationDegrees: z.number().min(0).lt(360),
+      })
+      .refine((p) => Math.abs(Math.hypot(p.x, p.y, p.z) - 1) <= 1e-3, 'center must be a unit vector'),
   ),
   envelope('error', z.strictObject({ message: z.string().min(1).max(1024) })),
 ]);

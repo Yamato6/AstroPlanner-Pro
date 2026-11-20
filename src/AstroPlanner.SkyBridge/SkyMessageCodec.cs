@@ -25,6 +25,9 @@ namespace AstroPlanner.SkyBridge;
 [JsonSerializable(typeof(CenterOnPayload))]
 [JsonSerializable(typeof(ViewModePayload))]
 [JsonSerializable(typeof(ThemePayload))]
+[JsonSerializable(typeof(FovPayload))]
+[JsonSerializable(typeof(SkyAppearancePayload))]
+[JsonSerializable(typeof(FovChangedPayload))]
 [JsonSerializable(typeof(ReadyPayload))]
 [JsonSerializable(typeof(FirstFramePayload))]
 [JsonSerializable(typeof(HoverPayload))]
@@ -64,6 +67,8 @@ public static class SkyMessageCodec
     public static string CenterOn(CenterOnPayload payload) => Encode(SkyMessageTypes.CenterOn, payload, SkyJsonContext.Default.CenterOnPayload);
     public static string SetViewMode(ViewModePayload payload) => Encode(SkyMessageTypes.SetViewMode, payload, SkyJsonContext.Default.ViewModePayload);
     public static string SetTheme(ThemePayload payload) => Encode(SkyMessageTypes.SetTheme, payload, SkyJsonContext.Default.ThemePayload);
+    public static string SetFov(FovPayload payload) => Encode(SkyMessageTypes.SetFov, payload, SkyJsonContext.Default.FovPayload);
+    public static string SetSkyAppearance(SkyAppearancePayload payload) => Encode(SkyMessageTypes.SetSkyAppearance, payload, SkyJsonContext.Default.SkyAppearancePayload);
 
     /// <summary>Formats an instant the way the protocol expects it ("2026-03-20T02:00:00.000Z").</summary>
     public static string FormatUtc(DateTime utc) =>
@@ -135,6 +140,10 @@ public static class SkyMessageCodec
                 SkyMessageTypes.Shortcut => Valid(payloadElement.Deserialize(SkyJsonContext.Default.ShortcutPayload),
                     p => p.Action is SkyShortcuts.TogglePause or SkyShortcuts.ViewDome or SkyShortcuts.ViewAllSky
                          or SkyShortcuts.ToggleFov or SkyShortcuts.FocusSearch),
+                SkyMessageTypes.FovChanged => Valid(payloadElement.Deserialize(SkyJsonContext.Default.FovChangedPayload),
+                    p => Finite(p.X) && Finite(p.Y) && Finite(p.Z)
+                         && Math.Abs(Math.Sqrt(p.X * p.X + p.Y * p.Y + p.Z * p.Z) - 1) <= 1e-3
+                         && Finite(p.RotationDegrees) && p.RotationDegrees is >= 0 and < 360),
                 SkyMessageTypes.Error => Valid(payloadElement.Deserialize(SkyJsonContext.Default.ErrorPayload),
                     p => p.Message is { Length: > 0 and <= 1024 }),
                 _ => null

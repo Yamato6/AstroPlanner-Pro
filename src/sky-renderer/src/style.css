@@ -25,6 +25,10 @@ canvas {
   cursor: grabbing;
 }
 
+#overlay.over-fov {
+  cursor: move;
+}
+
 #tooltip {
   position: absolute;
   pointer-events: none;

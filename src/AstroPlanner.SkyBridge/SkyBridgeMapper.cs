@@ -60,6 +60,31 @@ public static class SkyBridgeMapper
         ]);
     }
 
+    /// <summary>
+    /// Sky brightness around <paramref name="utc"/> (± <paramref name="halfWindow"/>, every
+    /// <paramref name="step"/>) for a site of zenith SQM <paramref name="siteSqm"/> (null = unknown).
+    /// </summary>
+    public static SkyAppearancePayload Appearance(
+        ObserverLocation observer,
+        DateTime utc,
+        TimeSpan halfWindow,
+        TimeSpan step,
+        double? siteSqm)
+    {
+        ArgumentNullException.ThrowIfNull(observer);
+        var start = utc - halfWindow;
+        var samples = SkyAppearanceCalculator.Sample(observer, start, utc + halfWindow, step, siteSqm);
+        return new SkyAppearancePayload(
+            SkyMessageCodec.FormatUtc(start),
+            step.TotalSeconds,
+            [.. samples.Select(s => Math.Round(s.ZenithSqm, 3))],
+            [.. samples.Select(s => Math.Round(s.LimitingMagnitude, 3))]);
+    }
+
+    /// <summary>A J2000 direction for the protocol, rounded like every other vector.</summary>
+    public static VectorDto ToVector(Vector3d direction) =>
+        new(Math.Round(direction.X, VectorDigits), Math.Round(direction.Y, VectorDigits), Math.Round(direction.Z, VectorDigits));
+
     public static ObserverPayload ToPayload(string name, ObserverLocation observer, double minimumAltitudeDegrees, HorizonMask? horizon)
     {
         ArgumentNullException.ThrowIfNull(observer);

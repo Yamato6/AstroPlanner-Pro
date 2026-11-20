@@ -143,7 +143,7 @@ internal static class TestShell
         var detail = new ObjectDetailViewModel(astronomy, context, weatherState, targets, planViewModel, logbook);
         var sky = new SkyViewModel(context, targets, planViewModel, skyStore ?? new FakeSkyViewStore(), logger, time);
         var tonight = new TonightViewModel(context, weatherState, logbook);
-        var locationsViewModel = new LocationsViewModel(locations ?? new FakeLocationRepository(), settingsViewModel, logger);
+        var locationsViewModel = new LocationsViewModel(locations ?? new FakeLocationRepository(), settingsViewModel, context, logger);
         return new ShellViewModel(
             context, weatherState, tonight, targets, sky, detail, planViewModel, logbook, locationsViewModel, settingsViewModel,
             logger, time, updates);

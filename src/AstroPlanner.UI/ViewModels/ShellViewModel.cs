@@ -64,6 +64,7 @@ public sealed partial class ShellViewModel : ObservableObject, IDisposable
         // The persisted settings win over runtime values.
         _weather.IsEnabled = settings.WeatherForecastEnabled;
         _context.LocationName = DescribeLocation();
+        _context.ZenithSqm = locations.ActiveLocation?.ZenithSqm;
         _context.Initialize(settings.Latitude, settings.Longitude, settings.Elevation, settings.TimeZoneId, settings.MinimumAltitude,
             horizonMask: locations.ActiveLocation?.HorizonMask ?? HorizonMask.Flat);
     }
@@ -113,6 +114,7 @@ public sealed partial class ShellViewModel : ObservableObject, IDisposable
         Targets.MaximumMagnitude = settings.MaximumMagnitude;
         Locations.Reload();
         _context.LocationName = DescribeLocation();
+        _context.ZenithSqm = Locations.ActiveLocation?.ZenithSqm;
         _context.Apply(
             settings.LatitudeDegrees, settings.LongitudeDegrees, settings.ElevationMeters,
             settings.TimeZoneId, settings.MinimumAltitude, Locations.ActiveLocation?.HorizonMask ?? HorizonMask.Flat);
