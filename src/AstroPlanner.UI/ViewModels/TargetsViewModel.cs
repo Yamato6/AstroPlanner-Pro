@@ -4,6 +4,7 @@ using System.Text.Json;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using AstroPlanner.Core.Algorithms;
+using AstroPlanner.Core.Imaging.Feasibility;
 using AstroPlanner.Core.Planning;
 using AstroPlanner.UI.Resources;
 using AstroPlanner.UI.Services;
@@ -27,6 +28,11 @@ public sealed partial class TargetsViewModel : ObservableValidator, IDisposable
     private readonly ICelestialRepository _repository;
     private readonly IAstronomyService _astronomy;
     private readonly NightEphemerisCalculator _nightCalculator;
+    private readonly FeasibilityCalculator _feasibilityCalculator;
+    private readonly EquipmentState? _equipment;
+    private readonly WeatherState? _weather;
+    private CancellationTokenSource? _feasibilityCancellation;
+    private FeasibilityKey? _feasibilityKey;
     private readonly IObserverContext _context;
     private readonly ISettingsService _settings;
     private readonly LogbookViewModel _logbook;
@@ -48,11 +54,16 @@ public sealed partial class TargetsViewModel : ObservableValidator, IDisposable
         IObserverContext context,
         ISettingsService settings,
         LogbookViewModel logbook,
-        IAppLogger logger)
+        IAppLogger logger,
+        EquipmentState? equipment = null,
+        WeatherState? weather = null)
     {
         _repository = repository;
         _astronomy = astronomy;
         _nightCalculator = new NightEphemerisCalculator(astronomy);
+        _feasibilityCalculator = new FeasibilityCalculator(astronomy);
+        _equipment = equipment;
+        _weather = weather;
         _context = context;
         _settings = settings;
         _logbook = logbook;
@@ -61,7 +72,43 @@ public sealed partial class TargetsViewModel : ObservableValidator, IDisposable
 
         _context.Recalculated += (_, _) => RecalculateAndFilter();
         _logbook.Changed += RefreshObservedMarks;
+        if (_equipment is not null)
+        {
+            _equipment.Changed += (_, _) => ScheduleFeasibility();
+        }
+
+        if (_weather is not null)
+        {
+            _weather.Changed += (_, _) => ScheduleFeasibility();
+        }
     }
+
+    /// <summary>Raised after the feasibility of every object has been recalculated (or cleared).</summary>
+    public event EventHandler? FeasibilityUpdated;
+
+    /// <summary>The background feasibility calculation (completed when there is none).</summary>
+    public Task FeasibilityTask { get; private set; } = Task.CompletedTask;
+
+    /// <summary>True while the feasibility is being calculated in the background.</summary>
+    [ObservableProperty]
+    public partial bool IsCalculatingFeasibility { get; private set; }
+
+    /// <summary>Minimum verdict filter options ("" = any).</summary>
+    public IReadOnlyList<FilterOption> VerdictFilters { get; } =
+    [
+        new("", Strings.FilterAnyVerdict),
+        new(nameof(FeasibilityVerdict.Marginal), Strings.FilterMarginalOrBetter),
+        new(nameof(FeasibilityVerdict.Good), Strings.FilterGoodOrBetter),
+        new(nameof(FeasibilityVerdict.Excellent), Strings.FilterExcellentOnly)
+    ];
+
+    /// <summary>Hides objects whose verdict is worse than this ("" = no filter).</summary>
+    [ObservableProperty]
+    public partial string VerdictFilter { get; set; } = "";
+
+    /// <summary>Only objects that fit the active rig's frame.</summary>
+    [ObservableProperty]
+    public partial bool OnlyFitsFov { get; set; }
 
     /// <summary>Raised after the catalog has been (re)loaded, before positions are calculated.</summary>
     public event EventHandler? CatalogLoaded;
@@ -201,6 +248,8 @@ public sealed partial class TargetsViewModel : ObservableValidator, IDisposable
     {
         OnlyVisible = false;
         OnlyObservableTonight = false;
+        OnlyFitsFov = false;
+        VerdictFilter = "";
         TypeFilter = DisplayNames.AllTypes;
         CatalogFilter = CatalogAll;
         ConstellationFilter = "";
@@ -225,6 +274,8 @@ public sealed partial class TargetsViewModel : ObservableValidator, IDisposable
     // These filters do not change positions: the table is only filtered again.
     partial void OnOnlyVisibleChanged(bool value) => ApplyFilter();
     partial void OnOnlyObservableTonightChanged(bool value) => ApplyFilter();
+    partial void OnOnlyFitsFovChanged(bool value) => ApplyFilter();
+    partial void OnVerdictFilterChanged(string value) => ApplyFilter();
     partial void OnTypeFilterChanged(string value) => ApplyFilter();
     partial void OnCatalogFilterChanged(string value) => ApplyFilter();
     partial void OnConstellationFilterChanged(string value) => ApplyFilter();
@@ -309,6 +360,7 @@ public sealed partial class TargetsViewModel : ObservableValidator, IDisposable
 
         OnPropertyChanged(nameof(VisibleObjectsCount));
         ScheduleNightEphemerides();
+        ScheduleFeasibility();
         ApplyFilter();
     }
 
@@ -379,6 +431,92 @@ public sealed partial class TargetsViewModel : ObservableValidator, IDisposable
         }
     }
 
+    /// <summary>
+    /// Starts the background feasibility calculation (spec §8) when anything it depends on changed:
+    /// night, site, horizon, minimum altitude, sky quality, darkness, rig or forecast.
+    /// </summary>
+    private void ScheduleFeasibility()
+    {
+        if (_allObjects.Count == 0 || _context.Night is not { } night || _context.InputError is not null)
+        {
+            return;
+        }
+
+        var rig = _equipment?.ActiveRig;
+        var forecast = _weather is { IsEnabled: true } ? _weather.Forecast : null;
+        var key = new FeasibilityKey(night.WindowStartLocal, _context.Observer, _context.TimeZoneId, _context.MinimumAltitude,
+            _context.HorizonMask, rig, _context.EffectiveZenithSqm, _context.Darkness, _context.ExtinctionCoefficient, forecast?.FetchedAtUtc);
+        if (key == _feasibilityKey)
+        {
+            return;
+        }
+
+        _feasibilityKey = key;
+        _feasibilityCancellation?.Cancel();
+        _feasibilityCancellation?.Dispose();
+        _feasibilityCancellation = new CancellationTokenSource();
+
+        if (rig is null)
+        {
+            foreach (var row in _allObjects)
+            {
+                row.Feasibility = null;
+            }
+
+            FeasibilityTask = Task.CompletedTask;
+            FeasibilityUpdated?.Invoke(this, EventArgs.Empty);
+            return;
+        }
+
+        var request = new FeasibilityRequest(_context.Observer, _context.TimeZone, night, _context.MinimumAltitude, rig,
+            _context.EffectiveZenithSqm, _context.ZenithSqmSource, _context.HorizonMask, _context.Darkness, forecast)
+        {
+            Constants = FeasibilityConstants.Default with { ExtinctionCoefficient = _context.ExtinctionCoefficient }
+        };
+        FeasibilityTask = CalculateFeasibilityAsync(key, request, [.. _allObjects], _feasibilityCancellation.Token);
+    }
+
+    private async Task CalculateFeasibilityAsync(
+        FeasibilityKey key,
+        FeasibilityRequest request,
+        List<CelestialObjectRowViewModel> rows,
+        CancellationToken cancellationToken)
+    {
+        IsCalculatingFeasibility = true;
+        try
+        {
+            var targets = rows.Select(row => row.Target).ToList();
+            var reports = await Task.Run(() => _feasibilityCalculator.EvaluateAll(targets, request, cancellationToken), cancellationToken);
+            if (key != _feasibilityKey)
+            {
+                return;
+            }
+
+            for (var index = 0; index < rows.Count; index++)
+            {
+                rows[index].Feasibility = reports[index];
+            }
+
+            if (OnlyFitsFov || VerdictFilter.Length > 0)
+            {
+                ApplyFilter();
+            }
+
+            FeasibilityUpdated?.Invoke(this, EventArgs.Empty);
+        }
+        catch (OperationCanceledException)
+        {
+            // Superseded by a newer request.
+        }
+        finally
+        {
+            if (key == _feasibilityKey)
+            {
+                IsCalculatingFeasibility = false;
+            }
+        }
+    }
+
     /// <summary>Filters and sorts the table with the positions already calculated.</summary>
     private void ApplyFilter()
     {
@@ -396,10 +534,13 @@ public sealed partial class TargetsViewModel : ObservableValidator, IDisposable
         var query = CatalogSearch.Parse(SearchText);
         var allTypes = TypeFilter == DisplayNames.AllTypes;
         var type = allTypes ? default : Enum.TryParse<CelestialObjectType>(TypeFilter, out var parsed) ? parsed : default;
+        FeasibilityVerdict? minimumVerdict = Enum.TryParse<FeasibilityVerdict>(VerdictFilter, out var verdict) ? verdict : null;
         var filtered = _allObjects
             .Where(item =>
                 (!OnlyVisible || item.IsVisible)
                 && (!OnlyObservableTonight || item.IsObservableTonight)
+                && (!OnlyFitsFov || item.FitsFov)
+                && (minimumVerdict is null || item.Verdict >= minimumVerdict)
                 && (allTypes || item.Type == type)
                 && IsInSelectedCatalog(item)
                 && (string.IsNullOrWhiteSpace(ConstellationFilter)
@@ -458,8 +599,16 @@ public sealed partial class TargetsViewModel : ObservableValidator, IDisposable
         _nightCancellation?.Cancel();
         _nightCancellation?.Dispose();
         _nightCancellation = null;
+        _feasibilityCancellation?.Cancel();
+        _feasibilityCancellation?.Dispose();
+        _feasibilityCancellation = null;
     }
 
     /// <summary>What the night ephemerides depend on.</summary>
     private sealed record NightKey(DateTime WindowStart, ObserverLocation Observer, string TimeZoneId, double MinimumAltitude, HorizonMask Horizon);
+
+    /// <summary>What the feasibility depends on.</summary>
+    private sealed record FeasibilityKey(
+        DateTime WindowStart, ObserverLocation Observer, string TimeZoneId, double MinimumAltitude, HorizonMask Horizon,
+        RigSetup? Rig, double ZenithSqm, DarknessDefinition Darkness, double Extinction, DateTime? ForecastFetchedUtc);
 }

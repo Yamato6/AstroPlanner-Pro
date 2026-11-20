@@ -2,6 +2,8 @@ using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
 using CommunityToolkit.Mvvm.ComponentModel;
 using AstroPlanner.Core.Algorithms;
+using AstroPlanner.Core.Imaging.Feasibility;
+using AstroPlanner.Core.SkyQuality;
 using AstroPlanner.Core.Interfaces;
 using AstroPlanner.Core.Models;
 using AstroPlanner.UI.Resources;
@@ -33,10 +35,25 @@ public interface IObserverContext : INotifyPropertyChanged, INotifyDataErrorInfo
     HorizonMask HorizonMask { get; set; }
 
     /// <summary>
-    /// Measured zenith sky brightness of the active location (SQM, mag/arcsec²), or null when
-    /// unknown. Only the sky view uses it so far: changing it does not recalculate anything.
+    /// Manual zenith sky brightness of the active location (SQM reading or Bortle estimate,
+    /// mag/arcsec²), or null to use the light-pollution atlas.
     /// </summary>
     double? ZenithSqm { get; set; }
+
+    /// <summary>Zenith SQM of the site from the World Atlas 2015 grid; null outside the shipped grids.</summary>
+    double? AtlasSqm { get; }
+
+    /// <summary>The zenith SQM in use: manual, else atlas, else a natural 22.0 (spec §8.4).</summary>
+    double EffectiveZenithSqm { get; }
+
+    /// <summary>Where <see cref="EffectiveZenithSqm"/> comes from.</summary>
+    SkyQualitySource ZenithSqmSource { get; }
+
+    /// <summary>What counts as dark enough to image (Settings).</summary>
+    DarknessDefinition Darkness { get; set; }
+
+    /// <summary>V extinction coefficient, mag/air mass (Settings).</summary>
+    double ExtinctionCoefficient { get; set; }
 
     /// <summary>Message for the first invalid input (latitude, longitude, minimum altitude), or null.</summary>
     string? InputError { get; }
@@ -74,7 +91,8 @@ public interface IObserverContext : INotifyPropertyChanged, INotifyDataErrorInfo
     void Apply(double latitude, double longitude, double elevation, string timeZoneId, double minimumAltitude, HorizonMask? horizonMask = null);
 
     /// <summary>
-    /// Raised after any change of location, time zone, time, minimum altitude or horizon, once the night
+    /// Raised after any change of location, time zone, time, minimum altitude, horizon, sky quality or
+    /// darkness settings, once the night
     /// and Moon have been recalculated (also when the input is invalid: see <see cref="InputError"/>).
     /// </summary>
     event EventHandler? Recalculated;
@@ -84,7 +102,7 @@ public interface IObserverContext : INotifyPropertyChanged, INotifyDataErrorInfo
 }
 
 /// <summary>Default <see cref="IObserverContext"/>. Nothing is calculated until <see cref="Initialize"/>.</summary>
-public sealed partial class ObserverContext(IAstronomyService astronomy, TimeProvider? timeProvider = null)
+public sealed partial class ObserverContext(IAstronomyService astronomy, TimeProvider? timeProvider = null, ILightPollutionAtlas? atlas = null)
     : ObservableValidator, IObserverContext
 {
     private readonly TimeProvider _time = timeProvider ?? TimeProvider.System;
@@ -119,7 +137,27 @@ public sealed partial class ObserverContext(IAstronomyService astronomy, TimePro
     public partial HorizonMask HorizonMask { get; set; } = HorizonMask.Flat;
 
     [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(EffectiveZenithSqm), nameof(ZenithSqmSource))]
     public partial double? ZenithSqm { get; set; }
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(EffectiveZenithSqm), nameof(ZenithSqmSource))]
+    public partial double? AtlasSqm { get; private set; }
+
+    public double EffectiveZenithSqm => Baseline.Sqm;
+
+    public SkyQualitySource ZenithSqmSource => Baseline.Source;
+
+    private (double Sqm, SkyQualitySource Source) Baseline =>
+        ZenithSqm is { } manual ? (manual, SkyQualitySource.Manual)
+        : AtlasSqm is { } fromAtlas ? (fromAtlas, SkyQualitySource.Atlas)
+        : (SkyBrightness.NaturalSqm, SkyQualitySource.Default);
+
+    [ObservableProperty]
+    public partial DarknessDefinition Darkness { get; set; }
+
+    [ObservableProperty]
+    public partial double ExtinctionCoefficient { get; set; } = Airmass.DefaultExtinctionCoefficient;
 
     [ObservableProperty]
     public partial string? InputError { get; private set; }
@@ -205,6 +243,9 @@ public sealed partial class ObserverContext(IAstronomyService astronomy, TimePro
     partial void OnObservationDateTimeChanged(DateTime value) => RecalculateIfReady();
     partial void OnMinimumAltitudeChanged(double value) => RecalculateIfReady();
     partial void OnHorizonMaskChanged(HorizonMask value) => RecalculateIfReady();
+    partial void OnZenithSqmChanged(double? value) => RecalculateIfReady();
+    partial void OnDarknessChanged(DarknessDefinition value) => RecalculateIfReady();
+    partial void OnExtinctionCoefficientChanged(double value) => RecalculateIfReady();
 
     private void RecalculateIfReady()
     {
@@ -228,6 +269,9 @@ public sealed partial class ObserverContext(IAstronomyService astronomy, TimePro
         {
             var observer = Observer;
             var utc = ToUtc(ObservationDateTime);
+            AtlasSqm = atlas?.ArtificialBrightness(Latitude, Longitude) is { } artificial
+                ? SkyBrightness.SqmFromArtificial(artificial)
+                : null;
             Night = astronomy.GetNightInfo(observer, ObservationDateTime, TimeZone);
             Moon = astronomy.GetMoon(observer, utc);
             SkyCondition = astronomy.GetSkyCondition(observer, utc);

@@ -493,4 +493,165 @@
   <data name="HorizonDuplicateAzimuthFormat" xml:space="preserve"><value>Two points have the azimuth {0}°.</value></data>
   <data name="HorizonPreviewAzimuth" xml:space="preserve"><value>Azimuth (°)</value></data>
   <data name="HorizonPreviewAltitude" xml:space="preserve"><value>Horizon altitude (°)</value></data>
+  <!-- M3: equipment, sky quality and capture feasibility -->
+  <data name="ActiveRigSummaryFormat" xml:space="preserve"><value>{0} · {1:0.0}° × {2:0.0}° · {3:0.00}″/px</value></data>
+  <data name="NoActiveRig" xml:space="preserve"><value>No active rig: add one in Equipment</value></data>
+  <data name="BestTargetsCalculating" xml:space="preserve"><value>Estimating what your gear can capture tonight…</value></data>
+  <data name="BestTargetsNone" xml:space="preserve"><value>Nothing looks feasible tonight with this rig and sky.</value></data>
+  <data name="BestTargetsNoRig" xml:space="preserve"><value>Add a camera, an optic, a mount and a rig in Equipment to see the best targets for your gear.</value></data>
+  <data name="CameraKindDslr" xml:space="preserve"><value>DSLR</value></data>
+  <data name="CameraKindMirrorless" xml:space="preserve"><value>Mirrorless</value></data>
+  <data name="CameraKindAstro" xml:space="preserve"><value>Astro camera</value></data>
+  <data name="SensorColorColor" xml:space="preserve"><value>Colour (one-shot colour)</value></data>
+  <data name="SensorColorMono" xml:space="preserve"><value>Mono</value></data>
+  <data name="OpticKindLens" xml:space="preserve"><value>Camera lens</value></data>
+  <data name="OpticKindRefractor" xml:space="preserve"><value>Refractor</value></data>
+  <data name="OpticKindReflector" xml:space="preserve"><value>Reflector</value></data>
+  <data name="OpticKindCatadioptric" xml:space="preserve"><value>Catadioptric (SCT, Maksutov)</value></data>
+  <data name="MountKindTripod" xml:space="preserve"><value>Fixed tripod (no tracking)</value></data>
+  <data name="MountKindTracker" xml:space="preserve"><value>Star tracker</value></data>
+  <data name="MountKindAltAz" xml:space="preserve"><value>Motorised alt-az</value></data>
+  <data name="MountKindEquatorial" xml:space="preserve"><value>Equatorial (unguided)</value></data>
+  <data name="MountKindGuided" xml:space="preserve"><value>Equatorial, guided</value></data>
+  <data name="DerivedRigFormat" xml:space="preserve"><value>Field {0:0.00}° × {1:0.00}° · {2:0.00}″/px · {3:0} mm f/{4:0.0} · {5} (stars ≈ {6:0.0} px at 2.5″ seeing) · {7}</value></data>
+  <data name="DerivedNpfFormat" xml:space="preserve"><value>max sub {0} s on a fixed tripod (NPF rule; 500 rule: {1} s)</value></data>
+  <data name="DerivedMountLimitFormat" xml:space="preserve"><value>max unguided sub {0} s (mount)</value></data>
+  <data name="SamplingGood" xml:space="preserve"><value>well sampled</value></data>
+  <data name="SamplingUnder" xml:space="preserve"><value>undersampled</value></data>
+  <data name="SamplingOver" xml:space="preserve"><value>oversampled</value></data>
+  <data name="EquipmentActivatedFormat" xml:space="preserve"><value>"{0}" is now the active rig.</value></data>
+  <data name="EquipmentDeleted" xml:space="preserve"><value>Deleted.</value></data>
+  <data name="EquipmentSaved" xml:space="preserve"><value>Saved.</value></data>
+  <data name="EquipmentSaveFailed" xml:space="preserve"><value>The equipment could not be saved (see the log).</value></data>
+  <data name="EquipmentInUse" xml:space="preserve"><value>It is used by a rig: delete or change the rig first.</value></data>
+  <data name="EquipmentInvalidValue" xml:space="preserve"><value>A value is out of range:</value></data>
+  <data name="EquipmentNameRequired" xml:space="preserve"><value>Type a name.</value></data>
+  <data name="EquipmentNumberRequiredFormat" xml:space="preserve"><value>{0}: type a number.</value></data>
+  <data name="EquipmentNewCamera" xml:space="preserve"><value>New camera</value></data>
+  <data name="EquipmentRigIncomplete" xml:space="preserve"><value>Choose a camera, an optic and a mount.</value></data>
+  <data name="EquipmentDerivedIncomplete" xml:space="preserve"><value>Choose a camera, an optic and a mount to see the field, the image scale and the longest sub.</value></data>
+  <data name="FieldSensorWidth" xml:space="preserve"><value>Sensor width</value></data>
+  <data name="FieldSensorHeight" xml:space="preserve"><value>Sensor height</value></data>
+  <data name="FieldResolution" xml:space="preserve"><value>Resolution</value></data>
+  <data name="FieldPixelSize" xml:space="preserve"><value>Pixel size</value></data>
+  <data name="FieldQe" xml:space="preserve"><value>Quantum efficiency</value></data>
+  <data name="FieldReadNoise" xml:space="preserve"><value>Read noise</value></data>
+  <data name="FieldDarkCurrent" xml:space="preserve"><value>Dark current</value></data>
+  <data name="FieldIso" xml:space="preserve"><value>ISO</value></data>
+  <data name="FieldGain" xml:space="preserve"><value>Gain</value></data>
+  <data name="FieldFocalLength" xml:space="preserve"><value>Focal length</value></data>
+  <data name="FieldAperture" xml:space="preserve"><value>Aperture</value></data>
+  <data name="FieldFocalRatio" xml:space="preserve"><value>Focal ratio (or the aperture)</value></data>
+  <data name="FieldTransmission" xml:space="preserve"><value>Transmission</value></data>
+  <data name="FieldMaxExposure" xml:space="preserve"><value>Max unguided sub</value></data>
+  <data name="FieldPayload" xml:space="preserve"><value>Payload</value></data>
+  <data name="FieldFocalMultiplier" xml:space="preserve"><value>Reducer / barlow factor</value></data>
+  <data name="ExtinctionRange" xml:space="preserve"><value>The extinction coefficient must be between 0 and 1.5 mag per air mass.</value></data>
+  <data name="FeasibilityHeadlineFormat" xml:space="preserve"><value>{0} · score {1}/100</value></data>
+  <data name="FilterAnyVerdict" xml:space="preserve"><value>Any verdict</value></data>
+  <data name="FilterMarginalOrBetter" xml:space="preserve"><value>Marginal or better</value></data>
+  <data name="FilterGoodOrBetter" xml:space="preserve"><value>Good or better</value></data>
+  <data name="FilterExcellentOnly" xml:space="preserve"><value>Excellent only</value></data>
+  <data name="LocationsAtlasSqmFormat" xml:space="preserve"><value>Light-pollution atlas: SQM {0:0.0} (Bortle ≈ {1}). Used when no SQM is typed.</value></data>
+  <data name="LocationsAtlasNone" xml:space="preserve"><value>Outside the light-pollution grids shipped with the app: type an SQM reading or a natural sky (22.0) is assumed.</value></data>
+  <data name="SiteSkyFormat" xml:space="preserve"><value>SQM {0:0.0} · Bortle ≈ {1} ({2})</value></data>
+  <data name="SkyQualityManual" xml:space="preserve"><value>manual</value></data>
+  <data name="SkyQualityAtlas" xml:space="preserve"><value>World Atlas 2015</value></data>
+  <data name="SkyQualityDefault" xml:space="preserve"><value>assumed natural sky</value></data>
+  <data name="VerdictExcellent" xml:space="preserve"><value>Excellent</value></data>
+  <data name="VerdictGood" xml:space="preserve"><value>Good</value></data>
+  <data name="VerdictMarginal" xml:space="preserve"><value>Marginal</value></data>
+  <data name="VerdictUnlikely" xml:space="preserve"><value>Unlikely</value></data>
+  <data name="VerdictNotPossible" xml:space="preserve"><value>Not possible</value></data>
+  <data name="ReasonNoDarkness" xml:space="preserve"><value>The Sun never gets low enough for a dark sky tonight.</value></data>
+  <data name="ReasonNeverAboveMinimumFormat" xml:space="preserve"><value>It never clears the minimum altitude or the horizon in darkness (highest {0:0}°).</value></data>
+  <data name="ReasonNoClearTimeFormat" xml:space="preserve"><value>Clouds are forecast over all of its {0:0.0} h window.</value></data>
+  <data name="ReasonUsableTimeFormat" xml:space="preserve"><value>{0:0.0} h usable in darkness.</value></data>
+  <data name="ReasonUsableTimeCloudsFormat" xml:space="preserve"><value>{0:0.0} h usable after clouds ({1:0.0} h above the horizon in darkness).</value></data>
+  <data name="ReasonCloudsFormat" xml:space="preserve"><value>Clouds: {0:0}% on average during its window.</value></data>
+  <data name="ReasonMoonlightFormat" xml:space="preserve"><value>Moon {0:0%} lit, {1:0}° away: the sky is {2:0.0} mag brighter.</value></data>
+  <data name="ReasonSkyBackgroundFormat" xml:space="preserve"><value>Sky at the target ≈ {0:0.0} mag/arcsec² (zenith {1:0.0}, {2}).</value></data>
+  <data name="ReasonFramingTooSmallFormat" xml:space="preserve"><value>Only {0:0.#} px across: too small for this rig.</value></data>
+  <data name="ReasonFramingSmallFormat" xml:space="preserve"><value>{0:0} px across ({1:0%} of the frame): small but usable.</value></data>
+  <data name="ReasonFramingGoodFormat" xml:space="preserve"><value>{0:0} px across ({1:0%} of the frame): good framing.</value></data>
+  <data name="ReasonFramingTooLargeFormat" xml:space="preserve"><value>Larger than the frame ({0:0%}).</value></data>
+  <data name="ReasonMosaicFormat" xml:space="preserve"><value>A mosaic of {0:0} panels would cover it.</value></data>
+  <data name="ReasonSubNpfFormat" xml:space="preserve"><value>Subs of {0} s at most (NPF rule on a fixed tripod).</value></data>
+  <data name="ReasonSubMountFormat" xml:space="preserve"><value>Subs of {0} s (limit of the mount's tracking).</value></data>
+  <data name="ReasonSubSkyLimitedFormat" xml:space="preserve"><value>Subs of {0} s: longer ones add little, the sky already swamps the read noise.</value></data>
+  <data name="ReasonSubCapFormat" xml:space="preserve"><value>Subs of {0} s (the longest the model suggests).</value></data>
+  <data name="ReasonSnrFormat" xml:space="preserve"><value>Estimated signal-to-noise of the stack ≈ {0:0}.</value></data>
+  <data name="ReasonUndersampledFormat" xml:space="preserve"><value>{1:0.##}″ per pixel, coarser than the seeing: undersampled (normal for wide fields).</value></data>
+  <data name="ReasonOversampledFormat" xml:space="preserve"><value>Stars ≈ {0:0.0} px wide at {1:0.##}″ per pixel: oversampled (binning helps).</value></data>
+  <data name="ReasonAssumedBrightnessFormat" xml:space="preserve"><value>The catalog gives no brightness: {0:0.0} mag/arcsec² assumed.</value></data>
+  <data name="RecommendedFormat" xml:space="preserve"><value>{0} × {1} s {2} = {3} · best {4}</value></data>
+  <data name="RecommendedIsoFormat" xml:space="preserve"><value>at ISO {0}</value></data>
+  <data name="RecommendedGainFormat" xml:space="preserve"><value>at gain {0}</value></data>
+  <data name="TabTonight" xml:space="preserve"><value>Tonight</value></data>
+  <data name="TabEquipment" xml:space="preserve"><value>Equipment</value></data>
+  <data name="TonightRigCard" xml:space="preserve"><value>Active rig</value></data>
+  <data name="TonightSkyCard" xml:space="preserve"><value>Sky quality at the site (zenith)</value></data>
+  <data name="TonightSkyCardTooltip" xml:space="preserve"><value>Zenith brightness without Moon or twilight: the SQM typed for the location, else the World Atlas 2015 light-pollution grid (Falchi et al. 2016, CC BY-NC 4.0), else a natural sky. Bortle is an approximate display only.</value></data>
+  <data name="BestTargetsTitle" xml:space="preserve"><value>Best targets for my gear tonight</value></data>
+  <data name="BestTargetsExplanation" xml:space="preserve"><value>Ranked by the capture-feasibility estimate for the active rig: usable dark time above your minimum altitude and horizon, sky brightness (site, Moon, twilight), framing, longest sub and signal-to-noise. Double-click a target to see why.</value></data>
+  <data name="ColumnVerdict" xml:space="preserve"><value>Verdict</value></data>
+  <data name="ColumnVerdictTooltip" xml:space="preserve"><value>Capture feasibility tonight with the active rig (an estimate: see the detail for the reasons)</value></data>
+  <data name="ColumnScore" xml:space="preserve"><value>Score</value></data>
+  <data name="ColumnSuggestedCapture" xml:space="preserve"><value>Suggested capture</value></data>
+  <data name="ColumnFocal" xml:space="preserve"><value>Focal</value></data>
+  <data name="CalculatingFeasibility" xml:space="preserve"><value>Estimating feasibility…</value></data>
+  <data name="FilterVerdict" xml:space="preserve"><value>Verdict:</value></data>
+  <data name="FilterVerdictTooltip" xml:space="preserve"><value>Hide targets whose feasibility verdict tonight is worse than this</value></data>
+  <data name="FilterFitsFov" xml:space="preserve"><value>Fits my field</value></data>
+  <data name="FilterFitsFovTooltip" xml:space="preserve"><value>Only targets that fit the active rig's frame and are not too small for it</value></data>
+  <data name="DetailFeasibilityTitle" xml:space="preserve"><value>Why this verdict? (active rig, tonight)</value></data>
+  <data name="DetailFeasibilityNone" xml:space="preserve"><value>No estimate yet: choose an active rig in Equipment (or wait for the calculation).</value></data>
+  <data name="DetailFeasibilityDisclaimer" xml:space="preserve"><value>An honest estimate, not a probability: a simple photometric model with documented assumptions (docs/feasibility-model.md). Seeing and transparency forecasts are not included yet.</value></data>
+  <data name="HeaderActiveRig" xml:space="preserve"><value>Active rig</value></data>
+  <data name="HeaderActiveRigTooltip" xml:space="preserve"><value>Camera + optic + mount used for the feasibility verdicts and the camera frame in the sky view</value></data>
+  <data name="SkyFovFromRigFormat" xml:space="preserve"><value>From the active rig: {0}</value></data>
+  <data name="EquipmentExplanation" xml:space="preserve"><value>Your cameras, lenses/telescopes and mounts, combined into rigs. The active rig sets the camera frame in the sky view and the feasibility verdicts. Noise figures are estimates: replace them with measured values when you have them.</value></data>
+  <data name="EquipmentRigs" xml:space="preserve"><value>Rigs</value></data>
+  <data name="EquipmentCameras" xml:space="preserve"><value>Cameras</value></data>
+  <data name="EquipmentOptics" xml:space="preserve"><value>Lenses and telescopes</value></data>
+  <data name="EquipmentMounts" xml:space="preserve"><value>Mounts</value></data>
+  <data name="EquipmentCamera" xml:space="preserve"><value>Camera</value></data>
+  <data name="EquipmentOptic" xml:space="preserve"><value>Lens or telescope</value></data>
+  <data name="EquipmentMount" xml:space="preserve"><value>Mount</value></data>
+  <data name="EquipmentSave" xml:space="preserve"><value>Save</value></data>
+  <data name="EquipmentNew" xml:space="preserve"><value>New</value></data>
+  <data name="EquipmentDelete" xml:space="preserve"><value>Delete</value></data>
+  <data name="EquipmentActivate" xml:space="preserve"><value>Make active</value></data>
+  <data name="FieldName" xml:space="preserve"><value>Name</value></data>
+  <data name="FieldNotes" xml:space="preserve"><value>Notes</value></data>
+  <data name="FieldCameraKind" xml:space="preserve"><value>Type</value></data>
+  <data name="FieldSensorColor" xml:space="preserve"><value>Sensor</value></data>
+  <data name="FieldSensorWidthMm" xml:space="preserve"><value>Sensor width (mm)</value></data>
+  <data name="FieldSensorHeightMm" xml:space="preserve"><value>Sensor height (mm)</value></data>
+  <data name="FieldResolutionWidth" xml:space="preserve"><value>Width (px)</value></data>
+  <data name="FieldResolutionHeight" xml:space="preserve"><value>Height (px)</value></data>
+  <data name="FieldPixelSizeUm" xml:space="preserve"><value>Pixel size (µm)</value></data>
+  <data name="FieldPixelSizeTooltip" xml:space="preserve"><value>Leave empty to derive it from the sensor width and the resolution</value></data>
+  <data name="FieldQeFraction" xml:space="preserve"><value>QE (0–1)</value></data>
+  <data name="FieldReadNoiseE" xml:space="preserve"><value>Read noise (e⁻)</value></data>
+  <data name="FieldDarkCurrentE" xml:space="preserve"><value>Dark current (e⁻/s)</value></data>
+  <data name="FieldNoiseTooltip" xml:space="preserve"><value>Peak quantum efficiency and noise at your usual ISO/gain; published estimates are fine, measured values are better</value></data>
+  <data name="FieldOpticKind" xml:space="preserve"><value>Type</value></data>
+  <data name="FieldFocalLengthMm" xml:space="preserve"><value>Focal length (mm)</value></data>
+  <data name="FieldApertureMm" xml:space="preserve"><value>Aperture (mm)</value></data>
+  <data name="FieldFocalRatioShort" xml:space="preserve"><value>or f-number</value></data>
+  <data name="FieldApertureTooltip" xml:space="preserve"><value>Type the aperture, or leave it empty and type the f-number</value></data>
+  <data name="FieldTransmissionFraction" xml:space="preserve"><value>Transmission (0–1)</value></data>
+  <data name="FieldMountKind" xml:space="preserve"><value>Type</value></data>
+  <data name="FieldMaxExposureS" xml:space="preserve"><value>Max unguided sub (s)</value></data>
+  <data name="FieldMaxExposureTooltip" xml:space="preserve"><value>Longest sub you trust on this mount; empty = a default for its type and the focal length (tracker 120 s up to 50 mm, 60 s up to 135 mm…, guided 300 s). Ignored on a fixed tripod (NPF rule).</value></data>
+  <data name="FieldPayloadKg" xml:space="preserve"><value>Payload (kg)</value></data>
+  <data name="FieldFocalMultiplierTooltip" xml:space="preserve"><value>1 = none; e.g. 0.8 for a ×0.8 reducer, 2 for a ×2 barlow</value></data>
+  <data name="SettingsNauticalTwilight" xml:space="preserve"><value>Image during nautical twilight too (Sun below −12°)</value></data>
+  <data name="SettingsNauticalTwilightTooltip" xml:space="preserve"><value>Off: only astronomical darkness (Sun below −18°) counts as imaging time. On: nautical twilight counts too, with its brighter sky.</value></data>
+  <data name="SettingsExtinction" xml:space="preserve"><value>Extinction k (mag/air mass):</value></data>
+  <data name="SettingsExtinctionTooltip" xml:space="preserve"><value>How much the atmosphere dims objects per air mass (V band). 0.15–0.2 at a high, dry site; 0.25 typical; 0.3–0.4 hazy or humid.</value></data>
+  <data name="ReasonFramingPoint" xml:space="preserve"><value>A point of light at this scale: nothing to frame.</value></data>
+  <data name="AboutLightPollution" xml:space="preserve"><value>Light pollution:</value></data>
+  <data name="AboutLightPollutionText" xml:space="preserve"><value>grids derived from the World Atlas 2015 of artificial night sky brightness, Falchi, F. et al. (2016), Science Advances 2, e1600377; data: GFZ Data Services, doi:10.5880/GFZ.1.4.2016.001, CC BY-NC 4.0. Because of this NonCommercial license AstroPlanner Pro is and stays free of charge.</value></data>
 </root>

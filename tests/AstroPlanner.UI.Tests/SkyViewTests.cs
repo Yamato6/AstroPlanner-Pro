@@ -477,7 +477,7 @@ public sealed class SkyViewModelTests
 
         var darkest = channel.Last("setSkyAppearance").GetProperty("zenithSqm").EnumerateArray().Max(e => e.GetDouble());
         darkest.Should().BeLessThanOrEqualTo(19.0 + 1e-6, "a city sky is never darker than its SQM");
-        shell.Sky.SiteSqmText.Should().Contain("19.00").And.Contain("6");
+        shell.Sky.SiteSqmText.Should().Contain("19.0").And.Contain("6").And.Contain(Strings.SkyQualityManual);
 
         shell.Sky.LayerToggles.Single(t => t.Key == "skyBrightness").IsEnabled = false;
         channel.Last("setLayers").GetProperty("skyBrightness").GetBoolean().Should().BeFalse();

@@ -257,6 +257,15 @@ public partial class MainWindow : Window
 
     private void OnSkyOpenDetails(object? sender, EventArgs e) => Tabs.SelectedItem = DetailTab;
 
+    /// <summary>Double-click on a best target: select it and show its detail (with the feasibility breakdown).</summary>
+    private void OnBestTargetDoubleClick(object sender, System.Windows.Input.MouseButtonEventArgs e)
+    {
+        if (sender is DataGrid { SelectedItem: CelestialObjectRowViewModel row } && DataContext is ShellViewModel shell && shell.Targets.SelectById(row.Id))
+        {
+            Tabs.SelectedItem = DetailTab;
+        }
+    }
+
     private void OnShowSkyRequested(object? sender, EventArgs e) => Tabs.SelectedItem = SkyTab;
 
     /// <summary>Saves what the renderer shows (e.g. a finder chart) as a PNG.</summary>

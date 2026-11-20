@@ -51,6 +51,10 @@
             <Run Text="{x:Static res:Strings.AboutCatalogsText}"/>
         </TextBlock>
         <TextBlock Style="{StaticResource CreditStyle}">
+            <Run FontWeight="SemiBold" Text="{x:Static res:Strings.AboutLightPollution}"/>
+            <Run Text="{x:Static res:Strings.AboutLightPollutionText}"/>
+        </TextBlock>
+        <TextBlock Style="{StaticResource CreditStyle}">
             <Run FontWeight="SemiBold" Text="{x:Static res:Strings.AboutAlgorithms}"/>
             <Run Text="{x:Static res:Strings.AboutAlgorithmsText}"/>
         </TextBlock>

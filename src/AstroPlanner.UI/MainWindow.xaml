@@ -124,6 +124,29 @@
                 </DataTrigger>
             </Style.Triggers>
         </Style>
+        <!-- Feasibility verdict: green when good, amber when marginal, red when unlikely or impossible -->
+        <Style x:Key="VerdictCellStyle" TargetType="TextBlock">
+            <Setter Property="TextAlignment" Value="Center"/>
+            <Setter Property="Foreground" Value="{StaticResource NightMutedTextBrush}"/>
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding Verdict}" Value="Excellent">
+                    <Setter Property="Foreground" Value="{StaticResource SuccessBrush}"/>
+                    <Setter Property="FontWeight" Value="SemiBold"/>
+                </DataTrigger>
+                <DataTrigger Binding="{Binding Verdict}" Value="Good">
+                    <Setter Property="Foreground" Value="{StaticResource SuccessSoftBrush}"/>
+                </DataTrigger>
+                <DataTrigger Binding="{Binding Verdict}" Value="Marginal">
+                    <Setter Property="Foreground" Value="{StaticResource WarningBrush}"/>
+                </DataTrigger>
+                <DataTrigger Binding="{Binding Verdict}" Value="Unlikely">
+                    <Setter Property="Foreground" Value="{StaticResource DangerBrush}"/>
+                </DataTrigger>
+                <DataTrigger Binding="{Binding Verdict}" Value="NotPossible">
+                    <Setter Property="Foreground" Value="{StaticResource PlaceholderTextBrush}"/>
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
     </Window.Resources>
     <Grid Margin="16">
         <Grid.RowDefinitions>
@@ -155,6 +178,7 @@
                     <ColumnDefinition Width="Auto"/>
                     <ColumnDefinition Width="Auto"/>
                     <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
                     <ColumnDefinition Width="Auto"/>
                 </Grid.ColumnDefinitions>
                 <StackPanel Grid.Column="0" Margin="0,0,24,0" VerticalAlignment="Center">
@@ -197,7 +221,17 @@
                     <TextBlock Foreground="White" Text="{Binding ActiveLocationName}" TextTrimming="CharacterEllipsis" ToolTip="{Binding ActiveLocationName}"/>
                     <TextBlock Foreground="{StaticResource TabTextBrush}" Text="{Binding LocationSummary}"/>
                 </StackPanel>
-                <StackPanel Grid.Column="4" Orientation="Horizontal" VerticalAlignment="Center">
+                <!-- Active rig (spec §10): drives the camera frame and the feasibility verdicts -->
+                <StackPanel Grid.Column="4" Margin="0,0,14,0"
+                            Visibility="{Binding Equipment, Converter={StaticResource NullToCollapsedConverter}}">
+                    <TextBlock Foreground="{StaticResource TabTextBrush}" Text="{x:Static res:Strings.HeaderActiveRig}"/>
+                    <ComboBox Style="{StaticResource DarkComboBoxStyle}" Width="240" Margin="0,2,0,0"
+                              AutomationProperties.AutomationId="ActiveRigCombo" AutomationProperties.Name="{x:Static res:Strings.HeaderActiveRig}"
+                              ToolTip="{x:Static res:Strings.HeaderActiveRigTooltip}"
+                              ItemsSource="{Binding Equipment.Rigs}" DisplayMemberPath="Name"
+                              SelectedValuePath="Rig.Id" SelectedValue="{Binding Equipment.ActiveRigId}"/>
+                </StackPanel>
+                <StackPanel Grid.Column="5" Orientation="Horizontal" VerticalAlignment="Center">
                     <Button Style="{StaticResource SecondaryButtonStyle}" Content="{x:Static res:Strings.HeaderSettings}" Click="OnSettingsClicked"
                             ToolTip="{x:Static res:Strings.HeaderSettingsTooltip}"/>
                     <Button Style="{StaticResource SecondaryButtonStyle}" Command="{Binding Targets.ResetFiltersCommand}" Content="{x:Static res:Strings.HeaderReset}"
@@ -274,6 +308,59 @@
         <!-- Main planner -->
         <TabControl x:Name="Tabs" Grid.Row="3"
                     Style="{StaticResource DarkTabControlStyle}">
+            <!-- Tonight (spec §4.1): sky quality of the site and the best targets for the active rig -->
+            <TabItem x:Name="TonightTab" Header="{x:Static res:Strings.TabTonight}" Style="{StaticResource DarkTabItemStyle}">
+                <Grid Margin="12">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+                    <UniformGrid Columns="2" Margin="0,0,0,12">
+                        <Border Background="{StaticResource NightCardBrush}" CornerRadius="7" Padding="14" Margin="0,0,6,0">
+                            <StackPanel>
+                                <TextBlock Foreground="{StaticResource NightMutedTextBrush}" Text="{x:Static res:Strings.TonightRigCard}"/>
+                                <TextBlock Foreground="White" FontSize="16" FontWeight="SemiBold" Text="{Binding Tonight.ActiveRigText}" TextWrapping="Wrap"/>
+                            </StackPanel>
+                        </Border>
+                        <Border Background="{StaticResource NightCardBrush}" CornerRadius="7" Padding="14" Margin="6,0,0,0"
+                                ToolTip="{x:Static res:Strings.TonightSkyCardTooltip}">
+                            <StackPanel>
+                                <TextBlock Foreground="{StaticResource NightMutedTextBrush}" Text="{x:Static res:Strings.TonightSkyCard}"/>
+                                <TextBlock Foreground="{StaticResource DarknessBrush}" FontSize="16" FontWeight="SemiBold" Text="{Binding Tonight.SiteSkyText}" TextWrapping="Wrap"/>
+                            </StackPanel>
+                        </Border>
+                    </UniformGrid>
+                    <StackPanel Grid.Row="1" Margin="0,0,0,6">
+                        <TextBlock FontSize="18" FontWeight="SemiBold" Text="{x:Static res:Strings.BestTargetsTitle}"/>
+                        <TextBlock Foreground="{StaticResource NightMutedTextBrush}" TextWrapping="Wrap" Text="{x:Static res:Strings.BestTargetsExplanation}"/>
+                        <TextBlock Margin="0,6,0,0" Foreground="{StaticResource WarningBrush}" TextWrapping="Wrap" Text="{Binding Tonight.BestTargetsHint}"
+                                   Visibility="{Binding Tonight.BestTargetsHint, Converter={StaticResource NullToCollapsedConverter}}"/>
+                    </StackPanel>
+                    <DataGrid Grid.Row="2" Style="{StaticResource NightDataGridStyle}" ItemsSource="{Binding Tonight.BestTargets}"
+                              AutomationProperties.Name="{x:Static res:Strings.BestTargetsTitle}"
+                              MouseDoubleClick="OnBestTargetDoubleClick">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="{x:Static res:Strings.ColumnId}" Binding="{Binding Id}" Width="90" ElementStyle="{StaticResource TrimmedCellStyle}"/>
+                            <DataGridTextColumn Header="{x:Static res:Strings.ColumnName}" Binding="{Binding Name}" Width="170" ElementStyle="{StaticResource TrimmedCellStyle}"/>
+                            <DataGridTextColumn Header="{x:Static res:Strings.ColumnType}" Binding="{Binding Type, Converter={StaticResource DisplayNameConverter}}" Width="120" ElementStyle="{StaticResource TrimmedCellStyle}"/>
+                            <DataGridTextColumn Header="{x:Static res:Strings.ColumnVerdict}" Binding="{Binding VerdictText}" Width="92" ElementStyle="{StaticResource VerdictCellStyle}"/>
+                            <DataGridTextColumn Header="{x:Static res:Strings.ColumnScore}" Binding="{Binding Score}" Width="54" ElementStyle="{StaticResource CenteredCellStyle}"/>
+                            <DataGridTextColumn Header="{x:Static res:Strings.ColumnSuggestedCapture}" Binding="{Binding RecommendedText}" Width="*" ElementStyle="{StaticResource TrimmedCellStyle}"/>
+                            <DataGridTemplateColumn Width="110">
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <Button Style="{StaticResource SecondaryButtonStyle}" Padding="8,2" Content="{x:Static res:Strings.DetailAddToPlan}"
+                                                Command="{Binding DataContext.Tonight.AddToPlanCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                                CommandParameter="{Binding}"/>
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                            </DataGridTemplateColumn>
+                        </DataGrid.Columns>
+                    </DataGrid>
+                </Grid>
+            </TabItem>
+
             <TabItem x:Name="PlannerTab" Header="{x:Static res:Strings.TabPlanner}" Style="{StaticResource DarkTabItemStyle}">
             <Grid Margin="12">
                     <Grid.ColumnDefinitions>
@@ -360,6 +447,17 @@
                                               ToolTip="{x:Static res:Strings.FilterObservableTonightTooltip}"
                                               IsChecked="{Binding Targets.OnlyObservableTonight}"/>
                                 </StackPanel>
+                                <StackPanel Orientation="Horizontal" Margin="0,0,0,6">
+                                    <TextBlock Style="{StaticResource FilterLabelStyle}" Text="{x:Static res:Strings.FilterVerdict}"
+                                               ToolTip="{x:Static res:Strings.FilterVerdictTooltip}"/>
+                                    <ComboBox Style="{StaticResource DarkComboBoxStyle}" Width="160" Margin="0,0,12,0"
+                                              AutomationProperties.Name="{x:Static res:Strings.FilterVerdict}"
+                                              ItemsSource="{Binding Targets.VerdictFilters}" DisplayMemberPath="Label"
+                                              SelectedValuePath="Value" SelectedValue="{Binding Targets.VerdictFilter}"/>
+                                    <CheckBox VerticalAlignment="Center" Content="{x:Static res:Strings.FilterFitsFov}"
+                                              ToolTip="{x:Static res:Strings.FilterFitsFovTooltip}"
+                                              IsChecked="{Binding Targets.OnlyFitsFov}"/>
+                                </StackPanel>
                             </WrapPanel>
 
                             <!-- Status / errors -->
@@ -398,6 +496,9 @@
                                     <TextBlock Foreground="{StaticResource NightMutedTextBrush}" Margin="12,0,0,0" FontStyle="Italic"
                                                Text="{x:Static res:Strings.CalculatingNight}"
                                                Visibility="{Binding Targets.IsCalculatingNight, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+                                    <TextBlock Foreground="{StaticResource NightMutedTextBrush}" Margin="12,0,0,0" FontStyle="Italic"
+                                               Text="{x:Static res:Strings.CalculatingFeasibility}"
+                                               Visibility="{Binding Targets.IsCalculatingFeasibility, Converter={StaticResource BooleanToVisibilityConverter}}"/>
                                 </StackPanel>
                             </StackPanel>
 
@@ -410,6 +511,12 @@
                                                         ElementStyle="{StaticResource ObservedCellStyle}"/>
                                     <DataGridTextColumn Header="{x:Static res:Strings.ColumnId}" Binding="{Binding Id}" Width="96" ElementStyle="{StaticResource TrimmedCellStyle}"/>
                                     <DataGridTextColumn Header="{x:Static res:Strings.ColumnName}" Binding="{Binding Name}" Width="170" ElementStyle="{StaticResource TrimmedCellStyle}"/>
+                                    <DataGridTextColumn Binding="{Binding VerdictText}" Width="92" ElementStyle="{StaticResource VerdictCellStyle}" SortMemberPath="Score">
+                                        <DataGridTextColumn.Header>
+                                            <TextBlock Text="{x:Static res:Strings.ColumnVerdict}" ToolTip="{x:Static res:Strings.ColumnVerdictTooltip}"/>
+                                        </DataGridTextColumn.Header>
+                                    </DataGridTextColumn>
+                                    <DataGridTextColumn Header="{x:Static res:Strings.ColumnScore}" Binding="{Binding Score}" Width="54" ElementStyle="{StaticResource CenteredCellStyle}"/>
                                     <DataGridTextColumn Header="{x:Static res:Strings.ColumnAlsoKnownAs}" Binding="{Binding CrossIdentifiers}" Width="112" ElementStyle="{StaticResource TrimmedCellStyle}"/>
                                     <DataGridTextColumn Header="{x:Static res:Strings.ColumnConstellation}" Binding="{Binding Constellation}" Width="124" ElementStyle="{StaticResource TrimmedCellStyle}"/>
                                     <DataGridTextColumn Header="{x:Static res:Strings.ColumnType}" Binding="{Binding Type, Converter={StaticResource DisplayNameConverter}}" Width="124" ElementStyle="{StaticResource TrimmedCellStyle}"/>
@@ -637,6 +744,9 @@
                                                  ToolTip="{x:Static res:Strings.SkyFovRotationTooltip}"/>
                                     </Grid>
                                     <TextBlock Margin="0,6,0,0" FontWeight="SemiBold" Text="{Binding Sky.FovText}" TextWrapping="Wrap"/>
+                                    <TextBlock Foreground="{StaticResource NightMutedTextBrush}" TextWrapping="Wrap"
+                                               Text="{Binding Sky.FovRigName, StringFormat={x:Static res:Strings.SkyFovFromRigFormat}}"
+                                               Visibility="{Binding Sky.FovRigName, Converter={StaticResource NullToCollapsedConverter}}"/>
                                     <TextBlock Foreground="{StaticResource NightMutedTextBrush}" Text="{Binding Sky.FovCenterText}"
                                                Visibility="{Binding Sky.FovCenterText, Converter={StaticResource NullToCollapsedConverter}}"/>
                                     <TextBlock Margin="0,4,0,0" Foreground="{StaticResource NightMutedTextBrush}" TextWrapping="Wrap"
@@ -693,8 +803,10 @@
                                 </Style.Triggers>
                             </Style>
                         </Border.Style>
+                        <ScrollViewer VerticalScrollBarVisibility="Auto">
                         <Grid DataContext="{Binding Detail.Observation}">
                             <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
                                 <RowDefinition Height="Auto"/>
                                 <RowDefinition Height="Auto"/>
                                 <RowDefinition Height="*"/>
@@ -764,7 +876,45 @@
                                         ToolTip="{x:Static res:Strings.SkyOpenFinderChartTooltip}"
                                         Command="{Binding DataContext.Sky.OpenFinderChartCommand, RelativeSource={RelativeSource AncestorType=Window}}"/>
                             </StackPanel>
+                            <!-- Capture feasibility (spec §8.6): every factor with its value and impact -->
+                            <StackPanel Grid.Row="3" Grid.ColumnSpan="3" Margin="0,20,0,0"
+                                        DataContext="{Binding DataContext.Detail, RelativeSource={RelativeSource AncestorType=Window}}">
+                                <TextBlock Foreground="{StaticResource NightMutedTextBrush}" Text="{x:Static res:Strings.DetailFeasibilityTitle}"/>
+                                <TextBlock Margin="0,6,0,0" TextWrapping="Wrap" Foreground="{StaticResource NightMutedTextBrush}"
+                                           Text="{x:Static res:Strings.DetailFeasibilityNone}"
+                                           Visibility="{Binding HasFeasibility, Converter={StaticResource InverseBooleanToVisibilityConverter}}"/>
+                                <StackPanel Visibility="{Binding HasFeasibility, Converter={StaticResource BooleanToVisibilityConverter}}">
+                                    <TextBlock Margin="0,6,0,0" FontSize="18" FontWeight="SemiBold" Text="{Binding FeasibilityHeadline}"/>
+                                    <TextBlock Margin="0,4,0,0" TextWrapping="Wrap" Foreground="{StaticResource SuccessSoftBrush}" Text="{Binding RecommendedText}"
+                                               Visibility="{Binding RecommendedText, Converter={StaticResource NullToCollapsedConverter}}"/>
+                                    <ItemsControl Margin="0,8,0,0" ItemsSource="{Binding FeasibilityLines}"
+                                                  AutomationProperties.Name="{x:Static res:Strings.DetailFeasibilityTitle}">
+                                        <ItemsControl.ItemTemplate>
+                                            <DataTemplate>
+                                                <TextBlock Margin="0,1" TextWrapping="Wrap" Text="{Binding Text, StringFormat=• {0}}">
+                                                    <TextBlock.Style>
+                                                        <Style TargetType="TextBlock">
+                                                            <Setter Property="Foreground" Value="White"/>
+                                                            <Style.Triggers>
+                                                                <DataTrigger Binding="{Binding IsNegative}" Value="True">
+                                                                    <Setter Property="Foreground" Value="{StaticResource WarningBrush}"/>
+                                                                </DataTrigger>
+                                                                <DataTrigger Binding="{Binding IsPositive}" Value="True">
+                                                                    <Setter Property="Foreground" Value="{StaticResource SuccessSoftBrush}"/>
+                                                                </DataTrigger>
+                                                            </Style.Triggers>
+                                                        </Style>
+                                                    </TextBlock.Style>
+                                                </TextBlock>
+                                            </DataTemplate>
+                                        </ItemsControl.ItemTemplate>
+                                    </ItemsControl>
+                                    <TextBlock Margin="0,8,0,0" FontSize="11" TextWrapping="Wrap" Foreground="{StaticResource PlaceholderTextBrush}"
+                                               Text="{x:Static res:Strings.DetailFeasibilityDisclaimer}"/>
+                                </StackPanel>
+                            </StackPanel>
                         </Grid>
+                        </ScrollViewer>
                     </Border>
                 </Grid>
             </TabItem>
@@ -948,6 +1098,268 @@
                 </Grid>
             </TabItem>
 
+            <!-- Equipment inventory and rigs (spec §4.5) -->
+            <TabItem x:Name="EquipmentTab" Header="{x:Static res:Strings.TabEquipment}" Style="{StaticResource DarkTabItemStyle}">
+                <Grid Margin="12" DataContext="{Binding Equipment}">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+                    <StackPanel Margin="0,0,0,8">
+                        <TextBlock Foreground="{StaticResource NightMutedTextBrush}" TextWrapping="Wrap" Text="{x:Static res:Strings.EquipmentExplanation}"/>
+                        <TextBlock Margin="0,4,0,0" TextWrapping="Wrap" Text="{Binding StatusMessage}"
+                                   Visibility="{Binding StatusMessage, Converter={StaticResource NullToCollapsedConverter}}">
+                            <TextBlock.Style>
+                                <Style TargetType="TextBlock">
+                                    <Setter Property="Foreground" Value="{StaticResource SuccessSoftBrush}"/>
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding HasError}" Value="True">
+                                            <Setter Property="Foreground" Value="{StaticResource DangerBrush}"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </TextBlock.Style>
+                        </TextBlock>
+                    </StackPanel>
+                    <TabControl Grid.Row="1" Style="{StaticResource DarkTabControlStyle}">
+                        <!-- Rigs -->
+                        <TabItem Header="{x:Static res:Strings.EquipmentRigs}" Style="{StaticResource DarkTabItemStyle}">
+                            <Grid Margin="8">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="320"/>
+                                    <ColumnDefinition Width="16"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <DataGrid Style="{StaticResource NightDataGridStyle}" ItemsSource="{Binding Rigs}" SelectedItem="{Binding SelectedRig}"
+                                          AutomationProperties.Name="{x:Static res:Strings.EquipmentRigs}">
+                                    <DataGrid.Columns>
+                                        <DataGridTextColumn Header="{x:Static res:Strings.ColumnName}" Binding="{Binding Name}" Width="*" ElementStyle="{StaticResource TrimmedCellStyle}"/>
+                                        <DataGridTextColumn Header="{x:Static res:Strings.ColumnFocal}" Binding="{Binding FocalLengthMm, StringFormat={}{0:0} mm}" Width="70" ElementStyle="{StaticResource NumericCellStyle}"/>
+                                    </DataGrid.Columns>
+                                </DataGrid>
+                                <ScrollViewer Grid.Column="2" VerticalScrollBarVisibility="Auto">
+                                    <StackPanel>
+                                        <TextBlock Text="{x:Static res:Strings.FieldName}"/>
+                                        <TextBox Width="320" HorizontalAlignment="Left" Text="{Binding RigName, UpdateSourceTrigger=PropertyChanged}"
+                                                 AutomationProperties.Name="{x:Static res:Strings.FieldName}"/>
+                                        <TextBlock Margin="0,8,0,0" Text="{x:Static res:Strings.EquipmentCamera}"/>
+                                        <ComboBox Style="{StaticResource DarkComboBoxStyle}" Width="320" HorizontalAlignment="Left"
+                                                  AutomationProperties.Name="{x:Static res:Strings.EquipmentCamera}"
+                                                  ItemsSource="{Binding Cameras}" DisplayMemberPath="Name" SelectedItem="{Binding RigCamera}"/>
+                                        <TextBlock Margin="0,8,0,0" Text="{x:Static res:Strings.EquipmentOptic}"/>
+                                        <ComboBox Style="{StaticResource DarkComboBoxStyle}" Width="320" HorizontalAlignment="Left"
+                                                  AutomationProperties.Name="{x:Static res:Strings.EquipmentOptic}"
+                                                  ItemsSource="{Binding Optics}" DisplayMemberPath="Name" SelectedItem="{Binding RigOptic}"/>
+                                        <TextBlock Margin="0,8,0,0" Text="{x:Static res:Strings.EquipmentMount}"/>
+                                        <ComboBox Style="{StaticResource DarkComboBoxStyle}" Width="320" HorizontalAlignment="Left"
+                                                  AutomationProperties.Name="{x:Static res:Strings.EquipmentMount}"
+                                                  ItemsSource="{Binding Mounts}" DisplayMemberPath="Name" SelectedItem="{Binding RigMount}"/>
+                                        <TextBlock Margin="0,8,0,0" Text="{x:Static res:Strings.FieldFocalMultiplier}" ToolTip="{x:Static res:Strings.FieldFocalMultiplierTooltip}"/>
+                                        <TextBox Width="80" HorizontalAlignment="Left" Text="{Binding FocalMultiplierText, UpdateSourceTrigger=PropertyChanged}"
+                                                 AutomationProperties.Name="{x:Static res:Strings.FieldFocalMultiplier}"/>
+                                        <TextBlock Margin="0,8,0,0" Text="{x:Static res:Strings.FieldNotes}"/>
+                                        <TextBox Width="320" HorizontalAlignment="Left" Text="{Binding RigNotes}" AutomationProperties.Name="{x:Static res:Strings.FieldNotes}"/>
+                                        <Border Margin="0,12,0,0" Padding="10" Background="{StaticResource NightCardBrush}" CornerRadius="6" MaxWidth="640" HorizontalAlignment="Left">
+                                            <TextBlock TextWrapping="Wrap" Text="{Binding DerivedText}" Foreground="{StaticResource LabelTextBrush}"/>
+                                        </Border>
+                                        <StackPanel Orientation="Horizontal" Margin="0,12,0,0">
+                                            <Button Style="{StaticResource PrimaryButtonStyle}" Content="{x:Static res:Strings.EquipmentSave}" Command="{Binding SaveRigCommand}"/>
+                                            <Button Style="{StaticResource SecondaryButtonStyle}" Content="{x:Static res:Strings.EquipmentNew}" Command="{Binding NewRigCommand}"/>
+                                            <Button Style="{StaticResource SecondaryButtonStyle}" Content="{x:Static res:Strings.EquipmentActivate}" Command="{Binding ActivateRigCommand}"/>
+                                            <Button Style="{StaticResource SecondaryButtonStyle}" Content="{x:Static res:Strings.EquipmentDelete}" Command="{Binding DeleteRigCommand}"/>
+                                        </StackPanel>
+                                    </StackPanel>
+                                </ScrollViewer>
+                            </Grid>
+                        </TabItem>
+
+                        <!-- Cameras -->
+                        <TabItem Header="{x:Static res:Strings.EquipmentCameras}" Style="{StaticResource DarkTabItemStyle}">
+                            <Grid Margin="8">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="320"/>
+                                    <ColumnDefinition Width="16"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <DataGrid Style="{StaticResource NightDataGridStyle}" ItemsSource="{Binding Cameras}" SelectedItem="{Binding SelectedCamera}"
+                                          AutomationProperties.Name="{x:Static res:Strings.EquipmentCameras}">
+                                    <DataGrid.Columns>
+                                        <DataGridTextColumn Header="{x:Static res:Strings.ColumnName}" Binding="{Binding Name}" Width="*" ElementStyle="{StaticResource TrimmedCellStyle}"/>
+                                    </DataGrid.Columns>
+                                </DataGrid>
+                                <ScrollViewer Grid.Column="2" VerticalScrollBarVisibility="Auto">
+                                    <StackPanel>
+                                        <TextBlock Text="{x:Static res:Strings.FieldName}"/>
+                                        <TextBox Width="320" HorizontalAlignment="Left" Text="{Binding CameraName}" AutomationProperties.Name="{x:Static res:Strings.FieldName}"/>
+                                        <WrapPanel Margin="0,8,0,0">
+                                            <StackPanel Margin="0,0,12,8">
+                                                <TextBlock Text="{x:Static res:Strings.FieldCameraKind}"/>
+                                                <ComboBox Style="{StaticResource DarkComboBoxStyle}" Width="150" ItemsSource="{Binding CameraKinds}" DisplayMemberPath="Label"
+                                                          SelectedValuePath="Value" SelectedValue="{Binding CameraKindValue}" AutomationProperties.Name="{x:Static res:Strings.FieldCameraKind}"/>
+                                            </StackPanel>
+                                            <StackPanel Margin="0,0,12,8">
+                                                <TextBlock Text="{x:Static res:Strings.FieldSensorColor}"/>
+                                                <ComboBox Style="{StaticResource DarkComboBoxStyle}" Width="190" ItemsSource="{Binding SensorColors}" DisplayMemberPath="Label"
+                                                          SelectedValuePath="Value" SelectedValue="{Binding CameraColorValue}" AutomationProperties.Name="{x:Static res:Strings.FieldSensorColor}"/>
+                                            </StackPanel>
+                                        </WrapPanel>
+                                        <WrapPanel>
+                                            <StackPanel Margin="0,0,12,8">
+                                                <TextBlock Text="{x:Static res:Strings.FieldSensorWidthMm}"/>
+                                                <TextBox Width="100" Text="{Binding SensorWidthText}" AutomationProperties.Name="{x:Static res:Strings.FieldSensorWidthMm}"/>
+                                            </StackPanel>
+                                            <StackPanel Margin="0,0,12,8">
+                                                <TextBlock Text="{x:Static res:Strings.FieldSensorHeightMm}"/>
+                                                <TextBox Width="100" Text="{Binding SensorHeightText}" AutomationProperties.Name="{x:Static res:Strings.FieldSensorHeightMm}"/>
+                                            </StackPanel>
+                                            <StackPanel Margin="0,0,12,8">
+                                                <TextBlock Text="{x:Static res:Strings.FieldResolutionWidth}"/>
+                                                <TextBox Width="100" Text="{Binding ResolutionWidthText}" AutomationProperties.Name="{x:Static res:Strings.FieldResolutionWidth}"/>
+                                            </StackPanel>
+                                            <StackPanel Margin="0,0,12,8">
+                                                <TextBlock Text="{x:Static res:Strings.FieldResolutionHeight}"/>
+                                                <TextBox Width="100" Text="{Binding ResolutionHeightText}" AutomationProperties.Name="{x:Static res:Strings.FieldResolutionHeight}"/>
+                                            </StackPanel>
+                                            <StackPanel Margin="0,0,12,8">
+                                                <TextBlock Text="{x:Static res:Strings.FieldPixelSizeUm}" ToolTip="{x:Static res:Strings.FieldPixelSizeTooltip}"/>
+                                                <TextBox Width="100" Text="{Binding PixelSizeText}" AutomationProperties.Name="{x:Static res:Strings.FieldPixelSizeUm}"
+                                                         ToolTip="{x:Static res:Strings.FieldPixelSizeTooltip}"/>
+                                            </StackPanel>
+                                        </WrapPanel>
+                                        <WrapPanel>
+                                            <StackPanel Margin="0,0,12,8">
+                                                <TextBlock Text="{x:Static res:Strings.FieldQeFraction}" ToolTip="{x:Static res:Strings.FieldNoiseTooltip}"/>
+                                                <TextBox Width="100" Text="{Binding QuantumEfficiencyText}" AutomationProperties.Name="{x:Static res:Strings.FieldQeFraction}"/>
+                                            </StackPanel>
+                                            <StackPanel Margin="0,0,12,8">
+                                                <TextBlock Text="{x:Static res:Strings.FieldReadNoiseE}" ToolTip="{x:Static res:Strings.FieldNoiseTooltip}"/>
+                                                <TextBox Width="100" Text="{Binding ReadNoiseText}" AutomationProperties.Name="{x:Static res:Strings.FieldReadNoiseE}"/>
+                                            </StackPanel>
+                                            <StackPanel Margin="0,0,12,8">
+                                                <TextBlock Text="{x:Static res:Strings.FieldDarkCurrentE}" ToolTip="{x:Static res:Strings.FieldNoiseTooltip}"/>
+                                                <TextBox Width="100" Text="{Binding DarkCurrentText}" AutomationProperties.Name="{x:Static res:Strings.FieldDarkCurrentE}"/>
+                                            </StackPanel>
+                                            <StackPanel Margin="0,0,12,8">
+                                                <TextBlock Text="{x:Static res:Strings.FieldIso}"/>
+                                                <TextBox Width="100" Text="{Binding IsoText}" AutomationProperties.Name="{x:Static res:Strings.FieldIso}"/>
+                                            </StackPanel>
+                                            <StackPanel Margin="0,0,12,8">
+                                                <TextBlock Text="{x:Static res:Strings.FieldGain}"/>
+                                                <TextBox Width="100" Text="{Binding GainText}" AutomationProperties.Name="{x:Static res:Strings.FieldGain}"/>
+                                            </StackPanel>
+                                        </WrapPanel>
+                                        <TextBlock Text="{x:Static res:Strings.FieldNotes}"/>
+                                        <TextBox Width="420" HorizontalAlignment="Left" Text="{Binding CameraNotes}" TextWrapping="Wrap" AutomationProperties.Name="{x:Static res:Strings.FieldNotes}"/>
+                                        <StackPanel Orientation="Horizontal" Margin="0,12,0,0">
+                                            <Button Style="{StaticResource PrimaryButtonStyle}" Content="{x:Static res:Strings.EquipmentSave}" Command="{Binding SaveCameraCommand}"/>
+                                            <Button Style="{StaticResource SecondaryButtonStyle}" Content="{x:Static res:Strings.EquipmentNew}" Command="{Binding NewCameraCommand}"/>
+                                            <Button Style="{StaticResource SecondaryButtonStyle}" Content="{x:Static res:Strings.EquipmentDelete}" Command="{Binding DeleteCameraCommand}"/>
+                                        </StackPanel>
+                                    </StackPanel>
+                                </ScrollViewer>
+                            </Grid>
+                        </TabItem>
+
+                        <!-- Optics -->
+                        <TabItem Header="{x:Static res:Strings.EquipmentOptics}" Style="{StaticResource DarkTabItemStyle}">
+                            <Grid Margin="8">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="320"/>
+                                    <ColumnDefinition Width="16"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <DataGrid Style="{StaticResource NightDataGridStyle}" ItemsSource="{Binding Optics}" SelectedItem="{Binding SelectedOptic}"
+                                          AutomationProperties.Name="{x:Static res:Strings.EquipmentOptics}">
+                                    <DataGrid.Columns>
+                                        <DataGridTextColumn Header="{x:Static res:Strings.ColumnName}" Binding="{Binding Name}" Width="*" ElementStyle="{StaticResource TrimmedCellStyle}"/>
+                                        <DataGridTextColumn Header="{x:Static res:Strings.ColumnFocal}" Binding="{Binding FocalLengthMm, StringFormat={}{0:0} mm}" Width="70" ElementStyle="{StaticResource NumericCellStyle}"/>
+                                    </DataGrid.Columns>
+                                </DataGrid>
+                                <ScrollViewer Grid.Column="2" VerticalScrollBarVisibility="Auto">
+                                    <StackPanel>
+                                        <TextBlock Text="{x:Static res:Strings.FieldName}"/>
+                                        <TextBox Width="320" HorizontalAlignment="Left" Text="{Binding OpticName}" AutomationProperties.Name="{x:Static res:Strings.FieldName}"/>
+                                        <TextBlock Margin="0,8,0,0" Text="{x:Static res:Strings.FieldOpticKind}"/>
+                                        <ComboBox Style="{StaticResource DarkComboBoxStyle}" Width="220" HorizontalAlignment="Left" ItemsSource="{Binding OpticKinds}" DisplayMemberPath="Label"
+                                                  SelectedValuePath="Value" SelectedValue="{Binding OpticKindValue}" AutomationProperties.Name="{x:Static res:Strings.FieldOpticKind}"/>
+                                        <WrapPanel Margin="0,8,0,0">
+                                            <StackPanel Margin="0,0,12,8">
+                                                <TextBlock Text="{x:Static res:Strings.FieldFocalLengthMm}"/>
+                                                <TextBox Width="100" Text="{Binding FocalLengthText}" AutomationProperties.Name="{x:Static res:Strings.FieldFocalLengthMm}"/>
+                                            </StackPanel>
+                                            <StackPanel Margin="0,0,12,8">
+                                                <TextBlock Text="{x:Static res:Strings.FieldApertureMm}" ToolTip="{x:Static res:Strings.FieldApertureTooltip}"/>
+                                                <TextBox Width="100" Text="{Binding ApertureText}" AutomationProperties.Name="{x:Static res:Strings.FieldApertureMm}"
+                                                         ToolTip="{x:Static res:Strings.FieldApertureTooltip}"/>
+                                            </StackPanel>
+                                            <StackPanel Margin="0,0,12,8">
+                                                <TextBlock Text="{x:Static res:Strings.FieldFocalRatioShort}" ToolTip="{x:Static res:Strings.FieldApertureTooltip}"/>
+                                                <TextBox Width="100" Text="{Binding FocalRatioText}" AutomationProperties.Name="{x:Static res:Strings.FieldFocalRatioShort}"/>
+                                            </StackPanel>
+                                            <StackPanel Margin="0,0,12,8">
+                                                <TextBlock Text="{x:Static res:Strings.FieldTransmissionFraction}"/>
+                                                <TextBox Width="100" Text="{Binding TransmissionText}" AutomationProperties.Name="{x:Static res:Strings.FieldTransmissionFraction}"/>
+                                            </StackPanel>
+                                        </WrapPanel>
+                                        <TextBlock Text="{x:Static res:Strings.FieldNotes}"/>
+                                        <TextBox Width="420" HorizontalAlignment="Left" Text="{Binding OpticNotes}" AutomationProperties.Name="{x:Static res:Strings.FieldNotes}"/>
+                                        <StackPanel Orientation="Horizontal" Margin="0,12,0,0">
+                                            <Button Style="{StaticResource PrimaryButtonStyle}" Content="{x:Static res:Strings.EquipmentSave}" Command="{Binding SaveOpticCommand}"/>
+                                            <Button Style="{StaticResource SecondaryButtonStyle}" Content="{x:Static res:Strings.EquipmentNew}" Command="{Binding NewOpticCommand}"/>
+                                            <Button Style="{StaticResource SecondaryButtonStyle}" Content="{x:Static res:Strings.EquipmentDelete}" Command="{Binding DeleteOpticCommand}"/>
+                                        </StackPanel>
+                                    </StackPanel>
+                                </ScrollViewer>
+                            </Grid>
+                        </TabItem>
+
+                        <!-- Mounts -->
+                        <TabItem Header="{x:Static res:Strings.EquipmentMounts}" Style="{StaticResource DarkTabItemStyle}">
+                            <Grid Margin="8">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="320"/>
+                                    <ColumnDefinition Width="16"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <DataGrid Style="{StaticResource NightDataGridStyle}" ItemsSource="{Binding Mounts}" SelectedItem="{Binding SelectedMount}"
+                                          AutomationProperties.Name="{x:Static res:Strings.EquipmentMounts}">
+                                    <DataGrid.Columns>
+                                        <DataGridTextColumn Header="{x:Static res:Strings.ColumnName}" Binding="{Binding Name}" Width="*" ElementStyle="{StaticResource TrimmedCellStyle}"/>
+                                    </DataGrid.Columns>
+                                </DataGrid>
+                                <ScrollViewer Grid.Column="2" VerticalScrollBarVisibility="Auto">
+                                    <StackPanel>
+                                        <TextBlock Text="{x:Static res:Strings.FieldName}"/>
+                                        <TextBox Width="320" HorizontalAlignment="Left" Text="{Binding MountName}" AutomationProperties.Name="{x:Static res:Strings.FieldName}"/>
+                                        <TextBlock Margin="0,8,0,0" Text="{x:Static res:Strings.FieldMountKind}"/>
+                                        <ComboBox Style="{StaticResource DarkComboBoxStyle}" Width="240" HorizontalAlignment="Left" ItemsSource="{Binding MountKinds}" DisplayMemberPath="Label"
+                                                  SelectedValuePath="Value" SelectedValue="{Binding MountKindValue}" AutomationProperties.Name="{x:Static res:Strings.FieldMountKind}"/>
+                                        <WrapPanel Margin="0,8,0,0">
+                                            <StackPanel Margin="0,0,12,8">
+                                                <TextBlock Text="{x:Static res:Strings.FieldMaxExposureS}" ToolTip="{x:Static res:Strings.FieldMaxExposureTooltip}"/>
+                                                <TextBox Width="100" Text="{Binding MaxExposureText}" AutomationProperties.Name="{x:Static res:Strings.FieldMaxExposureS}"
+                                                         ToolTip="{x:Static res:Strings.FieldMaxExposureTooltip}"/>
+                                            </StackPanel>
+                                            <StackPanel Margin="0,0,12,8">
+                                                <TextBlock Text="{x:Static res:Strings.FieldPayloadKg}"/>
+                                                <TextBox Width="100" Text="{Binding PayloadText}" AutomationProperties.Name="{x:Static res:Strings.FieldPayloadKg}"/>
+                                            </StackPanel>
+                                        </WrapPanel>
+                                        <TextBlock Text="{x:Static res:Strings.FieldNotes}"/>
+                                        <TextBox Width="420" HorizontalAlignment="Left" Text="{Binding MountNotes}" AutomationProperties.Name="{x:Static res:Strings.FieldNotes}"/>
+                                        <StackPanel Orientation="Horizontal" Margin="0,12,0,0">
+                                            <Button Style="{StaticResource PrimaryButtonStyle}" Content="{x:Static res:Strings.EquipmentSave}" Command="{Binding SaveMountCommand}"/>
+                                            <Button Style="{StaticResource SecondaryButtonStyle}" Content="{x:Static res:Strings.EquipmentNew}" Command="{Binding NewMountCommand}"/>
+                                            <Button Style="{StaticResource SecondaryButtonStyle}" Content="{x:Static res:Strings.EquipmentDelete}" Command="{Binding DeleteMountCommand}"/>
+                                        </StackPanel>
+                                    </StackPanel>
+                                </ScrollViewer>
+                            </Grid>
+                        </TabItem>
+                    </TabControl>
+                </Grid>
+            </TabItem>
+
             <TabItem Header="{x:Static res:Strings.TabLocations}" Style="{StaticResource DarkTabItemStyle}">
                 <Grid Margin="12" DataContext="{Binding Locations}">
                     <Grid.RowDefinitions>
@@ -1059,6 +1471,9 @@
                                              ToolTip="{x:Static res:Strings.LocationsSqmTooltip}"/>
                                     <TextBlock Margin="0,4,0,0" Foreground="{StaticResource NightMutedTextBrush}" Text="{Binding BortleText}"
                                                Visibility="{Binding BortleText, Converter={StaticResource NullToCollapsedConverter}}"/>
+                                    <TextBlock Margin="0,6,0,0" Foreground="{StaticResource NightMutedTextBrush}" TextWrapping="Wrap"
+                                               Text="{Binding AtlasSqmText}"
+                                               Visibility="{Binding AtlasSqmText, Converter={StaticResource NullToCollapsedConverter}}"/>
                                     <TextBlock Margin="0,6,0,0" Foreground="{StaticResource NightMutedTextBrush}" TextWrapping="Wrap"
                                                Text="{x:Static res:Strings.LocationsSqmTooltip}"/>
                                     <StackPanel Orientation="Horizontal" Margin="0,10,0,0">

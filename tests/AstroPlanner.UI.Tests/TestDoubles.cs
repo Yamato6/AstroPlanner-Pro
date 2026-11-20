@@ -127,25 +127,50 @@ internal static class TestShell
         IWeatherForecastService? weather = null,
         IUpdateChecker? updates = null,
         ILocationRepository? locations = null,
-        ISkyViewStore? skyStore = null)
+        ISkyViewStore? skyStore = null,
+        IEquipmentRepository? equipment = null,
+        ILightPollutionAtlas? atlas = null)
     {
         var logger = new NullLogger();
         var astronomy = new AstronomyService();
         settings ??= new FakeSettingsService(new ObserverSettings());
         logbook ??= new LogbookViewModel(new FakeLogService(), logger);
-        var context = new ObserverContext(astronomy, time);
+        var context = new ObserverContext(astronomy, time, atlas);
+        // No equipment unless a test asks for it: the existing tests keep their manual camera frame.
+        var equipmentState = new EquipmentState(equipment ?? new FakeEquipmentRepository(EquipmentInventory.Empty), logger);
         var weatherState = new WeatherState(context, logger, time, weather);
         var settingsViewModel = new SettingsViewModel(settings, new FakeCityRepository(), logger);
         var targets = new TargetsViewModel(
             new FakeCelestialRepository(catalog ?? [TestCatalog.M42, TestCatalog.M31, TestCatalog.M13]),
-            astronomy, context, settings, logbook, logger);
+            astronomy, context, settings, logbook, logger, equipmentState, weatherState);
         var planViewModel = new SessionPlanViewModel(plan ?? new FakePlanService(), astronomy, context, weatherState, targets, logger);
         var detail = new ObjectDetailViewModel(astronomy, context, weatherState, targets, planViewModel, logbook);
-        var sky = new SkyViewModel(context, targets, planViewModel, skyStore ?? new FakeSkyViewStore(), logger, time);
-        var tonight = new TonightViewModel(context, weatherState, logbook);
-        var locationsViewModel = new LocationsViewModel(locations ?? new FakeLocationRepository(), settingsViewModel, context, logger);
+        var sky = new SkyViewModel(context, targets, planViewModel, skyStore ?? new FakeSkyViewStore(), logger, time, equipmentState);
+        var tonight = new TonightViewModel(context, weatherState, logbook, targets, equipmentState, planViewModel);
+        var locationsViewModel = new LocationsViewModel(locations ?? new FakeLocationRepository(), settingsViewModel, context, logger, atlas);
         return new ShellViewModel(
             context, weatherState, tonight, targets, sky, detail, planViewModel, logbook, locationsViewModel, settingsViewModel,
-            logger, time, updates);
+            logger, time, updates, new EquipmentViewModel(equipmentState));
     }
+}
+
+/// <summary>Equipment kept in memory.</summary>
+internal sealed class FakeEquipmentRepository(EquipmentInventory inventory) : IEquipmentRepository
+{
+    public EquipmentInventory Inventory { get; private set; } = inventory;
+    public int SaveCount { get; private set; }
+
+    public EquipmentInventory Load() => Inventory;
+
+    public void Save(EquipmentInventory inventory)
+    {
+        Inventory = inventory;
+        SaveCount++;
+    }
+}
+
+/// <summary>A light-pollution atlas that returns the same artificial brightness everywhere (or nothing).</summary>
+internal sealed class FakeAtlas(double? artificialBrightness) : ILightPollutionAtlas
+{
+    public double? ArtificialBrightness(double latitudeDegrees, double longitudeDegrees) => artificialBrightness;
 }
