@@ -34,6 +34,9 @@ public sealed class ObserverSettings
     /// <summary>Fetch the cloud forecast from Open-Meteo (sends the location rounded to ~1 km).</summary>
     public bool WeatherForecastEnabled { get; set; } = true;
 
+    /// <summary>Fetch the seeing and transparency forecast from 7Timer! (sends the location rounded to ~1 km).</summary>
+    public bool AstroForecastEnabled { get; set; } = true;
+
     /// <summary>Check GitHub for a new version at startup.</summary>
     public bool CheckForUpdates { get; set; } = true;
 

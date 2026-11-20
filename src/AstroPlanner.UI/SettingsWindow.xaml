@@ -9,6 +9,7 @@
         WindowStartupLocation="CenterOwner"
         Background="{StaticResource DialogBackgroundBrush}">
     <Window.Resources>
+        <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>
         <!-- Colors and templates: Themes/Dark.xaml -->
         <Style TargetType="TextBlock">
             <Setter Property="Foreground" Value="{StaticResource NightTextBrush}"/>
@@ -108,8 +109,20 @@
                       Content="{x:Static res:Strings.SettingsCloudForecast}"/>
             <TextBlock Margin="23,2,0,8" Foreground="{StaticResource NightMutedTextBrush}" TextWrapping="Wrap" FontSize="12"
                        Text="{x:Static res:Strings.SettingsCloudForecastNote}"/>
+            <CheckBox Margin="0,4" IsChecked="{Binding AstroForecastEnabled}"
+                      Content="{x:Static res:Strings.SettingsAstroForecast}"/>
+            <TextBlock Margin="23,2,0,8" Foreground="{StaticResource NightMutedTextBrush}" TextWrapping="Wrap" FontSize="12"
+                       Text="{x:Static res:Strings.SettingsAstroForecastNote}"/>
             <CheckBox Margin="0,4" IsChecked="{Binding CheckForUpdates}"
                       Content="{x:Static res:Strings.SettingsCheckForUpdates}"/>
+            <TextBlock Margin="23,2,0,8" Foreground="{StaticResource NightMutedTextBrush}" TextWrapping="Wrap" FontSize="12"
+                       Text="{x:Static res:Strings.SettingsCheckForUpdatesNote}"/>
+            <StackPanel Orientation="Horizontal" Margin="0,4"
+                        Visibility="{Binding HasCache, Converter={StaticResource BooleanToVisibilityConverter}}">
+                <TextBlock VerticalAlignment="Center" Margin="0,0,12,0" Text="{Binding CacheSizeText}"/>
+                <Button Style="{StaticResource SecondaryButtonStyle}" Content="{x:Static res:Strings.SettingsClearCache}"
+                        ToolTip="{x:Static res:Strings.SettingsClearCacheTooltip}" Command="{Binding ClearCacheCommand}"/>
+            </StackPanel>
 
             <!-- Capture feasibility (spec §8.4) -->
             <CheckBox Margin="0,12,0,4" IsChecked="{Binding AllowNauticalTwilight}"

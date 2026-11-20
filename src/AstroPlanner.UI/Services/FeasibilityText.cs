@@ -91,6 +91,8 @@ public static class FeasibilityText
                 reason.Sampling == SamplingVerdict.Oversampled ? Strings.ReasonOversampledFormat : Strings.ReasonUndersampledFormat,
                 reason.Value, reason.Value2),
             FeasibilityFactor.AssumedBrightness => DisplayNames.Format(Strings.ReasonAssumedBrightnessFormat, reason.Value),
+            FeasibilityFactor.Seeing => DisplayNames.Format(Strings.ReasonSeeingFormat, reason.Value),
+            FeasibilityFactor.Transparency => DisplayNames.Format(Strings.ReasonTransparencyFormat, reason.Value, reason.Value2),
             _ => reason.Factor.ToString()
         };
     }

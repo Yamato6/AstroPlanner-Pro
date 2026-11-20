@@ -214,7 +214,8 @@ unless noted. It covers sanity scenarios, monotonicity and edge cases.
   predicted from a city.
 - One "characteristic" surface brightness per object. Real objects have bright cores and faint
   halos.
-- Seeing is fixed at 2.5″ and transparency is not modelled yet (M4: 7Timer!).
+- Without a forecast the seeing is 2.5″ and the extinction is the site's k. With the 7Timer!
+  forecast both follow the night (§11).
 - No star trailing beyond the NPF limit, no field rotation for alt-az beyond the default limit,
   no dew or wind.
 - The thresholds and weights are deliberately simple and tunable. Predictions can be compared with
@@ -267,6 +268,38 @@ Tests (`SessionSchedulerTests`):
   ≈ 01:10);
 - the profile matches the report.
 
+## 11. Forecast seeing and transparency (spec §9.2)
+
+When the 7Timer! ASTRO forecast covers the dark night, `NightConditions` (Core/Weather) averages
+its 3-hour points over it. `FeasibilityRequest.EffectiveConstants` then applies them:
+
+- **Seeing:** the mean forecast FWHM replaces `SeeingArcsec`. It changes the sampling verdict and
+  the seeing core used for point sources. A *Seeing* reason is added, negative from 2.25″.
+- **Transparency:** 7Timer!'s scale is in magnitudes per air mass and starts at "< 0.3" for its
+  clearest class, above the clean-air V extinction of a good site. So it does not replace k. Only
+  the excess over `ClearTransparency` (0.3) is added to the site's k, as haze:
+  k = k_site + max(0, T − 0.3). A *Transparency* reason gives T and the added extinction. It is
+  positive up to +0.05 and negative from +0.25.
+
+The classes are converted to numbers at the middle of each documented range
+(`AstroForecastScales`):
+
+| Class | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 |
+|---|---|---|---|---|---|---|---|---|
+| Seeing (″) | 0.4 | 0.625 | 0.875 | 1.125 | 1.375 | 1.75 | 2.25 | 2.75 |
+| Transparency (mag/air mass) | 0.25 | 0.35 | 0.45 | 0.55 | 0.65 | 0.775 | 0.925 | 1.1 |
+
+**Dew and wind** (`NightConditions`, from Open-Meteo, not part of the score) are warnings in
+Tonight:
+
+- *dew likely* when the air comes within 2 °C of its dew point, *possible* within 4 °C. Optics
+  radiate to the sky and cool below the air, so they fog before the air saturates;
+- *wind* when gusts exceed 30 km/h for a camera on a tripod or tracker, or 20 km/h for a telescope
+  (alt-az or equatorial).
+
+The thresholds are in `ConditionThresholds`. Without a forecast nothing changes, and the verdicts
+are exactly those of §1–§9. Tests: `NightConditionsTests`.
+
 ## Default constants (`FeasibilityConstants.Default`)
 
 | Constant | Value |
@@ -286,6 +319,8 @@ Tests (`SessionSchedulerTests`):
 | ExcellentScore / GoodScore / MarginalScore | 75 / 55 / 30 |
 | Step | 5 min |
 | SessionSchedulerOptions.MinimumBlock | 20 min |
+| ClearTransparency | 0.3 mag/air mass |
+| ConditionThresholds (dew high / moderate; gusts camera / telescope) | 2 / 4 °C; 30 / 20 km/h |
 
 ## References
 

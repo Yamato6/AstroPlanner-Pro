@@ -63,15 +63,60 @@ public sealed partial class ShellViewModel : ObservableObject, IDisposable
         _context.Recalculated += (_, _) => OnPropertyChanged(nameof(LocationSummary));
         Settings.PropertyChanged += OnSettingsPropertyChanged;
         Settings.SettingsSaved += OnSettingsSaved;
+        _weather.Changed += (_, _) =>
+        {
+            OnPropertyChanged(nameof(OnlineStatusText));
+            OnPropertyChanged(nameof(OnlineStatusGlyph));
+            OnPropertyChanged(nameof(OnlineStatusTooltip));
+        };
 
         // The persisted settings win over runtime values.
         _weather.IsEnabled = settings.WeatherForecastEnabled;
+        _weather.IsAstroEnabled = settings.AstroForecastEnabled;
         _context.LocationName = DescribeLocation();
         _context.ZenithSqm = locations.ActiveLocation?.ZenithSqm;
         _context.Darkness = settings.AllowNauticalTwilight ? DarknessDefinition.Nautical : DarknessDefinition.Astronomical;
         _context.ExtinctionCoefficient = settings.ExtinctionCoefficient;
         _context.Initialize(settings.Latitude, settings.Longitude, settings.Elevation, settings.TimeZoneId, settings.MinimumAltitude,
             horizonMask: locations.ActiveLocation?.HorizonMask ?? HorizonMask.Flat);
+    }
+
+    /// <summary>Overall state of the online services for the top bar (spec §10).</summary>
+    public string OnlineStatusText
+    {
+        get
+        {
+            var services = new[] { (_weather.IsEnabled, _weather.Forecast, _weather.LastError, _weather.IsForecastStale),
+                (_weather.IsAstroEnabled, (object?)_weather.AstroForecast, _weather.AstroLastError, _weather.IsAstroForecastStale) };
+            if (!services.Any(s => s.Item1))
+            {
+                return Strings.OnlineStatusOff;
+            }
+
+            return services.Any(s => s.Item1 && (s.Item3 is not null || s.Item4)) ? Strings.OnlineStatusOffline : Strings.OnlineStatusOnline;
+        }
+    }
+
+    /// <summary>Compact form for the top bar: ● online, ◐ offline with saved data, ○ off.</summary>
+    public string OnlineStatusGlyph =>
+        OnlineStatusText == Strings.OnlineStatusOnline ? "●" : OnlineStatusText == Strings.OnlineStatusOffline ? "◐" : "○";
+
+    /// <summary>The overall state, then one line per online service: off, OK, from the cache (as of …) or unavailable.</summary>
+    public string OnlineStatusTooltip => string.Join(Environment.NewLine,
+        OnlineStatusText,
+        ServiceLine(Strings.OnlineServiceWeather, _weather.IsEnabled, _weather.Forecast?.FetchedAtUtc, _weather.LastError, _weather.IsForecastStale),
+        ServiceLine(Strings.OnlineServiceAstro, _weather.IsAstroEnabled, _weather.AstroForecast?.FetchedAtUtc, _weather.AstroLastError, _weather.IsAstroForecastStale),
+        DisplayNames.Format(Strings.OnlineServiceLineFormat, Strings.OnlineServiceUpdates, Settings.CheckForUpdates ? Strings.OnlineServiceOn : Strings.OnlineServiceDisabled));
+
+    private string ServiceLine(string name, bool enabled, DateTime? fetchedUtc, string? error, bool stale)
+    {
+        var state = !enabled ? Strings.OnlineServiceDisabled
+            : fetchedUtc is { } fetched && (stale || error is not null)
+                ? DisplayNames.Format(Strings.OnlineServiceCachedFormat, TimeZoneInfo.ConvertTimeFromUtc(fetched, _context.TimeZone))
+            : fetchedUtc is { } ok ? DisplayNames.Format(Strings.OnlineServiceOkFormat, TimeZoneInfo.ConvertTimeFromUtc(ok, _context.TimeZone))
+            : error is not null ? DisplayNames.Format(Strings.OnlineServiceErrorFormat, error)
+            : Strings.OnlineServiceWaiting;
+        return DisplayNames.Format(Strings.OnlineServiceLineFormat, name, state);
     }
 
     /// <summary>Shared observing state (location, time, minimum altitude).</summary>
@@ -129,9 +174,10 @@ public sealed partial class ShellViewModel : ObservableObject, IDisposable
             settings.LatitudeDegrees, settings.LongitudeDegrees, settings.ElevationMeters,
             settings.TimeZoneId, settings.MinimumAltitude, Locations.ActiveLocation?.HorizonMask ?? HorizonMask.Flat);
 
-        if (_weather.IsEnabled != settings.WeatherForecastEnabled)
+        if (_weather.IsEnabled != settings.WeatherForecastEnabled || _weather.IsAstroEnabled != settings.AstroForecastEnabled)
         {
             _weather.IsEnabled = settings.WeatherForecastEnabled;
+            _weather.IsAstroEnabled = settings.AstroForecastEnabled;
             _ = _weather.RefreshSafeAsync();
         }
     }

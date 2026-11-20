@@ -19,7 +19,8 @@ public static class FeasibilityRequests
         return new FeasibilityRequest(context.Observer, context.TimeZone, night, context.MinimumAltitude, rig,
             context.EffectiveZenithSqm, context.ZenithSqmSource, context.HorizonMask, context.Darkness, Forecast(weather))
         {
-            Constants = FeasibilityConstants.Default with { ExtinctionCoefficient = context.ExtinctionCoefficient }
+            Constants = FeasibilityConstants.Default with { ExtinctionCoefficient = context.ExtinctionCoefficient },
+            Conditions = weather?.GetNightConditions(rig.Mount.Kind)
         };
     }
 

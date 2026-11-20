@@ -58,7 +58,7 @@ public sealed class FeasibilityCalculator(IAstronomyService astronomy)
         ArgumentNullException.ThrowIfNull(request);
         ArgumentNullException.ThrowIfNull(night);
 
-        var c = request.Constants;
+        var c = request.EffectiveConstants;
         var rig = request.Rig;
         var p = Prepare(target, request, night);
         var (ofDate, scale, surfaceRate, sampling) = (p.OfDate, p.ScaleArcsecPerPixel, p.SurfaceRate, p.Sampling);
@@ -227,7 +227,7 @@ public sealed class FeasibilityCalculator(IAstronomyService astronomy)
             verdict = FeasibilityVerdict.Unlikely;
         }
 
-        var reasons = Explain(report, framing, sub, subLimit, snr, sampling, assumed, surfaceBrightness, c);
+        var reasons = Explain(report, framing, sub, subLimit, snr, sampling, assumed, surfaceBrightness, c, request);
         var total = TimeSpan.FromSeconds(subCount * sub);
         return report with
         {
@@ -271,7 +271,7 @@ public sealed class FeasibilityCalculator(IAstronomyService astronomy)
         ArgumentNullException.ThrowIfNull(request);
         ArgumentNullException.ThrowIfNull(night);
 
-        var c = request.Constants;
+        var c = request.EffectiveConstants;
         var p = Prepare(target, request, night);
         var (tx, ty, tz) = NightSkySamples.UnitVector(p.OfDate);
         var track = new Track(p.OfDate, request, night);
@@ -359,7 +359,7 @@ public sealed class FeasibilityCalculator(IAstronomyService astronomy)
 
     private Prepared Prepare(CelestialObject target, FeasibilityRequest request, NightSkySamples night)
     {
-        var c = request.Constants;
+        var c = request.EffectiveConstants;
         var rig = request.Rig;
         var middleUtc = night.TimesUtc.Length > 0 ? night.TimesUtc[night.TimesUtc.Length / 2] : DateTime.UtcNow;
 
@@ -460,7 +460,8 @@ public sealed class FeasibilityCalculator(IAstronomyService astronomy)
         Sampling sampling,
         bool assumed,
         double surfaceBrightness,
-        FeasibilityConstants c)
+        FeasibilityConstants c,
+        FeasibilityRequest request)
     {
         var reasons = new List<FeasibilityReason>
         {
@@ -520,6 +521,19 @@ public sealed class FeasibilityCalculator(IAstronomyService astronomy)
         if (assumed)
         {
             reasons.Add(new(FeasibilityFactor.AssumedBrightness, ReasonImpact.Neutral, surfaceBrightness));
+        }
+
+        if (request.Conditions is { SeeingArcsec: { } seeing })
+        {
+            reasons.Add(new(FeasibilityFactor.Seeing, seeing >= 2.25 ? ReasonImpact.Negative : ReasonImpact.Neutral, seeing));
+        }
+
+        if (request.Conditions is { TransparencyMagnitudesPerAirmass: { } transparency })
+        {
+            var haze = request.HazeExtinction;
+            reasons.Add(new(FeasibilityFactor.Transparency,
+                haze >= 0.25 ? ReasonImpact.Negative : haze <= 0.05 ? ReasonImpact.Positive : ReasonImpact.Neutral,
+                transparency, haze));
         }
 
         // Blocking first, then what hurts, what helps, and the rest (stable within each group).
