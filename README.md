@@ -19,9 +19,16 @@
 > **Status: work in progress (v2.0 under development).** AstroPlanner Pro is based on
 > [AstroPlanner v1](https://github.com/Yamato6/AstroPlanner), whose full history it keeps.
 > Milestones M0 (English, .NET 10, new architecture), M1 (data foundation: the full NGC/IC
-> catalog, saved sites, refined events, v1 import) and M2 (the live 2D/3D sky) are done. The
-> roadmap (equipment and capture-feasibility model, online enrichment, comets and satellites) is
-> in the [specification](ASTROPLANNER_PRO_SPEC.md).
+> catalog, saved sites, refined events, v1 import) and M2 (the live 2D/3D sky) are done. M3 is
+> under way: equipment, light-pollution-aware sky quality and the capture-feasibility model are in
+> (part 1); the session planner with its timeline and exports comes next. The rest of the roadmap
+> (online enrichment, comets and satellites) is in the [specification](ASTROPLANNER_PRO_SPEC.md).
+
+![Tonight: the active rig (Canon T7 + Rokinon 16 mm on a tripod), the site's sky quality from the light-pollution atlas and the best targets for that gear, each with its verdict, score and suggested capture](docs/screenshots/tonight.png)
+
+![Why this verdict? The feasibility breakdown of the Orion Nebula: sky at the target, signal-to-noise, usable hours after clouds, Moon, framing, sub length and sampling](docs/screenshots/feasibility.png)
+
+![The equipment inventory: rigs made of a camera, a lens or telescope and a mount, with the field, image scale, sampling and longest sub derived live](docs/screenshots/equipment.png)
 
 ![The planner: the NGC/IC catalog with sizes, tonight's maximum altitude and best window, the dark night, Moon, clouds and the altitude of the selected object](docs/screenshots/planner.png)
 
@@ -35,6 +42,19 @@
 
 ## What it does today
 
+- **What can I photograph tonight, with my gear?** Every object gets an honest, explainable
+  estimate for the active rig: a verdict (Excellent → Not possible), a score and the reasons. They
+  cover usable dark time above your horizon, sky brightness at the target (light pollution,
+  moonlight with Krisciunas & Schaefer, twilight), framing, the longest sub (NPF rule or your mount)
+  and the signal-to-noise of the whole stack. The estimate comes with a suggested capture (subs,
+  ISO/gain, total time, best window). The *Tonight* tab ranks the best targets. See
+  [how it works](docs/feasibility-model.md).
+- **Equipment**: cameras, lenses and telescopes, mounts and rigs, with the field of view, image
+  scale, sampling and maximum exposure computed live. The active rig drives the verdicts and the
+  camera frame on the sky.
+- **Light-pollution aware**: the zenith sky quality of any site comes from the World Atlas 2015
+  (Falchi et al. 2016), shipped as a compact offline grid (Mexico at 30″, the world at 5′). An SQM
+  reading typed for the site takes precedence.
 - 🔭 **13,371 deep-sky objects and the 7 planets**: the whole NGC/IC catalog (OpenNGC), with all
   110 Messier and 109 Caldwell objects, sizes, surface brightness, common names and cross-IDs.
   Search by any identifier (`M31`, `NGC 224`, `C14`, `IC 434`, `Sh2-155`, `PGC 2557`) or name, and
@@ -104,7 +124,7 @@ Both can be turned off in **Settings → Internet connection**.
 ```bash
 dotnet build AstroPlanner.slnx -warnaserror
 dotnet run --project src/AstroPlanner.UI
-dotnet test AstroPlanner.slnx          # ~500 tests, no network
+dotnet test AstroPlanner.slnx          # ~600 tests, no network
 cd src/sky-renderer && npm ci && npm test   # renderer: ~150 Vitest tests (the UI build runs npm itself)
 dotnet run --project tools/AstroPlanner.DataBuilder -- all   # rebuild the catalogs (downloads the sources)
 ```
@@ -234,6 +254,10 @@ installer/                Inno Setup script
 - Stars: [HYG database](https://codeberg.org/astronexus/hyg) v4.4 by David Nash / astronexus.net (CC BY-SA 4.0).
 - Constellation boundaries: Roman (1987), CDS VI/42, as distributed with
   [astropy](https://github.com/astropy/astropy) (BSD-3-Clause).
+- Light pollution: grids derived from the World Atlas 2015 of artificial night sky brightness, Falchi et al. (2016),
+  *Science Advances* 2, e1600377; data: GFZ Data Services, [doi:10.5880/GFZ.1.4.2016.001](https://doi.org/10.5880/GFZ.1.4.2016.001)
+  ([CC BY-NC 4.0](https://creativecommons.org/licenses/by-nc/4.0/)).
+- Moonlight: Krisciunas & Schaefer (1991), *PASP* 103, 1033.
 - Cloud forecast: [Open-Meteo.com](https://open-meteo.com/) (data under [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/)).
 - Algorithms: Jean Meeus, *Astronomical Algorithms* (2nd ed.), and approximate orbital elements from JPL (NASA).
 - Charts: [ScottPlot](https://scottplot.net/).
@@ -241,7 +265,7 @@ installer/                Inno Setup script
 
 Sources, versions and checksums: [data/SOURCES.md](data/SOURCES.md); license texts:
 [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md). The code is MIT; the catalogs keep their own
-licenses. **AstroPlanner Pro is and will stay free:** the light-pollution atlas it will use from M3
+licenses. **AstroPlanner Pro is and will stay free:** the light-pollution atlas it uses
 (Falchi et al. 2016) is licensed for non-commercial use only.
 
 © 2026 Yamato6 · [MIT License](LICENSE)

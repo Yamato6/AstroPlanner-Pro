@@ -99,7 +99,7 @@ OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED O
 POSSIBILITY OF SUCH DAMAGE.
 ```
 
-## Data used from M3
+## Light-pollution data (shipped since M3)
 
 ### World Atlas 2015 of artificial night-sky brightness — CC BY-NC 4.0
 
@@ -108,7 +108,9 @@ B. A., Rybnikova, N. A. and Furgoni, R. (2016): The new world atlas of artificia
 brightness. *Science Advances* 2, e1600377. Data: GFZ Data Services,
 https://doi.org/10.5880/GFZ.1.4.2016.001, licensed under the Creative Commons
 Attribution-NonCommercial 4.0 International license. **Because of this NonCommercial license,
-AstroPlanner Pro is and must remain free of charge.** Only derived grids will be distributed.
+AstroPlanner Pro is and must remain free of charge.** Only derived, quantised grids
+(`data/build/lp`, Mexico at 30″ and the world at 5′) are distributed; the credit is also shown in
+the About window.
 
 ## Software libraries
 

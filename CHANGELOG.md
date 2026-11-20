@@ -6,6 +6,57 @@ versions follow [Semantic Versioning](https://semver.org/). Versions up to 1.0.0
 
 ## [Unreleased] — 2.0.0
 
+### M3 — Equipment & feasibility (part 1: equipment, sky quality and the feasibility model)
+
+#### Added
+- **Equipment** tab: cameras (sensor, resolution, pixel pitch, colour/mono, QE, read noise, dark
+  current, ISO/gain), lenses and telescopes (focal length, aperture or f-number, transmission),
+  mounts (fixed tripod, star tracker, alt-az, equatorial, guided) and **rigs** (camera + optic +
+  mount + reducer/barlow). The derived values are shown live:
+  - field of view and image scale;
+  - sampling against a 2.5″ seeing;
+  - NPF limit and 500 rule, or the mount's tracking limit.
+
+  Migration `0003_equipment`. On first run the owner's gear is seeded (Canon EOS Rebel T7 with a
+  Rokinon 16 mm f/2.0 on a fixed tripod, and the StarSense Explorer 130AZ), all editable.
+- **Active rig** selector in the top bar. The Sky camera frame follows it.
+- **Capture-feasibility model** (spec §8, `docs/feasibility-model.md`). For every target it gives:
+  - a verdict (Excellent → Not possible) and a 0–100 score;
+  - the reasons, each with its value and impact;
+  - recommended settings: sub, ISO/gain, number of subs, total time and best window.
+
+  It accounts for:
+  - usable dark time above the minimum altitude and the horizon mask, weighted by the cloud
+    forecast;
+  - sky background (site SQM brightened toward the horizon, **Krisciunas & Schaefer** moonlight,
+    twilight when allowed);
+  - framing (too small / small / good / too large, with mosaic panels);
+  - the longest sub (NPF with cos δ, mount limits, sky-limited sub);
+  - a per-pixel stack signal-to-noise with extinction.
+
+  The whole catalog takes about 70 ms in the background.
+- **Targets**: *Verdict* and *Score* columns, a minimum-verdict filter and *Fits my field*.
+- **Tonight** tab: the active rig, the site's sky quality and **"Best targets for my gear
+  tonight"** (double-click for the reasons, one click to add to the plan).
+- **Object detail**: "Why this verdict?" with every factor coloured by impact, and the suggested
+  capture.
+- **Light-pollution atlas**:
+  - `build-lp-grid` turns the 3 GB World Atlas 2015 GeoTIFF (Falchi et al. 2016, CC BY-NC 4.0)
+    into a Mexico grid at 30″ and a world grid at 5′, 3.1 MB in all and embedded in the app;
+  - the zenith SQM of any site comes from it unless one is typed (Locations shows the atlas
+    value);
+  - the sky renderer's light dome uses it too;
+  - it is credited in the About window and THIRD_PARTY_NOTICES.
+- **Settings**: image during nautical twilight, and the extinction coefficient k.
+- Atmospheric refraction scaled by the site's pressure (standard atmosphere from its elevation):
+  about 20 % less at 1888 m. The renderer receives the scaled model in `setObserver`, and the
+  projection golden file now carries the model per site.
+
+#### Changed
+- Planets are framed by their disc. Stars (no size) are a point of light and never better than
+  *Unlikely*.
+- The site's zenith SQM now triggers a recalculation (it feeds the feasibility model).
+
 ### M2 — Live sky (part 2: 2D charts, camera frame, sky brightness, horizon editor)
 
 #### Added
