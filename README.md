@@ -19,16 +19,18 @@
 > **Status: work in progress (v2.0 under development).** AstroPlanner Pro is based on
 > [AstroPlanner v1](https://github.com/Yamato6/AstroPlanner), whose full history it keeps.
 > Milestones M0 (English, .NET 10, new architecture), M1 (data foundation: the full NGC/IC
-> catalog, saved sites, refined events, v1 import) and M2 (the live 2D/3D sky) are done. M3 is
-> under way: equipment, light-pollution-aware sky quality and the capture-feasibility model are in
-> (part 1); the session planner with its timeline and exports comes next. The rest of the roadmap
-> (online enrichment, comets and satellites) is in the [specification](ASTROPLANNER_PRO_SPEC.md).
+> catalog, saved sites, refined events, v1 import), M2 (the live 2D/3D sky) and M3 (equipment,
+> light-pollution-aware sky quality, the capture-feasibility model and the session planner) are
+> done. The rest of the roadmap (online enrichment, comets and satellites) is in the
+> [specification](ASTROPLANNER_PRO_SPEC.md).
 
 ![Tonight: the active rig (Canon T7 + Rokinon 16 mm on a tripod), the site's sky quality from the light-pollution atlas and the best targets for that gear, each with its verdict, score and suggested capture](docs/screenshots/tonight.png)
 
 ![Why this verdict? The feasibility breakdown of the Orion Nebula: sky at the target, signal-to-noise, usable hours after clouds, Moon, framing, sub length and sampling](docs/screenshots/feasibility.png)
 
 ![The equipment inventory: rigs made of a camera, a lens or telescope and a mount, with the field, image scale, sampling and longest sub derived live](docs/screenshots/equipment.png)
+
+![My plan: six targets scheduled across the night with the T7 + 16 mm, each block on the timeline coloured by verdict over its usable window, with the subs, ISO and integration per target and the session checklist](docs/screenshots/session-plan.png)
 
 ![The planner: the NGC/IC catalog with sizes, tonight's maximum altitude and best window, the dark night, Moon, clouds and the altitude of the selected object](docs/screenshots/planner.png)
 
@@ -76,7 +78,12 @@
   and hide the faint stars, so you see how washed-out the night will be.
 - 📍 **Saved sites**: home, dark sites… each with its IANA and Windows time zone, a horizon
   profile (trees, buildings) edited by azimuth, and its measured sky brightness (SQM).
-- 📋 **My plan**: tonight's list in the best observing order, with notes, as CSV or printed.
+- 📋 **Session planner**: your targets scheduled across the night with your gear, each in the
+  stretch where it gathers the most signal (Moon, clouds and horizon included). For each one you
+  get the start and end, the subs, ISO/gain and total integration, and the meridian flip on
+  equatorial mounts. It shows a timeline and lets you set priorities and lock blocks. A checklist
+  covers batteries, dew heater, focus and calibration frames. Export it as PDF, CSV or `.ics`, or
+  print it.
 - 📓 **Logbook**: record what you observe and track your Messier marathon and Caldwell progress.
 - ↪️ **Import from AstroPlanner v1**: on first run, your v1 settings, plan and logbook are offered
   for import (the v1 files are only read).
@@ -103,7 +110,7 @@ survey imagery for framing. See the [specification](ASTROPLANNER_PRO_SPEC.md) an
 | Shortcut | Action | Shortcut | Action |
 |---|---|---|---|
 | `Ctrl+F` | Search | `Ctrl+P` | Print the plan |
-| `F5` | Current time | `Ctrl+E` | Export the plan to CSV |
+| `F5` | Current time | `Ctrl+E` | Export the plan to CSV (PDF and `.ics` in the *My plan* tab) |
 | `Ctrl+,` | Settings | `F1` | About |
 
 Your data (settings, sites, plan, logbook) is stored in `%LocalAppData%\AstroPlannerPro\app.db`

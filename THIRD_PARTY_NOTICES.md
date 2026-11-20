@@ -120,6 +120,8 @@ the About window.
 | SQLitePCLRaw (bundled SQLite) | Apache-2.0; SQLite itself is public domain |
 | CommunityToolkit.Mvvm | MIT |
 | ScottPlot, SkiaSharp | MIT |
+| PDFsharp 6.2.4 (session plan PDF) | MIT — © empira Software GmbH (PDFsharp Team). Pinned on purpose: PDFsharp 6.5.0 and later are AGPL-3.0-only and are not used |
+| System.Security.Cryptography.Pkcs, Microsoft.Extensions.Logging.Abstractions (PDFsharp dependencies) | MIT |
 | Microsoft.Web.WebView2 (SDK) | BSD-3-Clause (Microsoft); the WebView2 Runtime is part of Windows / installed separately |
 | three.js (sky renderer) | MIT — Copyright © 2010-2026 three.js authors |
 | zod (sky renderer) | MIT — Copyright © 2025 Colin McDonnell |

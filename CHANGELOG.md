@@ -6,6 +6,43 @@ versions follow [Semantic Versioning](https://semver.org/). Versions up to 1.0.0
 
 ## [Unreleased] — 2.0.0
 
+### M3 — Equipment & feasibility (part 2: session planner)
+
+#### Added
+- **Session planner** in *My plan* (spec §4.6). With the active rig, each target gets a block of
+  the night from a greedy scheduler (Core `Planning/SessionScheduler`):
+  - locked blocks stay where they are;
+  - the other targets, in priority order, take the free stretch where they gather the most
+    signal-to-noise (moonlight, extinction, altitude, horizon mask and clouds included), up to a
+    fair share of the dark time;
+  - the blocks then grow into the free time next to them, so no usable dark time is left idle.
+
+  Per block it gives the start and end, the sub length and ISO/gain, the number of subs, the total
+  integration and, for equatorial mounts, the meridian-flip time. It also says when a target is not
+  possible tonight or has no free time left.
+- **Timeline** (ScottPlot): one row per target with its usable window, its block coloured by
+  verdict (thick outline when locked) and the meridian flip, over the twilight and cloud bands.
+- **Priorities**: ▲ ▼ per row, *Auto-prioritize* (the targets visible for the shortest time first,
+  then the most feasible) and **lock** a block to keep it. Locks are saved (migration
+  `0004_plan_schedule`) and released when the night changes.
+- **Checklist**: batteries, dew heater, card space, polar alignment, focus, flats, darks and bias;
+  ticks are saved until *Reset*.
+- **Exports**:
+  - **PDF** with the night summary, the timeline, the table and the checklist (PDFsharp 6.2.4);
+  - **.ics** calendar, one event per block (RFC 5545: UTC times, escaping, folding; only the site
+    name, never its coordinates);
+  - **CSV** with start, end, subs, sub length, ISO/gain, integration, meridian flip and verdict;
+  - the printed plan shows the schedule too.
+- Core `FeasibilityCalculator.Profile`: the target sample by sample (altitude, hour angle, usable,
+  SNR gain), sharing the geometry of `Evaluate`.
+
+#### Changed
+- *My plan* keeps the user's priority order instead of sorting by culmination; the exports and the
+  printout list the targets in observing order (by start time).
+- PDFsharp is pinned to **6.2.4**, its last MIT release: 6.5.0 and later are AGPL-3.0-only (spec
+  §12). Dependabot ignores newer versions. `System.Security.Cryptography.Pkcs` is referenced
+  directly at 11.0.0 to replace the vulnerable 8.0.1 that PDFsharp pulls in.
+
 ### M3 — Equipment & feasibility (part 1: equipment, sky quality and the feasibility model)
 
 #### Added

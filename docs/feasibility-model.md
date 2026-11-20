@@ -220,6 +220,53 @@ unless noted. It covers sanity scenarios, monotonicity and edge cases.
 - The thresholds and weights are deliberately simple and tunable. Predictions can be compared with
   real results once the logbook stores them (spec §8.7, M6).
 
+## 10. Session planner (spec §4.6)
+
+`Core/Planning/SessionScheduler` places the targets of *My plan* in the night. It works on the
+same 5-minute samples as the model (`NightSkySamples`). Each target comes with its report and
+its profile (`FeasibilityCalculator.Profile`), which gives per sample:
+
+- the apparent altitude and the hour angle;
+- whether it is *usable*: dark, above the minimum altitude and the horizon mask;
+- the rate at which it gathers SNR²: `S² / (S + B) × (1 − clouds)`. Here `S` is the object's
+  electrons per pixel per second after extinction and `B` the sky's, with moonlight, twilight and
+  the site glow toward the horizon. In a shot-noise-limited stack this rate is what a minute of
+  exposure is worth.
+
+The steps:
+
+1. **Locks.** Locked targets keep their block as the user left it.
+2. **Best stretch.** The others go in priority order (the list order). Each takes the contiguous
+   run of free, usable samples with the highest summed SNR² rate. The run is capped at a fair share
+   of the free dark time (dark time ÷ targets, never under 20 minutes). Targets visible for less
+   than 20 minutes take what they have. A target the model calls *Not possible*, or never usable,
+   is reported as such. One whose time was all taken by higher priorities gets *No free time*.
+3. **Growth.** In rounds, each block grows by one sample at either end into free time where its
+   target is still usable, until nothing changes. Neighbours split the gaps between them, and no
+   usable dark time is left idle.
+4. **Settings per block.** The model's sub length and the rig's ISO/gain apply. The number of subs
+   is ⌊cloud-weighted usable time ÷ (sub + overhead)⌋. The SNR is the night's estimate scaled by
+   √(block time ÷ night time). For equatorial mounts the meridian flip is the upper transit (hour
+   angle crossing 0) inside the block, interpolated between samples.
+
+Same input, same schedule. *Auto-prioritize* orders the list by visible time (shortest first) and
+then by score, which lets every target fit when their windows overlap. The UI keeps the list in
+priority order; the exports list the targets by start time.
+
+Tests (`SessionSchedulerTests`):
+
+- a single target takes all its usable time;
+- overlapping targets never share time and fill the night;
+- the higher priority gets the best stretch;
+- locked blocks are kept;
+- not-possible and no-free-time cases are reported;
+- very short visibility is still scheduled;
+- the sub count includes the overhead;
+- the meridian flip is given only for equatorial mounts;
+- real targets come out in a sensible order (M31 before M42 on a winter evening, M42's flip
+  ≈ 01:10);
+- the profile matches the report.
+
 ## Default constants (`FeasibilityConstants.Default`)
 
 | Constant | Value |
@@ -238,6 +285,7 @@ unless noted. It covers sanity scenarios, monotonicity and edge cases.
 | TooSmallWeight / SmallWeight / TooLargeWeight | 0.3 / 0.9 / 0.85 |
 | ExcellentScore / GoodScore / MarginalScore | 75 / 55 / 30 |
 | Step | 5 min |
+| SessionSchedulerOptions.MinimumBlock | 20 min |
 
 ## References
 
