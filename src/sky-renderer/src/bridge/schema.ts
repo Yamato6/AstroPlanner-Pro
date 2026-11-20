@@ -61,6 +61,7 @@ const observerPayload = z.strictObject({
   horizon: z
     .array(z.strictObject({ azimuth: z.number().min(0).max(360), altitude: z.number().min(-10).max(90) }))
     .max(720),
+  refraction: refractionSchema,
 });
 
 const timePayload = z.strictObject({ utc, rate: z.number().min(-1e6).max(1e6) });

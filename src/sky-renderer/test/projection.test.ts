@@ -13,16 +13,16 @@ import { bridgeFixtures, readJson } from './fixtures';
 
 const fixture = z
   .object({
-    refraction: z.object({
-      a: z.number(),
-      b: z.number(),
-      c: z.number(),
-      d: z.number(),
-      minimumAltitudeDegrees: z.number(),
-    }),
     cases: z.array(
       z.object({
         site: z.string(),
+        refraction: z.object({
+          a: z.number(),
+          b: z.number(),
+          c: z.number(),
+          d: z.number(),
+          minimumAltitudeDegrees: z.number(),
+        }),
         target: z.string(),
         utc: z.string(),
         frame: z.object({
@@ -56,7 +56,7 @@ describe('projection cross-check', () => {
         lstRateDegreesPerSecond: c.frame.lstRateDegreesPerSecond,
       };
       const h = j2000ToHorizontal(frame, Date.parse(c.utc));
-      const actual = apparentHorizontal(h, c.j2000 as unknown as Vec3, fixture.refraction);
+      const actual = apparentHorizontal(h, c.j2000 as unknown as Vec3, c.refraction);
       expect(Math.abs(actual.altitudeDegrees - c.altitudeDegrees)).toBeLessThan(0.01);
       expect(azimuthDifference(actual.azimuthDegrees, c.azimuthDegrees)).toBeLessThan(0.01);
     },

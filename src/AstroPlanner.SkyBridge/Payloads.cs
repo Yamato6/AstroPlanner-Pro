@@ -69,6 +69,16 @@ public static class SkyViewModes
 public sealed record RefractionModel(double A, double B, double C, double D, double MinimumAltitudeDegrees)
 {
     public static RefractionModel Standard { get; } = new(1.02, 10.3, 5.11, 0.0019279, -2.0);
+
+    /// <summary>
+    /// The model at a site: both terms scaled by the pressure of its elevation
+    /// (Core <c>Refraction.PressureScale</c>), exactly as <c>Refraction.ApparentAltitude</c>.
+    /// </summary>
+    public static RefractionModel ForElevation(double elevationMeters)
+    {
+        var scale = AstroPlanner.Core.Algorithms.Refraction.PressureScale(elevationMeters);
+        return Standard with { A = Standard.A * scale, D = Standard.D * scale };
+    }
 }
 
 /// <summary>Visible layers and limits.</summary>
@@ -109,7 +119,8 @@ public sealed record ObserverPayload(
     double LongitudeDegrees,
     double ElevationMeters,
     double MinimumAltitudeDegrees,
-    IReadOnlyList<HorizonPointDto> Horizon);
+    IReadOnlyList<HorizonPointDto> Horizon,
+    RefractionModel Refraction);
 
 /// <summary>Sky time and the rate it advances at (1 = real time, 0 = paused).</summary>
 public sealed record TimePayload(string Utc, double Rate);

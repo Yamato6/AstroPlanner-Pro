@@ -20,6 +20,13 @@
         "azimuth": 200,
         "altitude": 3
       }
-    ]
+    ],
+    "refraction": {
+      "a": 0.8114389435356787,
+      "b": 10.3,
+      "c": 5.11,
+      "d": 0.0015336991561200343,
+      "minimumAltitudeDegrees": -2
+    }
   }
 }
