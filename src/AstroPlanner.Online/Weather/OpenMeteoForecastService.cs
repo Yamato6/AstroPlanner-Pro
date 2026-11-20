@@ -4,58 +4,54 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using AstroPlanner.Core.Interfaces;
 using AstroPlanner.Core.Models;
+using AstroPlanner.Online.Http;
 
 namespace AstroPlanner.Online.Weather;
 
 /// <summary>
-/// Cloud forecast from Open-Meteo (https://open-meteo.com): free and without a key.
-/// Coordinates are sent rounded to 2 decimals (~1 km), which is more than enough for a
-/// forecast and avoids sending the exact location.
+/// Hourly forecast from Open-Meteo (https://open-meteo.com, free, no key; spec §9.1): cloud cover by
+/// layer, precipitation probability, humidity, temperature, dew point and wind. Coordinates are sent
+/// rounded to 2 decimals (~1 km), which is more than enough for a forecast and avoids sending the
+/// exact location. Responses are cached for <see cref="CacheDuration"/> and reused when the service
+/// cannot be reached.
 /// </summary>
-public sealed class OpenMeteoForecastService(HttpClient http, TimeProvider? timeProvider = null) : IWeatherForecastService
+public sealed class OpenMeteoForecastService(HttpClient http, TimeProvider? timeProvider = null, IOnlineCache? cache = null)
+    : IWeatherForecastService
 {
     public const string BaseUrl = "https://api.open-meteo.com/v1/forecast";
+    public const string CacheName = "open-meteo";
+    public static readonly TimeSpan CacheDuration = TimeSpan.FromHours(1);
 
     private readonly TimeProvider _time = timeProvider ?? TimeProvider.System;
 
     public static string BuildUrl(double latitude, double longitude) =>
         FormattableString.Invariant($"{BaseUrl}?latitude={Math.Round(latitude, 2):0.00}&longitude={Math.Round(longitude, 2):0.00}")
         + "&hourly=cloud_cover,cloud_cover_low,cloud_cover_mid,cloud_cover_high,precipitation_probability,relative_humidity_2m"
+        + ",temperature_2m,dew_point_2m,wind_speed_10m,wind_gusts_10m"
         + "&timezone=GMT&forecast_days=7";
 
     public async Task<WeatherForecast> GetForecastAsync(
         double latitude, double longitude, CancellationToken cancellationToken = default)
     {
+        var fetched = await CachedFetch.GetAsync(http, cache, CacheName, BuildUrl(latitude, longitude), CacheDuration,
+            _time.GetUtcNow().UtcDateTime, "The weather service", cancellationToken);
+        return Parse(fetched.Content, latitude, longitude, fetched.FetchedAtUtc);
+    }
+
+    /// <exception cref="WeatherForecastException">Invalid or incomplete response.</exception>
+    public static WeatherForecast Parse(byte[] json, double latitude, double longitude, DateTime fetchedAtUtc)
+    {
+        ArgumentNullException.ThrowIfNull(json);
         OpenMeteoResponse? response;
         try
         {
-            using var message = await http.GetAsync(BuildUrl(latitude, longitude), cancellationToken);
-            if (!message.IsSuccessStatusCode)
-            {
-                throw new WeatherForecastException($"The weather service answered {(int)message.StatusCode}.");
-            }
-
-            await using var stream = await message.Content.ReadAsStreamAsync(cancellationToken);
-            response = await JsonSerializer.DeserializeAsync<OpenMeteoResponse>(stream, cancellationToken: cancellationToken);
-        }
-        catch (HttpRequestException ex)
-        {
-            throw new WeatherForecastException("No connection to the weather service.", ex);
-        }
-        catch (TaskCanceledException ex) when (!cancellationToken.IsCancellationRequested)
-        {
-            throw new WeatherForecastException("The weather service did not answer in time.", ex);
+            response = JsonSerializer.Deserialize<OpenMeteoResponse>(json);
         }
         catch (JsonException ex)
         {
             throw new WeatherForecastException("Invalid response from the weather service.", ex);
         }
 
-        return Parse(response, latitude, longitude, _time.GetUtcNow().UtcDateTime);
-    }
-
-    private static WeatherForecast Parse(OpenMeteoResponse? response, double latitude, double longitude, DateTime fetchedAtUtc)
-    {
         var hourly = response?.Hourly;
         if (hourly?.Time is not { Count: > 0 } times || hourly.CloudCover is not { } cloud || cloud.Count != times.Count)
         {
@@ -79,13 +75,19 @@ public sealed class OpenMeteoForecastService(HttpClient http, TimeProvider? time
                 ValueAt(hourly.CloudCoverMid, i),
                 ValueAt(hourly.CloudCoverHigh, i),
                 ValueAt(hourly.PrecipitationProbability, i),
-                ValueAt(hourly.RelativeHumidity, i)));
+                ValueAt(hourly.RelativeHumidity, i))
+            {
+                TemperatureC = ValueAt(hourly.Temperature, i),
+                DewPointC = ValueAt(hourly.DewPoint, i),
+                WindSpeedKmh = ValueAt(hourly.WindSpeed, i),
+                WindGustKmh = ValueAt(hourly.WindGusts, i)
+            });
         }
 
         return new WeatherForecast(latitude, longitude, hours, fetchedAtUtc);
     }
 
-    private static int? ValueAt(List<int?>? values, int index) =>
+    private static T? ValueAt<T>(List<T?>? values, int index) where T : struct =>
         values is not null && index < values.Count ? values[index] : null;
 
     private sealed class OpenMeteoResponse
@@ -102,5 +104,9 @@ public sealed class OpenMeteoForecastService(HttpClient http, TimeProvider? time
         [JsonPropertyName("cloud_cover_high")] public List<int?>? CloudCoverHigh { get; set; }
         [JsonPropertyName("precipitation_probability")] public List<int?>? PrecipitationProbability { get; set; }
         [JsonPropertyName("relative_humidity_2m")] public List<int?>? RelativeHumidity { get; set; }
+        [JsonPropertyName("temperature_2m")] public List<double?>? Temperature { get; set; }
+        [JsonPropertyName("dew_point_2m")] public List<double?>? DewPoint { get; set; }
+        [JsonPropertyName("wind_speed_10m")] public List<double?>? WindSpeed { get; set; }
+        [JsonPropertyName("wind_gusts_10m")] public List<double?>? WindGusts { get; set; }
     }
 }
