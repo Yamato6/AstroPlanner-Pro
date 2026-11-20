@@ -135,7 +135,8 @@ internal static class TestShell
         ILocationRepository? locations = null,
         ISkyViewStore? skyStore = null,
         IEquipmentRepository? equipment = null,
-        ILightPollutionAtlas? atlas = null)
+        ILightPollutionAtlas? atlas = null,
+        IAstroForecastService? astro = null)
     {
         var logger = new NullLogger();
         var astronomy = new AstronomyService();
@@ -144,7 +145,7 @@ internal static class TestShell
         var context = new ObserverContext(astronomy, time, atlas);
         // No equipment unless a test asks for it: the existing tests keep their manual camera frame.
         var equipmentState = new EquipmentState(equipment ?? new FakeEquipmentRepository(EquipmentInventory.Empty), logger);
-        var weatherState = new WeatherState(context, logger, time, weather);
+        var weatherState = new WeatherState(context, logger, time, weather, astro);
         var settingsViewModel = new SettingsViewModel(settings, new FakeCityRepository(), logger);
         var targets = new TargetsViewModel(
             new FakeCelestialRepository(catalog ?? [TestCatalog.M42, TestCatalog.M31, TestCatalog.M13]),

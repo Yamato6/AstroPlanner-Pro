@@ -53,7 +53,11 @@ public sealed partial class TonightViewModel : ObservableObject
 
         if (_equipment is not null)
         {
-            _equipment.Changed += (_, _) => OnPropertyChanged(nameof(ActiveRigText));
+            _equipment.Changed += (_, _) =>
+            {
+                OnPropertyChanged(nameof(ActiveRigText));
+                UpdateConditions();
+            };
         }
 
         _context.PropertyChanged += (_, e) =>
@@ -64,8 +68,16 @@ public sealed partial class TonightViewModel : ObservableObject
             }
         };
 
-        _context.Recalculated += (_, _) => OnSkyChanged();
-        _weather.Changed += (_, _) => UpdateCloudSummary();
+        _context.Recalculated += (_, _) =>
+        {
+            OnSkyChanged();
+            UpdateConditions();
+        };
+        _weather.Changed += (_, _) =>
+        {
+            UpdateCloudSummary();
+            UpdateConditions();
+        };
         _weather.PropertyChanged += (_, e) =>
         {
             // While the first forecast for a location is being fetched, say so.
@@ -93,6 +105,17 @@ public sealed partial class TonightViewModel : ObservableObject
 
     /// <summary>Zenith sky quality of the site and where it comes from.</summary>
     public string SiteSkyText => FeasibilityText.SiteSky(_context.EffectiveZenithSqm, _context.ZenithSqmSource);
+
+    /// <summary>"Seeing 1.1″ · transparency 0.35 mag", or why there is no seeing forecast.</summary>
+    [ObservableProperty]
+    public partial string ConditionsText { get; private set; } = "—";
+
+    /// <summary>"Dew margin 6 °C · gusts up to 18 km/h", or why there is no forecast.</summary>
+    [ObservableProperty]
+    public partial string ConditionsDetailText { get; private set; } = "";
+
+    /// <summary>Dew and wind warnings for tonight with the active rig; empty when there are none.</summary>
+    public ObservableCollection<string> Alerts { get; } = [];
 
     /// <summary>Adds a target to the session plan.</summary>
     [RelayCommand]
@@ -193,6 +216,55 @@ public sealed partial class TonightViewModel : ObservableObject
     }
 
     /// <summary>Recalculates the cloud card.</summary>
+    /// <summary>Seeing, transparency, dew and wind of the dark night (spec §4.1) and their warnings.</summary>
+    private void UpdateConditions()
+    {
+        Alerts.Clear();
+        var conditions = _weather.GetNightConditions(_equipment?.ActiveRig?.Mount.Kind);
+        var zone = _context.TimeZone;
+
+        ConditionsText = !_weather.IsAstroEnabled ? Strings.ConditionsAstroDisabled
+            : conditions is { SeeingArcsec: { } seeing, TransparencyMagnitudesPerAirmass: { } transparency }
+                ? Format(Strings.ConditionsSeeingFormat, seeing, transparency)
+                + (_weather.IsAstroForecastStale ? Format(Strings.ForecastAsOfFormat, Local(_weather.AstroForecast!.FetchedAtUtc)) : "")
+            : _weather.AstroLastError is { } astroError ? Format(Strings.ConditionsAstroUnavailableFormat, astroError)
+            : _weather.AstroForecast is null ? Strings.ConditionsNoForecast
+            : Strings.ConditionsNoForecastForDate;
+
+        var parts = new List<string>();
+        if (conditions?.MinimumDewMarginC is { } margin)
+        {
+            parts.Add(Format(Strings.ConditionsDewMarginFormat, margin));
+        }
+
+        if (conditions?.MaximumGustKmh is { } gust)
+        {
+            parts.Add(Format(Strings.ConditionsGustFormat, gust));
+        }
+
+        ConditionsDetailText = parts.Count > 0 ? string.Join(" · ", parts)
+            : !_weather.IsEnabled ? Strings.CloudsDisabled
+            : Strings.ConditionsNoDewWind;
+
+        if (conditions is null)
+        {
+            return;
+        }
+
+        if (conditions.DewRisk != Core.Weather.DewRisk.None && conditions.DewRiskFromUtc is { } from)
+        {
+            Alerts.Add(Format(conditions.DewRisk == Core.Weather.DewRisk.High ? Strings.AlertDewHighFormat : Strings.AlertDewModerateFormat,
+                Local(from), conditions.MinimumDewMarginC));
+        }
+
+        if (conditions.WindWarning)
+        {
+            Alerts.Add(Format(Strings.AlertWindFormat, conditions.MaximumGustKmh, conditions.GustLimitKmh));
+        }
+
+        DateTime Local(DateTime utc) => TimeZoneInfo.ConvertTimeFromUtc(utc, zone);
+    }
+
     private void UpdateCloudSummary()
     {
         var forecast = _weather.Forecast;
@@ -221,7 +293,10 @@ public sealed partial class TonightViewModel : ObservableObject
                     Strings.CloudsSummaryFormat,
                     CloudCover(summary.AverageCloudCoverPercent),
                     clearest,
-                    summary.ClearestHourCloudCoverPercent);
+                    summary.ClearestHourCloudCoverPercent)
+                    + (_weather.IsForecastStale
+                        ? Format(Strings.ForecastAsOfFormat, TimeZoneInfo.ConvertTimeFromUtc(forecast.FetchedAtUtc, _context.TimeZone))
+                        : "");
             }
             else
             {

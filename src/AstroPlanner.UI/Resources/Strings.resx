@@ -342,7 +342,7 @@
   <data name="AboutAlgorithms" xml:space="preserve"><value>Astronomical algorithms:</value></data>
   <data name="AboutAlgorithmsText" xml:space="preserve"><value>Jean Meeus, “Astronomical Algorithms” (2nd ed.), and approximate orbital elements from JPL (NASA).</value></data>
   <data name="AboutLibraries" xml:space="preserve"><value>Libraries:</value></data>
-  <data name="AboutLibrariesText" xml:space="preserve"><value>.NET and WPF, ScottPlot, CommunityToolkit.Mvvm, Microsoft.Extensions.DependencyInjection, Microsoft.Data.Sqlite (SQLite), PDFsharp and Microsoft Edge WebView2; the sky is drawn with three.js and zod (MIT).</value></data>
+  <data name="AboutLibrariesText" xml:space="preserve"><value>.NET and WPF, ScottPlot, CommunityToolkit.Mvvm, Microsoft.Extensions.DependencyInjection and Http (with Polly), Microsoft.Data.Sqlite (SQLite), PDFsharp and Microsoft Edge WebView2; the sky is drawn with three.js and zod (MIT).</value></data>
   <data name="AboutYourData" xml:space="preserve"><value>Your data</value></data>
   <data name="AboutYourDataText" xml:space="preserve"><value>Settings, plan, logbook and logs are stored only on this computer. Uninstalling AstroPlanner Pro does not delete them.</value></data>
   <data name="AboutOpenFolder" xml:space="preserve"><value>Open folder</value></data>
@@ -712,4 +712,40 @@
   <data name="PlanAutoPrioritize" xml:space="preserve"><value>Auto-prioritize</value></data>
   <data name="PlanAutoPrioritizeTooltip" xml:space="preserve"><value>Give priority to the targets visible for the shortest time, then to the most feasible</value></data>
   <data name="PlanTimelineTitle" xml:space="preserve"><value>Tonight's session</value></data>
+  <data name="ReasonSeeingFormat" xml:space="preserve"><value>Forecast seeing {0:0.0}″ (7Timer!)</value></data>
+  <data name="ReasonTransparencyFormat" xml:space="preserve"><value>Forecast transparency {0:0.00} mag/air mass: +{1:0.00} extinction over the site's</value></data>
+  <data name="TonightConditionsCard" xml:space="preserve"><value>Seeing and dew tonight</value></data>
+  <data name="TonightConditionsCardTooltip" xml:space="preserve"><value>Seeing and transparency from 7Timer!, dew point and wind from Open-Meteo, over the dark night. The seeing and haze also feed the verdicts.</value></data>
+  <data name="ConditionsSeeingFormat" xml:space="preserve"><value>Seeing {0:0.0}″ · transparency {1:0.00} mag</value></data>
+  <data name="ConditionsAstroDisabled" xml:space="preserve"><value>Seeing forecast disabled</value></data>
+  <data name="ConditionsAstroUnavailableFormat" xml:space="preserve"><value>Seeing unavailable: {0}</value></data>
+  <data name="ConditionsNoForecast" xml:space="preserve"><value>Seeing: no forecast yet</value></data>
+  <data name="ConditionsNoForecastForDate" xml:space="preserve"><value>No seeing forecast for this date</value></data>
+  <data name="ConditionsDewMarginFormat" xml:space="preserve"><value>Dew margin {0:0.#} °C</value></data>
+  <data name="ConditionsGustFormat" xml:space="preserve"><value>gusts up to {0:0} km/h</value></data>
+  <data name="ConditionsNoDewWind" xml:space="preserve"><value>No dew or wind forecast for this date</value></data>
+  <data name="ForecastAsOfFormat" xml:space="preserve"><value> (as of {0:HH:mm}, offline)</value></data>
+  <data name="AlertDewHighFormat" xml:space="preserve"><value>⚠ Dew likely from {0:HH:mm} (air within {1:0.#} °C of the dew point): use a dew heater or shield.</value></data>
+  <data name="AlertDewModerateFormat" xml:space="preserve"><value>⚠ Possible dew from {0:HH:mm} (air within {1:0.#} °C of the dew point): have a dew heater ready.</value></data>
+  <data name="AlertWindFormat" xml:space="preserve"><value>⚠ Wind: gusts up to {0:0} km/h (over {1:0} km/h for this mount); shorter subs or shelter the rig.</value></data>
+  <data name="SettingsAstroForecast" xml:space="preserve"><value>Seeing and transparency forecast (7Timer!)</value></data>
+  <data name="SettingsAstroForecastNote" xml:space="preserve"><value>Sends your approximate location (rounded to ~1 km) to 7timer.info. The seeing and haze also refine the capture verdicts.</value></data>
+  <data name="SettingsCheckForUpdatesNote" xml:space="preserve"><value>Asks api.github.com for the latest release; sends nothing about you.</value></data>
+  <data name="SettingsCacheSizeFormat" xml:space="preserve"><value>Saved online answers: {0:0.0} MB</value></data>
+  <data name="SettingsClearCache" xml:space="preserve"><value>Clear cache</value></data>
+  <data name="SettingsClearCacheTooltip" xml:space="preserve"><value>Delete the saved forecasts (they are used when you are offline)</value></data>
+  <data name="OnlineStatusOnline" xml:space="preserve"><value>Online</value></data>
+  <data name="OnlineStatusOffline" xml:space="preserve"><value>Offline: showing saved data</value></data>
+  <data name="OnlineStatusOff" xml:space="preserve"><value>Online services off</value></data>
+  <data name="OnlineStatusName" xml:space="preserve"><value>Online services status</value></data>
+  <data name="OnlineServiceWeather" xml:space="preserve"><value>Clouds, dew and wind (Open-Meteo)</value></data>
+  <data name="OnlineServiceAstro" xml:space="preserve"><value>Seeing and transparency (7Timer!)</value></data>
+  <data name="OnlineServiceUpdates" xml:space="preserve"><value>New-version check (GitHub)</value></data>
+  <data name="OnlineServiceLineFormat" xml:space="preserve"><value>{0}: {1}</value></data>
+  <data name="OnlineServiceOn" xml:space="preserve"><value>on</value></data>
+  <data name="OnlineServiceDisabled" xml:space="preserve"><value>off</value></data>
+  <data name="OnlineServiceOkFormat" xml:space="preserve"><value>updated {0:HH:mm}</value></data>
+  <data name="OnlineServiceCachedFormat" xml:space="preserve"><value>offline, showing the forecast of {0:HH:mm}</value></data>
+  <data name="OnlineServiceErrorFormat" xml:space="preserve"><value>unavailable ({0})</value></data>
+  <data name="OnlineServiceWaiting" xml:space="preserve"><value>waiting</value></data>
 </root>

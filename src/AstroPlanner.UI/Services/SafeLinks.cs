@@ -10,7 +10,7 @@ namespace AstroPlanner.UI.Services;
 /// </summary>
 public static class SafeLinks
 {
-    private static readonly string[] AllowedHosts = ["github.com", "open-meteo.com"];
+    private static readonly string[] AllowedHosts = ["github.com", "open-meteo.com", "7timer.info"];
 
     public static bool IsAllowed(Uri? uri) =>
         uri is { IsAbsoluteUri: true, Scheme: "https" }

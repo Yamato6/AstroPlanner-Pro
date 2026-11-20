@@ -445,7 +445,8 @@ public sealed partial class TargetsViewModel : ObservableValidator, IDisposable
         var rig = _equipment?.ActiveRig;
         var forecast = FeasibilityRequests.Forecast(_weather);
         var key = new FeasibilityKey(night.WindowStartLocal, _context.Observer, _context.TimeZoneId, _context.MinimumAltitude,
-            _context.HorizonMask, rig, _context.EffectiveZenithSqm, _context.Darkness, _context.ExtinctionCoefficient, forecast?.FetchedAtUtc);
+            _context.HorizonMask, rig, _context.EffectiveZenithSqm, _context.Darkness, _context.ExtinctionCoefficient, forecast?.FetchedAtUtc,
+            _weather?.AstroForecast?.FetchedAtUtc);
         if (key == _feasibilityKey)
         {
             return;
@@ -606,5 +607,6 @@ public sealed partial class TargetsViewModel : ObservableValidator, IDisposable
     /// <summary>What the feasibility depends on.</summary>
     private sealed record FeasibilityKey(
         DateTime WindowStart, ObserverLocation Observer, string TimeZoneId, double MinimumAltitude, HorizonMask Horizon,
-        RigSetup? Rig, double ZenithSqm, DarknessDefinition Darkness, double Extinction, DateTime? ForecastFetchedUtc);
+        RigSetup? Rig, double ZenithSqm, DarknessDefinition Darkness, double Extinction, DateTime? ForecastFetchedUtc,
+        DateTime? AstroForecastFetchedUtc);
 }

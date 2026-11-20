@@ -5,6 +5,7 @@ using System.Windows.Threading;
 using Microsoft.Extensions.DependencyInjection;
 using AstroPlanner.Core.Interfaces;
 using AstroPlanner.Core.Services;
+using AstroPlanner.Data.Cache;
 using AstroPlanner.Data.Catalog;
 using AstroPlanner.Data.LightPollution;
 using AstroPlanner.Data.Repositories;
@@ -52,18 +53,35 @@ public partial class App : Application
         // Application services (pure Core)
         services.AddSingleton<IAstronomyService, AstronomyService>();
 
-        // Internet: one shared HttpClient with a timeout and identification
-        // (GitHub rejects requests without a User-Agent).
-        services.AddSingleton(_ =>
+        // Internet (spec §9): one named HttpClient per service with identification (GitHub rejects
+        // requests without a User-Agent), a 15 s budget and the standard resilience pipeline
+        // (retries with backoff, circuit breaker). Answers are cached on disk for offline use.
+        services.AddSingleton<IOnlineCache>(_ => new DiskCache(AppPaths.DataFile("cache")));
+        foreach (var name in OnlineClients.All)
         {
-            var http = new HttpClient { Timeout = TimeSpan.FromSeconds(15) };
-            http.DefaultRequestHeaders.UserAgent.ParseAdd($"AstroPlannerPro/{AppVersion.Current}");
-            http.DefaultRequestHeaders.UserAgent.ParseAdd("(+https://github.com/Yamato6/AstroPlanner-Pro)");
-            return http;
-        });
-        services.AddSingleton<IWeatherForecastService>(sp =>
-            new OpenMeteoForecastService(sp.GetRequiredService<HttpClient>(), sp.GetRequiredService<TimeProvider>()));
-        services.AddSingleton<IUpdateChecker, GitHubUpdateChecker>();
+            services.AddHttpClient(name, http =>
+                {
+                    http.Timeout = Timeout.InfiniteTimeSpan;   // the resilience pipeline enforces it
+                    http.DefaultRequestHeaders.UserAgent.ParseAdd($"AstroPlannerPro/{AppVersion.Current}");
+                    http.DefaultRequestHeaders.UserAgent.ParseAdd("(+https://github.com/Yamato6/AstroPlanner-Pro)");
+                })
+                .AddStandardResilienceHandler(options =>
+                {
+                    options.TotalRequestTimeout.Timeout = TimeSpan.FromSeconds(15);
+                    options.AttemptTimeout.Timeout = TimeSpan.FromSeconds(6);
+                    options.CircuitBreaker.SamplingDuration = TimeSpan.FromSeconds(30);
+                    options.Retry.MaxRetryAttempts = 2;
+                });
+        }
+
+        services.AddSingleton<IWeatherForecastService>(sp => new OpenMeteoForecastService(
+            sp.GetRequiredService<IHttpClientFactory>().CreateClient(OnlineClients.OpenMeteo), sp.GetRequiredService<TimeProvider>(),
+            sp.GetRequiredService<IOnlineCache>()));
+        services.AddSingleton<IAstroForecastService>(sp => new SevenTimerAstroService(
+            sp.GetRequiredService<IHttpClientFactory>().CreateClient(OnlineClients.SevenTimer), sp.GetRequiredService<TimeProvider>(),
+            sp.GetRequiredService<IOnlineCache>()));
+        services.AddSingleton<IUpdateChecker>(sp => new GitHubUpdateChecker(
+            sp.GetRequiredService<IHttpClientFactory>().CreateClient(OnlineClients.GitHub), sp.GetRequiredService<IAppLogger>()));
 
         // User data: app.db (settings, locations, plan, logbook), migrated on first use
         services.AddSingleton(_ => new AppDatabase(AppPaths.DataFile("app.db")));

@@ -24,12 +24,29 @@ public sealed partial class SettingsViewModel : ObservableValidator
     private string? _activeLocationId;
     private (double Latitude, double Longitude, double Elevation, string TimeZoneId) _activeLocationValues;
 
-    public SettingsViewModel(ISettingsService settingsService, ICityRepository cityRepository, IAppLogger logger)
+    private readonly IOnlineCache? _cache;
+
+    public SettingsViewModel(ISettingsService settingsService, ICityRepository cityRepository, IAppLogger logger, IOnlineCache? cache = null)
     {
         _settingsService = settingsService;
         _cityRepository = cityRepository;
         _logger = logger;
+        _cache = cache;
         LoadFrom(_settingsService.Load());
+    }
+
+    /// <summary>Whether there is a cache of online answers to show and clear.</summary>
+    public bool HasCache => _cache is not null;
+
+    /// <summary>"Cache: 12.3 MB".</summary>
+    public string CacheSizeText => _cache is null ? "" : DisplayNames.Format(Strings.SettingsCacheSizeFormat, _cache.SizeBytes / 1048576.0);
+
+    /// <summary>Deletes the cached online answers (forecasts; images and descriptions from M4b).</summary>
+    [RelayCommand]
+    private void ClearCache()
+    {
+        _cache?.Clear();
+        OnPropertyChanged(nameof(CacheSizeText));
     }
 
     /// <summary>Raised after saving; the shell applies the new settings and recalculates.</summary>
@@ -65,6 +82,10 @@ public sealed partial class SettingsViewModel : ObservableValidator
     /// <summary>Fetch the cloud forecast (Open-Meteo).</summary>
     [ObservableProperty]
     public partial bool WeatherForecastEnabled { get; set; } = true;
+
+    /// <summary>Fetch the seeing and transparency forecast (7Timer!).</summary>
+    [ObservableProperty]
+    public partial bool AstroForecastEnabled { get; set; } = true;
 
     /// <summary>Check for a new version at startup.</summary>
     [ObservableProperty]
@@ -192,6 +213,7 @@ public sealed partial class SettingsViewModel : ObservableValidator
                 MinimumAltitude = MinimumAltitude,
                 MaximumMagnitude = MaximumMagnitude,
                 WeatherForecastEnabled = WeatherForecastEnabled,
+                AstroForecastEnabled = AstroForecastEnabled,
                 CheckForUpdates = CheckForUpdates,
                 Darkness = AllowNauticalTwilight ? DarknessDefinition.Nautical : DarknessDefinition.Astronomical,
                 ExtinctionCoefficient = ExtinctionCoefficient
@@ -267,6 +289,7 @@ public sealed partial class SettingsViewModel : ObservableValidator
         MinimumAltitude = settings.MinimumAltitude;
         MaximumMagnitude = settings.MaximumMagnitude;
         WeatherForecastEnabled = settings.WeatherForecastEnabled;
+        AstroForecastEnabled = settings.AstroForecastEnabled;
         CheckForUpdates = settings.CheckForUpdates;
         AllowNauticalTwilight = settings.Darkness == DarknessDefinition.Nautical;
         ExtinctionCoefficient = settings.ExtinctionCoefficient;

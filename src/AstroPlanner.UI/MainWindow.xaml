@@ -216,22 +216,25 @@
                     <TextBlock Foreground="{StaticResource TabTextBrush}" Text="{x:Static res:Strings.HeaderTimeZone}"/>
                     <TextBlock Foreground="White" Text="{Binding Observer.TimeZoneId}"/>
                 </StackPanel>
-                <StackPanel Grid.Column="3">
-                    <TextBlock Foreground="{StaticResource TabTextBrush}" Text="{x:Static res:Strings.HeaderActiveLocation}"/>
+                <StackPanel Grid.Column="3" Margin="0,0,12,0">
+                    <TextBlock Foreground="{StaticResource TabTextBrush}" Text="{x:Static res:Strings.HeaderActiveLocation}" TextTrimming="CharacterEllipsis"/>
                     <TextBlock Foreground="White" Text="{Binding ActiveLocationName}" TextTrimming="CharacterEllipsis" ToolTip="{Binding ActiveLocationName}"/>
-                    <TextBlock Foreground="{StaticResource TabTextBrush}" Text="{Binding LocationSummary}"/>
+                    <TextBlock Foreground="{StaticResource TabTextBrush}" Text="{Binding LocationSummary}" TextTrimming="CharacterEllipsis"/>
                 </StackPanel>
                 <!-- Active rig (spec §10): drives the camera frame and the feasibility verdicts -->
                 <StackPanel Grid.Column="4" Margin="0,0,14,0"
                             Visibility="{Binding Equipment, Converter={StaticResource NullToCollapsedConverter}}">
                     <TextBlock Foreground="{StaticResource TabTextBrush}" Text="{x:Static res:Strings.HeaderActiveRig}"/>
-                    <ComboBox Style="{StaticResource DarkComboBoxStyle}" Width="240" Margin="0,2,0,0"
+                    <ComboBox Style="{StaticResource DarkComboBoxStyle}" Width="220" Margin="0,2,0,0"
                               AutomationProperties.AutomationId="ActiveRigCombo" AutomationProperties.Name="{x:Static res:Strings.HeaderActiveRig}"
                               ToolTip="{x:Static res:Strings.HeaderActiveRigTooltip}"
                               ItemsSource="{Binding Equipment.Rigs}" DisplayMemberPath="Name"
                               SelectedValuePath="Rig.Id" SelectedValue="{Binding Equipment.ActiveRigId}"/>
                 </StackPanel>
                 <StackPanel Grid.Column="5" Orientation="Horizontal" VerticalAlignment="Center">
+                    <TextBlock VerticalAlignment="Center" Margin="0,0,10,0" FontSize="15" Foreground="{StaticResource TabTextBrush}"
+                               Text="{Binding OnlineStatusGlyph}" ToolTip="{Binding OnlineStatusTooltip}"
+                               AutomationProperties.Name="{Binding OnlineStatusText}" AutomationProperties.HelpText="{x:Static res:Strings.OnlineStatusName}"/>
                     <Button Style="{StaticResource SecondaryButtonStyle}" Content="{x:Static res:Strings.HeaderSettings}" Click="OnSettingsClicked"
                             ToolTip="{x:Static res:Strings.HeaderSettingsTooltip}"/>
                     <Button Style="{StaticResource SecondaryButtonStyle}" Command="{Binding Targets.ResetFiltersCommand}" Content="{x:Static res:Strings.HeaderReset}"
@@ -316,7 +319,7 @@
                         <RowDefinition Height="Auto"/>
                         <RowDefinition Height="*"/>
                     </Grid.RowDefinitions>
-                    <UniformGrid Columns="2" Margin="0,0,0,12">
+                    <UniformGrid Columns="3" Margin="0,0,0,12">
                         <Border Background="{StaticResource NightCardBrush}" CornerRadius="7" Padding="14" Margin="0,0,6,0">
                             <StackPanel>
                                 <TextBlock Foreground="{StaticResource NightMutedTextBrush}" Text="{x:Static res:Strings.TonightRigCard}"/>
@@ -330,8 +333,23 @@
                                 <TextBlock Foreground="{StaticResource DarknessBrush}" FontSize="16" FontWeight="SemiBold" Text="{Binding Tonight.SiteSkyText}" TextWrapping="Wrap"/>
                             </StackPanel>
                         </Border>
+                        <Border Background="{StaticResource NightCardBrush}" CornerRadius="7" Padding="14" Margin="6,0,0,0"
+                                ToolTip="{x:Static res:Strings.TonightConditionsCardTooltip}">
+                            <StackPanel>
+                                <TextBlock Foreground="{StaticResource NightMutedTextBrush}" Text="{x:Static res:Strings.TonightConditionsCard}"/>
+                                <TextBlock Foreground="White" FontSize="16" FontWeight="SemiBold" Text="{Binding Tonight.ConditionsText}" TextWrapping="Wrap"/>
+                                <TextBlock Foreground="{StaticResource NightMutedTextBrush}" Text="{Binding Tonight.ConditionsDetailText}" TextWrapping="Wrap"/>
+                            </StackPanel>
+                        </Border>
                     </UniformGrid>
                     <StackPanel Grid.Row="1" Margin="0,0,0,6">
+                        <ItemsControl ItemsSource="{Binding Tonight.Alerts}" Focusable="False" Margin="0,0,0,8">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <TextBlock Foreground="{StaticResource WarningBrush}" FontWeight="SemiBold" TextWrapping="Wrap" Text="{Binding}"/>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
                         <TextBlock FontSize="18" FontWeight="SemiBold" Text="{x:Static res:Strings.BestTargetsTitle}"/>
                         <TextBlock Foreground="{StaticResource NightMutedTextBrush}" TextWrapping="Wrap" Text="{x:Static res:Strings.BestTargetsExplanation}"/>
                         <TextBlock Margin="0,6,0,0" Foreground="{StaticResource WarningBrush}" TextWrapping="Wrap" Text="{Binding Tonight.BestTargetsHint}"
