@@ -101,7 +101,7 @@ public sealed class NightEphemerisCalculator(IAstronomyService astronomy)
             var sinAltitude = Math.Clamp(
                 night.SinLatitude * sinDeclination + night.CosLatitude * cosDeclination * Math.Cos(hourAngle), -1.0, 1.0);
             var altitude = Math.Asin(sinAltitude) / DegreesToRadians;
-            altitudes[k] = Refraction.ApparentAltitude(altitude);
+            altitudes[k] = Refraction.ApparentAltitude(altitude, night.RefractionScale);
 
             // The horizon only matters near or above the minimum altitude; far below it the
             // azimuth is not needed (NaN = use the minimum altitude alone).
@@ -125,7 +125,7 @@ public sealed class NightEphemerisCalculator(IAstronomyService astronomy)
         if (transit <= night.Times[^1])
         {
             transitUtc = transit;
-            var culmination = Refraction.ApparentAltitude(90.0 - Math.Abs(request.Observer.LatitudeDegrees - ofDate.DeclinationDegrees));
+            var culmination = Refraction.ApparentAltitude(90.0 - Math.Abs(request.Observer.LatitudeDegrees - ofDate.DeclinationDegrees), night.RefractionScale);
             maximum = Math.Max(maximum, culmination);
         }
 
@@ -229,6 +229,7 @@ public sealed class NightEphemerisCalculator(IAstronomyService astronomy)
         public required double CosLatitude { get; init; }
         public required double MiddleJulianDate { get; init; }
         public required bool NeedsAzimuth { get; init; }
+        public required double RefractionScale { get; init; }
         public int Count => Times.Length;
 
         public static NightSamples Create(NightEphemerisRequest request)
@@ -273,7 +274,8 @@ public sealed class NightEphemerisCalculator(IAstronomyService astronomy)
                 SinLatitude = Math.Sin(latitude),
                 CosLatitude = Math.Cos(latitude),
                 MiddleJulianDate = AstronomyMath.ToJulianDate(startUtc + (endUtc - startUtc) / 2),
-                NeedsAzimuth = request.HorizonMask is { IsFlat: false }
+                NeedsAzimuth = request.HorizonMask is { IsFlat: false },
+                RefractionScale = Refraction.PressureScale(request.Observer.ElevationMeters)
             };
         }
     }

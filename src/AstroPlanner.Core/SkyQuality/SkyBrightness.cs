@@ -36,6 +36,16 @@ public static class SkyBrightness
         (-18, 23.0)
     ];
 
+    /// <summary>Natural zenith luminance used with the light-pollution atlas, mcd/m² (spec §8.4).</summary>
+    public const double NaturalLuminance = 0.171;
+
+    /// <summary>
+    /// Zenith SQM of a site from the atlas' artificial brightness (mcd/m²):
+    /// −2.5·log10((L_artificial + 0.171) / 1.08·10⁸), clamped to the accepted SQM range.
+    /// </summary>
+    public static double SqmFromArtificial(double artificialLuminance) =>
+        Math.Clamp(SqmFromLuminance(Math.Max(0, artificialLuminance) + NaturalLuminance), MinimumSqm, MaximumSqm);
+
     /// <summary>Luminance (mcd/m²) of a sky of <paramref name="sqm"/> mag/arcsec².</summary>
     public static double LuminanceFromSqm(double sqm) => ZeroPointMillicandela * Math.Pow(10, -0.4 * sqm);
 

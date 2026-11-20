@@ -31,7 +31,7 @@ public sealed class AstronomyService : IAstronomyService
         // Coordinates of date → horizon → apparent altitude.
         var ofDate = EquatorialOfDate(target, utcDateTime);
         var geometric = CoordinateTransformer.ToHorizontal(ofDate, observer, utcDateTime);
-        return geometric with { AltitudeDegrees = Refraction.ApparentAltitude(geometric.AltitudeDegrees) };
+        return geometric with { AltitudeDegrees = Refraction.ApparentAltitude(geometric.AltitudeDegrees, Refraction.PressureScale(observer.ElevationMeters)) };
     }
 
     /// <summary>
@@ -201,7 +201,7 @@ public sealed class AstronomyService : IAstronomyService
             - moon.HorizontalParallaxDegrees * Math.Cos(geocentric.AltitudeDegrees * Math.PI / 180.0);
 
         return new MoonState(
-            Horizontal: geocentric with { AltitudeDegrees = Refraction.ApparentAltitude(topocentricAltitude) },
+            Horizontal: geocentric with { AltitudeDegrees = Refraction.ApparentAltitude(topocentricAltitude, Refraction.PressureScale(observer.ElevationMeters)) },
             Equatorial: moon.Equatorial,
             IlluminatedFraction: SolarSystemCalculator.GetMoonIlluminatedFraction(moon, sun),
             IsWaxing: SolarSystemCalculator.IsMoonWaxing(moon, sun));

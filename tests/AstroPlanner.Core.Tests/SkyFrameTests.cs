@@ -149,7 +149,7 @@ public sealed class SkyFrameTests
         bodies[0].Horizontal.AltitudeDegrees.Should().BeApproximately(service.GetSunAltitudeDegrees(observer, utc), 1e-9);
 
         var moon = service.GetMoon(observer, utc);
-        Refraction.ApparentAltitude(bodies[1].Horizontal.AltitudeDegrees).Should().BeApproximately(moon.Horizontal.AltitudeDegrees, 1e-9);
+        Refraction.ApparentAltitude(bodies[1].Horizontal.AltitudeDegrees, Refraction.PressureScale(observer.ElevationMeters)).Should().BeApproximately(moon.Horizontal.AltitudeDegrees, 1e-9);
         bodies[1].IlluminatedFraction.Should().BeApproximately(moon.IlluminatedFraction, 1e-12);
         bodies[1].IlluminatedFraction.Should().BeGreaterThan(0.95); // full Moon of 2026-01-03
         bodies[1].ApparentDiameterArcsec.Should().BeInRange(29.3 * 60, 34.1 * 60);
@@ -159,7 +159,7 @@ public sealed class SkyFrameTests
         var jupiter = SolarSystemCatalog.Planets.Single(p => p.Planet == Planet.Jupiter);
         var expected = service.GetHorizontal(jupiter, observer, utc);
         var actual = bodies.Single(b => b.Id == jupiter.Id).Horizontal;
-        Refraction.ApparentAltitude(actual.AltitudeDegrees).Should().BeApproximately(expected.AltitudeDegrees, 1e-9);
+        Refraction.ApparentAltitude(actual.AltitudeDegrees, Refraction.PressureScale(observer.ElevationMeters)).Should().BeApproximately(expected.AltitudeDegrees, 1e-9);
         actual.AzimuthDegrees.Should().BeApproximately(expected.AzimuthDegrees, 1e-9);
     }
 
