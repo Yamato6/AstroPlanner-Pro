@@ -1,0 +1,16 @@
+{
+  "v": 1,
+  "type": "setFov",
+  "payload": {
+    "visible": true,
+    "widthDegrees": 3.3652,
+    "heightDegrees": 2.2483,
+    "rotationDegrees": 15,
+    "center": {
+      "x": 0.1071502,
+      "y": 0.9897937,
+      "z": -0.0939537
+    },
+    "label": "APS-C \u00B7 400 mm"
+  }
+}

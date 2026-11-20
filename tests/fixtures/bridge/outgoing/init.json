@@ -24,6 +24,7 @@
       "bodies": true,
       "labels": true,
       "ground": true,
+      "skyBrightness": true,
       "starLimitMagnitude": 8.5,
       "deepSkyLimitMagnitude": 12
     },
