@@ -39,6 +39,16 @@ public static class FeasibilityText
     public static string Seconds(double seconds) =>
         seconds.ToString(seconds < 10 ? "0.#" : "0", System.Globalization.CultureInfo.CurrentCulture);
 
+    /// <summary>"120 × 30 s at ISO 800" (or "at gain 100", or nothing).</summary>
+    public static string Subs(int count, double subSeconds, int? iso, int? gain) =>
+        DisplayNames.Format(Strings.PlanSubsFormat, count, Seconds(subSeconds), Setting(iso, gain)).TrimEnd();
+
+    /// <summary>"at ISO 800", "at gain 100" or empty.</summary>
+    public static string Setting(int? iso, int? gain) =>
+        iso is { } i ? DisplayNames.Format(Strings.RecommendedIsoFormat, i)
+        : gain is { } g ? DisplayNames.Format(Strings.RecommendedGainFormat, g)
+        : string.Empty;
+
     public static IReadOnlyList<FeasibilityLine> Lines(FeasibilityReport report)
     {
         ArgumentNullException.ThrowIfNull(report);

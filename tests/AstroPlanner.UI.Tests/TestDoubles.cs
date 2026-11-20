@@ -42,6 +42,12 @@ internal sealed class FakePlanService : IObservationPlanService
     public IReadOnlyList<ObservationPlanEntry> Load() => Entries;
 
     public void Save(IEnumerable<ObservationPlanEntry> entries) => Entries = entries.ToList();
+
+    public List<string> Checklist { get; set; } = [];
+
+    public IReadOnlyList<string> LoadChecklist() => Checklist;
+
+    public void SaveChecklist(IEnumerable<string> doneKeys) => Checklist = doneKeys.ToList();
 }
 
 internal sealed class FakeLogService : IObservationLogService
@@ -143,7 +149,8 @@ internal static class TestShell
         var targets = new TargetsViewModel(
             new FakeCelestialRepository(catalog ?? [TestCatalog.M42, TestCatalog.M31, TestCatalog.M13]),
             astronomy, context, settings, logbook, logger, equipmentState, weatherState);
-        var planViewModel = new SessionPlanViewModel(plan ?? new FakePlanService(), astronomy, context, weatherState, targets, logger);
+        var planViewModel = new SessionPlanViewModel(plan ?? new FakePlanService(), astronomy, context, weatherState, targets, logger,
+            equipmentState, time);
         var detail = new ObjectDetailViewModel(astronomy, context, weatherState, targets, planViewModel, logbook);
         var sky = new SkyViewModel(context, targets, planViewModel, skyStore ?? new FakeSkyViewStore(), logger, time, equipmentState);
         var tonight = new TonightViewModel(context, weatherState, logbook, targets, equipmentState, planViewModel);

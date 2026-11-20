@@ -212,19 +212,18 @@ public sealed class UsabilityTests
     // ─── My plan ────────────────────────────────────────────────────────
 
     [Fact]
-    public async Task ObservationPlan_IsSortedByCulmination()
+    public async Task ObservationPlan_KeepsThePriorityOrder_AndKnowsTheCulminations()
     {
         var viewModel = await CreateLoadedMainAsync();
 
-        // M42 culminates around 22:20 and M31 at dusk: M31 goes first although it is added later.
+        // New objects get the lowest priority; the scheduler (with a rig) decides the times.
         foreach (var id in new[] { "M42", "M31" })
         {
             viewModel.Targets.SelectedObject = viewModel.Targets.Objects.Single(o => o.Id == id);
             viewModel.Detail.AddToPlanCommand.Execute(null);
         }
 
-        viewModel.Plan.Items.Select(item => item.Id).Should().Equal("M31", "M42");
-        viewModel.Plan.Items.Select(item => item.CulminationLocal).Should().BeInAscendingOrder();
+        viewModel.Plan.Items.Select(item => (item.Id, item.Priority)).Should().Equal(("M42", 1), ("M31", 2));
         viewModel.Plan.Items.Should().OnlyContain(item => item.CulminationLocal >= viewModel.Observer.Night!.WindowStartLocal);
     }
 
@@ -252,8 +251,9 @@ public sealed class UsabilityTests
 
         lines.Should().HaveCount(3);
         lines[0].Should().StartWith("Order,ID,Name");
-        lines[1].Should().StartWith("1,M31,Andromeda Galaxy");
-        lines[2].Should().StartWith("2,M42,").And.EndWith("\"UHC filter, 25 mm eyepiece\"");
+        // Without a rig nothing is scheduled: the plan keeps its priority order.
+        lines[1].Should().StartWith("1,M42,").And.EndWith("\"UHC filter, 25 mm eyepiece\"");
+        lines[2].Should().StartWith("2,M31,Andromeda Galaxy");
     }
 
     [Fact]

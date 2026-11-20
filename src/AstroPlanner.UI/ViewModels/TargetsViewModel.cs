@@ -443,7 +443,7 @@ public sealed partial class TargetsViewModel : ObservableValidator, IDisposable
         }
 
         var rig = _equipment?.ActiveRig;
-        var forecast = _weather is { IsEnabled: true } ? _weather.Forecast : null;
+        var forecast = FeasibilityRequests.Forecast(_weather);
         var key = new FeasibilityKey(night.WindowStartLocal, _context.Observer, _context.TimeZoneId, _context.MinimumAltitude,
             _context.HorizonMask, rig, _context.EffectiveZenithSqm, _context.Darkness, _context.ExtinctionCoefficient, forecast?.FetchedAtUtc);
         if (key == _feasibilityKey)
@@ -468,11 +468,7 @@ public sealed partial class TargetsViewModel : ObservableValidator, IDisposable
             return;
         }
 
-        var request = new FeasibilityRequest(_context.Observer, _context.TimeZone, night, _context.MinimumAltitude, rig,
-            _context.EffectiveZenithSqm, _context.ZenithSqmSource, _context.HorizonMask, _context.Darkness, forecast)
-        {
-            Constants = FeasibilityConstants.Default with { ExtinctionCoefficient = _context.ExtinctionCoefficient }
-        };
+        var request = FeasibilityRequests.Create(_context, rig, _weather)!;
         FeasibilityTask = CalculateFeasibilityAsync(key, request, [.. _allObjects], _feasibilityCancellation.Token);
     }
 

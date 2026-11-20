@@ -246,7 +246,7 @@
   <data name="PlanExportTooltip" xml:space="preserve"><value>Saves the plan as CSV to open it in Excel (Ctrl+E)</value></data>
   <data name="PlanPrint" xml:space="preserve"><value>Print…</value></data>
   <data name="PlanPrintTooltip" xml:space="preserve"><value>Prints the plan or saves it as PDF with Microsoft Print to PDF (Ctrl+P)</value></data>
-  <data name="PlanExplanation" xml:space="preserve"><value>Ordered by culmination time: the best order to observe. Type your notes in the Notes column.</value></data>
+  <data name="PlanExplanation" xml:space="preserve"><value>In priority order: each target gets its best stretch of the night with the active rig. Reorder with ▲ ▼, lock a block to keep it, and type your notes in the Notes column.</value></data>
   <data name="PlanEmpty" xml:space="preserve"><value>Your plan is empty. Add objects from the Object detail tab.</value></data>
   <data name="PlanNoteName" xml:space="preserve"><value>Note</value></data>
   <data name="PlanNoteTooltip" xml:space="preserve"><value>Note for this object (saved when you leave the field)</value></data>
@@ -342,7 +342,7 @@
   <data name="AboutAlgorithms" xml:space="preserve"><value>Astronomical algorithms:</value></data>
   <data name="AboutAlgorithmsText" xml:space="preserve"><value>Jean Meeus, “Astronomical Algorithms” (2nd ed.), and approximate orbital elements from JPL (NASA).</value></data>
   <data name="AboutLibraries" xml:space="preserve"><value>Libraries:</value></data>
-  <data name="AboutLibrariesText" xml:space="preserve"><value>.NET and WPF, ScottPlot, CommunityToolkit.Mvvm, Microsoft.Extensions.DependencyInjection, Microsoft.Data.Sqlite (SQLite) and Microsoft Edge WebView2; the sky is drawn with three.js and zod (MIT).</value></data>
+  <data name="AboutLibrariesText" xml:space="preserve"><value>.NET and WPF, ScottPlot, CommunityToolkit.Mvvm, Microsoft.Extensions.DependencyInjection, Microsoft.Data.Sqlite (SQLite), PDFsharp and Microsoft Edge WebView2; the sky is drawn with three.js and zod (MIT).</value></data>
   <data name="AboutYourData" xml:space="preserve"><value>Your data</value></data>
   <data name="AboutYourDataText" xml:space="preserve"><value>Settings, plan, logbook and logs are stored only on this computer. Uninstalling AstroPlanner Pro does not delete them.</value></data>
   <data name="AboutOpenFolder" xml:space="preserve"><value>Open folder</value></data>
@@ -654,4 +654,62 @@
   <data name="ReasonFramingPoint" xml:space="preserve"><value>A point of light at this scale: nothing to frame.</value></data>
   <data name="AboutLightPollution" xml:space="preserve"><value>Light pollution:</value></data>
   <data name="AboutLightPollutionText" xml:space="preserve"><value>grids derived from the World Atlas 2015 of artificial night sky brightness, Falchi, F. et al. (2016), Science Advances 2, e1600377; data: GFZ Data Services, doi:10.5880/GFZ.1.4.2016.001, CC BY-NC 4.0. Because of this NonCommercial license AstroPlanner Pro is and stays free of charge.</value></data>
+  <data name="PlanSummaryRigFormat" xml:space="preserve"><value>Rig: {0}</value></data>
+  <data name="PlanScheduleNoRig" xml:space="preserve"><value>Choose an active rig (Equipment tab) to schedule the night and get sub-exposure suggestions.</value></data>
+  <data name="PlanScheduleSummaryFormat" xml:space="preserve"><value>Dark time {0} · scheduled {1} · free {2}</value></data>
+  <data name="PlanStatusLocked" xml:space="preserve"><value>Locked</value></data>
+  <data name="PlanStatusNotPossible" xml:space="preserve"><value>Not possible tonight</value></data>
+  <data name="PlanStatusNoFreeTime" xml:space="preserve"><value>No free time left</value></data>
+  <data name="PlanSubsFormat" xml:space="preserve"><value>{0} × {1} s {2}</value></data>
+  <data name="CsvStart" xml:space="preserve"><value>Start</value></data>
+  <data name="CsvEnd" xml:space="preserve"><value>End</value></data>
+  <data name="CsvSubCount" xml:space="preserve"><value>Subs</value></data>
+  <data name="CsvSubSeconds" xml:space="preserve"><value>Sub (s)</value></data>
+  <data name="CsvIsoGain" xml:space="preserve"><value>ISO/gain</value></data>
+  <data name="CsvIntegrationMinutes" xml:space="preserve"><value>Integration (min)</value></data>
+  <data name="CsvMeridianFlip" xml:space="preserve"><value>Meridian flip</value></data>
+  <data name="CsvVerdict" xml:space="preserve"><value>Verdict</value></data>
+  <data name="IcsSummaryFormat" xml:space="preserve"><value>Image {0}</value></data>
+  <data name="IcsSubsFormat" xml:space="preserve"><value>Subs: {0} ({1})</value></data>
+  <data name="IcsMeridianFlipFormat" xml:space="preserve"><value>Meridian flip at {0:HH:mm}</value></data>
+  <data name="IcsVerdictFormat" xml:space="preserve"><value>Feasibility: {0}</value></data>
+  <data name="ColumnStart" xml:space="preserve"><value>Start</value></data>
+  <data name="ColumnEnd" xml:space="preserve"><value>End</value></data>
+  <data name="ColumnSubs" xml:space="preserve"><value>Subs</value></data>
+  <data name="ColumnIntegration" xml:space="preserve"><value>Integration</value></data>
+  <data name="ColumnMeridianFlip" xml:space="preserve"><value>Flip</value></data>
+  <data name="ColumnMeridianFlipTooltip" xml:space="preserve"><value>Meridian flip (equatorial mounts): when the target crosses the meridian during its block</value></data>
+  <data name="ColumnPriority" xml:space="preserve"><value>#</value></data>
+  <data name="ColumnPriorityTooltip" xml:space="preserve"><value>Priority: higher targets choose their stretch of the night first</value></data>
+  <data name="ColumnLock" xml:space="preserve"><value>Lock</value></data>
+  <data name="PlanLockName" xml:space="preserve"><value>Lock block</value></data>
+  <data name="PlanLockTooltip" xml:space="preserve"><value>Lock this block: the scheduler keeps it where it is</value></data>
+  <data name="PdfTimelineLegend" xml:space="preserve"><value>Grey: twilight · blue: clouds · thin bar: usable window · block: scheduled (colour = verdict, thick border = locked) · dashed: meridian flip</value></data>
+  <data name="PdfFooterFormat" xml:space="preserve"><value>AstroPlanner Pro · page {0}</value></data>
+  <data name="ChecklistTitle" xml:space="preserve"><value>Checklist</value></data>
+  <data name="ChecklistBatteries" xml:space="preserve"><value>Batteries charged</value></data>
+  <data name="ChecklistDewHeater" xml:space="preserve"><value>Dew heater</value></data>
+  <data name="ChecklistStorage" xml:space="preserve"><value>Free space on the card</value></data>
+  <data name="ChecklistPolarAlignment" xml:space="preserve"><value>Polar alignment / level</value></data>
+  <data name="ChecklistFocus" xml:space="preserve"><value>Focus (Bahtinov mask)</value></data>
+  <data name="ChecklistFlats" xml:space="preserve"><value>Flats</value></data>
+  <data name="ChecklistDarks" xml:space="preserve"><value>Darks</value></data>
+  <data name="ChecklistBias" xml:space="preserve"><value>Bias</value></data>
+  <data name="ChecklistReset" xml:space="preserve"><value>Reset</value></data>
+  <data name="ChecklistResetTooltip" xml:space="preserve"><value>Untick every item for a new session</value></data>
+  <data name="PlanExportPdf" xml:space="preserve"><value>Export PDF</value></data>
+  <data name="PlanExportPdfTooltip" xml:space="preserve"><value>Save the plan with its timeline and checklist as a printable PDF</value></data>
+  <data name="PlanExportIcs" xml:space="preserve"><value>Export .ics</value></data>
+  <data name="PlanExportIcsTooltip" xml:space="preserve"><value>Save the scheduled blocks as calendar events (.ics)</value></data>
+  <data name="PdfFileFilter" xml:space="preserve"><value>PDF files (*.pdf)|*.pdf</value></data>
+  <data name="IcsFileFilter" xml:space="preserve"><value>Calendar files (*.ics)|*.ics</value></data>
+  <data name="PlanExportPdfDialogTitle" xml:space="preserve"><value>Export the plan to PDF</value></data>
+  <data name="PlanExportIcsDialogTitle" xml:space="preserve"><value>Export the plan to a calendar</value></data>
+  <data name="PlanMoveUp" xml:space="preserve"><value>▲</value></data>
+  <data name="PlanMoveUpTooltip" xml:space="preserve"><value>Raise the priority</value></data>
+  <data name="PlanMoveDown" xml:space="preserve"><value>▼</value></data>
+  <data name="PlanMoveDownTooltip" xml:space="preserve"><value>Lower the priority</value></data>
+  <data name="PlanAutoPrioritize" xml:space="preserve"><value>Auto-prioritize</value></data>
+  <data name="PlanAutoPrioritizeTooltip" xml:space="preserve"><value>Give priority to the targets visible for the shortest time, then to the most feasible</value></data>
+  <data name="PlanTimelineTitle" xml:space="preserve"><value>Tonight's session</value></data>
 </root>

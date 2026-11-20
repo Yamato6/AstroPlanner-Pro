@@ -13,6 +13,12 @@ public interface IObservationPlanService
 
     /// <summary>Replaces the saved plan atomically.</summary>
     void Save(IEnumerable<ObservationPlanEntry> entries);
+
+    /// <summary>Keys of the session checklist items ticked off; empty if none.</summary>
+    IReadOnlyList<string> LoadChecklist();
+
+    /// <summary>Replaces the ticked checklist items.</summary>
+    void SaveChecklist(IEnumerable<string> doneKeys);
 }
 
 /// <summary>Persistence of the observation logbook.</summary>
