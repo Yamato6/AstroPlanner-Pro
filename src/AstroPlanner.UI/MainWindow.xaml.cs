@@ -31,6 +31,7 @@ public partial class MainWindow : Window
         NativeWindows.UseDarkTitleBar(this);
         AltitudePlot.UserInputProcessor.IsEnabled = false;
         SkyPlot.UserInputProcessor.IsEnabled = false;
+        HorizonPlot.UserInputProcessor.IsEnabled = false;
         SkyPlot.SizeChanged += (_, _) =>
         {
             if (_viewModel is not null) UpdateSkyMap(_viewModel.Sky);
@@ -41,28 +42,7 @@ public partial class MainWindow : Window
         SkyHostView.Unavailable += (_, reason) => _viewModel?.Sky.UseFallback(reason);
     }
 
-    /// <summary>
-    /// Command-line switches for the renderer benchmark (docs/sky-renderer.md):
-    /// --sky-benchmark runs a 10 s camera sweep and logs the frame statistics;
-    /// --sky-stars=N draws the star catalogue N times (stress test).
-    /// </summary>
-    private static string SkyQuery()
-    {
-        var args = Environment.GetCommandLineArgs();
-        var parameters = new List<string>();
-        if (args.Contains("--sky-benchmark", StringComparer.OrdinalIgnoreCase))
-        {
-            parameters.Add("bench=1");
-        }
-
-        var stars = args.FirstOrDefault(a => a.StartsWith("--sky-stars=", StringComparison.OrdinalIgnoreCase));
-        if (stars is not null && int.TryParse(stars["--sky-stars=".Length..], NumberStyles.Integer, CultureInfo.InvariantCulture, out var multiplier))
-        {
-            parameters.Add(string.Create(CultureInfo.InvariantCulture, $"stars={Math.Clamp(multiplier, 1, 8)}"));
-        }
-
-        return parameters.Count == 0 ? "" : "?" + string.Join('&', parameters);
-    }
+    private static string SkyQuery() => SkyLaunchOptions.Query(Environment.GetCommandLineArgs());
 
     private void OnTabsSelectionChanged(object sender, SelectionChangedEventArgs e)
     {
@@ -94,6 +74,8 @@ public partial class MainWindow : Window
             _viewModel.Sky.PropertyChanged -= OnSkyPropertyChanged;
             _viewModel.Sky.FocusSearchRequested -= OnSkyFocusSearch;
             _viewModel.Sky.OpenDetailsRequested -= OnSkyOpenDetails;
+            _viewModel.Sky.ShowSkyRequested -= OnShowSkyRequested;
+            _viewModel.Locations.PropertyChanged -= OnLocationsPropertyChanged;
         }
 
         _viewModel = e.NewValue as ShellViewModel;
@@ -104,6 +86,8 @@ public partial class MainWindow : Window
             _viewModel.Sky.PropertyChanged += OnSkyPropertyChanged;
             _viewModel.Sky.FocusSearchRequested += OnSkyFocusSearch;
             _viewModel.Sky.OpenDetailsRequested += OnSkyOpenDetails;
+            _viewModel.Sky.ShowSkyRequested += OnShowSkyRequested;
+            _viewModel.Locations.PropertyChanged += OnLocationsPropertyChanged;
         }
     }
 
@@ -219,6 +203,15 @@ public partial class MainWindow : Window
             case Key.OemQuestion or Key.Divide when none && Tabs.SelectedItem == SkyTab && Keyboard.FocusedElement is not TextBox:
                 OnSkyFocusSearch(this, EventArgs.Empty);
                 break;
+            case Key.D1 or Key.NumPad1 when none && Tabs.SelectedItem == SkyTab && Keyboard.FocusedElement is not TextBox:
+                if (_viewModel is not null) _viewModel.Sky.IsDomeMode = true;
+                break;
+            case Key.D2 or Key.NumPad2 when none && Tabs.SelectedItem == SkyTab && Keyboard.FocusedElement is not TextBox:
+                if (_viewModel is not null) _viewModel.Sky.IsAllSkyMode = true;
+                break;
+            case Key.F when none && Tabs.SelectedItem == SkyTab && Keyboard.FocusedElement is not TextBox:
+                if (_viewModel is not null) _viewModel.Sky.IsFovVisible = !_viewModel.Sky.IsFovVisible;
+                break;
             default:
                 return;
         }
@@ -263,6 +256,70 @@ public partial class MainWindow : Window
     }
 
     private void OnSkyOpenDetails(object? sender, EventArgs e) => Tabs.SelectedItem = DetailTab;
+
+    private void OnShowSkyRequested(object? sender, EventArgs e) => Tabs.SelectedItem = SkyTab;
+
+    /// <summary>Saves what the renderer shows (e.g. a finder chart) as a PNG.</summary>
+    private async void OnSkyExportClicked(object sender, RoutedEventArgs e)
+    {
+        if (_viewModel is null || !SkyHostView.IsReady) return;
+
+        var dialog = new Microsoft.Win32.SaveFileDialog
+        {
+            Title = Strings.SkyExportDialogTitle,
+            Filter = Strings.PngFileFilter,
+            FileName = _viewModel.Sky.SuggestedImageFileName()
+        };
+
+        if (dialog.ShowDialog(this) != true) return;
+
+        try
+        {
+            await SkyHostView.CapturePngAsync(dialog.FileName);
+        }
+        catch (Exception ex) when (ex is System.IO.IOException or UnauthorizedAccessException or System.Runtime.InteropServices.COMException or InvalidOperationException)
+        {
+            _logger.LogError("Could not export the sky view.", ex);
+            MessageBox.Show(this, DisplayNames.Format(Strings.SkyExportFailedFormat, ex.Message), Strings.SkyExportDialogTitle,
+                MessageBoxButton.OK, MessageBoxImage.Warning);
+        }
+    }
+
+    private void OnLocationsPropertyChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName is nameof(LocationsViewModel.HorizonVersion) && _viewModel is not null)
+        {
+            UpdateHorizonPlot(_viewModel.Locations);
+        }
+    }
+
+    /// <summary>Horizon profile preview: altitude against azimuth, the obstructed part filled.</summary>
+    private void UpdateHorizonPlot(LocationsViewModel viewModel)
+    {
+        var plot = HorizonPlot.Plot;
+        plot.Clear();
+        plot.FigureBackground.Color = Theme("SurfaceBrush");
+        plot.DataBackground.Color = Theme("NightPanelBrush");
+        plot.Axes.Color(Theme("NightMutedTextBrush"));
+        plot.Grid.MajorLineColor = Theme("NightBorderBrush");
+
+        var points = viewModel.GetHorizonPreview();
+        if (points.Count > 0)
+        {
+            var xs = points.Select(p => p.AzimuthDegrees).ToArray();
+            var ys = points.Select(p => p.AltitudeDegrees).ToArray();
+            var fill = plot.Add.FillY(xs, ys, xs.Select(_ => -10.0).ToArray());
+            fill.FillColor = Theme("SkyHorizonBrush").WithAlpha(0.45);
+            fill.LineColor = Theme("WarningBrush");
+            fill.LineWidth = 1.5f;
+        }
+
+        plot.Axes.Bottom.Label.Text = Strings.HorizonPreviewAzimuth;
+        plot.Axes.Left.Label.Text = Strings.HorizonPreviewAltitude;
+        plot.Axes.SetLimits(0, 360, -10, Math.Max(30, points.Count > 0 ? points.Max(p => p.AltitudeDegrees) + 5 : 30));
+        plot.Axes.Bottom.TickGenerator = new ScottPlot.TickGenerators.NumericFixedInterval(45);
+        HorizonPlot.Refresh();
+    }
 
     private void OnSkyPropertyChanged(object? sender, PropertyChangedEventArgs e)
     {

@@ -32,6 +32,12 @@ public interface IObserverContext : INotifyPropertyChanged, INotifyDataErrorInfo
     /// <summary>Local horizon of the active location (flat by default).</summary>
     HorizonMask HorizonMask { get; set; }
 
+    /// <summary>
+    /// Measured zenith sky brightness of the active location (SQM, mag/arcsec²), or null when
+    /// unknown. Only the sky view uses it so far: changing it does not recalculate anything.
+    /// </summary>
+    double? ZenithSqm { get; set; }
+
     /// <summary>Message for the first invalid input (latitude, longitude, minimum altitude), or null.</summary>
     string? InputError { get; }
 
@@ -111,6 +117,9 @@ public sealed partial class ObserverContext(IAstronomyService astronomy, TimePro
 
     [ObservableProperty]
     public partial HorizonMask HorizonMask { get; set; } = HorizonMask.Flat;
+
+    [ObservableProperty]
+    public partial double? ZenithSqm { get; set; }
 
     [ObservableProperty]
     public partial string? InputError { get; private set; }

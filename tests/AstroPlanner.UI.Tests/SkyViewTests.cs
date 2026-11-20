@@ -1,7 +1,10 @@
 using System.IO;
 using System.IO.Compression;
 using System.Text.Json;
+using AstroPlanner.Core.Algorithms;
+using AstroPlanner.Core.Models;
 using AstroPlanner.SkyBridge;
+using AstroPlanner.UI.Resources;
 using AstroPlanner.UI.Sky;
 using AstroPlanner.UI.ViewModels;
 
@@ -71,7 +74,7 @@ public sealed class SkyViewModelTests
 
         channel.Ready();
 
-        channel.Types.Should().StartWith(["init", "setObserver", "frameTransform", "movingBodies", "setTime", "centerOn", "setHighlights", "selectObject"]);
+        channel.Types.Should().StartWith(["init", "setObserver", "frameTransform", "movingBodies", "setSkyAppearance", "setTime", "centerOn", "setHighlights", "selectObject", "setFov"]);
         channel.Last("init").GetProperty("dataBaseUrl").GetString().Should().Be("https://data.astroplanner/");
         channel.Last("selectObject").GetProperty("id").GetString().Should().Be("M42");
         channel.Last("movingBodies").GetProperty("bodies").GetArrayLength().Should().Be(9);
@@ -97,7 +100,7 @@ public sealed class SkyViewModelTests
     private static readonly string[] BridgeTypes =
     [
         "init", "setObserver", "setTime", "setTimeRate", "frameTransform", "movingBodies", "setLayers",
-        "setHighlights", "selectObject", "centerOn", "setViewMode", "setTheme"
+        "setHighlights", "selectObject", "centerOn", "setViewMode", "setTheme", "setFov", "setSkyAppearance"
     ];
 
     [Fact]
@@ -377,6 +380,120 @@ public sealed class SkyViewModelTests
         shell.Sky.UseFallback("assets");
         shell.Sky.RendererMessage.Should().Contain("does not include");
     }
+
+    private static void ShouldPointAt(JsonElement payload, EquatorialCoordinates expected, double toleranceDegrees = 1e-4)
+    {
+        var v = new Vector3d(payload.GetProperty("x").GetDouble(), payload.GetProperty("y").GetDouble(), payload.GetProperty("z").GetDouble());
+        var actual = SkyFrame.ToEquatorial(v);
+        (actual.RightAscensionHours * 15).Should().BeApproximately(expected.RightAscensionHours * 15, toleranceDegrees);
+        actual.DeclinationDegrees.Should().BeApproximately(expected.DeclinationDegrees, toleranceDegrees);
+    }
+
+    [Fact]
+    public async Task ViewModes_AreSwitched_Remembered_AndTheFinderFollowsTheSelection()
+    {
+        var (shell, channel) = await CreateAsync();
+        shell.Targets.SelectById("M42");
+        var skyShown = 0;
+        shell.Sky.ShowSkyRequested += (_, _) => skyShown++;
+
+        shell.Sky.IsAllSkyMode = true;
+        channel.Last("setViewMode").GetProperty("mode").GetString().Should().Be("allSky");
+        _store.Saved.ViewMode.Should().Be("allSky");
+        shell.Sky.IsDomeMode.Should().BeFalse();
+
+        channel.Receive("""{"v":1,"type":"shortcut","payload":{"action":"viewDome"}}""");
+        shell.Sky.ViewMode.Should().Be("dome");
+        channel.Receive("""{"v":1,"type":"shortcut","payload":{"action":"viewAllSky"}}""");
+        shell.Sky.ViewMode.Should().Be("allSky");
+
+        // "Finder chart" (Detail, Targets, Sky): shows the Sky tab, centred on the selection.
+        shell.Sky.OpenFinderChartCommand.Execute(null);
+        skyShown.Should().Be(1);
+        shell.Sky.IsFinderMode.Should().BeTrue();
+        ShouldPointAt(channel.Last("centerOn"), TestCatalog.M42.Coordinates);
+        channel.Last("centerOn").GetProperty("fovDegrees").GetDouble().Should().Be(10);
+
+        shell.Targets.SelectById("M31");
+        ShouldPointAt(channel.Last("centerOn"), TestCatalog.M31.Coordinates);
+
+        // The next session opens in the same mode.
+        var (_, again) = await CreateAsync();
+        again.Last("init").GetProperty("viewMode").GetString().Should().Be("finder");
+    }
+
+    [Fact]
+    public async Task FovOverlay_FollowsTheSelection_AndKeepsWhatTheUserDragged()
+    {
+        var (shell, channel) = await CreateAsync();
+        channel.Last("setFov").GetProperty("visible").GetBoolean().Should().BeFalse();
+
+        channel.Receive("""{"v":1,"type":"shortcut","payload":{"action":"toggleFov"}}""");
+
+        shell.Sky.IsFovVisible.Should().BeTrue();
+        _store.Saved.FovVisible.Should().BeTrue();
+        var fov = channel.Last("setFov");
+        fov.GetProperty("visible").GetBoolean().Should().BeTrue();
+        // Default: Canon APS-C behind 650 mm (spec §1.3): 1.97° × 1.31°.
+        fov.GetProperty("widthDegrees").GetDouble().Should().BeApproximately(1.9655, 1e-3);
+        fov.GetProperty("heightDegrees").GetDouble().Should().BeApproximately(1.3133, 1e-3);
+        fov.GetProperty("label").GetString().Should().Contain("650 mm");
+        shell.Sky.FovText.Should().Contain("1.97").And.Contain("1.31");
+
+        shell.Targets.SelectById("M42");
+        ShouldPointAt(channel.Last("setFov").GetProperty("center"), TestCatalog.M42.Coordinates);
+        shell.Sky.FinderFovDegrees.Should().BeApproximately(3 * 1.9655, 1e-3);
+
+        // A drag in the renderer is remembered, not echoed back.
+        var sent = channel.Count("setFov");
+        channel.Receive("""{"v":1,"type":"fovChanged","payload":{"x":0,"y":0.6,"z":0.8,"rotationDegrees":15.5}}""");
+        channel.Count("setFov").Should().Be(sent);
+        shell.Sky.FovRotationDegrees.Should().Be(15.5);
+        _store.Saved.FovRotationDegrees.Should().Be(15.5);
+        shell.Sky.FovCenterText.Should().Contain("+53°");
+
+        // Typed values: a preset fills the sensor; editing it by hand clears the preset.
+        shell.Sky.SelectedSensorPreset = shell.Sky.SensorPresets[0];
+        shell.Sky.SensorWidthMm.Should().Be(36);
+        shell.Sky.SensorWidthMm = 30;
+        shell.Sky.SelectedSensorPreset.Should().BeNull();
+
+        shell.Sky.FocalLengthMm = 0;
+        shell.Sky.FovText.Should().Be(Strings.SkyFovInvalid);
+        channel.Last("setFov").GetProperty("visible").GetBoolean().Should().BeFalse();
+    }
+
+    [Fact]
+    public async Task SkyBrightness_IsSentWithTheTracks_AndUsesTheSiteSqm()
+    {
+        var (shell, channel) = await CreateAsync();
+        var appearance = channel.Last("setSkyAppearance");
+        appearance.GetProperty("zenithSqm").GetArrayLength().Should().Be(145);
+        appearance.GetProperty("startUtc").GetString().Should().Be(channel.Last("movingBodies").GetProperty("bodies")[0].GetProperty("track").GetProperty("startUtc").GetString());
+        shell.Sky.SiteSqmText.Should().Be(Strings.SkySiteSqmUnknown);
+        shell.Sky.SkyBrightnessText.Should().NotBeNullOrEmpty();
+
+        shell.Observer.ZenithSqm = 19.0;
+
+        var darkest = channel.Last("setSkyAppearance").GetProperty("zenithSqm").EnumerateArray().Max(e => e.GetDouble());
+        darkest.Should().BeLessThanOrEqualTo(19.0 + 1e-6, "a city sky is never darker than its SQM");
+        shell.Sky.SiteSqmText.Should().Contain("19.00").And.Contain("6");
+
+        shell.Sky.LayerToggles.Single(t => t.Key == "skyBrightness").IsEnabled = false;
+        channel.Last("setLayers").GetProperty("skyBrightness").GetBoolean().Should().BeFalse();
+        _store.Saved.SkyBrightness.Should().BeFalse();
+    }
+
+    [Fact]
+    public async Task ExportedImages_GetADescriptiveName()
+    {
+        var (shell, _) = await CreateAsync();
+        shell.Sky.SuggestedImageFileName().Should().Be("AstroPlannerPro-dome-2026-01-15-2200.png");
+
+        shell.Targets.SelectById("M42");
+        shell.Sky.IsFinderMode = true;
+        shell.Sky.SuggestedImageFileName().Should().Be("AstroPlannerPro-finder-M42-2026-01-15-2200.png");
+    }
 }
 
 public sealed class SkyClockTests
@@ -477,6 +594,9 @@ public sealed class SkyHostSecurityTests
     [InlineData("https://github.com/", false)]
     [InlineData("file:///C:/Windows/win.ini", false)]
     [InlineData("javascript:alert(1)", false)]
+    [InlineData("about:blank", false)]
+    [InlineData("data:text/html,<script>alert(1)</script>", false)]
+    [InlineData("https://app.astroplanner/index.html?res=1920x1080&mode=finder", true)]
     [InlineData("", false)]
     [InlineData(null, false)]
     public void OnlyTheAppHostCanBeLoaded_OrSendMessages(string? uri, bool allowed)
@@ -484,4 +604,23 @@ public sealed class SkyHostSecurityTests
         SkyHost.IsAllowedNavigation(uri).Should().Be(allowed);
         SkyHost.IsTrustedSource(uri).Should().Be(allowed);
     }
+}
+
+public sealed class SkyLaunchOptionsTests
+{
+    [Fact]
+    public void BenchmarkSwitches_BecomeRendererParameters()
+    {
+        SkyLaunchOptions.Query(["AstroPlannerPro.exe"]).Should().BeEmpty();
+        SkyLaunchOptions.Query(["AstroPlannerPro.exe", "--sky-benchmark", "--sky-stars=20", "--sky-resolution=1920x1080", "--sky-mode=allsky"])
+            .Should().Be("?bench=1&stars=8&res=1920x1080&mode=allSky");
+    }
+
+    [Theory]
+    [InlineData("--sky-resolution=1920x1080&x=1")]
+    [InlineData("--sky-resolution=big")]
+    [InlineData("--sky-mode=<script>")]
+    [InlineData("--sky-stars=many")]
+    public void AnythingMalformed_NeverReachesTheUrl(string argument) =>
+        SkyLaunchOptions.Query([argument]).Should().BeEmpty();
 }

@@ -31,6 +31,36 @@
         </Style>
         <Style TargetType="TextBox" BasedOn="{StaticResource DarkTextBoxStyle}"/>
         <Style TargetType="CheckBox" BasedOn="{StaticResource DarkCheckBoxStyle}"/>
+        <!-- Segmented buttons of the sky view modes (3D / all-sky / finder) -->
+        <Style x:Key="SkyModeButtonStyle" TargetType="RadioButton">
+            <Setter Property="Foreground" Value="{StaticResource StrongTextBrush}"/>
+            <Setter Property="Background" Value="{StaticResource ControlRaisedBrush}"/>
+            <Setter Property="BorderBrush" Value="{StaticResource ControlBorderBrush}"/>
+            <Setter Property="Padding" Value="10,6"/>
+            <Setter Property="Margin" Value="0,0,3,0"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="FocusVisualStyle" Value="{StaticResource DarkFocusVisual}"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="RadioButton">
+                        <Border Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="1" CornerRadius="4" Padding="{TemplateBinding Padding}" SnapsToDevicePixels="True">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="BorderBrush" Value="{StaticResource AccentBrush}"/>
+                </Trigger>
+                <Trigger Property="IsChecked" Value="True">
+                    <Setter Property="Background" Value="{StaticResource PrimaryBrush}"/>
+                    <Setter Property="BorderBrush" Value="{StaticResource PrimaryBorderBrush}"/>
+                    <Setter Property="Foreground" Value="White"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
         <Style x:Key="FilterLabelStyle" TargetType="TextBlock">
             <Setter Property="VerticalAlignment" Value="Center"/>
             <Setter Property="Margin" Value="0,0,6,0"/>
@@ -48,6 +78,9 @@
         </Style>
         <Style x:Key="NumericCellStyle" TargetType="TextBlock">
             <Setter Property="TextAlignment" Value="Right"/>
+        </Style>
+        <Style x:Key="PaddedNumericCellStyle" TargetType="TextBlock" BasedOn="{StaticResource NumericCellStyle}">
+            <Setter Property="Margin" Value="0,0,12,0"/>
         </Style>
         <!-- Distance to the Moon: orange when the Moon, bright and close, interferes -->
         <Style x:Key="MoonCellStyle" TargetType="TextBlock">
@@ -425,8 +458,13 @@
                                 <RowDefinition Height="Auto"/>
                                 <RowDefinition Height="*"/>
                             </Grid.RowDefinitions>
-                            <TextBlock Grid.Row="0" FontSize="18" FontWeight="SemiBold"
-                                       Text="{Binding Detail.ChartTitle}"/>
+                            <DockPanel Grid.Row="0">
+                                <Button DockPanel.Dock="Right" Style="{StaticResource SecondaryButtonStyle}" Padding="10,4"
+                                        Content="{x:Static res:Strings.SkyOpenFinderChart}" ToolTip="{x:Static res:Strings.SkyOpenFinderChartTooltip}"
+                                        Command="{Binding Sky.OpenFinderChartCommand}" IsEnabled="{Binding Detail.HasSelection}"/>
+                                <TextBlock FontSize="18" FontWeight="SemiBold" VerticalAlignment="Center" TextTrimming="CharacterEllipsis"
+                                           Text="{Binding Detail.ChartTitle}"/>
+                            </DockPanel>
                             <ScottPlot:WpfPlot x:Name="AltitudePlot" Grid.Row="1" Margin="0,8,0,0"/>
                         </Grid>
                     </Border>
@@ -461,6 +499,24 @@
                             <TextBlock Margin="0,6,0,0" Foreground="{StaticResource NightMutedTextBrush}" TextWrapping="Wrap"
                                        Text="{x:Static res:Strings.SkyHelp}"
                                        Visibility="{Binding Sky.IsRendererAvailable, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+
+                            <!-- View mode -->
+                            <StackPanel Visibility="{Binding Sky.IsRendererAvailable, Converter={StaticResource BooleanToVisibilityConverter}}">
+                                <TextBlock Margin="0,14,0,4" FontWeight="SemiBold" Text="{x:Static res:Strings.SkyViewHeader}"/>
+                                <DockPanel>
+                                    <Button DockPanel.Dock="Right" Style="{StaticResource SecondaryButtonStyle}" Padding="8,6"
+                                            Content="{x:Static res:Strings.SkyExportImage}" ToolTip="{x:Static res:Strings.SkyExportImageTooltip}"
+                                            Click="OnSkyExportClicked"/>
+                                    <StackPanel Orientation="Horizontal">
+                                        <RadioButton GroupName="SkyMode" Style="{StaticResource SkyModeButtonStyle}" IsChecked="{Binding Sky.IsDomeMode}"
+                                                     Content="{x:Static res:Strings.SkyViewDome}" ToolTip="{x:Static res:Strings.SkyViewDomeTooltip}"/>
+                                        <RadioButton GroupName="SkyMode" Style="{StaticResource SkyModeButtonStyle}" IsChecked="{Binding Sky.IsAllSkyMode}"
+                                                     Content="{x:Static res:Strings.SkyViewAllSky}" ToolTip="{x:Static res:Strings.SkyViewAllSkyTooltip}"/>
+                                        <RadioButton GroupName="SkyMode" Style="{StaticResource SkyModeButtonStyle}" IsChecked="{Binding Sky.IsFinderMode}"
+                                                     Content="{x:Static res:Strings.SkyViewFinder}" ToolTip="{x:Static res:Strings.SkyViewFinderTooltip}"/>
+                                    </StackPanel>
+                                </DockPanel>
+                            </StackPanel>
 
                             <!-- Time control -->
                             <StackPanel Visibility="{Binding Sky.IsRendererAvailable, Converter={StaticResource BooleanToVisibilityConverter}}">
@@ -515,6 +571,10 @@
                                 <Button Margin="6,0,0,0" Style="{StaticResource SecondaryButtonStyle}" Command="{Binding Sky.OpenDetailsCommand}"
                                         Content="{x:Static res:Strings.SkyOpenDetails}" IsEnabled="{Binding Sky.HasCatalogSelection}"/>
                             </StackPanel>
+                            <Button Margin="0,6,0,0" HorizontalAlignment="Left" Style="{StaticResource SecondaryButtonStyle}"
+                                    Command="{Binding Sky.OpenFinderChartCommand}" Content="{x:Static res:Strings.SkyOpenFinderChart}"
+                                    ToolTip="{x:Static res:Strings.SkyOpenFinderChartTooltip}" IsEnabled="{Binding Sky.HasCatalogSelection}"
+                                    Visibility="{Binding Sky.IsRendererAvailable, Converter={StaticResource BooleanToVisibilityConverter}}"/>
                             <TextBlock Margin="0,6,0,0" Foreground="{StaticResource NightMutedTextBrush}" TextWrapping="Wrap"
                                        Text="{Binding Sky.HoverText, StringFormat={x:Static res:Strings.SkyHoverFormat}}"
                                        Visibility="{Binding Sky.HoverText, Converter={StaticResource NullToCollapsedConverter}}"/>
@@ -539,6 +599,49 @@
                                 <CheckBox Margin="0,8,0,0" Content="{x:Static res:Strings.SkyShowStats}" IsChecked="{Binding Sky.ShowStats}"/>
                                 <TextBlock Margin="0,4,0,0" Foreground="{StaticResource NightMutedTextBrush}" Text="{Binding Sky.StatsText}"
                                            Visibility="{Binding Sky.StatsText, Converter={StaticResource NullToCollapsedConverter}}"/>
+
+                                <!-- Sky brightness -->
+                                <TextBlock Margin="0,14,0,4" FontWeight="SemiBold" Text="{x:Static res:Strings.SkyBrightnessHeader}"/>
+                                <TextBlock TextWrapping="Wrap" Text="{Binding Sky.SkyBrightnessText}"
+                                           Visibility="{Binding Sky.SkyBrightnessText, Converter={StaticResource NullToCollapsedConverter}}"/>
+                                <TextBlock Margin="0,2,0,0" Foreground="{StaticResource NightMutedTextBrush}" TextWrapping="Wrap" Text="{Binding Sky.SiteSqmText}"/>
+
+                                <!-- Camera field of view -->
+                                <TextBlock Margin="0,14,0,4" FontWeight="SemiBold" Text="{x:Static res:Strings.SkyFovHeader}"/>
+                                <CheckBox Content="{x:Static res:Strings.SkyFovShow}" IsChecked="{Binding Sky.IsFovVisible}"/>
+                                <StackPanel Margin="0,6,0,0" IsEnabled="{Binding Sky.IsFovVisible}">
+                                    <TextBlock Margin="0,0,0,2" Text="{x:Static res:Strings.SkySensorLabel}"/>
+                                    <ComboBox Style="{StaticResource DarkComboBoxStyle}" ItemsSource="{Binding Sky.SensorPresets}"
+                                              SelectedItem="{Binding Sky.SelectedSensorPreset}"/>
+                                    <Grid Margin="0,6,0,0">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="6"/>
+                                            <ColumnDefinition Width="*"/>
+                                        </Grid.ColumnDefinitions>
+                                        <Grid.RowDefinitions>
+                                            <RowDefinition Height="Auto"/>
+                                            <RowDefinition Height="Auto"/>
+                                            <RowDefinition Height="Auto"/>
+                                            <RowDefinition Height="Auto"/>
+                                        </Grid.RowDefinitions>
+                                        <TextBlock Grid.Row="0" Grid.Column="0" Text="{x:Static res:Strings.SkySensorWidth}"/>
+                                        <TextBox Grid.Row="1" Grid.Column="0" Text="{Binding Sky.SensorWidthMm, Delay=400, UpdateSourceTrigger=PropertyChanged}"/>
+                                        <TextBlock Grid.Row="0" Grid.Column="2" Text="{x:Static res:Strings.SkySensorHeight}"/>
+                                        <TextBox Grid.Row="1" Grid.Column="2" Text="{Binding Sky.SensorHeightMm, Delay=400, UpdateSourceTrigger=PropertyChanged}"/>
+                                        <TextBlock Grid.Row="2" Grid.Column="0" Margin="0,6,0,0" Text="{x:Static res:Strings.SkyFocalLength}"/>
+                                        <TextBox Grid.Row="3" Grid.Column="0" Text="{Binding Sky.FocalLengthMm, Delay=400, UpdateSourceTrigger=PropertyChanged}"/>
+                                        <TextBlock Grid.Row="2" Grid.Column="2" Margin="0,6,0,0" Text="{x:Static res:Strings.SkyFovRotation}"
+                                                   ToolTip="{x:Static res:Strings.SkyFovRotationTooltip}"/>
+                                        <TextBox Grid.Row="3" Grid.Column="2" Text="{Binding Sky.FovRotationDegrees, Delay=400, UpdateSourceTrigger=PropertyChanged}"
+                                                 ToolTip="{x:Static res:Strings.SkyFovRotationTooltip}"/>
+                                    </Grid>
+                                    <TextBlock Margin="0,6,0,0" FontWeight="SemiBold" Text="{Binding Sky.FovText}" TextWrapping="Wrap"/>
+                                    <TextBlock Foreground="{StaticResource NightMutedTextBrush}" Text="{Binding Sky.FovCenterText}"
+                                               Visibility="{Binding Sky.FovCenterText, Converter={StaticResource NullToCollapsedConverter}}"/>
+                                    <TextBlock Margin="0,4,0,0" Foreground="{StaticResource NightMutedTextBrush}" TextWrapping="Wrap"
+                                               Text="{x:Static res:Strings.SkyFovHelp}"/>
+                                </StackPanel>
                             </StackPanel>
 
                             <!-- Legend of the 2D fallback chart -->
@@ -656,6 +759,10 @@
                                         HorizontalAlignment="Left" Margin="0,8,0,0"
                                         ToolTip="{x:Static res:Strings.DetailLogObservationTooltip}"
                                         Click="OnLogObservationClicked"/>
+                                <Button Style="{StaticResource SecondaryButtonStyle}" Content="{x:Static res:Strings.SkyOpenFinderChart}"
+                                        HorizontalAlignment="Left" Margin="0,8,0,0"
+                                        ToolTip="{x:Static res:Strings.SkyOpenFinderChartTooltip}"
+                                        Command="{Binding DataContext.Sky.OpenFinderChartCommand, RelativeSource={RelativeSource AncestorType=Window}}"/>
                             </StackPanel>
                         </Grid>
                     </Border>
@@ -845,7 +952,8 @@
                 <Grid Margin="12" DataContext="{Binding Locations}">
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="*"/>
+                        <RowDefinition Height="*" MinHeight="120"/>
+                        <RowDefinition Height="Auto"/>
                     </Grid.RowDefinitions>
 
                     <!-- Save the site in use -->
@@ -866,7 +974,8 @@
 
                     <Border Grid.Row="1" Padding="8" Background="{StaticResource SurfaceBrush}"
                             BorderBrush="{StaticResource NightBorderBrush}" BorderThickness="1" CornerRadius="6">
-                        <DataGrid Style="{StaticResource NightDataGridStyle}" ItemsSource="{Binding Locations}">
+                        <DataGrid Style="{StaticResource NightDataGridStyle}" ItemsSource="{Binding Locations}"
+                                  SelectedItem="{Binding SelectedLocation}">
                             <DataGrid.Columns>
                                 <DataGridTextColumn Binding="{Binding IsActive, Converter={StaticResource ActiveMarkConverter}}" Width="26"
                                                     ElementStyle="{StaticResource ObservedCellStyle}">
@@ -876,9 +985,10 @@
                                 </DataGridTextColumn>
                                 <DataGridTextColumn Header="{x:Static res:Strings.ColumnLocationName}" Binding="{Binding Name}" Width="200" ElementStyle="{StaticResource TrimmedCellStyle}"/>
                                 <DataGridTextColumn Header="{x:Static res:Strings.ColumnCoordinates}" Binding="{Binding CoordinatesText}" Width="170"/>
-                                <DataGridTextColumn Header="{x:Static res:Strings.ColumnElevation}" Binding="{Binding ElevationText}" Width="80" ElementStyle="{StaticResource NumericCellStyle}"/>
+                                <DataGridTextColumn Header="{x:Static res:Strings.ColumnElevation}" Binding="{Binding ElevationText}" Width="90" ElementStyle="{StaticResource PaddedNumericCellStyle}"/>
                                 <DataGridTextColumn Header="{x:Static res:Strings.ColumnTimeZone}" Binding="{Binding TimeZoneText}" Width="170" ElementStyle="{StaticResource TrimmedCellStyle}"/>
                                 <DataGridTextColumn Header="{x:Static res:Strings.ColumnHorizon}" Binding="{Binding HorizonText}" Width="80"/>
+                                <DataGridTextColumn Header="{x:Static res:Strings.ColumnSqm}" Binding="{Binding SqmText}" Width="90"/>
                                 <DataGridTextColumn Header="{x:Static res:Strings.ColumnNotesLocation}" Binding="{Binding Notes}" Width="*" ElementStyle="{StaticResource TrimmedCellStyle}"/>
                                 <DataGridTemplateColumn Width="150">
                                     <DataGridTemplateColumn.CellTemplate>
@@ -899,6 +1009,80 @@
                                 </DataGridTemplateColumn>
                             </DataGrid.Columns>
                         </DataGrid>
+                    </Border>
+
+                    <!-- Details of the selected site: horizon profile and SQM -->
+                    <Border Grid.Row="2" Margin="0,10,0,0" Padding="10" Background="{StaticResource SurfaceBrush}"
+                            BorderBrush="{StaticResource NightBorderBrush}" BorderThickness="1" CornerRadius="6">
+                        <StackPanel>
+                            <TextBlock FontWeight="SemiBold" Text="{x:Static res:Strings.LocationsDetailsHeader}"/>
+                            <TextBlock Margin="0,4,0,0" Foreground="{StaticResource NightMutedTextBrush}" TextWrapping="Wrap"
+                                       Text="{x:Static res:Strings.LocationsDetailsHint}"/>
+                            <Grid Margin="0,8,0,0" Height="230" IsEnabled="{Binding HasSelection}">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="250"/>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="270"/>
+                                </Grid.ColumnDefinitions>
+                                <DockPanel Grid.Column="0">
+                                    <StackPanel DockPanel.Dock="Bottom" Orientation="Horizontal" Margin="0,6,0,0">
+                                        <Button Style="{StaticResource SecondaryButtonStyle}" Margin="0" Padding="8,4"
+                                                Content="{x:Static res:Strings.LocationsAddPoint}" Command="{Binding AddHorizonPointCommand}"/>
+                                        <Button Style="{StaticResource SecondaryButtonStyle}" Padding="8,4"
+                                                Content="{x:Static res:Strings.LocationsFlatHorizon}" Command="{Binding ClearHorizonCommand}"/>
+                                    </StackPanel>
+                                    <DataGrid x:Name="HorizonPointsGrid" Style="{StaticResource NightDataGridStyle}" ItemsSource="{Binding HorizonPoints}"
+                                              IsReadOnly="False" CanUserAddRows="False" CanUserDeleteRows="False" CanUserSortColumns="False">
+                                        <DataGrid.Columns>
+                                            <DataGridTextColumn Header="{x:Static res:Strings.LocationsHorizonAzimuth}" Width="*"
+                                                                Binding="{Binding Azimuth, UpdateSourceTrigger=LostFocus}"/>
+                                            <DataGridTextColumn Header="{x:Static res:Strings.LocationsHorizonAltitude}" Width="*"
+                                                                Binding="{Binding Altitude, UpdateSourceTrigger=LostFocus}"/>
+                                            <DataGridTemplateColumn Width="80">
+                                                <DataGridTemplateColumn.CellTemplate>
+                                                    <DataTemplate>
+                                                        <Button Style="{StaticResource SecondaryButtonStyle}" Padding="6,1"
+                                                                Content="{x:Static res:Strings.LocationsRemovePoint}"
+                                                                Command="{Binding DataContext.RemoveHorizonPointCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}"
+                                                                CommandParameter="{Binding}"/>
+                                                    </DataTemplate>
+                                                </DataGridTemplateColumn.CellTemplate>
+                                            </DataGridTemplateColumn>
+                                        </DataGrid.Columns>
+                                    </DataGrid>
+                                </DockPanel>
+                                <ScottPlot:WpfPlot x:Name="HorizonPlot" Grid.Column="1" Margin="10,0"/>
+                                <StackPanel Grid.Column="2">
+                                    <TextBlock Text="{x:Static res:Strings.LocationsSqmLabel}" ToolTip="{x:Static res:Strings.LocationsSqmTooltip}"/>
+                                    <TextBox x:Name="SqmBox" Margin="0,4,0,0" Width="110" HorizontalAlignment="Left"
+                                             Text="{Binding ZenithSqmText, UpdateSourceTrigger=PropertyChanged}"
+                                             ToolTip="{x:Static res:Strings.LocationsSqmTooltip}"/>
+                                    <TextBlock Margin="0,4,0,0" Foreground="{StaticResource NightMutedTextBrush}" Text="{Binding BortleText}"
+                                               Visibility="{Binding BortleText, Converter={StaticResource NullToCollapsedConverter}}"/>
+                                    <TextBlock Margin="0,6,0,0" Foreground="{StaticResource NightMutedTextBrush}" TextWrapping="Wrap"
+                                               Text="{x:Static res:Strings.LocationsSqmTooltip}"/>
+                                    <StackPanel Orientation="Horizontal" Margin="0,10,0,0">
+                                        <Button Style="{StaticResource PrimaryButtonStyle}" Margin="0"
+                                                Content="{x:Static res:Strings.LocationsSaveDetails}" Command="{Binding SaveDetailsCommand}"/>
+                                        <Button Style="{StaticResource SecondaryButtonStyle}"
+                                                Content="{x:Static res:Strings.LocationsRevertDetails}" Command="{Binding RevertDetailsCommand}"/>
+                                    </StackPanel>
+                                    <TextBlock Margin="0,6,0,0" TextWrapping="Wrap" Text="{Binding DetailsMessage}"
+                                               Visibility="{Binding DetailsMessage, Converter={StaticResource NullToCollapsedConverter}}">
+                                        <TextBlock.Style>
+                                            <Style TargetType="TextBlock">
+                                                <Setter Property="Foreground" Value="{StaticResource SuccessSoftBrush}"/>
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding DetailsHasError}" Value="True">
+                                                        <Setter Property="Foreground" Value="{StaticResource DangerBrush}"/>
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </TextBlock.Style>
+                                    </TextBlock>
+                                </StackPanel>
+                            </Grid>
+                        </StackPanel>
                     </Border>
                 </Grid>
             </TabItem>
