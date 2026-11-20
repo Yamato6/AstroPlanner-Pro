@@ -16,7 +16,8 @@ public sealed record Location
         string ianaTimeZoneId,
         string windowsTimeZoneId,
         HorizonMask? horizonMask = null,
-        string notes = "")
+        string notes = "",
+        double? zenithSqm = null)
     {
         Id = RequireText(id, nameof(id));
         Name = RequireText(name, nameof(name));
@@ -31,6 +32,7 @@ public sealed record Location
         WindowsTimeZoneId = RequireText(windowsTimeZoneId, nameof(windowsTimeZoneId));
         HorizonMask = horizonMask ?? HorizonMask.Flat;
         Notes = notes ?? string.Empty;
+        ZenithSqm = zenithSqm is null ? null : ValidateSqm(zenithSqm.Value);
     }
 
     public string Id { get; init; }
@@ -43,7 +45,15 @@ public sealed record Location
     public HorizonMask HorizonMask { get; init; }
     public string Notes { get; init; }
 
+    /// <summary>Measured zenith sky brightness (SQM, mag/arcsec²) typed by the user, or null (spec §4.8).</summary>
+    public double? ZenithSqm { get; init; }
+
     public ObserverLocation ToObserver() => new(LatitudeDegrees, LongitudeDegrees, ElevationMeters);
+
+    private static double ValidateSqm(double sqm) =>
+        double.IsFinite(sqm) && sqm is >= SkyQuality.SkyBrightness.MinimumSqm and <= SkyQuality.SkyBrightness.MaximumSqm
+            ? sqm
+            : throw new ArgumentOutOfRangeException(nameof(sqm), "The SQM reading must be between 16 and 22.5 mag/arcsec².");
 
     private static string RequireText(string value, string parameterName) =>
         string.IsNullOrWhiteSpace(value)

@@ -78,4 +78,14 @@ public sealed record SkyFrame(
         ArgumentNullException.ThrowIfNull(coordinates);
         return Vector3d.FromSpherical(coordinates.RightAscensionHours * 15.0, coordinates.DeclinationDegrees);
     }
+
+    /// <summary>Catalog coordinates of a J2000 direction (inverse of <see cref="FromEquatorial"/>).</summary>
+    public static EquatorialCoordinates ToEquatorial(Vector3d j2000)
+    {
+        var v = j2000.Normalized();
+        var ra = Math.Abs(v.X) < 1e-12 && Math.Abs(v.Y) < 1e-12
+            ? 0
+            : AstronomyMath.NormalizeDegrees(AstronomyMath.RadiansToDegreesValue(Math.Atan2(v.Y, v.X)));
+        return new EquatorialCoordinates(ra / 15.0, AstronomyMath.RadiansToDegreesValue(Math.Asin(Math.Clamp(v.Z, -1.0, 1.0))));
+    }
 }
