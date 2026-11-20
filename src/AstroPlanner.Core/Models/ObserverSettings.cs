@@ -1,4 +1,5 @@
 using AstroPlanner.Core.Algorithms;
+using AstroPlanner.Core.Imaging.Feasibility;
 
 namespace AstroPlanner.Core.Models;
 
@@ -35,6 +36,12 @@ public sealed class ObserverSettings
 
     /// <summary>Check GitHub for a new version at startup.</summary>
     public bool CheckForUpdates { get; set; } = true;
+
+    /// <summary>What counts as dark enough to image (spec §4.9): astronomical (Sun &lt; −18°) or nautical (&lt; −12°).</summary>
+    public DarknessDefinition Darkness { get; set; } = DarknessDefinition.Astronomical;
+
+    /// <summary>V extinction coefficient of the site, magnitudes per air mass (spec §6).</summary>
+    public double ExtinctionCoefficient { get; set; } = Airmass.DefaultExtinctionCoefficient;
 
     public ObserverLocation ToObserverLocation() =>
         new(LatitudeDegrees, LongitudeDegrees, ElevationMeters);

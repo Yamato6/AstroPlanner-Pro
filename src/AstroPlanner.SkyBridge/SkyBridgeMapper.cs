@@ -94,7 +94,8 @@ public static class SkyBridgeMapper
             observer.LongitudeDegrees,
             observer.ElevationMeters,
             minimumAltitudeDegrees,
-            [.. (horizon?.Points ?? []).Select(p => new HorizonPointDto(p.AzimuthDegrees, p.AltitudeDegrees))]);
+            [.. (horizon?.Points ?? []).Select(p => new HorizonPointDto(p.AzimuthDegrees, p.AltitudeDegrees))],
+            RefractionModel.ForElevation(observer.ElevationMeters));
     }
 
     /// <summary>Center-on payload for catalog coordinates (J2000).</summary>

@@ -111,6 +111,17 @@
             <CheckBox Margin="0,4" IsChecked="{Binding CheckForUpdates}"
                       Content="{x:Static res:Strings.SettingsCheckForUpdates}"/>
 
+            <!-- Capture feasibility (spec §8.4) -->
+            <CheckBox Margin="0,12,0,4" IsChecked="{Binding AllowNauticalTwilight}"
+                      Content="{x:Static res:Strings.SettingsNauticalTwilight}"
+                      ToolTip="{x:Static res:Strings.SettingsNauticalTwilightTooltip}"/>
+            <StackPanel Orientation="Horizontal" Margin="0,4">
+                <Label Content="{x:Static res:Strings.SettingsExtinction}" ToolTip="{x:Static res:Strings.SettingsExtinctionTooltip}"/>
+                <TextBox Width="60" Text="{Binding ExtinctionCoefficient, UpdateSourceTrigger=PropertyChanged}"
+                         AutomationProperties.Name="{x:Static res:Strings.SettingsExtinction}"
+                         ToolTip="{x:Static res:Strings.SettingsExtinctionTooltip}"/>
+            </StackPanel>
+
             <TextBlock Margin="0,16,0,0" TextWrapping="Wrap" Foreground="{StaticResource DangerSoftBrush}">
                 <TextBlock.Style>
                     <Style TargetType="TextBlock">

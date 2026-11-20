@@ -28,7 +28,8 @@ H(t) = L(φ) · Rz(−LST(t)) · P        LST(t) = lstDegrees + lstRateDegreesPe
   sky time moves more than 10 minutes from the last one (precession drifts ≪ 0.01° in that time).
 - `L(φ)` — hour-angle coordinates → (north, east, up) for the observer's latitude.
 - Refraction is then applied to the altitude in the shader with the Core coefficients
-  (Saemundsson, sent in `init`).
+  (Saemundsson, sent in `init` and again in `setObserver`, scaled by the pressure of the site's
+  elevation: `RefractionModel.ForElevation`, the same scale as Core `Refraction.PressureScale`).
 
 This is exactly the Core model (`Precession.FromJ2000` + `CoordinateTransformer.ToHorizontal` +
 `Refraction`): no nutation or aberration, as everywhere else in the app.
@@ -100,7 +101,7 @@ TypeScript (zod) schemas: `src/sky-renderer/src/bridge/schema.ts`.
 | C# → renderer | |
 |---|---|
 | `init` | data URL, refraction model, layers, view mode, theme, stats overlay |
-| `setObserver` | site, minimum altitude, horizon mask |
+| `setObserver` | site, minimum altitude, horizon mask, refraction model scaled for the site (M3) |
 | `setTime` / `setTimeRate` | sky time and rate (0 = paused, 1 = real time, 3600 = 1 h/s) |
 | `frameTransform` | the matrix parameters above |
 | `movingBodies` | Sun, Moon, planets: magnitude, size, phase, bright limb, track |

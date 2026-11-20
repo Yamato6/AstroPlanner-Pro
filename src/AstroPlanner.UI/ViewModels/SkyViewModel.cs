@@ -63,6 +63,7 @@ public sealed partial class SkyViewModel : ObservableObject, IDisposable
     private readonly ISkyViewStore _store;
     private readonly IAppLogger _logger;
     private readonly TimeProvider _time;
+    private readonly EquipmentState? _equipment;
     private readonly SkyClock _clock;
     private readonly SkyViewSettings _settings;
     private ISkyChannel? _channel;
@@ -82,8 +83,10 @@ public sealed partial class SkyViewModel : ObservableObject, IDisposable
         SessionPlanViewModel plan,
         ISkyViewStore store,
         IAppLogger logger,
-        TimeProvider? time = null)
+        TimeProvider? time = null,
+        EquipmentState? equipment = null)
     {
+        _equipment = equipment;
         _context = context;
         _targets = targets;
         _plan = plan;
@@ -139,8 +142,37 @@ public sealed partial class SkyViewModel : ObservableObject, IDisposable
         };
         _context.Recalculated += (_, _) => OnContextRecalculated();
         _context.PropertyChanged += OnContextPropertyChanged;
+        if (_equipment is not null)
+        {
+            _equipment.Changed += (_, _) => ApplyActiveRig();
+            ApplyActiveRig();
+        }
+
         SyncClockToContext();
     }
+
+    /// <summary>Name of the rig the camera frame comes from; null when it is typed by hand.</summary>
+    [ObservableProperty]
+    public partial string? FovRigName { get; private set; }
+
+    /// <summary>The camera frame follows the active rig (sensor and effective focal length); without one it stays manual.</summary>
+    private void ApplyActiveRig()
+    {
+        if (_equipment?.ActiveRig is not { } rig)
+        {
+            FovRigName = null;
+            return;
+        }
+
+        SensorWidthMm = rig.Camera.SensorWidthMm;
+        SensorHeightMm = rig.Camera.SensorHeightMm;
+        FocalLengthMm = rig.FocalLengthMm;
+        SelectedSensorPreset = SensorPresets.FirstOrDefault(p => p.WidthMm == SensorWidthMm && p.HeightMm == SensorHeightMm);
+        FovRigName = rig.Name;
+    }
+
+    /// <summary>The site's zenith SQM for the renderer: manual or atlas; null (natural sky) when unknown.</summary>
+    private double? SiteSqm => _context.ZenithSqmSource == SkyQualitySource.Default ? null : _context.EffectiveZenithSqm;
 
     private SkyLayerToggle Toggle(string key, string name, bool value) => new(key, name, value, OnLayersChanged);
 
@@ -429,7 +461,7 @@ public sealed partial class SkyViewModel : ObservableObject, IDisposable
 
     private void OnContextPropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
-        if (e.PropertyName == nameof(IObserverContext.ZenithSqm))
+        if (e.PropertyName == nameof(IObserverContext.EffectiveZenithSqm))
         {
             SendAppearance(_clock.UtcNow);
             UpdateSkyBrightnessText();
@@ -651,7 +683,7 @@ public sealed partial class SkyViewModel : ObservableObject, IDisposable
         }
 
         Send(SkyMessageCodec.SetSkyAppearance(SkyBridgeMapper.Appearance(
-            _context.Observer, utc, TrackHalfWindow, TrackStep, _context.ZenithSqm)));
+            _context.Observer, utc, TrackHalfWindow, TrackStep, SiteSqm)));
     }
 
     private string BodyDisplayName(string id) =>
@@ -1022,8 +1054,8 @@ public sealed partial class SkyViewModel : ObservableObject, IDisposable
     public partial string? SkyBrightnessText { get; private set; }
 
     /// <summary>Where the site's dark-sky brightness comes from (manual SQM or a natural sky).</summary>
-    public string SiteSqmText => _context.ZenithSqm is { } sqm
-        ? DisplayNames.Format(Strings.SkySiteSqmFormat, sqm, SkyBrightness.BortleFromSqm(sqm))
+    public string SiteSqmText => SiteSqm is { } sqm
+        ? FeasibilityText.SiteSky(sqm, _context.ZenithSqmSource)
         : Strings.SkySiteSqmUnknown;
 
     private void UpdateSkyBrightnessText()
@@ -1034,7 +1066,7 @@ public sealed partial class SkyViewModel : ObservableObject, IDisposable
             return;
         }
 
-        var now = SkyAppearanceCalculator.At(_context.Observer, _clock.UtcNow, _context.ZenithSqm);
+        var now = SkyAppearanceCalculator.At(_context.Observer, _clock.UtcNow, SiteSqm);
         SkyBrightnessText = DisplayNames.Format(Strings.SkyBrightnessFormat, now.ZenithSqm, now.LimitingMagnitude);
     }
 

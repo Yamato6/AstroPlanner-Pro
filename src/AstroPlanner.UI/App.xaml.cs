@@ -6,6 +6,7 @@ using Microsoft.Extensions.DependencyInjection;
 using AstroPlanner.Core.Interfaces;
 using AstroPlanner.Core.Services;
 using AstroPlanner.Data.Catalog;
+using AstroPlanner.Data.LightPollution;
 using AstroPlanner.Data.Repositories;
 using AstroPlanner.Data.Storage;
 using AstroPlanner.Online.Weather;
@@ -45,6 +46,8 @@ public partial class App : Application
         services.AddSingleton<ICelestialRepository>(new CatalogWithPlanetsRepository(
             SqliteCatalogRepository.FromEmbedded(AppPaths.DataFile("catalogs"))));
         services.AddSingleton<ICityRepository, JsonCityRepository>();
+        // Light-pollution grids (World Atlas 2015, embedded; decompressed on first lookup)
+        services.AddSingleton<ILightPollutionAtlas>(LightPollutionAtlas.FromEmbedded());
 
         // Application services (pure Core)
         services.AddSingleton<IAstronomyService, AstronomyService>();
@@ -69,6 +72,7 @@ public partial class App : Application
         services.AddSingleton<IObservationPlanService, SqlitePlanService>();
         services.AddSingleton<IObservationLogService, SqliteLogbookService>();
         services.AddSingleton<ILocationRepository, SqliteLocationRepository>();
+        services.AddSingleton<IEquipmentRepository, SqliteEquipmentRepository>();
         services.AddSingleton(sp => new V1ImportService(
             sp.GetRequiredService<AppDatabase>(), sp.GetRequiredService<ICelestialRepository>(),
             sp.GetRequiredService<ISettingsService>(), sp.GetRequiredService<IObservationPlanService>(),
@@ -78,10 +82,12 @@ public partial class App : Application
         // Shared observing state and forecast
         services.AddSingleton<IObserverContext, ObserverContext>();
         services.AddSingleton<WeatherState>();
+        services.AddSingleton<EquipmentState>();
 
         // View models
         services.AddSingleton<SettingsViewModel>();
         services.AddSingleton<LogbookViewModel>();
+        services.AddSingleton<EquipmentViewModel>();
         services.AddSingleton<LocationsViewModel>();
         services.AddSingleton<TargetsViewModel>();
         services.AddSingleton<SessionPlanViewModel>();

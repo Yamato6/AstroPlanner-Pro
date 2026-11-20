@@ -42,11 +42,13 @@ public sealed partial class ObjectDetailViewModel : ObservableObject
         _targets.SelectionOrTableChanged += (_, _) =>
         {
             UpdateObservation();
+            UpdateFeasibility();
             OnPropertyChanged(nameof(SelectedObject));
             OnPropertyChanged(nameof(HasSelection));
             OnPropertyChanged(nameof(IsInPlan));
             ChartVersion++;
         };
+        _targets.FeasibilityUpdated += (_, _) => UpdateFeasibility();
         _plan.Changed += (_, _) => OnPropertyChanged(nameof(IsInPlan));
         _weather.Changed += (_, _) =>
         {
@@ -71,6 +73,39 @@ public sealed partial class ObjectDetailViewModel : ObservableObject
     public partial CelestialObjectObservation? Observation { get; private set; }
 
     public bool IsInPlan => _plan.Contains(SelectedObject);
+
+    /// <summary>"Why this verdict?" (spec §8.6): one line per factor, worst first; empty without a report.</summary>
+    [ObservableProperty]
+    public partial IReadOnlyList<FeasibilityLine> FeasibilityLines { get; private set; } = [];
+
+    /// <summary>"Good · 68/100"; empty without a report.</summary>
+    [ObservableProperty]
+    public partial string FeasibilityHeadline { get; private set; } = "";
+
+    /// <summary>Suggested subs, ISO/gain, total and window; empty when nothing can be captured.</summary>
+    [ObservableProperty]
+    public partial string RecommendedText { get; private set; } = "";
+
+    [ObservableProperty]
+    public partial bool HasFeasibility { get; private set; }
+
+    private void UpdateFeasibility()
+    {
+        if (SelectedObject?.Feasibility is { } report)
+        {
+            FeasibilityLines = FeasibilityText.Lines(report);
+            FeasibilityHeadline = DisplayNames.Format(Strings.FeasibilityHeadlineFormat, FeasibilityText.Verdict(report.Verdict), report.Score);
+            RecommendedText = FeasibilityText.Recommended(report);
+            HasFeasibility = true;
+        }
+        else
+        {
+            FeasibilityLines = [];
+            FeasibilityHeadline = "";
+            RecommendedText = "";
+            HasFeasibility = false;
+        }
+    }
 
     /// <summary>Changes whenever the altitude chart must be redrawn.</summary>
     [ObservableProperty]

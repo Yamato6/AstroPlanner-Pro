@@ -1,4 +1,5 @@
 using CommunityToolkit.Mvvm.ComponentModel;
+using AstroPlanner.Core.Imaging.Feasibility;
 using AstroPlanner.Core.Planning;
 using AstroPlanner.UI.Resources;
 using AstroPlanner.UI.Services;
@@ -107,6 +108,25 @@ public sealed partial class CelestialObjectRowViewModel : ObservableObject
     public bool IsObservableTonight => Night?.IsObservableInDarkness == true;
 
     public string VisibilityStatus => IsVisible ? Strings.StatusVisible : Strings.StatusNotVisible;
+
+    /// <summary>Capture feasibility tonight with the active rig (spec §8); null until calculated or without a rig.</summary>
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(VerdictText), nameof(Score), nameof(FitsFov), nameof(Verdict), nameof(RecommendedText))]
+    public partial FeasibilityReport? Feasibility { get; set; }
+
+    public FeasibilityVerdict? Verdict => Feasibility?.Verdict;
+
+    /// <summary>"Good", "Unlikely"…; empty until calculated.</summary>
+    public string VerdictText => Feasibility is { } report ? FeasibilityText.Verdict(report.Verdict) : string.Empty;
+
+    /// <summary>Feasibility score 0–100; null until calculated.</summary>
+    public int? Score => Feasibility?.Score;
+
+    /// <summary>Suggested capture ("120 × 10 s at ISO 800 = 20 min · best 21:20–05:05"); empty without a report.</summary>
+    public string RecommendedText => Feasibility is { } report ? FeasibilityText.Recommended(report) : string.Empty;
+
+    /// <summary>The object fits the active rig's frame without being too small for it.</summary>
+    public bool FitsFov => Feasibility?.Framing.Class is FramingClass.Good or FramingClass.Small;
 
     /// <summary>
     /// Updates the position at the chosen time. The object is visible when it is above the

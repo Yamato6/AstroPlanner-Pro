@@ -2,6 +2,7 @@ using System.ComponentModel;
 using System.Globalization;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using AstroPlanner.Core.Imaging.Feasibility;
 using AstroPlanner.UI.Resources;
 using AstroPlanner.UI.Services;
 
@@ -39,8 +40,10 @@ public sealed partial class ShellViewModel : ObservableObject, IDisposable
         SettingsViewModel settings,
         IAppLogger logger,
         TimeProvider? timeProvider = null,
-        IUpdateChecker? updateChecker = null)
+        IUpdateChecker? updateChecker = null,
+        EquipmentViewModel? equipment = null)
     {
+        Equipment = equipment;
         _context = context;
         _weather = weather;
         _logger = logger;
@@ -65,6 +68,8 @@ public sealed partial class ShellViewModel : ObservableObject, IDisposable
         _weather.IsEnabled = settings.WeatherForecastEnabled;
         _context.LocationName = DescribeLocation();
         _context.ZenithSqm = locations.ActiveLocation?.ZenithSqm;
+        _context.Darkness = settings.AllowNauticalTwilight ? DarknessDefinition.Nautical : DarknessDefinition.Astronomical;
+        _context.ExtinctionCoefficient = settings.ExtinctionCoefficient;
         _context.Initialize(settings.Latitude, settings.Longitude, settings.Elevation, settings.TimeZoneId, settings.MinimumAltitude,
             horizonMask: locations.ActiveLocation?.HorizonMask ?? HorizonMask.Flat);
     }
@@ -83,6 +88,9 @@ public sealed partial class ShellViewModel : ObservableObject, IDisposable
     public LogbookViewModel Logbook { get; }
     public LocationsViewModel Locations { get; }
     public SettingsViewModel Settings { get; }
+
+    /// <summary>Equipment inventory and the active rig selector (null only in tests that do not need it).</summary>
+    public EquipmentViewModel? Equipment { get; }
 
     /// <summary>Loads the catalog (and with it the saved plan).</summary>
     [RelayCommand]
@@ -115,6 +123,8 @@ public sealed partial class ShellViewModel : ObservableObject, IDisposable
         Locations.Reload();
         _context.LocationName = DescribeLocation();
         _context.ZenithSqm = Locations.ActiveLocation?.ZenithSqm;
+        _context.Darkness = settings.Darkness;
+        _context.ExtinctionCoefficient = settings.ExtinctionCoefficient;
         _context.Apply(
             settings.LatitudeDegrees, settings.LongitudeDegrees, settings.ElevationMeters,
             settings.TimeZoneId, settings.MinimumAltitude, Locations.ActiveLocation?.HorizonMask ?? HorizonMask.Flat);

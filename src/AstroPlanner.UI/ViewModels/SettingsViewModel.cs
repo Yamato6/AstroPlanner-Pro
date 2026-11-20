@@ -1,3 +1,4 @@
+using AstroPlanner.Core.Imaging.Feasibility;
 using System.ComponentModel.DataAnnotations;
 using System.IO;
 using System.Text.Json;
@@ -68,6 +69,15 @@ public sealed partial class SettingsViewModel : ObservableValidator
     /// <summary>Check for a new version at startup.</summary>
     [ObservableProperty]
     public partial bool CheckForUpdates { get; set; } = true;
+
+    /// <summary>Count nautical twilight (Sun below −12°) as imaging time instead of only astronomical darkness.</summary>
+    [ObservableProperty]
+    public partial bool AllowNauticalTwilight { get; set; }
+
+    /// <summary>V extinction coefficient, mag/air mass.</summary>
+    [ObservableProperty, NotifyDataErrorInfo]
+    [Range(0, 1.5, ErrorMessageResourceType = typeof(Strings), ErrorMessageResourceName = nameof(Strings.ExtinctionRange))]
+    public partial double ExtinctionCoefficient { get; set; } = 0.25;
 
     [ObservableProperty]
     public partial City? SelectedCity { get; set; }
@@ -182,7 +192,9 @@ public sealed partial class SettingsViewModel : ObservableValidator
                 MinimumAltitude = MinimumAltitude,
                 MaximumMagnitude = MaximumMagnitude,
                 WeatherForecastEnabled = WeatherForecastEnabled,
-                CheckForUpdates = CheckForUpdates
+                CheckForUpdates = CheckForUpdates,
+                Darkness = AllowNauticalTwilight ? DarknessDefinition.Nautical : DarknessDefinition.Astronomical,
+                ExtinctionCoefficient = ExtinctionCoefficient
             };
 
             _settingsService.Save(settings);
@@ -256,6 +268,8 @@ public sealed partial class SettingsViewModel : ObservableValidator
         MaximumMagnitude = settings.MaximumMagnitude;
         WeatherForecastEnabled = settings.WeatherForecastEnabled;
         CheckForUpdates = settings.CheckForUpdates;
+        AllowNauticalTwilight = settings.Darkness == DarknessDefinition.Nautical;
+        ExtinctionCoefficient = settings.ExtinctionCoefficient;
         RememberActiveLocation(settings.ActiveLocationId);
         // If the city list is already loaded the saved city is restored; otherwise
         // LoadCitiesAsync selects it once loaded.

@@ -56,9 +56,12 @@ public sealed partial class LocationsViewModel : ObservableObject
     private readonly SettingsViewModel _settings;
     private readonly IObserverContext _context;
     private readonly IAppLogger _logger;
+    private readonly ILightPollutionAtlas? _atlas;
 
-    public LocationsViewModel(ILocationRepository repository, SettingsViewModel settings, IObserverContext context, IAppLogger logger)
+    public LocationsViewModel(ILocationRepository repository, SettingsViewModel settings, IObserverContext context, IAppLogger logger,
+        ILightPollutionAtlas? atlas = null)
     {
+        _atlas = atlas;
         _repository = repository;
         _settings = settings;
         _context = context;
@@ -161,7 +164,21 @@ public sealed partial class LocationsViewModel : ObservableObject
     [NotifyCanExecuteChangedFor(nameof(SaveDetailsCommand), nameof(RevertDetailsCommand), nameof(AddHorizonPointCommand), nameof(ClearHorizonCommand))]
     public partial LocationItemViewModel? SelectedLocation { get; set; }
 
-    partial void OnSelectedLocationChanged(LocationItemViewModel? value) => LoadDetails();
+    partial void OnSelectedLocationChanged(LocationItemViewModel? value)
+    {
+        LoadDetails();
+        OnPropertyChanged(nameof(AtlasSqmText));
+    }
+
+    /// <summary>
+    /// Zenith sky quality of the selected location from the World Atlas 2015 grid (used when no
+    /// SQM is typed), or why there is none.
+    /// </summary>
+    public string? AtlasSqmText => SelectedLocation?.Location is not { } location ? null
+        : _atlas?.ArtificialBrightness(location.LatitudeDegrees, location.LongitudeDegrees) is { } artificial
+            ? DisplayNames.Format(Strings.LocationsAtlasSqmFormat, SkyBrightness.SqmFromArtificial(artificial),
+                SkyBrightness.BortleFromSqm(SkyBrightness.SqmFromArtificial(artificial)))
+            : Strings.LocationsAtlasNone;
 
     public bool HasSelection => SelectedLocation is not null;
 

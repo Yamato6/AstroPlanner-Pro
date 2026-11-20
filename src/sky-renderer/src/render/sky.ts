@@ -507,6 +507,8 @@ export class SkyView {
 
   setObserver(observer: Observer): void {
     this.observer = observer;
+    // Refraction scaled by the site's pressure (computed in C#, applied by the shader).
+    this.setRefraction(observer.refraction);
     this.horizonPoints = [...observer.horizon].sort((a, b) => a.azimuth - b.azimuth);
     this.buildSilhouette();
   }
