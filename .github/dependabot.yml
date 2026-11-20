@@ -8,6 +8,10 @@ updates:
     groups:
       test-packages:
         patterns: ["xunit*", "FluentAssertions", "Microsoft.NET.Test.Sdk", "coverlet.*"]
+    ignore:
+      # PDFsharp 6.5.0 and later are AGPL-3.0-only; the app is MIT (spec §12). Stay on 6.2.x.
+      - dependency-name: "PDFsharp"
+        versions: [">= 6.3.0"]
 
   - package-ecosystem: npm
     directory: "/src/sky-renderer"

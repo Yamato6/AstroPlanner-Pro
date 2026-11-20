@@ -1,7 +1,17 @@
 namespace AstroPlanner.Core.Models;
 
 /// <summary>An object of the observation plan with the user's note.</summary>
-public sealed record ObservationPlanEntry(string Id, string Note = "");
+public sealed record ObservationPlanEntry(string Id, string Note = "")
+{
+    /// <summary>The user pinned its block in the session schedule (spec §4.6).</summary>
+    public bool Locked { get; init; }
+
+    /// <summary>Start of the locked block (local wall-clock time).</summary>
+    public DateTime? StartLocal { get; init; }
+
+    /// <summary>End of the locked block (local wall-clock time).</summary>
+    public DateTime? EndLocal { get; init; }
+}
 
 /// <summary>
 /// An observation recorded in the logbook. Seeing, transparency and rating go from 1 (poor)

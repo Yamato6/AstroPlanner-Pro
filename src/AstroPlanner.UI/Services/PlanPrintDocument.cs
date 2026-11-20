@@ -8,18 +8,17 @@ using AstroPlanner.UI.ViewModels;
 namespace AstroPlanner.UI.Services;
 
 /// <summary>
-/// Printable "My plan": title, night summary and a table in observing order. Black on white
+/// Printable "My plan": title, night summary and the schedule in observing order. Black on white
 /// so that it reads well on paper (and under red light in the field).
 /// </summary>
 public static class PlanPrintDocument
 {
-    private static readonly double[] ColumnWidths = [28, 74, 46, 150, 92, 40, 56, 44, 180];
+    private static readonly double[] ColumnWidths = [26, 44, 44, 46, 130, 120, 60, 40, 44, 150];
 
     private static string[] Headers =>
     [
-        Strings.PrintColumnNumber, Strings.ColumnCulmination, Strings.ColumnId, Strings.ColumnName,
-        Strings.ColumnConstellation, Strings.ColumnMagnitude, Strings.ColumnMaximumAltitude, Strings.ColumnMoon,
-        Strings.ColumnNotes
+        Strings.PrintColumnNumber, Strings.ColumnStart, Strings.ColumnEnd, Strings.ColumnId, Strings.ColumnName,
+        Strings.ColumnSubs, Strings.ColumnIntegration, Strings.ColumnMeridianFlip, Strings.ColumnMoon, Strings.ColumnNotes
     ];
 
     public static FlowDocument Create(IReadOnlyList<PlanItemViewModel> items, string summary)
@@ -65,12 +64,13 @@ public static class PlanPrintDocument
             group.Rows.Add(CreateRow(
             [
                 order++.ToString(culture),
-                item.CulminationLocal?.ToString("HH:mm", culture) ?? "—",
+                item.StartLocal?.ToString("HH:mm", culture) ?? "—",
+                item.EndLocal?.ToString("HH:mm", culture) ?? "—",
                 row.Id,
                 row.CommonName,
-                row.Constellation,
-                row.ApparentMagnitude.ToString("0.0", culture),
-                string.Create(culture, $"{item.MaximumAltitudeDegrees:0}°"),
+                item.SubsText.Length > 0 ? item.SubsText : item.StatusText,
+                item.IntegrationText,
+                item.MeridianFlipLocal?.ToString("HH:mm", culture) ?? "",
                 row.MoonInterferes
                     ? string.Create(culture, $"{row.MoonSeparationDegrees:0}° !")
                     : string.Create(culture, $"{row.MoonSeparationDegrees:0}°"),

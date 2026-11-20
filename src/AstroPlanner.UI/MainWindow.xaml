@@ -923,15 +923,27 @@
                 <Grid Margin="12">
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="*"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="2*" MinHeight="140"/>
+                        <RowDefinition Height="3*"/>
+                        <RowDefinition Height="Auto"/>
                     </Grid.RowDefinitions>
 
-                    <!-- Toolbar: order, export and print -->
-                    <DockPanel Grid.Row="0" Margin="0,0,0,10" LastChildFill="True">
+                    <!-- Toolbar: priorities, exports and print -->
+                    <DockPanel Grid.Row="0" Margin="0,0,0,6" LastChildFill="True">
                         <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
+                            <Button Style="{StaticResource SecondaryButtonStyle}" Content="{x:Static res:Strings.PlanAutoPrioritize}" Margin="0,0,8,0"
+                                    ToolTip="{x:Static res:Strings.PlanAutoPrioritizeTooltip}"
+                                    Command="{Binding Plan.AutoPrioritizeCommand}"/>
                             <Button Style="{StaticResource SecondaryButtonStyle}" Content="{x:Static res:Strings.PlanExportCsv}" Margin="0,0,8,0"
                                     ToolTip="{x:Static res:Strings.PlanExportTooltip}"
                                     Click="OnExportPlanClicked"/>
+                            <Button Style="{StaticResource SecondaryButtonStyle}" Content="{x:Static res:Strings.PlanExportPdf}" Margin="0,0,8,0"
+                                    ToolTip="{x:Static res:Strings.PlanExportPdfTooltip}"
+                                    Click="OnExportPlanPdfClicked"/>
+                            <Button Style="{StaticResource SecondaryButtonStyle}" Content="{x:Static res:Strings.PlanExportIcs}" Margin="0,0,8,0"
+                                    ToolTip="{x:Static res:Strings.PlanExportIcsTooltip}"
+                                    Click="OnExportPlanIcsClicked"/>
                             <Button Style="{StaticResource PrimaryButtonStyle}" Content="{x:Static res:Strings.PlanPrint}"
                                     ToolTip="{x:Static res:Strings.PlanPrintTooltip}"
                                     Click="OnPrintPlanClicked"/>
@@ -943,7 +955,10 @@
                         </StackPanel>
                     </DockPanel>
 
-                    <TextBlock Grid.Row="1" Text="{x:Static res:Strings.PlanEmpty}"
+                    <TextBlock Grid.Row="1" Margin="0,0,0,6" Text="{Binding Plan.ScheduleSummary}" TextWrapping="Wrap"
+                               Foreground="{StaticResource NightTextBrush}" FontWeight="SemiBold"/>
+
+                    <TextBlock Grid.Row="2" Grid.RowSpan="2" Text="{x:Static res:Strings.PlanEmpty}"
                                HorizontalAlignment="Center" VerticalAlignment="Center"
                                Foreground="{StaticResource NightMutedTextBrush}" FontSize="16">
                         <TextBlock.Style>
@@ -957,7 +972,23 @@
                             </Style>
                         </TextBlock.Style>
                     </TextBlock>
-                    <Border Grid.Row="1" Padding="8" Background="{StaticResource SurfaceBrush}"
+
+                    <!-- Timeline (drawn by the code-behind from Plan.Timeline) -->
+                    <Border Grid.Row="2" Margin="0,0,0,8" Padding="4" Background="{StaticResource NightPanelBrush}"
+                            BorderBrush="{StaticResource NightBorderBrush}" BorderThickness="1" CornerRadius="6">
+                        <Border.Style>
+                            <Style TargetType="Border">
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding Plan.Timeline}" Value="{x:Null}">
+                                        <Setter Property="Visibility" Value="Collapsed"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Border.Style>
+                        <ScottPlot:WpfPlot x:Name="TimelinePlot" AutomationProperties.Name="{x:Static res:Strings.PlanTimelineTitle}"/>
+                    </Border>
+
+                    <Border Grid.Row="3" Padding="8" Background="{StaticResource SurfaceBrush}"
                             BorderBrush="{StaticResource NightBorderBrush}" BorderThickness="1" CornerRadius="6">
                         <Border.Style>
                             <Style TargetType="Border">
@@ -971,17 +1002,54 @@
                         <DataGrid Style="{StaticResource NightDataGridStyle}"
                                   ItemsSource="{Binding Plan.Items}">
                             <DataGrid.Columns>
-                                <DataGridTextColumn Header="{x:Static res:Strings.ColumnCulmination}" Binding="{Binding CulminationLocal, StringFormat=HH:mm}" Width="88"/>
-                                <DataGridTextColumn Header="{x:Static res:Strings.ColumnId}" Binding="{Binding Row.Id}" Width="90" ElementStyle="{StaticResource TrimmedCellStyle}"/>
-                                <DataGridTextColumn Header="{x:Static res:Strings.ColumnName}" Binding="{Binding Row.Name}" Width="200" ElementStyle="{StaticResource TrimmedCellStyle}"/>
-                                <DataGridTextColumn Header="{x:Static res:Strings.ColumnConstellation}" Binding="{Binding Row.Constellation}" Width="100"/>
-                                <DataGridTextColumn Header="{x:Static res:Strings.ColumnMagnitude}" Binding="{Binding Row.MagnitudeText}" Width="50" ElementStyle="{StaticResource NumericCellStyle}"/>
+                                <DataGridTextColumn Binding="{Binding Priority}" Width="34" ElementStyle="{StaticResource NumericCellStyle}">
+                                    <DataGridTextColumn.Header>
+                                        <TextBlock Text="{x:Static res:Strings.ColumnPriority}" ToolTip="{x:Static res:Strings.ColumnPriorityTooltip}"/>
+                                    </DataGridTextColumn.Header>
+                                </DataGridTextColumn>
+                                <DataGridTemplateColumn Width="62">
+                                    <DataGridTemplateColumn.CellTemplate>
+                                        <DataTemplate>
+                                            <StackPanel Orientation="Horizontal">
+                                                <Button Style="{StaticResource GridButtonStyle}" Content="{x:Static res:Strings.PlanMoveUp}" Padding="6,0" Margin="0,0,2,0"
+                                                        ToolTip="{x:Static res:Strings.PlanMoveUpTooltip}" AutomationProperties.Name="{x:Static res:Strings.PlanMoveUpTooltip}"
+                                                        Command="{Binding DataContext.Plan.MoveUpCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                                        CommandParameter="{Binding}"/>
+                                                <Button Style="{StaticResource GridButtonStyle}" Content="{x:Static res:Strings.PlanMoveDown}" Padding="6,0"
+                                                        ToolTip="{x:Static res:Strings.PlanMoveDownTooltip}" AutomationProperties.Name="{x:Static res:Strings.PlanMoveDownTooltip}"
+                                                        Command="{Binding DataContext.Plan.MoveDownCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                                        CommandParameter="{Binding}"/>
+                                            </StackPanel>
+                                        </DataTemplate>
+                                    </DataGridTemplateColumn.CellTemplate>
+                                </DataGridTemplateColumn>
+                                <DataGridTemplateColumn Header="{x:Static res:Strings.ColumnLock}" Width="44">
+                                    <DataGridTemplateColumn.CellTemplate>
+                                        <DataTemplate>
+                                            <CheckBox HorizontalAlignment="Center" IsChecked="{Binding IsLocked, UpdateSourceTrigger=PropertyChanged}"
+                                                      IsEnabled="{Binding HasBlock}"
+                                                      ToolTip="{x:Static res:Strings.PlanLockTooltip}" AutomationProperties.Name="{x:Static res:Strings.PlanLockName}"/>
+                                        </DataTemplate>
+                                    </DataGridTemplateColumn.CellTemplate>
+                                </DataGridTemplateColumn>
+                                <DataGridTextColumn Header="{x:Static res:Strings.ColumnStart}" Binding="{Binding StartLocal, StringFormat=HH:mm}" Width="52"/>
+                                <DataGridTextColumn Header="{x:Static res:Strings.ColumnEnd}" Binding="{Binding EndLocal, StringFormat=HH:mm}" Width="52"/>
+                                <DataGridTextColumn Header="{x:Static res:Strings.ColumnId}" Binding="{Binding Row.Id}" Width="80" ElementStyle="{StaticResource TrimmedCellStyle}"/>
+                                <DataGridTextColumn Header="{x:Static res:Strings.ColumnName}" Binding="{Binding Row.Name}" Width="150" ElementStyle="{StaticResource TrimmedCellStyle}"/>
+                                <DataGridTextColumn Header="{x:Static res:Strings.ColumnVerdict}" Binding="{Binding VerdictText}" Width="80" ElementStyle="{StaticResource VerdictCellStyle}"/>
+                                <DataGridTextColumn Header="{x:Static res:Strings.ColumnSubs}" Binding="{Binding SubsText}" Width="150" ElementStyle="{StaticResource TrimmedCellStyle}"/>
+                                <DataGridTextColumn Header="{x:Static res:Strings.ColumnIntegration}" Binding="{Binding IntegrationText}" Width="76"/>
+                                <DataGridTextColumn Binding="{Binding MeridianFlipLocal, StringFormat=HH:mm}" Width="48">
+                                    <DataGridTextColumn.Header>
+                                        <TextBlock Text="{x:Static res:Strings.ColumnMeridianFlip}" ToolTip="{x:Static res:Strings.ColumnMeridianFlipTooltip}"/>
+                                    </DataGridTextColumn.Header>
+                                </DataGridTextColumn>
+                                <DataGridTextColumn Header="{x:Static res:Strings.ColumnStatus}" Binding="{Binding StatusText}" Width="110" ElementStyle="{StaticResource TrimmedCellStyle}"/>
+                                <DataGridTextColumn Header="{x:Static res:Strings.ColumnCulmination}" Binding="{Binding CulminationLocal, StringFormat=HH:mm}" Width="80"/>
                                 <DataGridTextColumn Header="{x:Static res:Strings.ColumnMaximumAltitude}" Binding="{Binding MaximumAltitudeDegrees, StringFormat={}{0:0}°}" Width="66" ElementStyle="{StaticResource NumericCellStyle}"/>
                                 <DataGridTextColumn Header="{x:Static res:Strings.ColumnClouds}" Binding="{Binding CloudCoverAtCulmination, StringFormat={x:Static res:Strings.PercentFormat}, TargetNullValue='—'}" Width="58" ElementStyle="{StaticResource NumericCellStyle}"/>
-                                <DataGridTextColumn Header="{x:Static res:Strings.ColumnAltitude}" Binding="{Binding Row.AltitudeDegrees, StringFormat=F1}" Width="62" ElementStyle="{StaticResource NumericCellStyle}"/>
                                 <DataGridTextColumn Header="{x:Static res:Strings.ColumnMoon}" Binding="{Binding Row.MoonSeparationDegrees, StringFormat={}{0:0}°}" Width="52" ElementStyle="{StaticResource PlanMoonCellStyle}"/>
-                                <DataGridTextColumn Header="{x:Static res:Strings.ColumnStatus}" Binding="{Binding Row.VisibilityStatus}" Width="82" ElementStyle="{StaticResource PlanStatusCellStyle}"/>
-                                <DataGridTemplateColumn Header="{x:Static res:Strings.ColumnNotes}" Width="*" MinWidth="160">
+                                <DataGridTemplateColumn Header="{x:Static res:Strings.ColumnNotes}" Width="*" MinWidth="140">
                                     <DataGridTemplateColumn.CellTemplate>
                                         <DataTemplate>
                                             <TextBox Text="{Binding Note, UpdateSourceTrigger=LostFocus}"
@@ -1003,6 +1071,26 @@
                             </DataGrid.Columns>
                         </DataGrid>
                     </Border>
+
+                    <!-- Checklist (spec §4.6) -->
+                    <DockPanel Grid.Row="4" Margin="0,8,0,0">
+                        <TextBlock DockPanel.Dock="Left" VerticalAlignment="Center" Margin="0,0,12,0" FontWeight="SemiBold"
+                                   Foreground="{StaticResource NightTextBrush}" Text="{x:Static res:Strings.ChecklistTitle}"/>
+                        <Button DockPanel.Dock="Right" Style="{StaticResource SecondaryButtonStyle}" Content="{x:Static res:Strings.ChecklistReset}"
+                                ToolTip="{x:Static res:Strings.ChecklistResetTooltip}" Command="{Binding Plan.ResetChecklistCommand}"/>
+                        <ItemsControl ItemsSource="{Binding Plan.Checklist}" Focusable="False">
+                            <ItemsControl.ItemsPanel>
+                                <ItemsPanelTemplate>
+                                    <WrapPanel/>
+                                </ItemsPanelTemplate>
+                            </ItemsControl.ItemsPanel>
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <CheckBox Margin="0,2,16,2" Content="{Binding Text}" IsChecked="{Binding IsDone}"/>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </DockPanel>
                 </Grid>
             </TabItem>
 

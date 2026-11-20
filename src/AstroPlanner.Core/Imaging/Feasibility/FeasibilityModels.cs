@@ -241,3 +241,15 @@ public sealed record FeasibilityConstants
     /// <summary>Sampling step of the night.</summary>
     public TimeSpan Step { get; init; } = TimeSpan.FromMinutes(5);
 }
+
+/// <summary>
+/// A target over a sampled night (<see cref="Planning.NightSkySamples"/>), one value per sample:
+/// apparent altitude (°), hour angle (° in [−180, 180], 0 = upper transit), whether it can be
+/// imaged (dark, above the minimum altitude and the horizon mask) and the rate at which it gathers
+/// SNR² there (arbitrary units, comparable only within the same target; 0 when not usable).
+/// </summary>
+public sealed record TargetNightProfile(
+    IReadOnlyList<double> AltitudeDegrees,
+    IReadOnlyList<double> HourAngleDegrees,
+    IReadOnlyList<bool> Usable,
+    IReadOnlyList<double> Quality);

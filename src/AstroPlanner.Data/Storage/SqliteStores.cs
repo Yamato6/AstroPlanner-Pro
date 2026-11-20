@@ -91,21 +91,49 @@ public static class SettingsTable
 /// <summary>"My plan" in app.db.</summary>
 public sealed class SqlitePlanService(AppDatabase database) : IObservationPlanService
 {
+    private const string DateFormat = "yyyy-MM-ddTHH:mm:ss";
+    private const string ChecklistKey = "plan_checklist";
+
     private readonly AppDatabase _database = database ?? throw new ArgumentNullException(nameof(database));
 
     public IReadOnlyList<ObservationPlanEntry> Load()
     {
         using var connection = _database.Open();
         using var command = connection.CreateCommand();
-        command.CommandText = "SELECT object_id, note FROM plan_items ORDER BY position";
+        command.CommandText = "SELECT object_id, note, locked, start_local, end_local FROM plan_items ORDER BY position";
         using var reader = command.ExecuteReader();
         var entries = new List<ObservationPlanEntry>();
         while (reader.Read())
         {
-            entries.Add(new ObservationPlanEntry(reader.GetString(0), reader.GetString(1)));
+            entries.Add(new ObservationPlanEntry(reader.GetString(0), reader.GetString(1))
+            {
+                Locked = reader.GetInt64(2) != 0,
+                StartLocal = ReadDate(reader, 3),
+                EndLocal = ReadDate(reader, 4)
+            });
         }
 
         return entries;
+    }
+
+    private static DateTime? ReadDate(SqliteDataReader reader, int ordinal) =>
+        !reader.IsDBNull(ordinal) && DateTime.TryParseExact(reader.GetString(ordinal), DateFormat, CultureInfo.InvariantCulture,
+            DateTimeStyles.None, out var value)
+            ? value
+            : null;
+
+    private static object WriteDate(DateTime? value) =>
+        value is { } date ? date.ToString(DateFormat, CultureInfo.InvariantCulture) : DBNull.Value;
+
+    public IReadOnlyList<string> LoadChecklist() =>
+        SettingsTable.Read(_database, ChecklistKey) is { Length: > 0 } value
+            ? value.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+            : [];
+
+    public void SaveChecklist(IEnumerable<string> doneKeys)
+    {
+        ArgumentNullException.ThrowIfNull(doneKeys);
+        SettingsTable.Write(_database, ChecklistKey, string.Join(',', doneKeys.Where(k => !string.IsNullOrWhiteSpace(k))));
     }
 
     public void Save(IEnumerable<ObservationPlanEntry> entries)
@@ -115,11 +143,13 @@ public sealed class SqlitePlanService(AppDatabase database) : IObservationPlanSe
         using var transaction = connection.BeginTransaction();
         Sql.Execute(connection, transaction, "DELETE FROM plan_items");
         using var insert = Sql.Command(connection, transaction,
-            "INSERT INTO plan_items (position, object_id, note) VALUES ($p, $id, $note)", "$p", "$id", "$note");
+            "INSERT INTO plan_items (position, object_id, note, locked, start_local, end_local) VALUES ($p, $id, $note, $locked, $start, $end)",
+            "$p", "$id", "$note", "$locked", "$start", "$end");
         var position = 0;
         foreach (var entry in entries.Where(e => !string.IsNullOrWhiteSpace(e.Id)))
         {
-            Sql.Run(insert, position++, entry.Id, entry.Note ?? string.Empty);
+            Sql.Run(insert, position++, entry.Id, entry.Note ?? string.Empty, entry.Locked ? 1 : 0,
+                WriteDate(entry.StartLocal), WriteDate(entry.EndLocal));
         }
 
         transaction.Commit();

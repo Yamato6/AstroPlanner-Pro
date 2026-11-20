@@ -177,6 +177,35 @@ public sealed class SqliteStoreTests : TempFolderTest
     }
 
     [Fact]
+    public void Plan_KeepsLockedBlocks()
+    {
+        var service = new SqlitePlanService(Database());
+        var locked = new ObservationPlanEntry("M42", "after midnight")
+        {
+            Locked = true,
+            StartLocal = new DateTime(2026, 12, 10, 0, 30, 0),
+            EndLocal = new DateTime(2026, 12, 10, 2, 45, 0)
+        };
+
+        service.Save([locked, new("M31")]);
+
+        new SqlitePlanService(Database()).Load().Should().Equal(locked, new ObservationPlanEntry("M31"));
+    }
+
+    [Fact]
+    public void Checklist_RoundTrips()
+    {
+        var service = new SqlitePlanService(Database());
+        service.LoadChecklist().Should().BeEmpty();
+
+        service.SaveChecklist(["Batteries", "Focus", " "]);
+        new SqlitePlanService(Database()).LoadChecklist().Should().Equal("Batteries", "Focus");
+
+        service.SaveChecklist([]);
+        service.LoadChecklist().Should().BeEmpty();
+    }
+
+    [Fact]
     public void Logbook_RoundTripsEveryField()
     {
         var entry = new ObservationLogEntry(Guid.NewGuid(), "M42", "Orion Nebula", new DateTime(2026, 1, 15, 22, 30, 15),
