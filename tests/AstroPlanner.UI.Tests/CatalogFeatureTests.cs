@@ -360,7 +360,7 @@ public sealed class CatalogFeatureTests
         }
 
         targets.Objects.Should().NotBeEmpty();
-        times.Max().Should().BeLessThan(TimeSpan.FromMilliseconds(200));
+        times.Max().Should().BeLessThan(PerformanceBudget.Of(TimeSpan.FromMilliseconds(200)));
 
         // The 2D sky chart draws only the brightest objects (the full sky arrives with M2).
         targets.ResetFiltersCommand.Execute(null);

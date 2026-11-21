@@ -757,7 +757,7 @@
   <data name="FramingFieldFormat" xml:space="preserve"><value>{0} · {1:0.00}° × {2:0.00}°</value></data>
   <data name="FramingUnavailable" xml:space="preserve"><value>Framing preview not available.</value></data>
   <data name="FramingDisabled" xml:space="preserve"><value>Survey images are turned off (Settings → Internet connection).</value></data>
-  <data name="FramingPlanet" xml:space="preserve"><value>No survey image for planets: they move against the stars.</value></data>
+  <data name="FramingPlanet" xml:space="preserve"><value>No survey image for Solar System bodies: they move against the stars.</value></data>
   <data name="FramingNoRig" xml:space="preserve"><value>Choose a rig (Equipment) to preview its framing.</value></data>
   <data name="FramingLoadingFormat" xml:space="preserve"><value>Loading {0} survey tiles…</value></data>
   <data name="FramingMirrorFormat" xml:space="preserve"><value> · via {0}</value></data>
@@ -792,4 +792,25 @@
   <data name="OnlineServiceNameResolver" xml:space="preserve"><value>Name search (Sesame, CDS)</value></data>
   <data name="AboutOnlineData" xml:space="preserve"><value>Online data:</value></data>
   <data name="AboutOnlineDataText" xml:space="preserve"><value>seeing and transparency from 7Timer! (Ye 2011); survey images from the Digitized Sky Survey (STScI/NASA) and Pan-STARRS1, coloured and HEALPixed by CDS and mirrored by ESA ESASky; descriptions from Wikipedia (CC BY-SA 4.0) with Wikimedia Commons images under their own licenses; names resolved by Sesame (CDS: SIMBAD, NED, VizieR).</value></data>
+  <data name="TypeComet" xml:space="preserve"><value>Comet</value></data>
+  <data name="TypeAsteroid" xml:space="preserve"><value>Asteroid</value></data>
+  <data name="TypeMilkyWayCore" xml:space="preserve"><value>Milky Way core</value></data>
+  <data name="DetailSmallBodyFormat" xml:space="preserve"><value>Sun {0:0.00} AU · Earth {1:0.00} AU · elongation {2:0}° · elements {3}, epoch {4:yyyy-MM-dd}</value></data>
+  <data name="AlertCometFormat" xml:space="preserve"><value>☄ Comet of the night: {0}, mag {1:0.0}, best {2}.</value></data>
+  <data name="AlertMilkyWayTonightFormat" xml:space="preserve"><value>🌌 Milky Way core above 10° in darkness {0:HH:mm}–{1:HH:mm}; {2} of it with the Moon down.</value></data>
+  <data name="AlertMilkyWayNextFormat" xml:space="preserve"><value>🌌 No Milky Way core in a dark, Moon-free sky tonight; next good night: {0:ddd yyyy-MM-dd} ({1:HH:mm}–{2:HH:mm}).</value></data>
+  <data name="MilkyWayOpen" xml:space="preserve"><value>Milky Way core planner…</value></data>
+  <data name="MilkyWayOpenTooltip" xml:space="preserve"><value>When the galactic centre is up in a dark, Moon-free sky over the next 12 months</value></data>
+  <data name="MilkyWayWindowTitle" xml:space="preserve"><value>Milky Way core planner</value></data>
+  <data name="MilkyWaySubtitleFormat" xml:space="preserve"><value>{0} · core (galactic centre) above {1:0}° in astronomical darkness, next 12 months.</value></data>
+  <data name="MilkyWayLegend" xml:space="preserve"><value>Grey: hours of core in darkness; green: with the Moon down (good nights have at least 30 min).</value></data>
+  <data name="MilkyWayAxisHours" xml:space="preserve"><value>Hours</value></data>
+  <data name="MilkyWayBestNights" xml:space="preserve"><value>Best nights (longest time with the Moon down)</value></data>
+  <data name="MilkyWayNightFormat" xml:space="preserve"><value>{0:ddd yyyy-MM-dd} · {1:HH:mm}–{2:HH:mm} · Moon down {3} · Moon {4:0} %</value></data>
+  <data name="MilkyWayLoading" xml:space="preserve"><value>Calculating the year…</value></data>
+  <data name="MilkyWayNoSite" xml:space="preserve"><value>Choose a valid location first.</value></data>
+  <data name="MilkyWayNever" xml:space="preserve"><value>From this site the core never stays above 10° in a dark, Moon-free sky in the next 12 months.</value></data>
+  <data name="SettingsSmallBodies" xml:space="preserve"><value>Comets and bright asteroids (Minor Planet Center)</value></data>
+  <data name="SettingsSmallBodiesNote" xml:space="preserve"><value>Downloads orbital elements from minorplanetcenter.net (daily for comets, yearly for asteroids); sends nothing about you.</value></data>
+  <data name="OnlineServiceSmallBodies" xml:space="preserve"><value>Comets and asteroids (MPC)</value></data>
 </root>

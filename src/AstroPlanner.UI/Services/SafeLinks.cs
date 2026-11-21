@@ -14,7 +14,9 @@ public static class SafeLinks
     [
         "github.com", "open-meteo.com", "7timer.info",
         // M4b: articles, images and their licenses, survey and name-resolver credits.
-        "wikipedia.org", "wikimedia.org", "creativecommons.org", "cds.unistra.fr", "esa.int", "stsci.edu"
+        "wikipedia.org", "wikimedia.org", "creativecommons.org", "cds.unistra.fr", "esa.int", "stsci.edu",
+        // M5a: comet and asteroid elements.
+        "minorplanetcenter.net"
     ];
 
     public static bool IsAllowed(Uri? uri) =>

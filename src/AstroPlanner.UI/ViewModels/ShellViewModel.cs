@@ -43,9 +43,11 @@ public sealed partial class ShellViewModel : ObservableObject, IDisposable
         TimeProvider? timeProvider = null,
         IUpdateChecker? updateChecker = null,
         EquipmentViewModel? equipment = null,
-        OnlineInfoState? online = null)
+        OnlineInfoState? online = null,
+        SmallBodyState? smallBodies = null)
     {
         _online = online ?? new OnlineInfoState();
+        SmallBodies = smallBodies;
         Equipment = equipment;
         _context = context;
         _weather = weather;
@@ -72,7 +74,13 @@ public sealed partial class ShellViewModel : ObservableObject, IDisposable
         // The persisted settings win over runtime values.
         _weather.IsEnabled = settings.WeatherForecastEnabled;
         _weather.IsAstroEnabled = settings.AstroForecastEnabled;
-        _online.Apply(settings.SurveyImagesEnabled, settings.WikipediaEnabled, settings.NameResolverEnabled);
+        _online.Apply(settings.SurveyImagesEnabled, settings.WikipediaEnabled, settings.NameResolverEnabled, settings.SmallBodiesEnabled);
+        if (smallBodies is not null)
+        {
+            smallBodies.Changed += (_, _) => Targets.SetSmallBodies(smallBodies.Objects);
+            Targets.CatalogLoaded += (_, _) => _ = smallBodies.RefreshSafeAsync();
+        }
+
         _context.LocationName = DescribeLocation();
         _context.ZenithSqm = locations.ActiveLocation?.ZenithSqm;
         _context.Darkness = settings.AllowNauticalTwilight ? DarknessDefinition.Nautical : DarknessDefinition.Astronomical;
@@ -90,7 +98,8 @@ public sealed partial class ShellViewModel : ObservableObject, IDisposable
                 (_weather.IsAstroEnabled, _weather.AstroForecast, _weather.AstroLastError, _weather.IsAstroForecastStale),
                 (_online.Images.Enabled, null, _online.Images.LastError, false),
                 (_online.Wikipedia.Enabled, null, _online.Wikipedia.LastError, false),
-                (_online.NameResolver.Enabled, null, _online.NameResolver.LastError, false) };
+                (_online.NameResolver.Enabled, null, _online.NameResolver.LastError, false),
+                (_online.SmallBodies.Enabled, null, _online.SmallBodies.LastError, false) };
             if (!services.Any(s => s.Item1))
             {
                 return Strings.OnlineStatusOff;
@@ -112,6 +121,7 @@ public sealed partial class ShellViewModel : ObservableObject, IDisposable
         OnDemandLine(Strings.OnlineServiceImages, _online.Images),
         OnDemandLine(Strings.OnlineServiceWikipedia, _online.Wikipedia),
         OnDemandLine(Strings.OnlineServiceNameResolver, _online.NameResolver),
+        OnDemandLine(Strings.OnlineServiceSmallBodies, _online.SmallBodies),
         DisplayNames.Format(Strings.OnlineServiceLineFormat, Strings.OnlineServiceUpdates, Settings.CheckForUpdates ? Strings.OnlineServiceOn : Strings.OnlineServiceDisabled));
 
     private string ServiceLine(string name, bool enabled, DateTime? fetchedUtc, string? error, bool stale)
@@ -144,6 +154,9 @@ public sealed partial class ShellViewModel : ObservableObject, IDisposable
 
     /// <summary>Shared observing state (location, time, minimum altitude).</summary>
     public IObserverContext Observer => _context;
+
+    /// <summary>Comets and asteroids of the catalog (null only in tests that do not need them).</summary>
+    public SmallBodyState? SmallBodies { get; }
 
     /// <summary>Cloud forecast for the active location.</summary>
     public WeatherState Weather => _weather;
@@ -204,7 +217,8 @@ public sealed partial class ShellViewModel : ObservableObject, IDisposable
             _ = _weather.RefreshSafeAsync();
         }
 
-        _online.Apply(settings.SurveyImagesEnabled, settings.WikipediaEnabled, settings.NameResolverEnabled);
+        _online.Apply(settings.SurveyImagesEnabled, settings.WikipediaEnabled, settings.NameResolverEnabled, settings.SmallBodiesEnabled);
+        _ = SmallBodies?.RefreshSafeAsync();
     }
 
     // ─── Date and time ──────────────────────────────────────────────────

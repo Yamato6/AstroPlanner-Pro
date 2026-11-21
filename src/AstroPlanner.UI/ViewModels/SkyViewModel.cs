@@ -129,6 +129,13 @@ public sealed partial class SkyViewModel : ObservableObject, IDisposable
         SelectedSensorPreset = SensorPresets.FirstOrDefault(p => p.WidthMm == SensorWidthMm && p.HeightMm == SensorHeightMm);
         _initialized = true;
 
+        _targets.SmallBodiesChanged += (_, _) =>
+        {
+            if (_context.InputError is null)
+            {
+                SendBodies(_clock.UtcNow);
+            }
+        };
         _targets.SelectionOrTableChanged += (_, _) =>
         {
             MapVersion++;
@@ -681,9 +688,30 @@ public sealed partial class SkyViewModel : ObservableObject, IDisposable
 
         _tracksCenterUtc = utc;
         Send(SkyMessageCodec.MovingBodies(SkyBridgeMapper.MovingBodies(
-            _context.Observer, utc, TrackHalfWindow, TrackStep, BodyDisplayName)));
+            _context.Observer, utc, TrackHalfWindow, TrackStep, BodyDisplayName, SkySmallBodies(utc))));
         SendAppearance(utc);
     }
+
+    /// <summary>Faintest comet or asteroid drawn in the sky.</summary>
+    public const double SmallBodyMagnitudeLimit = 12;
+
+    /// <summary>Most comets and asteroids drawn (the brightest), to keep the tracks message small.</summary>
+    public const int SmallBodyCountLimit = 40;
+
+    /// <summary>The comets and asteroids of the catalog bright enough to draw at <paramref name="utc"/>, brightest first.</summary>
+    private List<CelestialObject> SkySmallBodies(DateTime utc) =>
+    [
+        .. _targets.AllObjects
+            .Where(row => row.Target.IsSmallBody)
+            .Select(row => (row.Target, Magnitude: MagnitudeAt(row.Target, utc)))
+            .Where(b => double.IsFinite(b.Magnitude) && b.Magnitude <= SmallBodyMagnitudeLimit)
+            .OrderBy(b => b.Magnitude)
+            .Take(SmallBodyCountLimit)
+            .Select(b => b.Target)
+    ];
+
+    private static double MagnitudeAt(CelestialObject target, DateTime utc) =>
+        target.Orbit is { } orbit ? OrbitCalculator.GetPosition(orbit, utc).Magnitude : double.NaN;
 
     /// <summary>Sky brightness over the same window as the body tracks (they are refreshed together).</summary>
     private void SendAppearance(DateTime utc)
@@ -724,7 +752,7 @@ public sealed partial class SkyViewModel : ObservableObject, IDisposable
 
         Send(SkyMessageCodec.SelectObject(selected is null
             ? new SelectionPayload(null, null)
-            : new SelectionPayload(selected.IsPlanet ? SkyObjectKinds.Body : SkyObjectKinds.DeepSky, selected.Id)));
+            : new SelectionPayload(selected.Target.IsMoving ? SkyObjectKinds.Body : SkyObjectKinds.DeepSky, selected.Id)));
         OnPropertyChanged(nameof(HasCatalogSelection));
         return true;
     }
@@ -779,7 +807,7 @@ public sealed partial class SkyViewModel : ObservableObject, IDisposable
         {
             SearchMessage = null;
             _targets.SelectById(match.Id);
-            CenterOn(match.Target, fovDegrees: match.IsPlanet ? 20 : 30);
+            CenterOn(match.Target, fovDegrees: match.IsPlanet ? 20 : match.Target.IsSmallBody ? 10 : 30);
             return;
         }
 
@@ -841,13 +869,14 @@ public sealed partial class SkyViewModel : ObservableObject, IDisposable
     /// </summary>
     private Vector3d? DirectionOf(CelestialObject target)
     {
-        if (target.Planet is null)
+        if (!target.IsMoving)
         {
             return SkyFrame.FromEquatorial(target.Coordinates);
         }
 
         var utc = _clock.UtcNow;
-        var body = MovingBodyCalculator.GetBodies(_context.Observer, utc).FirstOrDefault(b => b.Id == target.Id);
+        var body = MovingBodyCalculator.GetBodies(_context.Observer, utc, target.IsSmallBody ? [target] : null)
+            .FirstOrDefault(b => b.Id == target.Id);
         return body is null
             ? null
             : SkyFrame.Compute(_context.Observer, utc).J2000ToHorizontalAt(utc).Transpose().Transform(SkyFrame.FromHorizontal(body.Horizontal));

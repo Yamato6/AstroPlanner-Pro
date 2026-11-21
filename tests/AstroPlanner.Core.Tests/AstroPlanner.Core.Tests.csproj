@@ -10,6 +10,7 @@
 
   <ItemGroup>
     <Compile Include="..\Shared\TestCatalog.cs" Link="Shared\TestCatalog.cs" />
+    <Compile Include="..\Shared\PerformanceBudget.cs" Link="Shared\PerformanceBudget.cs" />
   </ItemGroup>
 
   <!-- JPL Horizons golden fixtures (tools/fetch-horizons-fixtures.ps1); never fetched by tests. -->

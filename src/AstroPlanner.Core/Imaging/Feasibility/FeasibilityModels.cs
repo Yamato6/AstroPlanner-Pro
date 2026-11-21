@@ -268,6 +268,12 @@ public sealed record FeasibilityConstants
     /// </summary>
     public double ClearTransparency { get; init; } = 0.3;
 
+    /// <summary>
+    /// Apparent coma diameter assumed for comets (arcmin): the catalogues give no size, and the
+    /// total magnitude is spread over it. A typical value for comets within reach of small gear.
+    /// </summary>
+    public double CometComaArcmin { get; init; } = 5;
+
     /// <summary>Sampling step of the night.</summary>
     public TimeSpan Step { get; init; } = TimeSpan.FromMinutes(5);
 }

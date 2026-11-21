@@ -1200,10 +1200,8 @@ export class SkyView {
     }
     const g = this.overlay;
     const body = track.body;
-    const radius = Math.max(
-      body.kind === 'planet' ? 2.5 : 6,
-      ((body.diameterArcsec / 3600) * this.pixelsPerDegree) / 2,
-    );
+    const minimumRadius = { planet: 2.5, comet: 3, asteroid: 1.8, sun: 6, moon: 6 }[body.kind];
+    const radius = Math.max(minimumRadius, ((body.diameterArcsec / 3600) * this.pixelsPerDegree) / 2);
 
     if (body.kind === 'sun') {
       const glow = g.createRadialGradient(p.x, p.y, radius * 0.5, p.x, p.y, radius * 4);
@@ -1219,6 +1217,13 @@ export class SkyView {
       g.fill();
     } else if (body.kind === 'moon') {
       this.drawMoon(p, radius, j2000, body);
+    } else if (body.kind === 'comet') {
+      this.drawComet(p, radius, j2000, body);
+    } else if (body.kind === 'asteroid') {
+      g.fillStyle = '#cfc8bc';
+      g.beginPath();
+      g.arc(p.x, p.y, radius, 0, Math.PI * 2);
+      g.fill();
     } else {
       g.fillStyle = '#f5c26b';
       g.beginPath();
@@ -1230,6 +1235,43 @@ export class SkyView {
       g.textAlign = 'left';
       label(body.name, p.x + radius + 4, p.y - radius - 2, palette.bodyLabel, true);
     }
+  }
+
+  /**
+   * A comet: a fuzzy head and a short tail pointing away from the Sun (brightLimbAngleDegrees is
+   * the position angle of the Sun's direction, as for the Moon's bright limb).
+   */
+  private drawComet(p: ScreenPoint, radius: number, j2000: Vec3, body: MovingBody): void {
+    const g = this.overlay;
+    const axes = this.screenAxes(j2000, p);
+    const chi = (body.brightLimbAngleDegrees * Math.PI) / 180 + Math.PI;
+    const tail = axes
+      ? {
+          x: Math.cos(chi) * axes.north.x + Math.sin(chi) * axes.east.x,
+          y: Math.cos(chi) * axes.north.y + Math.sin(chi) * axes.east.y,
+        }
+      : { x: 0, y: -1 };
+    const length = Math.hypot(tail.x, tail.y) || 1;
+    const end = { x: p.x + (tail.x / length) * radius * 9, y: p.y + (tail.y / length) * radius * 9 };
+
+    const gradient = g.createLinearGradient(p.x, p.y, end.x, end.y);
+    gradient.addColorStop(0, 'rgba(160, 232, 216, 0.75)');
+    gradient.addColorStop(1, 'rgba(160, 232, 216, 0)');
+    g.strokeStyle = gradient;
+    g.lineWidth = radius * 1.2;
+    g.lineCap = 'round';
+    g.beginPath();
+    g.moveTo(p.x, p.y);
+    g.lineTo(end.x, end.y);
+    g.stroke();
+
+    const head = g.createRadialGradient(p.x, p.y, 0, p.x, p.y, radius * 2);
+    head.addColorStop(0, 'rgba(214, 250, 240, 1)');
+    head.addColorStop(1, 'rgba(160, 232, 216, 0)');
+    g.fillStyle = head;
+    g.beginPath();
+    g.arc(p.x, p.y, radius * 2, 0, Math.PI * 2);
+    g.fill();
   }
 
   /** The Moon with its phase: the bright limb points at position angle χ, the terminator is an ellipse. */

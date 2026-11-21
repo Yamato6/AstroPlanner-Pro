@@ -14,4 +14,7 @@ coordinates are those of Aguascalientes city centre, rounded to 2 decimals as th
 | `wikipedia-summary-disambiguation.json` | the same for `Castor` |
 | `commons-extmetadata-m42.json` | `https://commons.wikimedia.org/w/api.php?action=query&format=json&formatversion=2&prop=imageinfo&iiprop=extmetadata&iiextmetadatafilter=LicenseShortName\|LicenseUrl\|Artist\|Credit\|UsageTerms\|AttributionRequired&titles=File:Orion_Nebula_-_Hubble_2006_mosaic_18000.jpg` |
 
+| `mpc-cometels-excerpt.txt` | 8 lines of `https://minorplanetcenter.net/iau/MPCORB/CometEls.txt` (2026-11-20) |
+| `mpc-bright-2026-excerpt.txt` | first 6 lines of `https://minorplanetcenter.net/iau/Ephemerides/Bright/2026/Soft00Bright.txt` |
+
 To refresh them, repeat the requests with `curl` and update the expected values in the tests.

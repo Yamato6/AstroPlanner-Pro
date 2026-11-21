@@ -21,7 +21,8 @@ public sealed class OnlineServiceStatus
 }
 
 /// <summary>
-/// The on-demand online services of M4b (spec §4.4, §4.2, §9): survey images, Wikipedia and Sesame.
+/// The on-demand online services (spec §4.4, §4.2, §9): survey images, Wikipedia, Sesame, and the
+/// comet and asteroid elements of the MPC.
 /// Holds their toggles (from Settings) and last outcome; raises <see cref="Changed"/> for the top-bar status.
 /// </summary>
 public sealed class OnlineInfoState
@@ -30,15 +31,20 @@ public sealed class OnlineInfoState
     public OnlineServiceStatus Wikipedia { get; } = new();
     public OnlineServiceStatus NameResolver { get; } = new();
 
+    /// <summary>Comet and asteroid elements (MPC), refreshed daily.</summary>
+    public OnlineServiceStatus SmallBodies { get; } = new();
+
     /// <summary>A toggle or an outcome changed.</summary>
     public event EventHandler? Changed;
 
-    public void Apply(bool images, bool wikipedia, bool nameResolver)
+    public void Apply(bool images, bool wikipedia, bool nameResolver, bool smallBodies = true)
     {
-        var changed = Images.Enabled != images || Wikipedia.Enabled != wikipedia || NameResolver.Enabled != nameResolver;
+        var changed = Images.Enabled != images || Wikipedia.Enabled != wikipedia || NameResolver.Enabled != nameResolver
+            || SmallBodies.Enabled != smallBodies;
         Images.Enabled = images;
         Wikipedia.Enabled = wikipedia;
         NameResolver.Enabled = nameResolver;
+        SmallBodies.Enabled = smallBodies;
         if (changed)
         {
             OnChanged();

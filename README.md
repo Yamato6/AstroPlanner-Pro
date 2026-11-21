@@ -78,6 +78,12 @@
   license, and links to both pages.
 - 🔎 **Find anything**: a sky search that finds nothing in the catalog asks CDS Sesame (SIMBAD,
   NED, VizieR), so "Barnard 33" or "Sh2-240" still centres the view.
+- ☄️ **Comets and asteroids**: the comets brighter than magnitude 15 tonight and ~300 bright
+  asteroids, from the Minor Planet Center's elements, in the table, the sky (comets with a tail
+  pointing away from the Sun) and the feasibility verdicts, with a "comet of the night" alert.
+  Orbits are computed for any eccentricity and checked against JPL Horizons.
+- 🌌 **Milky Way core**: the galactic centre as a wide-field target, tonight's window in a dark,
+  Moon-free sky (or the next good night), and a 12-month planner with the best nights.
 - 🌠 **Live sky**: a GPU-rendered sky dome (three.js in WebView2) with 83k stars, constellations,
   the Milky Way, 13k deep-sky objects and the Sun, Moon (with its phase) and planets, all
   positioned by the same tested astronomy core as the tables. Play time at up to ×3600, step by
@@ -101,8 +107,9 @@
   for import (the v1 files are only read).
 - ⏱️ **Live mode**: follows the clock and refreshes everything every minute.
 
-It works offline; the internet is only used for the forecasts and the new-version notice, each of
-which can be turned off.
+It works offline; the internet is only used for the forecasts, the survey images, descriptions,
+name search, comet and asteroid elements and the new-version notice, each of which can be turned
+off.
 
 ## Where it is going (v2.0)
 
@@ -143,6 +150,8 @@ AstroPlanner Pro has no accounts and collects no data. It only connects to:
   receiving the **object's name**;
 - **cds.unistra.fr** (or its mirrors vizier.cfa.harvard.edu and vizier.idia.ac.za), only when a
   sky search finds nothing in the catalog, receiving the **name you typed**;
+- **minorplanetcenter.net**, for comet (daily) and bright-asteroid (yearly) orbital elements
+  (nothing about you is sent);
 - **api.github.com**, to check for a new version (nothing about you is sent).
 
 Each one can be turned off in **Settings → Internet connection**, where the saved answers (kept in
@@ -226,6 +235,13 @@ installer/                Inno Setup script
   interferes when above the horizon, ≥ 25 % lit and less than 30° from the object.
 - **Planets:** JPL Keplerian elements (1800-2050) with light-time correction; ~1′ error for the inner
   planets and up to ~10′ for Jupiter and Saturn. Meeus magnitudes (ch. 41) including Saturn's rings (ch. 45).
+- **Comets and asteroids:** two-body orbits from the MPC osculating elements, elliptic, parabolic
+  and hyperbolic (safeguarded Newton; Barker's equation), with light time. Against JPL Horizons over
+  a month around the elements' epoch: 4–17″ for 2P/Encke, C/2023 A3 and C/2025 A6, 4″ for Vesta;
+  a year after the epoch of the yearly asteroid file, Vesta is off by 44″. Magnitudes: the MPC's
+  comet formula (H + 5 log Δ + 2.5 K log r) and the IAU H-G system for asteroids.
+- **Milky Way core:** Sgr A* as a fixed target; a night counts as good with at least 30 minutes of
+  the core above 10° in astronomical darkness with the Moon down.
 - **Wall-clock time → UTC:** sites store both the IANA and the Windows time zone id and convert
   with `TimeZoneInfo`; times skipped by daylight saving time move forward one hour.
 

@@ -365,7 +365,9 @@ public sealed class FeasibilityCalculator(IAstronomyService astronomy)
 
         // --- Position of date ---------------------------------------------------------------
         var planet = target.IsPlanet ? _astronomy.GetPlanetPosition(target, middleUtc) : null;
-        var ofDate = planet?.Equatorial ?? Precession.Precess(target.Coordinates, Precession.J2000JulianDate, night.MiddleJulianDate);
+        var smallBody = target.IsSmallBody ? _astronomy.GetSmallBodyPosition(target, middleUtc) : null;
+        var ofDate = planet?.Equatorial ?? smallBody?.Equatorial
+            ?? Precession.Precess(target.Coordinates, Precession.J2000JulianDate, night.MiddleJulianDate);
 
         // --- Photometry and optics (spec §8.5) ------------------------------------------------
         var scale = rig.ImageScaleArcsecPerPixel;
@@ -376,11 +378,15 @@ public sealed class FeasibilityCalculator(IAstronomyService astronomy)
         var surfaceRate = c.PhotonZeroPoint * areaCm2 * throughput * scale * scale;
         var sampling = OpticsMath.SamplingFor(c.SeeingArcsec, scale);
 
-        // Size: the catalogued axes, or the planet's disc; none = a point (stars).
-        var majorArcmin = planet is not null ? planet.ApparentDiameterArcsec / 60 : target.MajorAxisArcmin ?? 0;
-        var minorArcmin = planet is not null ? majorArcmin : target.MinorAxisArcmin is > 0 ? target.MinorAxisArcmin.Value : majorArcmin;
+        // Size: the catalogued axes, the planet's disc, a typical coma for comets; none = a point
+        // (stars, asteroids).
+        var majorArcmin = planet is not null ? planet.ApparentDiameterArcsec / 60
+            : target.Type == CelestialObjectType.Comet ? c.CometComaArcmin
+            : target.MajorAxisArcmin ?? 0;
+        var minorArcmin = planet is not null || target.IsSmallBody ? majorArcmin
+            : target.MinorAxisArcmin is > 0 ? target.MinorAxisArcmin.Value : majorArcmin;
         var pointLike = !(majorArcmin > 0) || target.Type is CelestialObjectType.Star or CelestialObjectType.DoubleStar;
-        var magnitude = planet?.Magnitude ?? target.ApparentMagnitude;
+        var magnitude = planet?.Magnitude ?? smallBody?.Magnitude ?? target.ApparentMagnitude;
         var assumed = false;
         double surfaceBrightness;
         if (pointLike)

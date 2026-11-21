@@ -9,6 +9,7 @@ public static class OnlineClients
     public const string Hips = "hips";
     public const string Wikipedia = "wikipedia";
     public const string Sesame = "sesame";
+    public const string Mpc = "mpc";
 
-    public static IReadOnlyList<string> All { get; } = [OpenMeteo, SevenTimer, GitHub, Hips, Wikipedia, Sesame];
+    public static IReadOnlyList<string> All { get; } = [OpenMeteo, SevenTimer, GitHub, Hips, Wikipedia, Sesame, Mpc];
 }

@@ -32,6 +32,9 @@ public static class DisplayNames
         CelestialObjectType.Star => Strings.TypeStar,
         CelestialObjectType.DoubleStar => Strings.TypeDoubleStar,
         CelestialObjectType.Nova => Strings.TypeNova,
+        CelestialObjectType.Comet => Strings.TypeComet,
+        CelestialObjectType.Asteroid => Strings.TypeAsteroid,
+        CelestialObjectType.MilkyWayCore => Strings.TypeMilkyWayCore,
         _ => Strings.TypeOther
     };
 
@@ -44,6 +47,20 @@ public static class DisplayNames
     };
 
     /// <summary>A time window, e.g. "21:20–05:05"; empty without one.</summary>
+    /// <summary>"2P/Encke", "C/2023 A3 (Tsuchinshan-ATLAS)", "(4) Vesta"; the display name for other objects.</summary>
+    public static string SmallBodyName(CelestialObject target)
+    {
+        ArgumentNullException.ThrowIfNull(target);
+        if (target.Orbit is not { } orbit || orbit.Name.Length == 0)
+        {
+            return target.DisplayName == target.Id ? target.Id : $"{target.Id} {target.DisplayName}";
+        }
+
+        return orbit.Kind == SmallBodyKind.Asteroid ? $"{orbit.Designation} {orbit.Name}"
+            : orbit.Designation.Contains('/', StringComparison.Ordinal) ? $"{orbit.Designation} ({orbit.Name})"
+            : $"{orbit.Designation}/{orbit.Name}";
+    }
+
     public static string Window(DateTime? start, DateTime? end) =>
         start is { } from && end is { } to ? Format(Strings.WindowFormat, from, to) : string.Empty;
 

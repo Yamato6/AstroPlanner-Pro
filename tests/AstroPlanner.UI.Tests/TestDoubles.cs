@@ -140,7 +140,8 @@ internal static class TestShell
         ISurveyTileSource? tiles = null,
         IObjectInfoService? info = null,
         INameResolver? resolver = null,
-        IImageDecoder? decoder = null)
+        IImageDecoder? decoder = null,
+        ISmallBodyService? smallBodies = null)
     {
         var logger = new NullLogger();
         var astronomy = new AstronomyService();
@@ -162,11 +163,12 @@ internal static class TestShell
         var detail = new ObjectDetailViewModel(astronomy, context, weatherState, targets, planViewModel, logbook, framing, about);
         var sky = new SkyViewModel(context, targets, planViewModel, skyStore ?? new FakeSkyViewStore(), logger, time, equipmentState,
             resolver, online);
-        var tonight = new TonightViewModel(context, weatherState, logbook, targets, equipmentState, planViewModel);
+        var tonight = new TonightViewModel(context, weatherState, logbook, targets, equipmentState, planViewModel, astronomy);
         var locationsViewModel = new LocationsViewModel(locations ?? new FakeLocationRepository(), settingsViewModel, context, logger, atlas);
         return new ShellViewModel(
             context, weatherState, tonight, targets, sky, detail, planViewModel, logbook, locationsViewModel, settingsViewModel,
-            logger, time, updates, new EquipmentViewModel(equipmentState), online);
+            logger, time, updates, new EquipmentViewModel(equipmentState), online,
+            new SmallBodyState(context, online, logger, time, smallBodies));
     }
 }
 

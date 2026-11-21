@@ -8,7 +8,9 @@ public enum MovingBodyKind
 {
     Sun,
     Moon,
-    Planet
+    Planet,
+    Comet,
+    Asteroid
 }
 
 /// <summary>
@@ -20,7 +22,8 @@ public enum MovingBodyKind
 /// <param name="ApparentDiameterArcsec">Apparent diameter of the disc.</param>
 /// <param name="PhaseAngleDegrees">Sun-body-Earth angle (0 = fully lit; 0 for the Sun).</param>
 /// <param name="IlluminatedFraction">Lit fraction of the disc (1 for the Sun).</param>
-/// <param name="BrightLimbAngleDegrees">Position angle of the bright limb from north through east (0 for the Sun).</param>
+/// <param name="BrightLimbAngleDegrees">Position angle of the bright limb from north through east (0 for the Sun); for comets the
+/// direction of the Sun, the tail pointing the opposite way.</param>
 public sealed record MovingBodyState(
     string Id,
     MovingBodyKind Kind,
@@ -54,8 +57,12 @@ public static class MovingBodyCalculator
 
     private const double KilometresPerAu = 149_597_870.7;
 
-    /// <summary>All bodies (Sun, Moon, planets in catalog order) at <paramref name="utcDateTime"/>.</summary>
-    public static IReadOnlyList<MovingBodyState> GetBodies(ObserverLocation observer, DateTime utcDateTime)
+    /// <summary>
+    /// All bodies (Sun, Moon, planets in catalog order, then the given comets and asteroids) at
+    /// <paramref name="utcDateTime"/>.
+    /// </summary>
+    public static IReadOnlyList<MovingBodyState> GetBodies(
+        ObserverLocation observer, DateTime utcDateTime, IReadOnlyList<CelestialObject>? smallBodies = null)
     {
         ArgumentNullException.ThrowIfNull(observer);
         var utc = DateTime.SpecifyKind(utcDateTime, DateTimeKind.Utc);
@@ -103,6 +110,24 @@ public static class MovingBodyCalculator
                 SolarSystemCalculator.GetBrightLimbPositionAngleDegrees(position.Equatorial, sun.Equatorial)));
         }
 
+        foreach (var body in smallBodies ?? [])
+        {
+            if (body.Orbit is not { } orbit)
+            {
+                continue;
+            }
+
+            var position = OrbitCalculator.GetPosition(orbit, utc);
+            bodies.Add(new MovingBodyState(body.Id, orbit.Kind == SmallBodyKind.Comet ? MovingBodyKind.Comet : MovingBodyKind.Asteroid,
+                CoordinateTransformer.ToHorizontal(position.Equatorial, observer, utc),
+                position.Equatorial,
+                position.Magnitude,
+                ApparentDiameterArcsec: 0,
+                position.PhaseAngleDegrees,
+                IlluminatedFraction: (1 + Math.Cos(AstronomyMath.DegreesToRadiansValue(position.PhaseAngleDegrees))) / 2,
+                SolarSystemCalculator.GetBrightLimbPositionAngleDegrees(position.Equatorial, sun.Equatorial)));
+        }
+
         return bodies;
     }
 
@@ -115,14 +140,15 @@ public static class MovingBodyCalculator
         DateTime stateUtc,
         DateTime startUtc,
         DateTime endUtc,
-        TimeSpan step)
+        TimeSpan step,
+        IReadOnlyList<CelestialObject>? smallBodies = null)
     {
         ArgumentNullException.ThrowIfNull(observer);
         ArgumentOutOfRangeException.ThrowIfLessThanOrEqual(step, TimeSpan.Zero);
         ArgumentOutOfRangeException.ThrowIfLessThan(endUtc, startUtc);
 
         var frame = SkyFrame.Compute(observer, stateUtc);
-        var states = GetBodies(observer, stateUtc);
+        var states = GetBodies(observer, stateUtc, smallBodies);
         var samples = states.Select(_ => new List<TrackSample>()).ToList();
 
         for (var time = startUtc; time <= endUtc; time += step)
@@ -130,7 +156,7 @@ public static class MovingBodyCalculator
             var utc = DateTime.SpecifyKind(time, DateTimeKind.Utc);
             // The frame is orthogonal, so its inverse is its transpose.
             var toJ2000 = frame.J2000ToHorizontalAt(utc).Transpose();
-            var bodies = GetBodies(observer, utc);
+            var bodies = GetBodies(observer, utc, smallBodies);
             for (var i = 0; i < bodies.Count; i++)
             {
                 samples[i].Add(new TrackSample(utc, toJ2000.Transform(SkyFrame.FromHorizontal(bodies[i].Horizontal))));

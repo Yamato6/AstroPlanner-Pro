@@ -11,7 +11,7 @@ namespace AstroPlanner.Core.Algorithms;
 public static class PlanetCalculator
 {
     /// <summary>Light time for 1 AU, in days.</summary>
-    private const double LightTimeDaysPerAu = 0.0057755183;
+    internal const double LightTimeDaysPerAu = 0.0057755183;
 
     /// <summary>Obliquity of the J2000 ecliptic (degrees).</summary>
     private const double ObliquityJ2000 = 23.43928;
@@ -103,14 +103,7 @@ public static class PlanetCalculator
         var earthSunDistance = Length(earth);
 
         // J2000 ecliptic → J2000 equatorial → equinox of date.
-        var epsilon = AstronomyMath.DegreesToRadiansValue(ObliquityJ2000);
-        var x = geocentric.X;
-        var y = geocentric.Y * Math.Cos(epsilon) - geocentric.Z * Math.Sin(epsilon);
-        var z = geocentric.Y * Math.Sin(epsilon) + geocentric.Z * Math.Cos(epsilon);
-        var j2000 = new EquatorialCoordinates(
-            AstronomyMath.NormalizeDegrees(AstronomyMath.RadiansToDegreesValue(Math.Atan2(y, x))) / 15.0,
-            AstronomyMath.RadiansToDegreesValue(Math.Asin(Math.Clamp(z / distance, -1.0, 1.0))));
-        var ofDate = Precession.FromJ2000(j2000, utcDateTime);
+        var ofDate = Precession.FromJ2000(EclipticToEquatorialJ2000(geocentric), utcDateTime);
 
         var phaseAngle = AngleFromSides(sunDistance, distance, earthSunDistance);
         var elongation = AngleFromSides(earthSunDistance, distance, sunDistance);
@@ -175,6 +168,39 @@ public static class PlanetCalculator
         return AstronomyMath.RadiansToDegreesValue(Math.Asin(Math.Clamp(sinB, -1.0, 1.0)));
     }
 
+    /// <summary>Heliocentric position of the Earth (Earth-Moon barycentre) in the J2000 ecliptic (AU).</summary>
+    internal static (double X, double Y, double Z) EarthHeliocentric(double jd) => Heliocentric(EarthMoonBarycenter, jd);
+
+    /// <summary>Direction of a J2000 ecliptic vector as J2000 equatorial coordinates.</summary>
+    internal static EquatorialCoordinates EclipticToEquatorialJ2000((double X, double Y, double Z) v)
+    {
+        var epsilon = AstronomyMath.DegreesToRadiansValue(ObliquityJ2000);
+        var x = v.X;
+        var y = v.Y * Math.Cos(epsilon) - v.Z * Math.Sin(epsilon);
+        var z = v.Y * Math.Sin(epsilon) + v.Z * Math.Cos(epsilon);
+        var length = Math.Sqrt(x * x + y * y + z * z);
+        return new EquatorialCoordinates(
+            AstronomyMath.NormalizeDegrees(AstronomyMath.RadiansToDegreesValue(Math.Atan2(y, x))) / 15.0 % 24,
+            AstronomyMath.RadiansToDegreesValue(Math.Asin(Math.Clamp(z / length, -1.0, 1.0))));
+    }
+
+    /// <summary>A point of the orbital plane (x towards perihelion) rotated to the J2000 ecliptic.</summary>
+    internal static (double X, double Y, double Z) RotateToEcliptic(
+        double xOrbit, double yOrbit, double argumentOfPerihelion, double node, double inclination)
+    {
+        var cw = Cos(argumentOfPerihelion);
+        var sw = Sin(argumentOfPerihelion);
+        var cn = Cos(node);
+        var sn = Sin(node);
+        var ci = Cos(inclination);
+        var si = Sin(inclination);
+
+        return (
+            (cw * cn - sw * sn * ci) * xOrbit + (-sw * cn - cw * sn * ci) * yOrbit,
+            (cw * sn + sw * cn * ci) * xOrbit + (-sw * sn + cw * cn * ci) * yOrbit,
+            sw * si * xOrbit + cw * si * yOrbit);
+    }
+
     /// <summary>Heliocentric position in the J2000 ecliptic (AU).</summary>
     private static (double X, double Y, double Z) Heliocentric(OrbitalElements el, double jd)
     {
@@ -209,18 +235,7 @@ public static class PlanetCalculator
         // Coordinates in the orbital plane and rotation to the ecliptic.
         var xOrbit = a * (Math.Cos(eccentricAnomaly) - e);
         var yOrbit = a * Math.Sqrt(1 - e * e) * Math.Sin(eccentricAnomaly);
-
-        var cw = Cos(argumentOfPerihelion);
-        var sw = Sin(argumentOfPerihelion);
-        var cn = Cos(node);
-        var sn = Sin(node);
-        var ci = Cos(inclination);
-        var si = Sin(inclination);
-
-        return (
-            (cw * cn - sw * sn * ci) * xOrbit + (-sw * cn - cw * sn * ci) * yOrbit,
-            (cw * sn + sw * cn * ci) * xOrbit + (-sw * sn + cw * cn * ci) * yOrbit,
-            sw * si * xOrbit + cw * si * yOrbit);
+        return RotateToEcliptic(xOrbit, yOrbit, argumentOfPerihelion, node, inclination);
     }
 
     private static (double X, double Y, double Z) Subtract((double X, double Y, double Z) a, (double X, double Y, double Z) b) =>
@@ -229,7 +244,7 @@ public static class PlanetCalculator
     private static double Length((double X, double Y, double Z) v) => Math.Sqrt(v.X * v.X + v.Y * v.Y + v.Z * v.Z);
 
     /// <summary>Angle (degrees) opposite the side <paramref name="opposite"/>, by the law of cosines.</summary>
-    private static double AngleFromSides(double adjacent1, double adjacent2, double opposite)
+    internal static double AngleFromSides(double adjacent1, double adjacent2, double opposite)
     {
         var cosine = (adjacent1 * adjacent1 + adjacent2 * adjacent2 - opposite * opposite) / (2 * adjacent1 * adjacent2);
         return AstronomyMath.RadiansToDegreesValue(Math.Acos(Math.Clamp(cosine, -1.0, 1.0)));

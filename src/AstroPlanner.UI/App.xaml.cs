@@ -12,6 +12,7 @@ using AstroPlanner.Data.Repositories;
 using AstroPlanner.Data.Storage;
 using AstroPlanner.Online.Imaging;
 using AstroPlanner.Online.Info;
+using AstroPlanner.Online.SmallBodies;
 using AstroPlanner.Online.Weather;
 using AstroPlanner.UI.Resources;
 using AstroPlanner.UI.Services;
@@ -91,6 +92,10 @@ public partial class App : Application
         services.AddSingleton<INameResolver>(sp => new SesameResolver(
             sp.GetRequiredService<IHttpClientFactory>().CreateClient(OnlineClients.Sesame), sp.GetRequiredService<IOnlineCache>(),
             sp.GetRequiredService<TimeProvider>()));
+        services.AddSingleton<ISmallBodyService>(sp => new MpcSmallBodyService(
+            sp.GetRequiredService<IHttpClientFactory>().CreateClient(OnlineClients.Mpc), sp.GetRequiredService<TimeProvider>(),
+            sp.GetRequiredService<IOnlineCache>()));
+        services.AddSingleton<SmallBodyState>();
         services.AddSingleton<IImageDecoder, WpfImageDecoder>();
         services.AddSingleton<OnlineInfoState>();
         services.AddSingleton<IUpdateChecker>(sp => new GitHubUpdateChecker(

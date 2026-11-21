@@ -176,6 +176,15 @@ public partial class MainWindow : Window
 
     private void ShowAbout() => new AboutWindow { Owner = this }.ShowDialog();
 
+    /// <summary>Opens the Milky Way core planner for the active site.</summary>
+    private void OnMilkyWayClicked(object sender, RoutedEventArgs e)
+    {
+        if (_viewModel?.Tonight.CreateMilkyWayPlanner() is { } planner)
+        {
+            new MilkyWayWindow(planner) { Owner = this }.ShowDialog();
+        }
+    }
+
     /// <summary>
     /// Keyboard shortcuts: Ctrl+F search, F5 now, Ctrl+, settings, Ctrl+P print the plan,
     /// Ctrl+E export the plan, F1 about.

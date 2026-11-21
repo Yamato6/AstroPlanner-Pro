@@ -63,12 +63,18 @@ public interface IAstronomyService
     PlanetPosition? GetPlanetPosition(CelestialObject target, DateTime utcDateTime);
 
     /// <summary>
+    /// Position, distances, phase and magnitude of a comet or asteroid; null if
+    /// <paramref name="target"/> has no orbit.
+    /// </summary>
+    SmallBodyPosition? GetSmallBodyPosition(CelestialObject target, DateTime utcDateTime);
+
+    /// <summary>
     /// IAU constellation of <paramref name="target"/> at <paramref name="utcDateTime"/>: planets
     /// move between constellations, fixed objects never do.
     /// </summary>
     Constellation GetConstellation(CelestialObject target, DateTime utcDateTime);
 
-    /// <summary>Apparent magnitude: calculated for a planet, the catalog one for the rest.</summary>
+    /// <summary>Apparent magnitude: calculated for planets, comets and asteroids, the catalog one for the rest.</summary>
     double GetApparentMagnitude(CelestialObject target, DateTime utcDateTime);
 
     /// <summary>Geometric altitude of the center of the Sun (degrees).</summary>

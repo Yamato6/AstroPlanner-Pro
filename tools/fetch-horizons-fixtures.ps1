@@ -14,7 +14,9 @@
 #>
 [CmdletBinding()]
 param(
-    [string] $OutputDirectory
+    [string] $OutputDirectory,
+    # Fetch only the small-body RA/Dec fixtures (M5), leaving the alt/az ones untouched.
+    [switch] $SmallBodiesOnly
 )
 
 $ErrorActionPreference = 'Stop'
@@ -40,7 +42,7 @@ $fixtures = @(
 New-Item -ItemType Directory -Force $OutputDirectory | Out-Null
 $OutputDirectory = (Resolve-Path $OutputDirectory).Path
 
-foreach ($fixture in $fixtures) {
+foreach ($fixture in $(if ($SmallBodiesOnly) { @() } else { $fixtures })) {
     $query = [ordered]@{
         format      = 'json'
         COMMAND     = "'$($fixture.Command)'"
@@ -79,6 +81,60 @@ foreach ($fixture in $fixtures) {
         $parts = $row.Split(',') | ForEach-Object { $_.Trim() }
         $utc = [datetime]::ParseExact($parts[0], 'yyyy-MMM-dd HH:mm', [cultureinfo]::InvariantCulture)
         $lines += '{0},{1},{2}' -f $utc.ToString('yyyy-MM-ddTHH:mm', [cultureinfo]::InvariantCulture), $parts[3], $parts[4]
+    }
+
+    $path = Join-Path $OutputDirectory "$($fixture.Name).csv"
+    [IO.File]::WriteAllLines($path, [string[]]$lines, (New-Object Text.UTF8Encoding $false))
+    Write-Host "$($fixture.Name): $($lines.Count - 3) rows"
+}
+
+# Small bodies (M5): geocentric astrometric RA/Dec (ICRF, quantity 1) and distance (quantity 20)
+# every 12 hours, for the orbit tests. The elements the app uses for each one are recorded next
+# to them (tests/fixtures/horizons/smallbodies-elements.txt, lines from the MPC files).
+$smallBodies = @(
+    @{ Name = 'comet_2P_2026-11'; Command = 'DES=2P;CAP;NOFRAG'; Start = '2026-11-05'; Stop = '2026-12-05' },
+    @{ Name = 'comet_C2023A3_2026-11'; Command = 'DES=C/2023 A3;CAP;NOFRAG'; Start = '2026-11-05'; Stop = '2026-12-05' },
+    @{ Name = 'comet_C2025A6_2026-11'; Command = 'DES=C/2025 A6;CAP;NOFRAG'; Start = '2026-11-05'; Stop = '2026-12-05' },
+    @{ Name = 'asteroid_4_2025-11'; Command = '4;'; Start = '2025-11-06'; Stop = '2025-12-06' },
+    @{ Name = 'asteroid_4_2026-11'; Command = '4;'; Start = '2026-11-05'; Stop = '2026-12-05' }
+)
+
+foreach ($fixture in $smallBodies) {
+    $query = [ordered]@{
+        format      = 'json'
+        COMMAND     = "'$($fixture.Command)'"
+        OBJ_DATA    = "'NO'"
+        MAKE_EPHEM  = "'YES'"
+        EPHEM_TYPE  = "'OBSERVER'"
+        CENTER      = "'500@399'"
+        START_TIME  = "'$($fixture.Start)'"
+        STOP_TIME   = "'$($fixture.Stop)'"
+        STEP_SIZE   = "'12 h'"
+        QUANTITIES  = "'1,20'"
+        CSV_FORMAT  = "'YES'"
+        ANG_FORMAT  = "'DEG'"
+        EXTRA_PREC  = "'YES'"
+    }
+    $queryString = ($query.GetEnumerator() | ForEach-Object {
+        "$($_.Key)=$([uri]::EscapeDataString($_.Value))"
+    }) -join '&'
+
+    $response = Invoke-RestMethod -Uri "https://ssd.jpl.nasa.gov/api/horizons.api?$queryString" `
+        -UserAgent 'AstroPlannerPro-dev (+https://github.com/Yamato6/AstroPlanner-Pro)'
+    $text = $response.result
+    $start = $text.IndexOf('$$SOE')
+    $end = $text.IndexOf('$$EOE')
+    if ($start -lt 0 -or $end -lt 0) { throw "Unexpected Horizons output for $($fixture.Name):`n$text" }
+
+    $lines = @(
+        "# JPL Horizons $($response.signature.version), fetched $(Get-Date -Format 'yyyy-MM-dd') by tools/fetch-horizons-fixtures.ps1"
+        "# target=$($fixture.Command) center=500@399 (geocentric) quantities=1,20 (astrometric RA/Dec ICRF, delta) step=12h"
+        'utc,ra_deg,dec_deg,delta_au'
+    )
+    foreach ($row in $text.Substring($start + 5, $end - $start - 5).Trim() -split "`n") {
+        $parts = $row.Split(',') | ForEach-Object { $_.Trim() }
+        $utc = [datetime]::ParseExact($parts[0], 'yyyy-MMM-dd HH:mm', [cultureinfo]::InvariantCulture)
+        $lines += '{0},{1},{2},{3}' -f $utc.ToString('yyyy-MM-ddTHH:mm', [cultureinfo]::InvariantCulture), $parts[3], $parts[4], $parts[5]
     }
 
     $path = Join-Path $OutputDirectory "$($fixture.Name).csv"
