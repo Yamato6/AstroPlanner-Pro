@@ -84,9 +84,13 @@ public sealed partial class SkyViewModel : ObservableObject, IDisposable
         ISkyViewStore store,
         IAppLogger logger,
         TimeProvider? time = null,
-        EquipmentState? equipment = null)
+        EquipmentState? equipment = null,
+        INameResolver? nameResolver = null,
+        OnlineInfoState? online = null)
     {
         _equipment = equipment;
+        _nameResolver = nameResolver;
+        _online = online;
         _context = context;
         _targets = targets;
         _plan = plan;
@@ -288,6 +292,13 @@ public sealed partial class SkyViewModel : ObservableObject, IDisposable
 
     [ObservableProperty]
     public partial string? SearchMessage { get; private set; }
+
+    /// <summary>The last name resolved online (Sesame), shown at the centre of the view; null otherwise.</summary>
+    [ObservableProperty]
+    public partial ResolvedName? ResolvedTarget { get; private set; }
+
+    private readonly INameResolver? _nameResolver;
+    private readonly OnlineInfoState? _online;
 
     /// <summary>Raised when the renderer asks for the search box (the "/" shortcut).</summary>
     public event EventHandler? FocusSearchRequested;
@@ -743,29 +754,76 @@ public sealed partial class SkyViewModel : ObservableObject, IDisposable
     [RelayCommand]
     private void OpenDetails() => OpenDetailsRequested?.Invoke(this, EventArgs.Empty);
 
-    /// <summary>Finds an object by id or name ("m31", "ngc 7000", "Orion", "Jupiter"), selects it and centers the view.</summary>
+    /// <summary>
+    /// Finds an object by id or name ("m31", "ngc 7000", "Orion", "Jupiter"), selects it and centers
+    /// the view. A name missing from the catalog is resolved online with CDS Sesame when allowed
+    /// (spec §4.2): the view turns to it and the message says what it is and who resolved it.
+    /// </summary>
     [RelayCommand]
-    private void Search()
+    private async Task SearchAsync()
     {
+        var text = SearchText.Trim();
         var query = CatalogSearch.Parse(SearchText);
         if (query.IsEmpty)
         {
             return;
         }
 
+        ResolvedTarget = null;
+
         // An exact name ("Jupiter", "Andromeda Galaxy") wins over objects that only contain the text.
         var matches = _targets.AllObjects.Where(item => CatalogSearch.Matches(item, query)).ToList();
-        var match = matches.FirstOrDefault(item => string.Equals(item.Name, SearchText.Trim(), StringComparison.OrdinalIgnoreCase))
+        var match = matches.FirstOrDefault(item => string.Equals(item.Name, text, StringComparison.OrdinalIgnoreCase))
                     ?? matches.FirstOrDefault();
-        if (match is null)
+        if (match is not null)
         {
-            SearchMessage = DisplayNames.Format(Strings.SkySearchNotFoundFormat, SearchText.Trim());
+            SearchMessage = null;
+            _targets.SelectById(match.Id);
+            CenterOn(match.Target, fovDegrees: match.IsPlanet ? 20 : 30);
             return;
         }
 
-        SearchMessage = null;
-        _targets.SelectById(match.Id);
-        CenterOn(match.Target, fovDegrees: match.IsPlanet ? 20 : 30);
+        if (_nameResolver is null || _online is { NameResolver.Enabled: false })
+        {
+            SearchMessage = DisplayNames.Format(Strings.SkySearchNotFoundFormat, text);
+            return;
+        }
+
+        SearchMessage = DisplayNames.Format(Strings.SkySearchResolvingFormat, text);
+        try
+        {
+            var resolved = await _nameResolver.ResolveAsync(text);
+            ReportResolver(null);
+            if (SearchText.Trim() != text)
+            {
+                return;   // the user typed something else meanwhile
+            }
+
+            if (resolved is null)
+            {
+                SearchMessage = DisplayNames.Format(Strings.SkySearchNotFoundOnlineFormat, text);
+                return;
+            }
+
+            ResolvedTarget = resolved;
+            SearchMessage = DisplayNames.Format(Strings.SkySearchResolvedFormat, resolved.Name, resolved.ObjectType ?? "?", resolved.Source,
+                resolved.Coordinates.RightAscensionHours, resolved.Coordinates.DeclinationDegrees);
+            var direction = SkyBridgeMapper.ToVector(SkyFrame.FromEquatorial(resolved.Coordinates));
+            Send(SkyMessageCodec.CenterOn(new CenterOnPayload(direction.X, direction.Y, direction.Z, 5)));
+        }
+        catch (OnlineServiceException ex)
+        {
+            ReportResolver(ex.Message);
+            SearchMessage = DisplayNames.Format(Strings.SkySearchOnlineFailedFormat, text, ex.Message);
+        }
+    }
+
+    private void ReportResolver(string? error)
+    {
+        if (_online is not null)
+        {
+            _online.Report(_online.NameResolver, _time.GetUtcNow().UtcDateTime, error);
+        }
     }
 
     private void CenterOn(CelestialObject target, double? fovDegrees)

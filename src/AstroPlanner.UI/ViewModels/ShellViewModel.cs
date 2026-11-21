@@ -23,6 +23,7 @@ public sealed partial class ShellViewModel : ObservableObject, IDisposable
     private readonly IAppLogger _logger;
     private readonly TimeProvider _time;
     private readonly IUpdateChecker? _updateChecker;
+    private readonly OnlineInfoState _online;
     private SynchronizationContext? _uiContext;
     private ITimer? _liveTimer;
     private bool _isApplyingLiveTime;
@@ -41,8 +42,10 @@ public sealed partial class ShellViewModel : ObservableObject, IDisposable
         IAppLogger logger,
         TimeProvider? timeProvider = null,
         IUpdateChecker? updateChecker = null,
-        EquipmentViewModel? equipment = null)
+        EquipmentViewModel? equipment = null,
+        OnlineInfoState? online = null)
     {
+        _online = online ?? new OnlineInfoState();
         Equipment = equipment;
         _context = context;
         _weather = weather;
@@ -63,16 +66,13 @@ public sealed partial class ShellViewModel : ObservableObject, IDisposable
         _context.Recalculated += (_, _) => OnPropertyChanged(nameof(LocationSummary));
         Settings.PropertyChanged += OnSettingsPropertyChanged;
         Settings.SettingsSaved += OnSettingsSaved;
-        _weather.Changed += (_, _) =>
-        {
-            OnPropertyChanged(nameof(OnlineStatusText));
-            OnPropertyChanged(nameof(OnlineStatusGlyph));
-            OnPropertyChanged(nameof(OnlineStatusTooltip));
-        };
+        _weather.Changed += (_, _) => OnOnlineStatusChanged();
+        _online.Changed += (_, _) => OnOnlineStatusChanged();
 
         // The persisted settings win over runtime values.
         _weather.IsEnabled = settings.WeatherForecastEnabled;
         _weather.IsAstroEnabled = settings.AstroForecastEnabled;
+        _online.Apply(settings.SurveyImagesEnabled, settings.WikipediaEnabled, settings.NameResolverEnabled);
         _context.LocationName = DescribeLocation();
         _context.ZenithSqm = locations.ActiveLocation?.ZenithSqm;
         _context.Darkness = settings.AllowNauticalTwilight ? DarknessDefinition.Nautical : DarknessDefinition.Astronomical;
@@ -86,8 +86,11 @@ public sealed partial class ShellViewModel : ObservableObject, IDisposable
     {
         get
         {
-            var services = new[] { (_weather.IsEnabled, _weather.Forecast, _weather.LastError, _weather.IsForecastStale),
-                (_weather.IsAstroEnabled, (object?)_weather.AstroForecast, _weather.AstroLastError, _weather.IsAstroForecastStale) };
+            var services = new[] { (_weather.IsEnabled, (object?)_weather.Forecast, _weather.LastError, _weather.IsForecastStale),
+                (_weather.IsAstroEnabled, _weather.AstroForecast, _weather.AstroLastError, _weather.IsAstroForecastStale),
+                (_online.Images.Enabled, null, _online.Images.LastError, false),
+                (_online.Wikipedia.Enabled, null, _online.Wikipedia.LastError, false),
+                (_online.NameResolver.Enabled, null, _online.NameResolver.LastError, false) };
             if (!services.Any(s => s.Item1))
             {
                 return Strings.OnlineStatusOff;
@@ -106,6 +109,9 @@ public sealed partial class ShellViewModel : ObservableObject, IDisposable
         OnlineStatusText,
         ServiceLine(Strings.OnlineServiceWeather, _weather.IsEnabled, _weather.Forecast?.FetchedAtUtc, _weather.LastError, _weather.IsForecastStale),
         ServiceLine(Strings.OnlineServiceAstro, _weather.IsAstroEnabled, _weather.AstroForecast?.FetchedAtUtc, _weather.AstroLastError, _weather.IsAstroForecastStale),
+        OnDemandLine(Strings.OnlineServiceImages, _online.Images),
+        OnDemandLine(Strings.OnlineServiceWikipedia, _online.Wikipedia),
+        OnDemandLine(Strings.OnlineServiceNameResolver, _online.NameResolver),
         DisplayNames.Format(Strings.OnlineServiceLineFormat, Strings.OnlineServiceUpdates, Settings.CheckForUpdates ? Strings.OnlineServiceOn : Strings.OnlineServiceDisabled));
 
     private string ServiceLine(string name, bool enabled, DateTime? fetchedUtc, string? error, bool stale)
@@ -117,6 +123,23 @@ public sealed partial class ShellViewModel : ObservableObject, IDisposable
             : error is not null ? DisplayNames.Format(Strings.OnlineServiceErrorFormat, error)
             : Strings.OnlineServiceWaiting;
         return DisplayNames.Format(Strings.OnlineServiceLineFormat, name, state);
+    }
+
+    /// <summary>A service used on demand: off, on (not used yet), last answer, or its last error.</summary>
+    private string OnDemandLine(string name, OnlineServiceStatus status)
+    {
+        var state = !status.Enabled ? Strings.OnlineServiceDisabled
+            : status.LastError is { } error ? DisplayNames.Format(Strings.OnlineServiceErrorFormat, error)
+            : status.LastSuccessUtc is { } ok ? DisplayNames.Format(Strings.OnlineServiceOkFormat, TimeZoneInfo.ConvertTimeFromUtc(ok, _context.TimeZone))
+            : Strings.OnlineServiceOn;
+        return DisplayNames.Format(Strings.OnlineServiceLineFormat, name, state);
+    }
+
+    private void OnOnlineStatusChanged()
+    {
+        OnPropertyChanged(nameof(OnlineStatusText));
+        OnPropertyChanged(nameof(OnlineStatusGlyph));
+        OnPropertyChanged(nameof(OnlineStatusTooltip));
     }
 
     /// <summary>Shared observing state (location, time, minimum altitude).</summary>
@@ -180,6 +203,8 @@ public sealed partial class ShellViewModel : ObservableObject, IDisposable
             _weather.IsAstroEnabled = settings.AstroForecastEnabled;
             _ = _weather.RefreshSafeAsync();
         }
+
+        _online.Apply(settings.SurveyImagesEnabled, settings.WikipediaEnabled, settings.NameResolverEnabled);
     }
 
     // ─── Date and time ──────────────────────────────────────────────────

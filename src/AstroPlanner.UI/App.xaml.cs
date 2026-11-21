@@ -10,6 +10,8 @@ using AstroPlanner.Data.Catalog;
 using AstroPlanner.Data.LightPollution;
 using AstroPlanner.Data.Repositories;
 using AstroPlanner.Data.Storage;
+using AstroPlanner.Online.Imaging;
+using AstroPlanner.Online.Info;
 using AstroPlanner.Online.Weather;
 using AstroPlanner.UI.Resources;
 using AstroPlanner.UI.Services;
@@ -80,6 +82,17 @@ public partial class App : Application
         services.AddSingleton<IAstroForecastService>(sp => new SevenTimerAstroService(
             sp.GetRequiredService<IHttpClientFactory>().CreateClient(OnlineClients.SevenTimer), sp.GetRequiredService<TimeProvider>(),
             sp.GetRequiredService<IOnlineCache>()));
+        services.AddSingleton<ISurveyTileSource>(sp => new HipsTileService(
+            sp.GetRequiredService<IHttpClientFactory>().CreateClient(OnlineClients.Hips), sp.GetRequiredService<IOnlineCache>(),
+            sp.GetRequiredService<TimeProvider>()));
+        services.AddSingleton<IObjectInfoService>(sp => new WikipediaSummaryService(
+            sp.GetRequiredService<IHttpClientFactory>().CreateClient(OnlineClients.Wikipedia), sp.GetRequiredService<IOnlineCache>(),
+            sp.GetRequiredService<TimeProvider>()));
+        services.AddSingleton<INameResolver>(sp => new SesameResolver(
+            sp.GetRequiredService<IHttpClientFactory>().CreateClient(OnlineClients.Sesame), sp.GetRequiredService<IOnlineCache>(),
+            sp.GetRequiredService<TimeProvider>()));
+        services.AddSingleton<IImageDecoder, WpfImageDecoder>();
+        services.AddSingleton<OnlineInfoState>();
         services.AddSingleton<IUpdateChecker>(sp => new GitHubUpdateChecker(
             sp.GetRequiredService<IHttpClientFactory>().CreateClient(OnlineClients.GitHub), sp.GetRequiredService<IAppLogger>()));
 
@@ -109,6 +122,8 @@ public partial class App : Application
         services.AddSingleton<LocationsViewModel>();
         services.AddSingleton<TargetsViewModel>();
         services.AddSingleton<SessionPlanViewModel>();
+        services.AddSingleton<FramingViewModel>();
+        services.AddSingleton<ObjectInfoViewModel>();
         services.AddSingleton<ObjectDetailViewModel>();
         services.AddSingleton<SkyViewModel>();
         services.AddSingleton<TonightViewModel>();

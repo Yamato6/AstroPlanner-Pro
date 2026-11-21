@@ -136,7 +136,11 @@ internal static class TestShell
         ISkyViewStore? skyStore = null,
         IEquipmentRepository? equipment = null,
         ILightPollutionAtlas? atlas = null,
-        IAstroForecastService? astro = null)
+        IAstroForecastService? astro = null,
+        ISurveyTileSource? tiles = null,
+        IObjectInfoService? info = null,
+        INameResolver? resolver = null,
+        IImageDecoder? decoder = null)
     {
         var logger = new NullLogger();
         var astronomy = new AstronomyService();
@@ -152,13 +156,17 @@ internal static class TestShell
             astronomy, context, settings, logbook, logger, equipmentState, weatherState);
         var planViewModel = new SessionPlanViewModel(plan ?? new FakePlanService(), astronomy, context, weatherState, targets, logger,
             equipmentState, time);
-        var detail = new ObjectDetailViewModel(astronomy, context, weatherState, targets, planViewModel, logbook);
-        var sky = new SkyViewModel(context, targets, planViewModel, skyStore ?? new FakeSkyViewStore(), logger, time, equipmentState);
+        var online = new OnlineInfoState();
+        var framing = new FramingViewModel(tiles, decoder ?? new WpfImageDecoder(), equipmentState, online, logger, time);
+        var about = new ObjectInfoViewModel(info, online, logger, time);
+        var detail = new ObjectDetailViewModel(astronomy, context, weatherState, targets, planViewModel, logbook, framing, about);
+        var sky = new SkyViewModel(context, targets, planViewModel, skyStore ?? new FakeSkyViewStore(), logger, time, equipmentState,
+            resolver, online);
         var tonight = new TonightViewModel(context, weatherState, logbook, targets, equipmentState, planViewModel);
         var locationsViewModel = new LocationsViewModel(locations ?? new FakeLocationRepository(), settingsViewModel, context, logger, atlas);
         return new ShellViewModel(
             context, weatherState, tonight, targets, sky, detail, planViewModel, logbook, locationsViewModel, settingsViewModel,
-            logger, time, updates, new EquipmentViewModel(equipmentState));
+            logger, time, updates, new EquipmentViewModel(equipmentState), online);
     }
 }
 
