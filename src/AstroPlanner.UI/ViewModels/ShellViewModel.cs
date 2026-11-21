@@ -70,6 +70,7 @@ public sealed partial class ShellViewModel : ObservableObject, IDisposable
         _context.Recalculated += (_, _) => OnPropertyChanged(nameof(LocationSummary));
         Settings.PropertyChanged += OnSettingsPropertyChanged;
         Settings.SettingsSaved += OnSettingsSaved;
+        Settings.Theme.Changed += (_, _) => OnPropertyChanged(nameof(IsNightTheme));
         _weather.Changed += (_, _) => OnOnlineStatusChanged();
         _online.Changed += (_, _) => OnOnlineStatusChanged();
 
@@ -93,8 +94,22 @@ public sealed partial class ShellViewModel : ObservableObject, IDisposable
         _context.ZenithSqm = locations.ActiveLocation?.ZenithSqm;
         _context.Darkness = settings.AllowNauticalTwilight ? DarknessDefinition.Nautical : DarknessDefinition.Astronomical;
         _context.ExtinctionCoefficient = settings.ExtinctionCoefficient;
+        _context.Tuning = settings.Tuning;
         _context.Initialize(settings.Latitude, settings.Longitude, settings.Elevation, settings.TimeZoneId, settings.MinimumAltitude,
             horizonMask: locations.ActiveLocation?.HorizonMask ?? HorizonMask.Flat);
+    }
+
+    /// <summary>Night-vision theme (top bar toggle, Ctrl+Shift+N); saved at once.</summary>
+    public bool IsNightTheme
+    {
+        get => Settings.Theme.IsNight;
+        set
+        {
+            if (value != Settings.Theme.IsNight)
+            {
+                Settings.SetTheme(value ? Core.Models.AppTheme.Night : Core.Models.AppTheme.Dark);
+            }
+        }
     }
 
     /// <summary>Overall state of the online services for the top bar (spec §10).</summary>
@@ -219,6 +234,7 @@ public sealed partial class ShellViewModel : ObservableObject, IDisposable
         _context.ZenithSqm = Locations.ActiveLocation?.ZenithSqm;
         _context.Darkness = settings.Darkness;
         _context.ExtinctionCoefficient = settings.ExtinctionCoefficient;
+        _context.Tuning = settings.Tuning ?? new();
         _context.Apply(
             settings.LatitudeDegrees, settings.LongitudeDegrees, settings.ElevationMeters,
             settings.TimeZoneId, settings.MinimumAltitude, Locations.ActiveLocation?.HorizonMask ?? HorizonMask.Flat);

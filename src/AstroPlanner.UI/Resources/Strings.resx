@@ -845,4 +845,82 @@
   <data name="DetailDoubleStarTitle" xml:space="preserve"><value>Double star (Washington Double Star Catalog, last measures)</value></data>
   <data name="DoubleStarPairFormat" xml:space="preserve"><value>{0} · {1:0.0}″ at PA {2:0}° · mags {3:0.0} + {4:0.0} ({5})</value></data>
   <data name="DoubleStarPairNoAngleFormat" xml:space="preserve"><value>{0} · {1:0.0}″ · mags {2:0.0} + {3:0.0} ({4})</value></data>
+  <data name="HeaderNightVision" xml:space="preserve"><value>Night vision</value></data>
+  <data name="HeaderNightVisionTooltip" xml:space="preserve"><value>Red on black, to keep your eyes dark-adapted at the telescope (Ctrl+Shift+N). The charts and the 3D sky turn red too.</value></data>
+  <data name="SettingsDisplay" xml:space="preserve"><value>Display</value></data>
+  <data name="SettingsNightTheme" xml:space="preserve"><value>Night-vision theme (red on black)</value></data>
+  <data name="SettingsNightThemeNote" xml:space="preserve"><value>Also from the top bar or with Ctrl+Shift+N. Dim your screen as well: red light is gentler on dark adaptation, not harmless.</value></data>
+  <data name="SettingsAdvanced" xml:space="preserve"><value>Advanced: calibration of the feasibility model</value></data>
+  <data name="SettingsAdvancedNote" xml:space="preserve"><value>The model's tunable constants (docs/feasibility-model.md §9). Compare its predictions with your results in Logbook › Predictions vs results before changing them.</value></data>
+  <data name="AdvancedSeeing" xml:space="preserve"><value>Seeing without a forecast (″)</value></data>
+  <data name="AdvancedSeeingTooltip" xml:space="preserve"><value>FWHM of the stars when there is no 7Timer! forecast. 2.5″ is a typical suburban night; 1.5″ a very steady one.</value></data>
+  <data name="AdvancedCoreBrightening" xml:space="preserve"><value>Core brightening (mag)</value></data>
+  <data name="AdvancedCoreBrighteningTooltip" xml:space="preserve"><value>Extended objects are evaluated this much brighter than their mean surface brightness: the cores, where the detail is, are brighter than the average.</value></data>
+  <data name="AdvancedOverhead" xml:space="preserve"><value>Overhead between subs (s)</value></data>
+  <data name="AdvancedOverheadTooltip" xml:space="preserve"><value>Time lost between subs: download, dithering, settling.</value></data>
+  <data name="AdvancedMaximumSub" xml:space="preserve"><value>Longest sub (s)</value></data>
+  <data name="AdvancedMaximumSubTooltip" xml:space="preserve"><value>The model never suggests a longer sub-exposure.</value></data>
+  <data name="AdvancedSnr" xml:space="preserve"><value>Stack SNR for Marginal / Good / Excellent</value></data>
+  <data name="AdvancedSnrTooltip" xml:space="preserve"><value>Signal-to-noise ratio of the whole stack that makes a target Marginal, Good or Excellent.</value></data>
+  <data name="AdvancedSnrMarginalName" xml:space="preserve"><value>Stack SNR for Marginal</value></data>
+  <data name="AdvancedSnrGoodName" xml:space="preserve"><value>Stack SNR for Good</value></data>
+  <data name="AdvancedSnrExcellentName" xml:space="preserve"><value>Stack SNR for Excellent</value></data>
+  <data name="AdvancedSplitPixels" xml:space="preserve"><value>Pixels to split a double</value></data>
+  <data name="AdvancedSplitPixelsTooltip" xml:space="preserve"><value>How many pixels apart the two stars of a double must be for the camera to show them apart.</value></data>
+  <data name="AdvancedReset" xml:space="preserve"><value>_Reset to defaults</value></data>
+  <data name="AdvancedResetTooltip" xml:space="preserve"><value>Puts every constant of this section back to its default value (saved with Save).</value></data>
+  <data name="AdvancedSeeingRange" xml:space="preserve"><value>The seeing must be between 0.5″ and 8″.</value></data>
+  <data name="AdvancedCoreBrighteningRange" xml:space="preserve"><value>The core brightening must be between 0 and 3 magnitudes.</value></data>
+  <data name="AdvancedOverheadRange" xml:space="preserve"><value>The overhead must be between 0 and 60 seconds.</value></data>
+  <data name="AdvancedMaximumSubRange" xml:space="preserve"><value>The longest sub must be between 10 and 1800 seconds.</value></data>
+  <data name="AdvancedSnrRange" xml:space="preserve"><value>Each SNR threshold must be between 1 and 100.</value></data>
+  <data name="AdvancedSnrOrder" xml:space="preserve"><value>The SNR thresholds must grow: Marginal &lt; Good &lt; Excellent.</value></data>
+  <data name="AdvancedSplitPixelsRange" xml:space="preserve"><value>The pixels to split a double must be between 1 and 5.</value></data>
+  <data name="LogbookPhotographedFormat" xml:space="preserve"><value>{0} photographed</value></data>
+  <data name="LogbookDeleteName" xml:space="preserve"><value>Delete this logbook entry</value></data>
+  <data name="PredictionVerdictLineFormat" xml:space="preserve"><value>{0}: {1} × · mean rating {2:0.0}★ · predicted score {3:0} · difference {4:+0;−0;0}</value></data>
+  <data name="PredictionsEmpty" xml:space="preserve"><value>No photographed entries with a prediction yet. Log a target as Photographed from its details: tonight's verdict is kept with it.</value></data>
+  <data name="PredictionsSummaryFormat" xml:space="preserve"><value>{0} photographed entries · results {1:+0;−0;0} points against the predictions on average · correlation {2:0.00}</value></data>
+  <data name="PredictionsSummaryNoCorrelationFormat" xml:space="preserve"><value>{0} photographed entries · results {1:+0;−0;0} points against the predictions on average (a correlation needs {2})</value></data>
+  <data name="PredictionsTitle" xml:space="preserve"><value>Predictions vs results</value></data>
+  <data name="PredictionsExplanation" xml:space="preserve"><value>The model's score (0–100) for tonight against your rating of the result (1★ = 0 … 5★ = 100). Positive differences: better than predicted. If they are always off one way, recalibrate in Settings › Advanced.</value></data>
+  <data name="PredictionsChartName" xml:space="preserve"><value>Chart of predicted score against rating</value></data>
+  <data name="PredictionsAxisScore" xml:space="preserve"><value>Predicted score</value></data>
+  <data name="PredictionsAxisRating" xml:space="preserve"><value>Your rating (★)</value></data>
+  <data name="CsvKind" xml:space="preserve"><value>Kind</value></data>
+  <data name="CsvRig" xml:space="preserve"><value>Rig</value></data>
+  <data name="CsvIso" xml:space="preserve"><value>ISO</value></data>
+  <data name="CsvGain" xml:space="preserve"><value>Gain</value></data>
+  <data name="CsvImage" xml:space="preserve"><value>Image</value></data>
+  <data name="CsvPredictedVerdict" xml:space="preserve"><value>Predicted verdict</value></data>
+  <data name="CsvPredictedScore" xml:space="preserve"><value>Predicted score</value></data>
+  <data name="LogKindPhotographed" xml:space="preserve"><value>📷 Photographed</value></data>
+  <data name="LogKindObserved" xml:space="preserve"><value>👁 Observed</value></data>
+  <data name="ColumnKind" xml:space="preserve"><value>Kind</value></data>
+  <data name="ColumnCapture" xml:space="preserve"><value>Capture</value></data>
+  <data name="CaptureSubsFormat" xml:space="preserve"><value>{0:0.#} s × {1}</value></data>
+  <data name="CaptureSubFormat" xml:space="preserve"><value>{0:0.#} s subs</value></data>
+  <data name="CaptureIsoFormat" xml:space="preserve"><value>ISO {0}</value></data>
+  <data name="CaptureGainFormat" xml:space="preserve"><value>gain {0}</value></data>
+  <data name="LogEntryPredictionFormat" xml:space="preserve"><value>Tonight's prediction, kept with the entry: {0} · score {1}/100 · stack SNR {2:0}</value></data>
+  <data name="LogEntryNoPrediction" xml:space="preserve"><value>No prediction to keep: the model has no verdict for this target tonight.</value></data>
+  <data name="LogEntrySubInvalid" xml:space="preserve"><value>The sub length must be a positive number of seconds.</value></data>
+  <data name="LogEntryCountInvalid" xml:space="preserve"><value>ISO, gain and the number of subs must be whole numbers (0 or more).</value></data>
+  <data name="LogEntryPhotographed" xml:space="preserve"><value>_Photographed</value></data>
+  <data name="LogEntryPhotographedTooltip" xml:space="preserve"><value>An imaging session: the capture and tonight's prediction are saved for Predictions vs results.</value></data>
+  <data name="LogEntryRig" xml:space="preserve"><value>Rig</value></data>
+  <data name="LogEntrySubs" xml:space="preserve"><value>Subs</value></data>
+  <data name="LogEntrySubSecondsName" xml:space="preserve"><value>Sub length in seconds</value></data>
+  <data name="LogEntrySubCountName" xml:space="preserve"><value>Number of subs</value></data>
+  <data name="LogEntrySubTimes" xml:space="preserve"><value>s ×</value></data>
+  <data name="LogEntryIso" xml:space="preserve"><value>ISO</value></data>
+  <data name="LogEntryGain" xml:space="preserve"><value>Gain</value></data>
+  <data name="LogEntryImage" xml:space="preserve"><value>Image</value></data>
+  <data name="LogEntryImageTooltip" xml:space="preserve"><value>The stacked or best image. Only its location is saved: the file stays where it is.</value></data>
+  <data name="LogEntryBrowseImage" xml:space="preserve"><value>_Browse…</value></data>
+  <data name="LogEntryBrowseImageTooltip" xml:space="preserve"><value>Choose the image file</value></data>
+  <data name="LogEntryImageDialogTitle" xml:space="preserve"><value>Image of the session</value></data>
+  <data name="ImageFileFilter" xml:space="preserve"><value>Images (*.jpg;*.jpeg;*.png;*.tif;*.tiff;*.fits;*.fit;*.xisf)|*.jpg;*.jpeg;*.png;*.tif;*.tiff;*.fits;*.fit;*.xisf|All files (*.*)|*.*</value></data>
+  <data name="LogEntryNotesName" xml:space="preserve"><value>Notes</value></data>
+  <data name="LogEntryTimeName" xml:space="preserve"><value>Time (HH:mm)</value></data>
 </root>

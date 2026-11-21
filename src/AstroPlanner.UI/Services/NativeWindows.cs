@@ -3,6 +3,7 @@ using System.IO;
 using System.Runtime.InteropServices;
 using System.Windows;
 using System.Windows.Interop;
+using AstroPlanner.Core.Models;
 
 namespace AstroPlanner.UI.Services;
 
@@ -11,24 +12,51 @@ internal static class NativeWindows
 {
     private const int DwmwaUseImmersiveDarkMode = 20;
     private const int DwmwaUseImmersiveDarkModeBefore20H1 = 19;
+    private const int DwmwaBorderColor = 34;
+    private const int DwmwaCaptionColor = 35;
+    private const int DwmwaTextColor = 36;
+
+    /// <summary>DWMWA_COLOR_DEFAULT: back to the system color.</summary>
+    private const int DwmColorDefault = unchecked((int)0xFFFFFFFF);
 
     [DllImport("dwmapi.dll")]
     private static extern int DwmSetWindowAttribute(IntPtr hwnd, int attribute, ref int value, int size);
 
     /// <summary>
-    /// Dark title bar matching the theme (Windows 10 20H1+ and Windows 11). Applied on
-    /// SourceInitialized, before the window is painted for the first time; it does nothing on
+    /// Title bar matching the theme (Windows 10 20H1+ and Windows 11), applied on
+    /// SourceInitialized, before the window is painted for the first time. Dark always; in the
+    /// night theme Windows 11 also paints the caption black with red text. It does nothing on
     /// older versions of Windows.
     /// </summary>
     public static void UseDarkTitleBar(Window window) =>
-        window.SourceInitialized += (_, _) =>
+        window.SourceInitialized += (_, _) => ApplyTitleBar(window, ThemeManager.Current);
+
+    /// <summary>Applies the title bar colors of <paramref name="theme"/> to a window that already has a handle.</summary>
+    public static void ApplyTitleBar(Window window, AppTheme theme)
+    {
+        var handle = new WindowInteropHelper(window).Handle;
+        if (handle == IntPtr.Zero)
         {
-            var handle = new WindowInteropHelper(window).Handle;
-            var enabled = 1;
-            var applied = DwmSetWindowAttribute(handle, DwmwaUseImmersiveDarkMode, ref enabled, sizeof(int)) == 0
-                          || DwmSetWindowAttribute(handle, DwmwaUseImmersiveDarkModeBefore20H1, ref enabled, sizeof(int)) == 0;
-            Debug.WriteLineIf(!applied, "Dark title bar is not supported on this version of Windows.");
-        };
+            return;
+        }
+
+        var enabled = 1;
+        var applied = DwmSetWindowAttribute(handle, DwmwaUseImmersiveDarkMode, ref enabled, sizeof(int)) == 0
+                      || DwmSetWindowAttribute(handle, DwmwaUseImmersiveDarkModeBefore20H1, ref enabled, sizeof(int)) == 0;
+        Debug.WriteLineIf(!applied, "Dark title bar is not supported on this version of Windows.");
+
+        // Windows 11 only (22000+); earlier versions reject these attributes, which is fine.
+        var night = theme == AppTheme.Night;
+        var caption = night ? ColorRef(0x0A, 0x01, 0x01) : DwmColorDefault;
+        var text = night ? ColorRef(0xF0, 0x70, 0x5E) : DwmColorDefault;
+        var border = night ? ColorRef(0x3A, 0x0E, 0x0E) : DwmColorDefault;
+        _ = DwmSetWindowAttribute(handle, DwmwaCaptionColor, ref caption, sizeof(int));
+        _ = DwmSetWindowAttribute(handle, DwmwaTextColor, ref text, sizeof(int));
+        _ = DwmSetWindowAttribute(handle, DwmwaBorderColor, ref border, sizeof(int));
+    }
+
+    /// <summary>COLORREF: 0x00BBGGRR.</summary>
+    private static int ColorRef(byte red, byte green, byte blue) => red | (green << 8) | (blue << 16);
 
     /// <summary>Shows a window and brings it to the front (e.g. when the app is opened a second time).</summary>
     public static void BringToFront(Window window)

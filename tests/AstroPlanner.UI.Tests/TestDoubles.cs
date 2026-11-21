@@ -152,7 +152,8 @@ internal static class TestShell
         // No equipment unless a test asks for it: the existing tests keep their manual camera frame.
         var equipmentState = new EquipmentState(equipment ?? new FakeEquipmentRepository(EquipmentInventory.Empty), logger);
         var weatherState = new WeatherState(context, logger, time, weather, astro);
-        var settingsViewModel = new SettingsViewModel(settings, new FakeCityRepository(), logger);
+        var theme = new ThemeState();
+        var settingsViewModel = new SettingsViewModel(settings, new FakeCityRepository(), logger, theme: theme);
         var targets = new TargetsViewModel(
             new FakeCelestialRepository(catalog ?? [TestCatalog.M42, TestCatalog.M31, TestCatalog.M13]),
             astronomy, context, settings, logbook, logger, equipmentState, weatherState);
@@ -162,9 +163,9 @@ internal static class TestShell
             equipmentState, time, satelliteState);
         var framing = new FramingViewModel(tiles, decoder ?? new WpfImageDecoder(), equipmentState, online, logger, time);
         var about = new ObjectInfoViewModel(info, online, logger, time);
-        var detail = new ObjectDetailViewModel(astronomy, context, weatherState, targets, planViewModel, logbook, framing, about);
+        var detail = new ObjectDetailViewModel(astronomy, context, weatherState, targets, planViewModel, logbook, framing, about, equipmentState);
         var sky = new SkyViewModel(context, targets, planViewModel, skyStore ?? new FakeSkyViewStore(), logger, time, equipmentState,
-            resolver, online, satelliteState);
+            resolver, online, satelliteState, theme);
         var tonight = new TonightViewModel(context, weatherState, logbook, targets, equipmentState, planViewModel, astronomy, satelliteState);
         var locationsViewModel = new LocationsViewModel(locations ?? new FakeLocationRepository(), settingsViewModel, context, logger, atlas);
         return new ShellViewModel(

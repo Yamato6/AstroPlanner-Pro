@@ -7,14 +7,15 @@
         SizeToContent="Height"
         ResizeMode="NoResize"
         WindowStartupLocation="CenterOwner"
-        Background="{StaticResource DialogBackgroundBrush}">
+        Background="{DynamicResource DialogBackgroundBrush}">
     <Window.Resources>
+        <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>
         <!-- Colors and templates: Themes/Dark.xaml -->
         <Style TargetType="TextBlock">
-            <Setter Property="Foreground" Value="{StaticResource NightTextBrush}"/>
+            <Setter Property="Foreground" Value="{DynamicResource NightTextBrush}"/>
         </Style>
         <Style TargetType="Label">
-            <Setter Property="Foreground" Value="{StaticResource LabelTextBrush}"/>
+            <Setter Property="Foreground" Value="{DynamicResource LabelTextBrush}"/>
             <Setter Property="VerticalContentAlignment" Value="Center"/>
         </Style>
         <Style TargetType="TextBox" BasedOn="{StaticResource DarkTextBoxStyle}">
@@ -35,7 +36,7 @@
 
     <StackPanel Margin="28">
         <TextBlock FontSize="22" FontWeight="SemiBold" Text="{Binding Title}"/>
-        <TextBlock Margin="0,4,0,18" Foreground="{StaticResource NightMutedTextBrush}" TextWrapping="Wrap"
+        <TextBlock Margin="0,4,0,18" Foreground="{DynamicResource NightMutedTextBrush}" TextWrapping="Wrap"
                    Text="{x:Static res:Strings.LogEntryIntro}"/>
 
         <Grid>
@@ -56,33 +57,84 @@
                 <DatePicker Width="140" Margin="0,4,8,4" Style="{StaticResource DarkDatePickerStyle}"
                             AutomationProperties.Name="{x:Static res:Strings.LogEntryDateName}" SelectedDate="{Binding ObservedDate}"/>
                 <TextBox Width="70" Text="{Binding ObservedTime, UpdateSourceTrigger=PropertyChanged}"
+                         AutomationProperties.Name="{x:Static res:Strings.LogEntryTimeName}"
                          ToolTip="{x:Static res:Strings.LogEntryTimeTooltip}"/>
             </StackPanel>
 
             <Label Grid.Row="1" Content="{x:Static res:Strings.LogEntryLocation}"/>
-            <TextBox Grid.Row="1" Grid.Column="1" Text="{Binding Location, UpdateSourceTrigger=PropertyChanged}"/>
+            <TextBox Grid.Row="1" Grid.Column="1" Text="{Binding Location, UpdateSourceTrigger=PropertyChanged}"
+                     AutomationProperties.Name="{x:Static res:Strings.LogEntryLocation}"/>
 
             <Label Grid.Row="2" Content="{x:Static res:Strings.LogEntryEquipment}"/>
             <TextBox Grid.Row="2" Grid.Column="1" Text="{Binding Equipment, UpdateSourceTrigger=PropertyChanged}"
+                     AutomationProperties.Name="{x:Static res:Strings.LogEntryEquipment}"
                      ToolTip="{x:Static res:Strings.LogEntryEquipmentTooltip}"/>
 
             <Label Grid.Row="3" Content="{x:Static res:Strings.LogEntryConditions}"/>
             <StackPanel Grid.Row="3" Grid.Column="1" Orientation="Horizontal">
                 <TextBlock Text="{x:Static res:Strings.LogEntrySeeing}" VerticalAlignment="Center" Margin="0,0,6,0"/>
-                <ComboBox ItemsSource="{Binding Scale}" SelectedItem="{Binding Seeing}"/>
+                <ComboBox ItemsSource="{Binding Scale}" SelectedItem="{Binding Seeing}" AutomationProperties.Name="{x:Static res:Strings.LogEntrySeeing}"/>
                 <TextBlock Text="{x:Static res:Strings.LogEntryTransparency}" VerticalAlignment="Center" Margin="0,0,6,0"/>
-                <ComboBox ItemsSource="{Binding Scale}" SelectedItem="{Binding Transparency}"/>
+                <ComboBox ItemsSource="{Binding Scale}" SelectedItem="{Binding Transparency}" AutomationProperties.Name="{x:Static res:Strings.LogEntryTransparency}"/>
                 <TextBlock Text="{x:Static res:Strings.LogEntryRating}" VerticalAlignment="Center" Margin="0,0,6,0"/>
-                <ComboBox ItemsSource="{Binding Scale}" SelectedItem="{Binding Rating}"/>
+                <ComboBox ItemsSource="{Binding Scale}" SelectedItem="{Binding Rating}" AutomationProperties.Name="{x:Static res:Strings.LogEntryRating}"/>
             </StackPanel>
 
             <Label Grid.Row="4" Content="{x:Static res:Strings.LogEntryNotes}" VerticalAlignment="Top" Margin="0,4,0,0"/>
             <TextBox Grid.Row="4" Grid.Column="1" Height="90" TextWrapping="Wrap" AcceptsReturn="True"
-                     VerticalScrollBarVisibility="Auto"
+                     VerticalScrollBarVisibility="Auto" AutomationProperties.Name="{x:Static res:Strings.LogEntryNotesName}"
                      Text="{Binding Notes, UpdateSourceTrigger=PropertyChanged}"/>
         </Grid>
 
-        <TextBlock x:Name="ErrorText" Margin="0,12,0,0" Foreground="{StaticResource DangerSoftBrush}" TextWrapping="Wrap" Visibility="Collapsed"/>
+        <!-- Photographed (spec §4.7): pre-filled from the plan block or the model's recommendation -->
+        <CheckBox Margin="0,14,0,4" Style="{StaticResource DarkCheckBoxStyle}" Foreground="{DynamicResource NightTextBrush}"
+                  Content="{x:Static res:Strings.LogEntryPhotographed}" IsChecked="{Binding IsPhotographed}"
+                  ToolTip="{x:Static res:Strings.LogEntryPhotographedTooltip}"/>
+        <Grid Visibility="{Binding IsPhotographed, Converter={StaticResource BooleanToVisibilityConverter}}">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="130"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
+
+            <Label Grid.Row="0" Content="{x:Static res:Strings.LogEntryRig}"/>
+            <TextBox Grid.Row="0" Grid.Column="1" Text="{Binding RigName, UpdateSourceTrigger=PropertyChanged}"
+                     AutomationProperties.Name="{x:Static res:Strings.LogEntryRig}"/>
+
+            <Label Grid.Row="1" Content="{x:Static res:Strings.LogEntrySubs}"/>
+            <StackPanel Grid.Row="1" Grid.Column="1" Orientation="Horizontal">
+                <TextBox Width="70" Text="{Binding SubSecondsText, UpdateSourceTrigger=PropertyChanged}"
+                         AutomationProperties.Name="{x:Static res:Strings.LogEntrySubSecondsName}" ToolTip="{x:Static res:Strings.LogEntrySubSecondsName}"/>
+                <TextBlock Margin="6,0,10,0" VerticalAlignment="Center" Text="{x:Static res:Strings.LogEntrySubTimes}"/>
+                <TextBox Width="60" Text="{Binding SubCountText, UpdateSourceTrigger=PropertyChanged}"
+                         AutomationProperties.Name="{x:Static res:Strings.LogEntrySubCountName}" ToolTip="{x:Static res:Strings.LogEntrySubCountName}"/>
+                <TextBlock Margin="16,0,6,0" VerticalAlignment="Center" Text="{x:Static res:Strings.LogEntryIso}"/>
+                <TextBox Width="64" Text="{Binding IsoText, UpdateSourceTrigger=PropertyChanged}"
+                         AutomationProperties.Name="{x:Static res:Strings.LogEntryIso}"/>
+                <TextBlock Margin="12,0,6,0" VerticalAlignment="Center" Text="{x:Static res:Strings.LogEntryGain}"/>
+                <TextBox Width="56" Text="{Binding GainText, UpdateSourceTrigger=PropertyChanged}"
+                         AutomationProperties.Name="{x:Static res:Strings.LogEntryGain}"/>
+            </StackPanel>
+
+            <Label Grid.Row="2" Content="{x:Static res:Strings.LogEntryImage}"/>
+            <DockPanel Grid.Row="2" Grid.Column="1">
+                <Button DockPanel.Dock="Right" Margin="8,4,0,4" Style="{StaticResource SecondaryButtonStyle}"
+                        Content="{x:Static res:Strings.LogEntryBrowseImage}" ToolTip="{x:Static res:Strings.LogEntryBrowseImageTooltip}"
+                        Click="OnBrowseImageClicked"/>
+                <TextBox Text="{Binding ImagePath, UpdateSourceTrigger=PropertyChanged}" AutomationProperties.Name="{x:Static res:Strings.LogEntryImage}"
+                         ToolTip="{x:Static res:Strings.LogEntryImageTooltip}"/>
+            </DockPanel>
+
+            <TextBlock Grid.Row="3" Grid.Column="1" Margin="0,6,0,0" FontSize="12" TextWrapping="Wrap"
+                       Foreground="{DynamicResource NightMutedTextBrush}" Text="{Binding PredictionText}"/>
+        </Grid>
+
+        <TextBlock x:Name="ErrorText" Margin="0,12,0,0" Foreground="{DynamicResource DangerSoftBrush}" TextWrapping="Wrap" Visibility="Collapsed"/>
 
         <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,20,0,0">
             <Button Content="{x:Static res:Strings.Cancel}" IsCancel="True" Style="{StaticResource DialogButtonStyle}"/>

@@ -41,9 +41,18 @@ canvas {
   white-space: nowrap;
 }
 
-/* Night-vision theme (spec §4.10): everything in red. */
+/* Night-vision theme (spec §4.10): everything in red (#night-red in index.html keeps only the
+   luminance, in the red channel). */
+#filters {
+  position: absolute;
+}
+
+body.night {
+  background: #050000;
+}
+
 body.night canvas {
-  filter: grayscale(1) sepia(1) hue-rotate(-50deg) saturate(6) brightness(0.8);
+  filter: url(#night-red) brightness(0.9);
 }
 
 body.night #tooltip {

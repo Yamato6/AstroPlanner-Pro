@@ -23,6 +23,7 @@ public sealed partial class ObjectDetailViewModel : ObservableObject
     private readonly TargetsViewModel _targets;
     private readonly SessionPlanViewModel _plan;
     private readonly LogbookViewModel _logbook;
+    private readonly EquipmentState? _equipment;
 
     public ObjectDetailViewModel(
         IAstronomyService astronomy,
@@ -32,8 +33,10 @@ public sealed partial class ObjectDetailViewModel : ObservableObject
         SessionPlanViewModel plan,
         LogbookViewModel logbook,
         FramingViewModel framing,
-        ObjectInfoViewModel about)
+        ObjectInfoViewModel about,
+        EquipmentState? equipment = null)
     {
+        _equipment = equipment;
         _astronomy = astronomy;
         _context = context;
         _weather = weather;
@@ -164,10 +167,34 @@ public sealed partial class ObjectDetailViewModel : ObservableObject
     private void RemoveFromPlan() => _plan.Remove(SelectedObject);
 
     /// <summary>Logbook draft for the selected object at the chosen time.</summary>
-    public LogEntryDraftViewModel? CreateLogDraft() =>
-        SelectedObject is null
-            ? null
-            : _logbook.CreateDraft(SelectedObject.Id, SelectedObject.CommonName, _context.ObservationDateTime, _context.LocationName);
+    /// <summary>
+    /// Draft of a logbook entry for the selected object. The capture is pre-filled with the active
+    /// rig and the subs of its plan block, else the model's recommendation; a target with a plan
+    /// block starts as "Photographed". Tonight's verdict goes with it (predictions vs results).
+    /// </summary>
+    public LogEntryDraftViewModel? CreateLogDraft()
+    {
+        if (SelectedObject is not { } row)
+        {
+            return null;
+        }
+
+        var block = _plan.Items.FirstOrDefault(i => i.Id == row.Id)?.Schedule is { HasBlock: true } scheduled ? scheduled : null;
+        var recommended = row.Feasibility?.Recommended;
+        var rig = _equipment?.ActiveRig;
+        var capture = new CaptureDetails
+        {
+            RigId = rig?.Rig.Id,
+            RigName = rig?.Name ?? "",
+            SubSeconds = block is not null ? block.SubSeconds : recommended?.SubSeconds,
+            Iso = block is not null ? block.Iso : recommended?.Iso,
+            Gain = block is not null ? block.Gain : recommended?.Gain,
+            SubCount = block is not null ? block.SubCount : recommended?.SubCount
+        };
+        var prediction = row.Feasibility is { } report ? PredictionSummary.From(report) : null;
+        return _logbook.CreateDraft(row.Id, row.CommonName, _context.ObservationDateTime, _context.LocationName, capture, prediction,
+            photographed: block is not null);
+    }
 
     /// <summary>
     /// Altitude of the selected object from sunset to sunrise, in the observer's local

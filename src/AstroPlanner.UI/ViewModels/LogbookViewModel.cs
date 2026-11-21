@@ -4,6 +4,7 @@ using System.Globalization;
 using System.IO;
 using System.Text;
 using System.Text.RegularExpressions;
+using AstroPlanner.Core.Imaging.Feasibility;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using AstroPlanner.UI.Resources;
@@ -13,8 +14,8 @@ using static AstroPlanner.UI.Services.DisplayNames;
 namespace AstroPlanner.UI.ViewModels;
 
 /// <summary>
-/// Observation logbook: logged entries, objects already observed and Messier marathon and
-/// Caldwell progress.
+/// Observation logbook: logged entries (observed or photographed), objects already observed,
+/// Messier marathon and Caldwell progress, and the model's predictions against the results.
 /// </summary>
 public sealed partial class LogbookViewModel : ObservableObject
 {
@@ -24,6 +25,7 @@ public sealed partial class LogbookViewModel : ObservableObject
     private readonly IObservationLogService _service;
     private readonly IAppLogger _logger;
     private HashSet<string> _observedIds = [];
+    private HashSet<string> _photographedIds = [];
     private HashSet<string> _caldwellIds = [];
 
     public LogbookViewModel(IObservationLogService service, IAppLogger logger)
@@ -63,6 +65,41 @@ public sealed partial class LogbookViewModel : ObservableObject
 
     public double CaldwellProgressPercent => 100.0 * ObservedCaldwellCount / CaldwellTotal;
 
+    /// <summary>Messier objects with at least one photographed entry.</summary>
+    [ObservableProperty]
+    public partial int PhotographedMessierCount { get; private set; }
+
+    /// <summary>Caldwell objects with at least one photographed entry.</summary>
+    [ObservableProperty]
+    public partial int PhotographedCaldwellCount { get; private set; }
+
+    /// <summary>"3 photographed" under the Messier progress bar.</summary>
+    public string MessierPhotographedText => Format(Strings.LogbookPhotographedFormat, PhotographedMessierCount);
+
+    public string CaldwellPhotographedText => Format(Strings.LogbookPhotographedFormat, PhotographedCaldwellCount);
+
+    public IReadOnlySet<string> PhotographedIds => _photographedIds;
+
+    // ─── Predictions vs results (spec §8.7) ────────────────────────────
+
+    /// <summary>The model's predictions against the ratings of the photographed entries.</summary>
+    [ObservableProperty]
+    public partial PredictionStatistics Predictions { get; private set; } = PredictionComparison.Compare([]);
+
+    public bool HasPredictions => Predictions.Points.Count > 0;
+
+    /// <summary>One line per verdict: how many, mean rating, mean predicted score and the difference.</summary>
+    public IReadOnlyList<string> PredictionLines => [.. Predictions.ByVerdict.Select(v => Format(Strings.PredictionVerdictLineFormat,
+        FeasibilityText.Verdict(v.Verdict), v.Count, v.MeanRating, v.MeanPredictedScore, v.MeanDifference))];
+
+    /// <summary>The overall comparison, or how to get one.</summary>
+    public string PredictionSummaryText =>
+        !HasPredictions ? Strings.PredictionsEmpty
+        : Predictions.Correlation is { } r
+            ? Format(Strings.PredictionsSummaryFormat, Predictions.Points.Count, Predictions.MeanDifference ?? 0, r)
+            : Format(Strings.PredictionsSummaryNoCorrelationFormat, Predictions.Points.Count, Predictions.MeanDifference ?? 0,
+                PredictionComparison.MinimumPointsForCorrelation);
+
     /// <summary>
     /// Tells the logbook which catalog objects are Caldwell objects (their ids are NGC/IC
     /// numbers, so the id alone does not say it).
@@ -82,6 +119,24 @@ public sealed partial class LogbookViewModel : ObservableObject
     /// <summary>Draft of a new entry for <paramref name="objectId"/>, with the equipment of the last one.</summary>
     public LogEntryDraftViewModel CreateDraft(string objectId, string objectName, DateTime observedAtLocal, string location) =>
         new(objectId, objectName, observedAtLocal, location, Entries.FirstOrDefault()?.Equipment ?? "");
+
+    /// <summary>
+    /// Draft of a new entry with the capture pre-filled: the rig, and the subs of the plan block
+    /// (else the model's recommendation). <paramref name="photographed"/> preselects "Photographed".
+    /// </summary>
+    public LogEntryDraftViewModel CreateDraft(string objectId, string objectName, DateTime observedAtLocal, string location,
+        CaptureDetails capture, PredictionSummary? prediction, bool photographed)
+    {
+        ArgumentNullException.ThrowIfNull(capture);
+        var draft = new LogEntryDraftViewModel(objectId, objectName, observedAtLocal, location,
+            capture.RigName.Length > 0 ? capture.RigName : Entries.FirstOrDefault()?.Equipment ?? "")
+        {
+            Prediction = prediction
+        };
+        draft.Prefill(capture);
+        draft.IsPhotographed = photographed;
+        return draft;
+    }
 
     /// <summary>Saves the draft as an entry; false if it is invalid or could not be saved.</summary>
     public bool Add(LogEntryDraftViewModel draft)
@@ -103,7 +158,12 @@ public sealed partial class LogbookViewModel : ObservableObject
             draft.Seeing,
             draft.Transparency,
             draft.Rating,
-            draft.Notes.Trim());
+            draft.Notes.Trim())
+        {
+            Kind = draft.IsPhotographed ? LogEntryKind.Photographed : LogEntryKind.Observed,
+            Capture = draft.BuildCapture(),
+            Prediction = draft.IsPhotographed ? draft.Prediction : null
+        };
 
         // Keep the newest-to-oldest order.
         var index = 0;
@@ -153,7 +213,8 @@ public sealed partial class LogbookViewModel : ObservableObject
     {
         var csv = new CsvBuilder(culture).AddRow([Strings.CsvDate, Strings.CsvTime, Strings.CsvId, Strings.CsvName,
             Strings.CsvLocation, Strings.CsvEquipment, Strings.CsvSeeing, Strings.CsvTransparency, Strings.CsvRating,
-            Strings.CsvNotes]);
+            Strings.CsvNotes, Strings.CsvKind, Strings.CsvRig, Strings.CsvSubSeconds, Strings.CsvIso, Strings.CsvGain,
+            Strings.CsvSubCount, Strings.CsvImage, Strings.CsvPredictedVerdict, Strings.CsvPredictedScore]);
         foreach (var entry in Entries.OrderBy(e => e.ObservedAtLocal))
         {
             csv.AddRow([
@@ -166,7 +227,16 @@ public sealed partial class LogbookViewModel : ObservableObject
                 entry.Seeing.ToString(culture),
                 entry.Transparency.ToString(culture),
                 entry.Rating.ToString(culture),
-                entry.Notes
+                entry.Notes,
+                entry.IsPhotographed ? Strings.LogKindPhotographed : Strings.LogKindObserved,
+                entry.Capture?.RigName ?? "",
+                entry.Capture?.SubSeconds?.ToString(culture) ?? "",
+                entry.Capture?.Iso?.ToString(culture) ?? "",
+                entry.Capture?.Gain?.ToString(culture) ?? "",
+                entry.Capture?.SubCount?.ToString(culture) ?? "",
+                entry.Capture?.ImagePath ?? "",
+                entry.Prediction is { } prediction ? FeasibilityText.Verdict(prediction.Verdict) : "",
+                entry.Prediction?.Score.ToString(culture) ?? ""
             ]);
         }
 
@@ -208,8 +278,18 @@ public sealed partial class LogbookViewModel : ObservableObject
     private void RefreshSummary()
     {
         _observedIds = Entries.Select(e => e.ObjectId).ToHashSet(StringComparer.Ordinal);
+        _photographedIds = Entries.Where(e => e.IsPhotographed).Select(e => e.ObjectId).ToHashSet(StringComparer.Ordinal);
         ObservedMessierCount = _observedIds.Count(id => MessierId().IsMatch(id));
         ObservedCaldwellCount = _observedIds.Count(_caldwellIds.Contains);
+        PhotographedMessierCount = _photographedIds.Count(id => MessierId().IsMatch(id));
+        PhotographedCaldwellCount = _photographedIds.Count(_caldwellIds.Contains);
+        Predictions = PredictionComparison.Compare(Entries);
+        OnPropertyChanged(nameof(PhotographedIds));
+        OnPropertyChanged(nameof(MessierPhotographedText));
+        OnPropertyChanged(nameof(CaldwellPhotographedText));
+        OnPropertyChanged(nameof(HasPredictions));
+        OnPropertyChanged(nameof(PredictionLines));
+        OnPropertyChanged(nameof(PredictionSummaryText));
         OnPropertyChanged(nameof(ObservedIds));
         OnPropertyChanged(nameof(MessierProgressText));
         OnPropertyChanged(nameof(MessierProgressPercent));
@@ -267,6 +347,91 @@ public sealed partial class LogEntryDraftViewModel : ObservableValidator
 
     [ObservableProperty]
     public partial string Notes { get; set; } = "";
+
+    // ─── Photographed (spec §4.7) ──────────────────────────────────────
+
+    /// <summary>The entry records an imaging session: the capture fields are saved.</summary>
+    [ObservableProperty]
+    public partial bool IsPhotographed { get; set; }
+
+    /// <summary>Rig of the inventory the capture fields came from; null when typed by hand.</summary>
+    public string? RigId { get; private set; }
+
+    [ObservableProperty]
+    public partial string RigName { get; set; } = "";
+
+    [ObservableProperty, NotifyDataErrorInfo]
+    [CustomValidation(typeof(LogEntryDraftViewModel), nameof(ValidateSeconds))]
+    public partial string SubSecondsText { get; set; } = "";
+
+    [ObservableProperty, NotifyDataErrorInfo]
+    [CustomValidation(typeof(LogEntryDraftViewModel), nameof(ValidateCount))]
+    public partial string IsoText { get; set; } = "";
+
+    [ObservableProperty, NotifyDataErrorInfo]
+    [CustomValidation(typeof(LogEntryDraftViewModel), nameof(ValidateCount))]
+    public partial string GainText { get; set; } = "";
+
+    [ObservableProperty, NotifyDataErrorInfo]
+    [CustomValidation(typeof(LogEntryDraftViewModel), nameof(ValidateCount))]
+    public partial string SubCountText { get; set; } = "";
+
+    /// <summary>The stacked or best image (a file the user chose; it is not copied).</summary>
+    [ObservableProperty]
+    public partial string ImagePath { get; set; } = "";
+
+    /// <summary>The model's prediction for tonight, kept with a photographed entry.</summary>
+    public PredictionSummary? Prediction { get; init; }
+
+    /// <summary>"Predicted: Good · score 64/100 · SNR 18", or that there is none.</summary>
+    public string PredictionText => Prediction is { } p
+        ? Format(Strings.LogEntryPredictionFormat, FeasibilityText.Verdict(p.Verdict), p.Score, p.SignalToNoise)
+        : Strings.LogEntryNoPrediction;
+
+    /// <summary>Fills the capture fields (rig, sub, ISO/gain, count).</summary>
+    public void Prefill(CaptureDetails capture)
+    {
+        ArgumentNullException.ThrowIfNull(capture);
+        RigId = capture.RigId;
+        RigName = capture.RigName;
+        SubSecondsText = capture.SubSeconds?.ToString("0.#", CultureInfo.CurrentCulture) ?? "";
+        IsoText = capture.Iso?.ToString(CultureInfo.CurrentCulture) ?? "";
+        GainText = capture.Gain?.ToString(CultureInfo.CurrentCulture) ?? "";
+        SubCountText = capture.SubCount?.ToString(CultureInfo.CurrentCulture) ?? "";
+        ImagePath = capture.ImagePath ?? "";
+    }
+
+    /// <summary>The capture of a photographed entry; null for an observed one.</summary>
+    public CaptureDetails? BuildCapture() => !IsPhotographed
+        ? null
+        : new CaptureDetails
+        {
+            RigId = RigName.Trim().Length > 0 ? RigId : null,
+            RigName = RigName.Trim(),
+            SubSeconds = ParseSeconds(SubSecondsText),
+            Iso = ParseCount(IsoText),
+            Gain = ParseCount(GainText),
+            SubCount = ParseCount(SubCountText),
+            ImagePath = ImagePath.Trim().Length > 0 ? ImagePath.Trim() : null
+        };
+
+    private static double? ParseSeconds(string text) =>
+        double.TryParse(text, NumberStyles.Float, CultureInfo.CurrentCulture, out var value) && value > 0 && double.IsFinite(value)
+            ? value
+            : null;
+
+    private static int? ParseCount(string text) =>
+        int.TryParse(text, NumberStyles.Integer, CultureInfo.CurrentCulture, out var value) && value >= 0 ? value : null;
+
+    public static ValidationResult? ValidateSeconds(string text, ValidationContext context) =>
+        string.IsNullOrWhiteSpace(text) || ParseSeconds(text) is not null
+            ? ValidationResult.Success
+            : new ValidationResult(Strings.LogEntrySubInvalid, [context?.MemberName ?? ""]);
+
+    public static ValidationResult? ValidateCount(string text, ValidationContext context) =>
+        string.IsNullOrWhiteSpace(text) || ParseCount(text) is not null
+            ? ValidationResult.Success
+            : new ValidationResult(Strings.LogEntryCountInvalid, [context?.MemberName ?? ""]);
 
     /// <summary>Local date and time of the observation, or null if the time is invalid.</summary>
     public DateTime? ObservedAtLocal =>

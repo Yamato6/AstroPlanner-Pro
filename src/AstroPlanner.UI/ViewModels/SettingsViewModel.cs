@@ -26,13 +26,39 @@ public sealed partial class SettingsViewModel : ObservableValidator
 
     private readonly IOnlineCache? _cache;
 
-    public SettingsViewModel(ISettingsService settingsService, ICityRepository cityRepository, IAppLogger logger, IOnlineCache? cache = null)
+    public SettingsViewModel(ISettingsService settingsService, ICityRepository cityRepository, IAppLogger logger, IOnlineCache? cache = null,
+        ThemeState? theme = null)
     {
         _settingsService = settingsService;
         _cityRepository = cityRepository;
         _logger = logger;
         _cache = cache;
-        LoadFrom(_settingsService.Load());
+        Theme = theme ?? new ThemeState();
+        var settings = _settingsService.Load();
+        LoadFrom(settings);
+        Theme.Apply(settings.Theme);
+    }
+
+    /// <summary>The theme in use; the saved one is applied at startup and on save.</summary>
+    public ThemeState Theme { get; }
+
+    /// <summary>Switches between the dark and the night-vision theme and saves only that choice.</summary>
+    public void SetTheme(AppTheme theme)
+    {
+        try
+        {
+            var settings = _settingsService.Load();
+            settings.Theme = theme;
+            _settingsService.Save(settings);
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            // The theme still changes for this session.
+            _logger.LogError("Could not save the theme.", ex);
+        }
+
+        IsNightTheme = theme == AppTheme.Night;
+        Theme.Apply(theme);
     }
 
     /// <summary>Whether there is a cache of online answers to show and clear.</summary>
@@ -119,6 +145,79 @@ public sealed partial class SettingsViewModel : ObservableValidator
     [ObservableProperty, NotifyDataErrorInfo]
     [Range(0, 1.5, ErrorMessageResourceType = typeof(Strings), ErrorMessageResourceName = nameof(Strings.ExtinctionRange))]
     public partial double ExtinctionCoefficient { get; set; } = 0.25;
+
+    /// <summary>Red night-vision theme (Settings › Display).</summary>
+    [ObservableProperty]
+    public partial bool IsNightTheme { get; set; }
+
+    // ─── Advanced: calibration of the feasibility model (spec §8.7) ─────────
+
+    /// <summary>Seeing FWHM without a forecast, arcseconds.</summary>
+    [ObservableProperty, NotifyDataErrorInfo]
+    [Range(0.5, 8, ErrorMessageResourceType = typeof(Strings), ErrorMessageResourceName = nameof(Strings.AdvancedSeeingRange))]
+    public partial double TuningSeeingArcsec { get; set; }
+
+    /// <summary>Core brightening of extended objects, magnitudes.</summary>
+    [ObservableProperty, NotifyDataErrorInfo]
+    [Range(0, 3, ErrorMessageResourceType = typeof(Strings), ErrorMessageResourceName = nameof(Strings.AdvancedCoreBrighteningRange))]
+    public partial double TuningCoreBrighteningMagnitudes { get; set; }
+
+    /// <summary>Overhead between subs, seconds.</summary>
+    [ObservableProperty, NotifyDataErrorInfo]
+    [Range(0, 60, ErrorMessageResourceType = typeof(Strings), ErrorMessageResourceName = nameof(Strings.AdvancedOverheadRange))]
+    public partial double TuningOverheadSeconds { get; set; }
+
+    /// <summary>Longest suggested sub, seconds.</summary>
+    [ObservableProperty, NotifyDataErrorInfo]
+    [Range(10, 1800, ErrorMessageResourceType = typeof(Strings), ErrorMessageResourceName = nameof(Strings.AdvancedMaximumSubRange))]
+    public partial double TuningMaximumSubSeconds { get; set; }
+
+    [ObservableProperty, NotifyDataErrorInfo]
+    [Range(1, 100, ErrorMessageResourceType = typeof(Strings), ErrorMessageResourceName = nameof(Strings.AdvancedSnrRange))]
+    public partial double TuningSnrMarginal { get; set; }
+
+    [ObservableProperty, NotifyDataErrorInfo]
+    [Range(1, 100, ErrorMessageResourceType = typeof(Strings), ErrorMessageResourceName = nameof(Strings.AdvancedSnrRange))]
+    public partial double TuningSnrGood { get; set; }
+
+    [ObservableProperty, NotifyDataErrorInfo]
+    [Range(1, 100, ErrorMessageResourceType = typeof(Strings), ErrorMessageResourceName = nameof(Strings.AdvancedSnrRange))]
+    public partial double TuningSnrExcellent { get; set; }
+
+    /// <summary>Pixels needed to split a double star.</summary>
+    [ObservableProperty, NotifyDataErrorInfo]
+    [Range(1, 5, ErrorMessageResourceType = typeof(Strings), ErrorMessageResourceName = nameof(Strings.AdvancedSplitPixelsRange))]
+    public partial double TuningDoubleStarSplitPixels { get; set; }
+
+    /// <summary>The calibration as edited (values equal to their default are stored as defaults).</summary>
+    public FeasibilityTuning Tuning => FeasibilityTuning.From(FeasibilityConstants.Default with
+    {
+        SeeingArcsec = TuningSeeingArcsec,
+        CoreBrighteningMagnitudes = TuningCoreBrighteningMagnitudes,
+        OverheadSeconds = TuningOverheadSeconds,
+        MaximumSubSeconds = TuningMaximumSubSeconds,
+        SnrMarginal = TuningSnrMarginal,
+        SnrGood = TuningSnrGood,
+        SnrExcellent = TuningSnrExcellent,
+        DoubleStarSplitPixels = TuningDoubleStarSplitPixels
+    });
+
+    /// <summary>Puts every advanced constant back to its default (saved with the other settings).</summary>
+    [RelayCommand]
+    private void ResetTuning() => LoadTuning(new FeasibilityTuning());
+
+    private void LoadTuning(FeasibilityTuning tuning)
+    {
+        var constants = tuning.Apply(FeasibilityConstants.Default);
+        TuningSeeingArcsec = constants.SeeingArcsec;
+        TuningCoreBrighteningMagnitudes = constants.CoreBrighteningMagnitudes;
+        TuningOverheadSeconds = constants.OverheadSeconds;
+        TuningMaximumSubSeconds = constants.MaximumSubSeconds;
+        TuningSnrMarginal = constants.SnrMarginal;
+        TuningSnrGood = constants.SnrGood;
+        TuningSnrExcellent = constants.SnrExcellent;
+        TuningDoubleStarSplitPixels = constants.DoubleStarSplitPixels;
+    }
 
     [ObservableProperty]
     public partial City? SelectedCity { get; set; }
@@ -221,6 +320,13 @@ public sealed partial class SettingsViewModel : ObservableValidator
                 return;
             }
 
+            if (!(TuningSnrMarginal < TuningSnrGood && TuningSnrGood < TuningSnrExcellent))
+            {
+                HasError = true;
+                StatusMessage = Strings.AdvancedSnrOrder;
+                return;
+            }
+
             var settings = new ObserverSettings
             {
                 CityId = IsManualLocation ? null : SelectedCity?.Id,
@@ -241,12 +347,15 @@ public sealed partial class SettingsViewModel : ObservableValidator
                 SatellitesEnabled = SatellitesEnabled,
                 CheckForUpdates = CheckForUpdates,
                 Darkness = AllowNauticalTwilight ? DarknessDefinition.Nautical : DarknessDefinition.Astronomical,
-                ExtinctionCoefficient = ExtinctionCoefficient
+                ExtinctionCoefficient = ExtinctionCoefficient,
+                Theme = IsNightTheme ? AppTheme.Night : AppTheme.Dark,
+                Tuning = Tuning
             };
 
             _settingsService.Save(settings);
             HasError = false;
             StatusMessage = Strings.SettingsSaved;
+            Theme.Apply(settings.Theme);
             SettingsSaved?.Invoke(settings);
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
@@ -323,6 +432,8 @@ public sealed partial class SettingsViewModel : ObservableValidator
         CheckForUpdates = settings.CheckForUpdates;
         AllowNauticalTwilight = settings.Darkness == DarknessDefinition.Nautical;
         ExtinctionCoefficient = settings.ExtinctionCoefficient;
+        IsNightTheme = settings.Theme == AppTheme.Night;
+        LoadTuning(settings.Tuning ?? new FeasibilityTuning());
         RememberActiveLocation(settings.ActiveLocationId);
         // If the city list is already loaded the saved city is restored; otherwise
         // LoadCitiesAsync selects it once loaded.

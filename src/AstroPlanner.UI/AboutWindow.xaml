@@ -8,19 +8,19 @@
         ResizeMode="NoResize"
         ShowInTaskbar="False"
         WindowStartupLocation="CenterOwner"
-        Background="{StaticResource DialogBackgroundBrush}">
+        Background="{DynamicResource DialogBackgroundBrush}">
     <Window.Resources>
         <Style TargetType="TextBlock">
-            <Setter Property="Foreground" Value="{StaticResource NightTextBrush}"/>
+            <Setter Property="Foreground" Value="{DynamicResource NightTextBrush}"/>
             <Setter Property="TextWrapping" Value="Wrap"/>
         </Style>
         <Style x:Key="SectionStyle" TargetType="TextBlock">
-            <Setter Property="Foreground" Value="{StaticResource NightMutedTextBrush}"/>
+            <Setter Property="Foreground" Value="{DynamicResource NightMutedTextBrush}"/>
             <Setter Property="FontWeight" Value="SemiBold"/>
             <Setter Property="Margin" Value="0,18,0,6"/>
         </Style>
         <Style x:Key="CreditStyle" TargetType="TextBlock">
-            <Setter Property="Foreground" Value="{StaticResource NightTextBrush}"/>
+            <Setter Property="Foreground" Value="{DynamicResource NightTextBrush}"/>
             <Setter Property="TextWrapping" Value="Wrap"/>
             <Setter Property="Margin" Value="0,0,0,5"/>
         </Style>
@@ -31,8 +31,8 @@
             <Image Source="pack://application:,,,/AstroPlannerPro;component/Assets/AstroPlanner.png" Width="56" Height="56" Margin="0,0,16,0"
                    RenderOptions.BitmapScalingMode="HighQuality"/>
             <StackPanel VerticalAlignment="Center">
-                <TextBlock FontSize="24" FontWeight="SemiBold" Foreground="White" Text="{x:Static res:Strings.AppName}"/>
-                <TextBlock Foreground="{StaticResource NightMutedTextBrush}">
+                <TextBlock FontSize="24" FontWeight="SemiBold" Foreground="{DynamicResource HighlightTextBrush}" Text="{x:Static res:Strings.AppName}"/>
+                <TextBlock Foreground="{DynamicResource NightMutedTextBrush}">
                     <Run Text="{x:Static res:Strings.AboutVersion}"/> <Run x:Name="VersionRun"/>
                 </TextBlock>
             </StackPanel>
@@ -73,7 +73,7 @@
             <Button DockPanel.Dock="Right" Style="{StaticResource SecondaryButtonStyle}" Content="{x:Static res:Strings.AboutOpenFolder}"
                     Click="OnOpenDataFolderClicked"/>
             <TextBlock x:Name="DataFolderText" VerticalAlignment="Center" FontFamily="Consolas" FontSize="12"
-                       Foreground="{StaticResource NightMutedTextBrush}" TextTrimming="CharacterEllipsis" TextWrapping="NoWrap"/>
+                       Foreground="{DynamicResource NightMutedTextBrush}" TextTrimming="CharacterEllipsis" TextWrapping="NoWrap"/>
         </DockPanel>
 
         <TextBlock Style="{StaticResource SectionStyle}" Text="{x:Static res:Strings.AboutLicense}"/>

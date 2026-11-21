@@ -1,6 +1,7 @@
 using System.Globalization;
 using AstroPlanner.Core.Models;
 using AstroPlanner.Core.Services;
+using AstroPlanner.UI.Resources;
 using AstroPlanner.UI.Services;
 using AstroPlanner.UI.ViewModels;
 
@@ -134,7 +135,7 @@ public sealed class LogbookAndPlanetUiTests : IDisposable
         lines.Should().HaveCount(3);
         lines[0].Should().StartWith("Date,Time,ID,Name");
         lines[1].Should().StartWith("2026-01-10,22:15,M42");
-        lines[2].Should().EndWith("\"arms visible, no filter\"");
+        lines[2].Should().Contain("\"arms visible, no filter\"," + Strings.LogKindObserved, "the capture columns follow the notes");
     }
 
     [Fact]

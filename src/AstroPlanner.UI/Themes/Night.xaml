@@ -1,0 +1,54 @@
+<!--
+    Night-vision theme (spec §4.10): the colors of Themes/Dark.xaml, same keys, in dim red on
+    black so the eyes stay dark-adapted at the telescope. Only colors live here: ThemeManager
+    merges this dictionary after Dark.xaml, whose styles use every brush through DynamicResource.
+    Text/background pairs keep a WCAG AA contrast of at least 4.5:1 (ThemeContrastTests).
+-->
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <SolidColorBrush x:Key="WindowBackgroundBrush" Color="#0A0101"/>
+    <SolidColorBrush x:Key="DialogBackgroundBrush" Color="#0D0202"/>
+    <SolidColorBrush x:Key="NightPanelBrush" Color="#140404"/>
+    <SolidColorBrush x:Key="NightCardBrush" Color="#1A0505"/>
+    <SolidColorBrush x:Key="SurfaceBrush" Color="#0C0202"/>
+    <SolidColorBrush x:Key="ControlBrush" Color="#160404"/>
+    <SolidColorBrush x:Key="ControlRaisedBrush" Color="#1F0606"/>
+    <SolidColorBrush x:Key="ControlHoverBrush" Color="#2C0909"/>
+    <SolidColorBrush x:Key="SelectionBrush" Color="#3E0D0D"/>
+    <SolidColorBrush x:Key="BannerBrush" Color="#2A0808"/>
+
+    <SolidColorBrush x:Key="NightBorderBrush" Color="#3A0E0E"/>
+    <SolidColorBrush x:Key="ControlBorderBrush" Color="#5A1616"/>
+    <SolidColorBrush x:Key="GridLineBrush" Color="#360D0D"/>
+    <SolidColorBrush x:Key="HoverBorderBrush" Color="#8A2A24"/>
+    <SolidColorBrush x:Key="FocusBorderBrush" Color="#D8483A"/>
+
+    <SolidColorBrush x:Key="NightTextBrush" Color="#F0705E"/>
+    <SolidColorBrush x:Key="StrongTextBrush" Color="#FF8470"/>
+    <SolidColorBrush x:Key="LabelTextBrush" Color="#E46A58"/>
+    <SolidColorBrush x:Key="TabTextBrush" Color="#DC6654"/>
+    <SolidColorBrush x:Key="NightMutedTextBrush" Color="#CC5C4C"/>
+    <SolidColorBrush x:Key="PlaceholderTextBrush" Color="#8A3A30"/>
+    <SolidColorBrush x:Key="HighlightTextBrush" Color="#FF9080"/>
+
+    <SolidColorBrush x:Key="AccentBrush" Color="#FF6A56"/>
+    <SolidColorBrush x:Key="PrimaryBrush" Color="#6A1410"/>
+    <SolidColorBrush x:Key="PrimaryBorderBrush" Color="#A0281E"/>
+    <SolidColorBrush x:Key="PrimaryPressedBrush" Color="#4E0E0B"/>
+    <SolidColorBrush x:Key="SuccessBrush" Color="#FFA48C"/>
+    <SolidColorBrush x:Key="SuccessSoftBrush" Color="#F09078"/>
+    <SolidColorBrush x:Key="DangerBrush" Color="#FF4A38"/>
+    <SolidColorBrush x:Key="DangerSoftBrush" Color="#FF7A66"/>
+    <SolidColorBrush x:Key="WarningBrush" Color="#FF7448"/>
+    <SolidColorBrush x:Key="MoonBrush" Color="#F0A090"/>
+    <SolidColorBrush x:Key="PlanetBrush" Color="#FF8A5C"/>
+    <SolidColorBrush x:Key="DarknessBrush" Color="#E07A70"/>
+
+    <SolidColorBrush x:Key="ChartTwilightBrush" Color="#3A1010"/>
+    <SolidColorBrush x:Key="ChartCloudBrush" Color="#A06058"/>
+    <SolidColorBrush x:Key="SkyHorizonBrush" Color="#6A2020"/>
+    <SolidColorBrush x:Key="SkyFillBrush" Color="#140404"/>
+    <SolidColorBrush x:Key="SkyLabelBrush" Color="#B0503F"/>
+    <SolidColorBrush x:Key="SkyCanvasBrush" Color="#050000"/>
+</ResourceDictionary>
