@@ -94,8 +94,8 @@ public sealed class EquipmentAndFeasibilityTests
     {
         var (shell, equipment) = await CreateAsync();
         var tripod = Row(shell, "M42").Feasibility!;
-        shell.Sky.FocalLengthMm.Should().Be(16);
-        shell.Sky.FovRigName.Should().Contain("Rokinon");
+        shell.Sky.Camera.FocalLengthMm.Should().Be(16);
+        shell.Sky.Camera.FovRigName.Should().Contain("Rokinon");
 
         shell.Equipment!.ActiveRigId = "t7-starsense-130";
         await shell.Targets.FeasibilityTask;
@@ -103,7 +103,7 @@ public sealed class EquipmentAndFeasibilityTests
         equipment.Inventory.ActiveRigId.Should().Be("t7-starsense-130");
         Row(shell, "M42").Feasibility.Should().NotBeSameAs(tripod);
         Row(shell, "M42").Feasibility!.SubSeconds.Should().BeLessThan(1, "650 mm on an untracked mount: NPF ≈ 0.4 s");
-        shell.Sky.FocalLengthMm.Should().Be(650);
+        shell.Sky.Camera.FocalLengthMm.Should().Be(650);
     }
 
     [Fact]

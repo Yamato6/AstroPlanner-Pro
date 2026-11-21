@@ -186,6 +186,6 @@ public sealed class LogbookAndPlanetUiTests : IDisposable
         viewModel.Targets.Objects.Should().ContainSingle().Which.Id.Should().Be("Jupiter");
 
         viewModel.Targets.SearchText = "";
-        viewModel.Sky.GetSkyMapPoints().Single(p => p.Id == "Jupiter").IsPlanet.Should().BeTrue();
+        viewModel.Sky.Map.GetSkyMapPoints().Single(p => p.Id == "Jupiter").IsPlanet.Should().BeTrue();
     }
 }

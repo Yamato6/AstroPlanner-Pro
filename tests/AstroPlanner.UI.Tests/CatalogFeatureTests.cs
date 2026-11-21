@@ -364,9 +364,9 @@ public sealed class CatalogFeatureTests
 
         // The 2D sky chart draws only the brightest objects (the full sky arrives with M2).
         targets.ResetFiltersCommand.Execute(null);
-        var points = shell.Sky.GetSkyMapPoints();
-        points.Should().HaveCount(SkyViewModel.MaximumPoints);
-        points.Count(p => p.HasLabel).Should().Be(SkyViewModel.MaximumLabels);
+        var points = shell.Sky.Map.GetSkyMapPoints();
+        points.Should().HaveCount(SkyMapViewModel.MaximumPoints);
+        points.Count(p => p.HasLabel).Should().Be(SkyMapViewModel.MaximumLabels);
     }
 }
 

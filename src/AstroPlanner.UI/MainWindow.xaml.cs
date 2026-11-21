@@ -35,7 +35,7 @@ public partial class MainWindow : Window
         TimelinePlot.UserInputProcessor.IsEnabled = false;
         SkyPlot.SizeChanged += (_, _) =>
         {
-            if (_viewModel is not null) UpdateSkyMap(_viewModel.Sky);
+            if (_viewModel is not null) UpdateSkyMap(_viewModel.Sky.Map);
         };
         DataContextChanged += OnDataContextChanged;
         Loaded += OnLoaded;
@@ -83,7 +83,7 @@ public partial class MainWindow : Window
         if (_viewModel is not null)
         {
             _viewModel.Detail.PropertyChanged -= OnDetailPropertyChanged;
-            _viewModel.Sky.PropertyChanged -= OnSkyPropertyChanged;
+            _viewModel.Sky.Map.PropertyChanged -= OnSkyMapPropertyChanged;
             _viewModel.Sky.FocusSearchRequested -= OnSkyFocusSearch;
             _viewModel.Sky.OpenDetailsRequested -= OnSkyOpenDetails;
             _viewModel.Sky.ShowSkyRequested -= OnShowSkyRequested;
@@ -98,7 +98,7 @@ public partial class MainWindow : Window
         if (_viewModel is not null)
         {
             _viewModel.Detail.PropertyChanged += OnDetailPropertyChanged;
-            _viewModel.Sky.PropertyChanged += OnSkyPropertyChanged;
+            _viewModel.Sky.Map.PropertyChanged += OnSkyMapPropertyChanged;
             _viewModel.Sky.FocusSearchRequested += OnSkyFocusSearch;
             _viewModel.Sky.OpenDetailsRequested += OnSkyOpenDetails;
             _viewModel.Sky.ShowSkyRequested += OnShowSkyRequested;
@@ -114,7 +114,7 @@ public partial class MainWindow : Window
     {
         if (_viewModel is null) return;
         UpdateChart(_viewModel.Detail);
-        UpdateSkyMap(_viewModel.Sky);
+        UpdateSkyMap(_viewModel.Sky.Map);
         UpdateHorizonPlot(_viewModel.Locations);
         UpdateTimeline(_viewModel.Plan.Timeline);
         UpdatePredictionPlot(_viewModel.Logbook);
@@ -133,7 +133,7 @@ public partial class MainWindow : Window
         await _viewModel.Settings.LoadCitiesCommand.ExecuteAsync(null);
         await _viewModel.LoadCommand.ExecuteAsync(null);
         UpdateChart(_viewModel.Detail);
-        UpdateSkyMap(_viewModel.Sky);
+        UpdateSkyMap(_viewModel.Sky.Map);
         PredictionPlot.UserInputProcessor.IsEnabled = false;
         UpdatePredictionPlot(_viewModel.Logbook);
         if (SkyQuery().Length > 0)
@@ -248,7 +248,7 @@ public partial class MainWindow : Window
                 break;
             // Sky tab (when the focus is not in a text box; inside the renderer it sends them itself).
             case Key.Space when none && Tabs.SelectedItem == SkyTab && Keyboard.FocusedElement is not TextBox:
-                _viewModel?.Sky.TogglePlayCommand.Execute(null);
+                _viewModel?.Sky.Time.TogglePlayCommand.Execute(null);
                 break;
             case Key.OemQuestion or Key.Divide when none && Tabs.SelectedItem == SkyTab && Keyboard.FocusedElement is not TextBox:
                 OnSkyFocusSearch(this, EventArgs.Empty);
@@ -260,7 +260,7 @@ public partial class MainWindow : Window
                 if (_viewModel is not null) _viewModel.Sky.IsAllSkyMode = true;
                 break;
             case Key.F when none && Tabs.SelectedItem == SkyTab && Keyboard.FocusedElement is not TextBox:
-                if (_viewModel is not null) _viewModel.Sky.IsFovVisible = !_viewModel.Sky.IsFovVisible;
+                if (_viewModel is not null) _viewModel.Sky.Camera.IsFovVisible = !_viewModel.Sky.Camera.IsFovVisible;
                 break;
             default:
                 return;
@@ -380,11 +380,11 @@ public partial class MainWindow : Window
         HorizonPlot.Refresh();
     }
 
-    private void OnSkyPropertyChanged(object? sender, PropertyChangedEventArgs e)
+    private void OnSkyMapPropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
-        if (e.PropertyName is nameof(SkyViewModel.MapVersion) && _viewModel is not null)
+        if (e.PropertyName is nameof(SkyMapViewModel.MapVersion) && _viewModel is not null)
         {
-            UpdateSkyMap(_viewModel.Sky);
+            UpdateSkyMap(_viewModel.Sky.Map);
         }
     }
 
@@ -488,7 +488,7 @@ public partial class MainWindow : Window
         var scale = SkyPlot.DisplayScale;
         var coordinates = SkyPlot.Plot.GetCoordinates(
             new ScottPlot.Pixel((float)(position.X * scale), (float)(position.Y * scale)));
-        _viewModel.Sky.SelectNearestOnSkyMap(coordinates.X, coordinates.Y);
+        _viewModel.Sky.Map.SelectNearestOnSkyMap(coordinates.X, coordinates.Y);
     }
 
     /// <summary>Theme color (Themes/Dark.xaml) for ScottPlot: the charts share the UI palette.</summary>
@@ -501,7 +501,7 @@ public partial class MainWindow : Window
     /// Polar sky chart: altitude circles every 30°, cardinal points, objects above the horizon
     /// (size by magnitude), My plan, selection and the Moon.
     /// </summary>
-    private void UpdateSkyMap(SkyViewModel viewModel)
+    private void UpdateSkyMap(SkyMapViewModel viewModel)
     {
         var plot = SkyPlot.Plot;
         plot.Clear();
