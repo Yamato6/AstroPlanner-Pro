@@ -88,6 +88,14 @@ Text from the English Wikipedia, CC BY-SA 4.0, credited and linked under every d
 Images from Wikimedia Commons under each file's own license, shown with its author and license
 name; images without a Commons license are not shown.
 
+### Comet and asteroid elements — Minor Planet Center, fetched at run time
+
+Orbital elements of comets (`CometEls.txt`) and of the year's bright asteroids
+(`Ephemerides/Bright/{year}/Soft00Bright.txt`) from the IAU
+[Minor Planet Center](https://minorplanetcenter.net/) (Smithsonian Astrophysical Observatory).
+Credited in the app; the elements are only cached locally, not redistributed.
+`tests/fixtures/online/mpc-*.txt` are short excerpts used by the tests.
+
 ### Name resolution — Sesame (CDS)
 
 [Sesame](https://cds.unistra.fr/cgi-bin/Sesame) name resolver (SIMBAD, NED, VizieR) of the CDS,

@@ -6,6 +6,34 @@ versions follow [Semantic Versioning](https://semver.org/). Versions up to 1.0.0
 
 ## [Unreleased] — 2.0.0
 
+### M5 — Dynamic objects (part 1: comets, asteroids, Milky Way core)
+
+#### Added
+- **Comets and bright asteroids** from the Minor Planet Center: `CometEls.txt` daily and the
+  yearly bright-asteroid file (falling back to last year's in early January), cached on disk and
+  used offline. Comets enter the catalog when brighter than magnitude 15 for the night; the bright
+  asteroids all do. They get rows in Targets (types Comet and Asteroid, the "Solar system" filter),
+  night ephemerides, feasibility (comets with a 5′ coma), the sky (comets with an anti-Sun tail,
+  asteroids as dots; the 40 brightest up to mag 12) and details (distances, elements and epoch).
+- **Orbits for any eccentricity** (`Core/Algorithms/OrbitCalculator`): elliptic, parabolic
+  (Barker) and hyperbolic, safeguarded Newton, light time; comet g/k and asteroid H-G magnitudes.
+  Golden tests against JPL Horizons (2P/Encke, C/2023 A3, C/2025 A6, (4) Vesta): 4–17″ near the
+  elements' epoch, 44″ for Vesta a year later.
+- **Milky Way core**: Sgr A* as a wide-field catalog target; `MilkyWayPlanner` (core above 10° in
+  astronomical darkness, with the Moon down); a Tonight alert with tonight's window or the next good
+  night, and a 12-month planner window with the best nights.
+- **Comet of the night** alert in Tonight.
+- **Settings → Internet**: a toggle for the MPC elements; the top-bar status covers them.
+- Wikipedia titles for comets ("2P/Encke"), asteroids ("4 Vesta") and the core ("Galactic Center").
+
+#### Changed
+- Bridge: moving bodies may be `comet` or `asteroid`, up to 128.
+- Timing tests get a ×1.5 margin on CI only (`tests/Shared/PerformanceBudget`); the spec's budgets
+  still apply locally.
+
+#### Fixed
+- The Settings window's status line threw a binding error (`Run.Text` binds two-way by default).
+
 ### M4 — Online enrichment (part 2: framing preview, Wikipedia, Sesame)
 
 #### Added

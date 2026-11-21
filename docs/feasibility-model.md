@@ -300,6 +300,14 @@ Tonight:
 The thresholds are in `ConditionThresholds`. Without a forecast nothing changes, and the verdicts
 are exactly those of §1–§9. Tests: `NightConditionsTests`.
 
+## 12. Comets and asteroids (M5)
+
+Their position, distances and magnitude come from `OrbitCalculator` at the middle of the night
+(the MPC formulae: comets H + 5 log Δ + 2.5 K log r, asteroids H-G). Asteroids are point sources.
+A comet's total magnitude is spread over an assumed coma of `CometComaArcmin` (5′), since the
+catalogues give no size; a tail is not modelled. The Milky Way core is an extended target of
+30° × 20° with no magnitude: its verdict says mostly whether the rig's field can frame it.
+
 ## Default constants (`FeasibilityConstants.Default`)
 
 | Constant | Value |
@@ -320,6 +328,7 @@ are exactly those of §1–§9. Tests: `NightConditionsTests`.
 | Step | 5 min |
 | SessionSchedulerOptions.MinimumBlock | 20 min |
 | ClearTransparency | 0.3 mag/air mass |
+| CometComaArcmin | 5′ |
 | ConditionThresholds (dew high / moderate; gusts camera / telescope) | 2 / 4 °C; 30 / 20 km/h |
 
 ## References
