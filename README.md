@@ -43,6 +43,8 @@
 
 ![The all-sky chart at dusk from Mexico City: sunlit satellites (labelled) with their trails, comets and asteroids, the planets and the 16 mm camera frame](docs/screenshots/sky-satellites.png)
 
+![A double star in the object detail: Albireo with its pairs from the Washington Double Star Catalog, its spectral type and distance, and why the 16 mm lens cannot split it](docs/screenshots/double-star.png)
+
 ![A finder chart of M42: gnomonic, north up, east left, star magnitudes, the 650 mm camera frame and a scale bar](docs/screenshots/sky-finder.png)
 
 ![The 3D sky with the site's horizon profile (trees and buildings) drawn as a silhouette](docs/screenshots/sky-horizon.png)
@@ -85,6 +87,11 @@
   asteroids, from the Minor Planet Center's elements, in the table, the sky (comets with a tail
   pointing away from the Sun) and the feasibility verdicts, with a "comet of the night" alert.
   Orbits are computed for any eccentricity and checked against JPL Horizons.
+- ⭐ **Stars and double stars**: the ~8,900 naked-eye stars (to magnitude 6.5) are catalog rows
+  next to the deep-sky objects, findable by name, Bayer or Flamsteed ("β Cyg", "Beta Cygni",
+  "61 Cyg"), HIP or HD number, with their spectral type, colour, distance and variability. The
+  ~1,800 bright doubles show their pairs from the Washington Double Star Catalog, and the verdict
+  says whether your rig splits them. Clicking a star in the sky selects its row.
 - 🌌 **Milky Way core**: the galactic centre as a wide-field target, tonight's window in a dark,
   Moon-free sky (or the next good night), and a 12-month planner with the best nights.
 - 🛰️ **Satellites**: the ~160 brightest satellites and the space stations from CelesTrak, moving
@@ -313,6 +320,7 @@ installer/                Inno Setup script
 - Deep-sky catalog: [OpenNGC](https://github.com/mattiaverga/OpenNGC) by Mattia Verga
   ([CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/)).
 - Stars: [HYG database](https://codeberg.org/astronexus/hyg) v4.4 by David Nash / astronexus.net (CC BY-SA 4.0).
+- Double stars: [Washington Double Star Catalog](http://www.astro.gsu.edu/wds/), U.S. Naval Observatory (public domain).
 - Constellation boundaries: Roman (1987), CDS VI/42, as distributed with
   [astropy](https://github.com/astropy/astropy) (BSD-3-Clause).
 - Light pollution: grids derived from the World Atlas 2015 of artificial night sky brightness, Falchi et al. (2016),

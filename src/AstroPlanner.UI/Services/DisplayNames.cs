@@ -96,6 +96,45 @@ public static class DisplayNames
     };
 
     /// <summary>Formats a resource string with the current culture.</summary>
+    /// <summary>"Spectral type A0m... · B−V 0.01 · 8.6 light-years · variable (Hipparcos 1.52–1.33)".</summary>
+    public static string StarSummary(StarInfo star)
+    {
+        ArgumentNullException.ThrowIfNull(star);
+        var parts = new List<string>();
+        if (star.SpectralType is { } spectral)
+        {
+            parts.Add(Format(Strings.StarSpectralFormat, spectral));
+        }
+
+        if (star.ColorIndex is { } colour)
+        {
+            parts.Add(Format(Strings.StarColorFormat, colour));
+        }
+
+        if (star.DistanceLightYears is { } lightYears)
+        {
+            parts.Add(Format(Strings.StarDistanceFormat, lightYears));
+        }
+
+        if (star.IsVariable)
+        {
+            parts.Add(star.VariableFaintestMagnitude is { } faint && star.VariableBrightestMagnitude is { } bright
+                ? Format(Strings.StarVariableRangeFormat, bright, faint)
+                : Strings.StarVariable);
+        }
+
+        return string.Join(" · ", parts);
+    }
+
+    /// <summary>"STFA 43 AB · 34.3″ at PA 54° · mags 3.2 + 4.7 (2025)".</summary>
+    public static string DoubleStarPair(DoubleStarPair pair)
+    {
+        ArgumentNullException.ThrowIfNull(pair);
+        return pair.PositionAngleDegrees is { } angle
+            ? Format(Strings.DoubleStarPairFormat, pair.Name, pair.SeparationArcsec, angle, pair.PrimaryMagnitude, pair.CompanionMagnitude, pair.LastYear)
+            : Format(Strings.DoubleStarPairNoAngleFormat, pair.Name, pair.SeparationArcsec, pair.PrimaryMagnitude, pair.CompanionMagnitude, pair.LastYear);
+    }
+
     /// <summary>Eight-point compass direction of an azimuth (north = 0°, east = 90°): "N", "NE", …</summary>
     public static string Compass(double azimuthDegrees)
     {

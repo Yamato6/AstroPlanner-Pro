@@ -137,11 +137,11 @@ public sealed class NightEphemerisCalculatorTests
 
     [Fact]
     [Trait("Category", "Performance")]
-    public void FifteenThousandObjects_TakeLessThanOneSecond()
+    public void TwentyFiveThousandObjects_TakeLessThanOneSecond()
     {
-        // DoD of M1: the night ephemerides of the whole catalog in < 1 s.
+        // DoD of M1: the night ephemerides of the whole catalog in < 1 s (~22.5k objects with the stars of M6a).
         var random = new Random(42);
-        var catalog = Enumerable.Range(0, 15_000)
+        var catalog = Enumerable.Range(0, 25_000)
             .Select(i => new CelestialObject($"T{i}", "Test", "Test", CelestialObjectType.Galaxy, 10,
                 new EquatorialCoordinates(random.NextDouble() * 24, random.NextDouble() * 180 - 90)))
             .ToList();
@@ -160,7 +160,7 @@ public sealed class NightEphemerisCalculatorTests
             best = stopwatch.Elapsed < best ? stopwatch.Elapsed : best;
         }
 
-        all.Should().HaveCount(15_000);
+        all.Should().HaveCount(25_000);
         best.Should().BeLessThan(PerformanceBudget.Of(TimeSpan.FromSeconds(1)));
     }
 }

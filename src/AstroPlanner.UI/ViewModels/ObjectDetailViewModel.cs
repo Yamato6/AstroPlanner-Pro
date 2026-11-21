@@ -247,6 +247,10 @@ public sealed partial class ObjectDetailViewModel : ObservableObject
                 ? DisplayNames.Format(Strings.DetailSmallBodyFormat, body.SunDistanceAu, body.DistanceAu, body.ElongationDegrees,
                     orbit.Source, AstronomyMath.FromJulianDate(orbit.Elements.EpochJulianDate))
                 : null,
+            StarText = item.Target.Star is { } star ? DisplayNames.StarSummary(star) : null,
+            DoubleStarText = item.Target.Star is { IsDouble: true } doubleStar
+                ? string.Join(Environment.NewLine, doubleStar.Pairs.Select(DisplayNames.DoubleStarPair))
+                : null,
             MoonSeparationDegrees = moonSeparation,
             CloudCoverAtCulmination = _weather.CloudCoverAtLocal(events.CulminationLocal),
             MoonWarning = moonInterferes

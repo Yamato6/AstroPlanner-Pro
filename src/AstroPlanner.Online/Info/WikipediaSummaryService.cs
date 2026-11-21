@@ -79,6 +79,27 @@ public sealed partial class WikipediaSummaryService(HttpClient http, IOnlineCach
             return [.. titles.Distinct(StringComparer.OrdinalIgnoreCase)];
         }
 
+        if (target.Star is not null)
+        {
+            // "Castor (star)" before "Castor" (a disambiguation page); then "Alpha Geminorum" or "61 Cygni",
+            // the spelled-out names (ASCII letters only), which redirect to the star's article.
+            var proper = target.CommonName.Length > 0 && target.CommonName.All(c => c < 0x370 && !char.IsDigit(c))
+                ? target.CommonName
+                : null;
+            if (proper is not null)
+            {
+                titles.Add($"{proper} (star)");
+            }
+
+            titles.AddRange(target.AlternateNames.Where(name => name.All(c => c < 0x80)));
+            if (proper is not null)
+            {
+                titles.Add(proper);
+            }
+
+            return [.. titles.Distinct(StringComparer.OrdinalIgnoreCase).Take(4)];
+        }
+
         if (target.MessierNumber is { } messier)
         {
             titles.Add(string.Create(CultureInfo.InvariantCulture, $"Messier {messier}"));

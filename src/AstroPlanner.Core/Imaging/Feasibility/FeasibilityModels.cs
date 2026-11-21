@@ -69,7 +69,9 @@ public enum FeasibilityFactor
     /// <summary>Forecast seeing (7Timer!): Value = FWHM (″).</summary>
     Seeing,
     /// <summary>Forecast transparency (7Timer!): Value = mag/air mass, Value2 = extinction added to the site's k.</summary>
-    Transparency
+    Transparency,
+    /// <summary>A double star's main pair against the rig: Value = separation (″), Value2 = the rig's resolution limit (″), Value3 = companion magnitude.</summary>
+    Resolution
 }
 
 public enum ReasonImpact
@@ -273,6 +275,19 @@ public sealed record FeasibilityConstants
     /// total magnitude is spread over it. A typical value for comets within reach of small gear.
     /// </summary>
     public double CometComaArcmin { get; init; } = 5;
+
+    /// <summary>
+    /// Pixels between the two stars of a double for the camera to show them apart (two images
+    /// a pixel apart merge after debayering). The resolution limit is the largest of this times
+    /// the image scale, the Dawes limit of the aperture and the seeing FWHM.
+    /// </summary>
+    public double DoubleStarSplitPixels { get; init; } = 2;
+
+    /// <summary>A pair this many times wider than the resolution limit is comfortably split.</summary>
+    public double DoubleStarComfortFactor { get; init; } = 1.5;
+
+    /// <summary>Dawes' limit for an aperture of 1 mm (arcseconds): 116″ / D[mm].</summary>
+    public double DawesArcsecMillimetres { get; init; } = 116;
 
     /// <summary>Sampling step of the night.</summary>
     public TimeSpan Step { get; init; } = TimeSpan.FromMinutes(5);

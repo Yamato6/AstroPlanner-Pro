@@ -228,6 +228,16 @@ public sealed class FeasibilityCalculator(IAstronomyService astronomy)
         }
 
         var reasons = Explain(report, framing, sub, subLimit, snr, sampling, assumed, surfaceBrightness, c, request);
+        if (target.Star?.MainPair is { } pair)
+        {
+            var limit = ResolutionLimitArcsec(rig.ApertureMm, scale, c.SeeingArcsec, c);
+            var impact = pair.SeparationArcsec >= limit * c.DoubleStarComfortFactor ? ReasonImpact.Positive
+                : pair.SeparationArcsec >= limit ? ReasonImpact.Neutral
+                : ReasonImpact.Negative;
+            reasons.Insert(impact == ReasonImpact.Negative ? 0 : reasons.Count,
+                new FeasibilityReason(FeasibilityFactor.Resolution, impact, pair.SeparationArcsec, limit, pair.CompanionMagnitude));
+        }
+
         var total = TimeSpan.FromSeconds(subCount * sub);
         return report with
         {
@@ -455,6 +465,16 @@ public sealed class FeasibilityCalculator(IAstronomyService astronomy)
         }
 
         return new FramingAssessment(framing, majorPixels, minorPixels, fill, panels);
+    }
+
+    /// <summary>
+    /// Smallest separation (″) at which the rig shows a double star as two: the largest of the
+    /// Dawes limit of the aperture, <see cref="FeasibilityConstants.DoubleStarSplitPixels"/> pixels and the seeing.
+    /// </summary>
+    public static double ResolutionLimitArcsec(double apertureMm, double imageScaleArcsecPerPixel, double seeingArcsec, FeasibilityConstants constants)
+    {
+        ArgumentNullException.ThrowIfNull(constants);
+        return Math.Max(Math.Max(constants.DawesArcsecMillimetres / apertureMm, constants.DoubleStarSplitPixels * imageScaleArcsecPerPixel), seeingArcsec);
     }
 
     private static List<FeasibilityReason> Explain(

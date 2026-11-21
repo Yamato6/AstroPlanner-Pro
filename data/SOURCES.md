@@ -37,8 +37,20 @@ lists M102 as a duplicate of M101; the app keeps the usual identification, as v1
 | File | `data/hyg/CURRENT/hyg_v44.csv.gz` (Git LFS, fetched from the `media/commit/…` URL) — SHA-256 `00b349893b9a53106dd488d8371e8d2fa586043e500bb3cdb8bff3931682197d` |
 | Downloaded | 2026-11-19 |
 | License | **CC BY-SA 4.0** |
-| Used for | `catalogs.sqlite`, table `stars`: 83,476 stars to magnitude 9.0 (spec §16), with HIP/HD/HR, proper names, Bayer/Flamsteed, B–V and proper motion. Drawn by the sky renderer from M2. |
+| Used for | `catalogs.sqlite`, table `stars`: 83,476 stars to magnitude 9.0 (spec §16), with HIP/HD/HR, proper names, Bayer/Flamsteed, B–V, proper motion and (M6a) spectral type, distance, variability (Hipparcos range) and multiple-system grouping. Drawn by the sky renderer from M2; the 8,920 to magnitude 6.5 are catalog rows from M6a. |
 | Attribution | "HYG database v4.4 by David Nash / astronexus.net, CC BY-SA 4.0." |
+
+## Washington Double Star Catalog — double stars (M6a)
+
+| | |
+|---|---|
+| Source | U.S. Naval Observatory, Washington Double Star Catalog, summary file served by Georgia State University: http://www.astro.gsu.edu/wds/Webtextfiles/wdsweb_summ2.txt (format: `wdsweb_format.txt`). Only HTTP: the HTTPS certificate does not validate; the SHA-256 pins the content. |
+| Version | file of **2026-10-29** (Last-Modified) |
+| File | `wds/wdsweb_summ2.txt` — SHA-256 `937e5ffaba92e4bcee791b92c6b321f698dc7d048a5e44c96ce9684470aa544f` (157,886 pairs) |
+| Downloaded | 2026-11-21 |
+| License | U.S. government work, **public domain**; the USNO asks to credit the WDS. |
+| Used for | `catalogs.sqlite`, table `double_stars`: 2,975 pairs (primary ≤ mag 7, companion ≤ mag 11, 0.3″–300″) matched to 2,445 HYG stars; separation, position angle, magnitudes and year of the last measure. |
+| Attribution | "Washington Double Star Catalog, U.S. Naval Observatory (Mason et al. 2001, AJ 122, 3466)." |
 
 ## d3-celestial — constellation lines, boundaries, names, Milky Way
 

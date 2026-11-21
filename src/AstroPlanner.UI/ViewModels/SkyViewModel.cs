@@ -623,8 +623,13 @@ public sealed partial class SkyViewModel : ObservableObject, IDisposable
             return;
         }
 
-        _sentSelectionId = selection.Id;
-        if ((selection.Kind is SkyObjectKinds.DeepSky or SkyObjectKinds.Body) && _targets.SelectById(selection.Id))
+        // A star is picked by its HYG id; its catalog row (if bright enough to be one) has a HIP/HD id.
+        var rowId = selection.Kind == SkyObjectKinds.Star
+            ? int.TryParse(selection.Id, NumberStyles.Integer, CultureInfo.InvariantCulture, out var hygId) ? _targets.StarRowId(hygId) : null
+            : selection.Id;
+        _sentSelectionId = rowId ?? selection.Id;
+        if ((selection.Kind is SkyObjectKinds.DeepSky or SkyObjectKinds.Body or SkyObjectKinds.Star) && rowId is not null
+            && _targets.SelectById(rowId))
         {
             SkyOnlySelectionText = null;
         }
@@ -809,7 +814,9 @@ public sealed partial class SkyViewModel : ObservableObject, IDisposable
 
         Send(SkyMessageCodec.SelectObject(selected is null
             ? new SelectionPayload(null, null)
-            : new SelectionPayload(selected.Target.IsMoving ? SkyObjectKinds.Body : SkyObjectKinds.DeepSky, selected.Id)));
+            : selected.Target.Star is { } star
+                ? new SelectionPayload(SkyObjectKinds.Star, star.HygId.ToString(CultureInfo.InvariantCulture))
+                : new SelectionPayload(selected.Target.IsMoving ? SkyObjectKinds.Body : SkyObjectKinds.DeepSky, selected.Id)));
         OnPropertyChanged(nameof(HasCatalogSelection));
         return true;
     }

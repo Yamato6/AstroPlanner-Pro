@@ -92,6 +92,9 @@ public static class FeasibilityText
                 reason.Value, reason.Value2),
             FeasibilityFactor.AssumedBrightness => DisplayNames.Format(Strings.ReasonAssumedBrightnessFormat, reason.Value),
             FeasibilityFactor.Seeing => DisplayNames.Format(Strings.ReasonSeeingFormat, reason.Value),
+            FeasibilityFactor.Resolution => DisplayNames.Format(
+                reason.Impact == ReasonImpact.Negative ? Strings.ReasonResolutionUnsplitFormat : Strings.ReasonResolutionSplitFormat,
+                reason.Value, reason.Value2, reason.Value3),
             FeasibilityFactor.Transparency => DisplayNames.Format(Strings.ReasonTransparencyFormat, reason.Value, reason.Value2),
             _ => reason.Factor.ToString()
         };

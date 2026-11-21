@@ -110,7 +110,8 @@ internal static class Program
             OpenNgcRows(paths.Raw(DataSources.OpenNgc.RelativePath)).Concat(OpenNgcRows(paths.Raw(DataSources.OpenNgcAddendum.RelativePath))),
             HygRows(paths.Raw(DataSources.Hyg.RelativePath)),
             curation,
-            paths.Build(CatalogSchema.FileName));
+            paths.Build(CatalogSchema.FileName),
+            File.ReadLines(paths.Raw(DataSources.Wds.RelativePath), Encoding.Latin1));
 
         foreach (var source in DataSources.D3Celestial)
         {
@@ -207,16 +208,18 @@ internal static class Program
 /// <summary>Builds the catalog from parsed rows; separated from IO so that tests can run it on small fixtures.</summary>
 internal static class CatalogBuild
 {
-    public sealed record Result(OpenNgcImport OpenNgc, int StarCount, string Report);
+    public sealed record Result(OpenNgcImport OpenNgc, int StarCount, int DoubleStarPairs, string Report);
 
     public static Result Run(
         IEnumerable<IReadOnlyDictionary<string, string>> openNgcRows,
         IEnumerable<IReadOnlyDictionary<string, string>> hygRows,
         MessierCuration curation,
-        string outputPath)
+        string outputPath,
+        IEnumerable<string>? wdsLines = null)
     {
         var openNgc = OpenNgcImporter.Import(openNgcRows, curation);
         var stars = HygImporter.Import(hygRows);
+        var (doubles, selected, unmatched) = WdsImporter.Import(wdsLines ?? [], stars);
 
         var metadata = new Dictionary<string, string>(StringComparer.Ordinal)
         {
@@ -228,19 +231,24 @@ internal static class CatalogBuild
             ["hyg_sha256"] = DataSources.Hyg.Sha256,
             ["star_limiting_magnitude"] = HygImporter.DefaultLimitingMagnitude.ToString("0.0", CultureInfo.InvariantCulture),
             ["object_count"] = openNgc.Objects.Count.ToString(CultureInfo.InvariantCulture),
-            ["star_count"] = stars.Count.ToString(CultureInfo.InvariantCulture)
+            ["star_count"] = stars.Count.ToString(CultureInfo.InvariantCulture),
+            ["wds_version"] = DataSources.Wds.Version,
+            ["wds_sha256"] = DataSources.Wds.Sha256,
+            ["double_star_pairs"] = doubles.Count.ToString(CultureInfo.InvariantCulture)
         };
 
-        CatalogWriter.Write(outputPath, openNgc.Objects, stars, metadata);
-        return new Result(openNgc, stars.Count, Report(openNgc, stars.Count));
+        CatalogWriter.Write(outputPath, openNgc.Objects, stars, metadata, doubles);
+        return new Result(openNgc, stars.Count, doubles.Count, Report(openNgc, stars.Count, doubles, selected, unmatched));
     }
 
-    private static string Report(OpenNgcImport openNgc, int starCount)
+    private static string Report(OpenNgcImport openNgc, int starCount, IReadOnlyList<DoubleStarEntry> doubles, int selected, int unmatched)
     {
         var report = new StringBuilder();
         report.AppendLine(CultureInfo.InvariantCulture, $"# catalogs.sqlite build report (schema {CatalogSchema.Version})");
         report.AppendLine(CultureInfo.InvariantCulture, $"OpenNGC {DataSources.OpenNgc.Version}: {openNgc.Objects.Count} objects ({openNgc.DuplicateRows} duplicate rows folded, {openNgc.NonExistentRows} non-existent dropped)");
         report.AppendLine(CultureInfo.InvariantCulture, $"HYG {DataSources.Hyg.Version}: {starCount} stars to magnitude {HygImporter.DefaultLimitingMagnitude:0.0}");
+        report.AppendLine(CultureInfo.InvariantCulture,
+            $"WDS {DataSources.Wds.Version}: {selected} pairs selected (primary <= {WdsImporter.MaximumPrimaryMagnitude:0.0}, secondary <= {WdsImporter.MaximumSecondaryMagnitude:0.0}, {WdsImporter.MinimumSeparationArcsec:0.0}\"-{WdsImporter.MaximumSeparationArcsec:0}\"), {doubles.Count} matched to {doubles.Select(d => d.HygId).Distinct().Count()} HYG stars, {unmatched} unmatched");
         report.AppendLine();
         report.AppendLine("## Objects by type");
         foreach (var group in openNgc.Objects.GroupBy(o => o.Type).OrderByDescending(g => g.Count()).ThenBy(g => g.Key))

@@ -90,9 +90,12 @@ public sealed class NightConditionsUiTests
 
         shell.Tonight.ConditionsText.Should().Be("Seeing 1.1″ · transparency 0.35 mag");
         shell.Tonight.ConditionsDetailText.Should().StartWith("Dew margin 1 °C").And.Contain("gusts up to 35 km/h");
-        shell.Tonight.Alerts.Should().HaveCount(2);
-        shell.Tonight.Alerts[0].Should().StartWith("⚠ Dew likely from");
-        shell.Tonight.Alerts[1].Should().Contain("35 km/h").And.Contain("over 30 km/h", "the demo rig is a camera on a tripod");
+        // The Milky Way core alert is found in the background and may or may not be there yet.
+        await shell.Tonight.MilkyWayTask;
+        var conditions = shell.Tonight.Alerts.Where(a => !a.StartsWith("🌌", StringComparison.Ordinal)).ToList();
+        conditions.Should().HaveCount(2);
+        conditions[0].Should().StartWith("⚠ Dew likely from");
+        conditions[1].Should().Contain("35 km/h").And.Contain("over 30 km/h", "the demo rig is a camera on a tripod");
         shell.OnlineStatusText.Should().Be(Strings.OnlineStatusOnline);
         shell.OnlineStatusTooltip.Should().Contain("Open-Meteo): updated").And.Contain("7Timer!): updated").And.Contain("GitHub): on");
     }

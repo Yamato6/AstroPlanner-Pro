@@ -834,4 +834,15 @@
   <data name="PdfCrossingsTitle" xml:space="preserve"><value>Satellites crossing the field (sunlit; the frames taken then may show a trail)</value></data>
   <data name="ColumnSatellites" xml:space="preserve"><value>Sat.</value></data>
   <data name="ColumnSatellitesTooltip" xml:space="preserve"><value>Sunlit bright satellites crossing the active rig's field (north up) during the block; red ticks on the timeline. Hover a number for the times.</value></data>
+  <data name="ReasonResolutionSplitFormat" xml:space="preserve"><value>Double star: this rig splits the main pair ({0:0.0}″ apart, companion mag {2:0.0}); it resolves down to {1:0.0}″</value></data>
+  <data name="ReasonResolutionUnsplitFormat" xml:space="preserve"><value>Double star: the main pair ({0:0.0}″ apart) is closer than this rig resolves ({1:0.0}″); it will look like one star</value></data>
+  <data name="CatalogStars" xml:space="preserve"><value>Stars</value></data>
+  <data name="StarSpectralFormat" xml:space="preserve"><value>Spectral type {0}</value></data>
+  <data name="StarColorFormat" xml:space="preserve"><value>B−V {0:0.00}</value></data>
+  <data name="StarDistanceFormat" xml:space="preserve"><value>{0:#,0.#} light-years</value></data>
+  <data name="StarVariable" xml:space="preserve"><value>variable</value></data>
+  <data name="StarVariableRangeFormat" xml:space="preserve"><value>variable (Hipparcos {0:0.00}–{1:0.00})</value></data>
+  <data name="DetailDoubleStarTitle" xml:space="preserve"><value>Double star (Washington Double Star Catalog, last measures)</value></data>
+  <data name="DoubleStarPairFormat" xml:space="preserve"><value>{0} · {1:0.0}″ at PA {2:0}° · mags {3:0.0} + {4:0.0} ({5})</value></data>
+  <data name="DoubleStarPairNoAngleFormat" xml:space="preserve"><value>{0} · {1:0.0}″ · mags {2:0.0} + {3:0.0} ({4})</value></data>
 </root>

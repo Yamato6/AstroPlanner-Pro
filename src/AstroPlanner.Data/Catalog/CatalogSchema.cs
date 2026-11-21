@@ -8,7 +8,7 @@ namespace AstroPlanner.Data.Catalog;
 public static class CatalogSchema
 {
     /// <summary>Stored in <c>meta.schema_version</c>.</summary>
-    public const int Version = 1;
+    public const int Version = 2;
 
     /// <summary>File name inside <c>data/build</c> and of the embedded resource.</summary>
     public const string FileName = "catalogs.sqlite";
@@ -67,10 +67,36 @@ public static class CatalogSchema
             magnitude     REAL NOT NULL,
             color_index   REAL,
             pm_ra_mas     REAL,
-            pm_dec_mas    REAL
+            pm_dec_mas    REAL,
+            -- Schema 2 (M6a): what HYG says about the star beyond its position.
+            spectral_type TEXT,
+            distance_pc   REAL,
+            variable      TEXT,
+            var_min       REAL,
+            var_max       REAL,
+            component     INTEGER,
+            comp_primary  INTEGER,
+            system        TEXT
+        );
+
+        -- Double stars (Washington Double Star Catalog) matched to a HYG star (schema 2).
+        CREATE TABLE double_stars (
+            hyg_id            INTEGER NOT NULL REFERENCES stars (hyg_id),
+            wds_id            TEXT NOT NULL,
+            discoverer        TEXT NOT NULL,
+            components        TEXT NOT NULL,
+            first_year        INTEGER,
+            last_year         INTEGER NOT NULL,
+            pa_degrees        REAL,
+            separation_arcsec REAL NOT NULL,
+            magnitude1        REAL NOT NULL,
+            magnitude2        REAL NOT NULL,
+            spectral_type     TEXT,
+            PRIMARY KEY (wds_id, discoverer, components)
         );
 
         CREATE INDEX stars_magnitude ON stars (magnitude);
+        CREATE INDEX double_stars_hyg ON double_stars (hyg_id);
         CREATE INDEX designations_designation ON designations (designation);
         """;
 }

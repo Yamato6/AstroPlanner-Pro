@@ -1,6 +1,7 @@
-# catalogs.sqlite build report (schema 1)
+# catalogs.sqlite build report (schema 2)
 OpenNGC v20260501: 13371 objects (652 duplicate rows folded, 10 non-existent dropped)
 HYG v4.4: 83476 stars to magnitude 9.0
+WDS 2026-10-29: 3239 pairs selected (primary <= 7.0, secondary <= 11.0, 0.3"-300"), 2975 matched to 2445 HYG stars, 264 unmatched
 
 ## Objects by type
 Galaxy: 10521

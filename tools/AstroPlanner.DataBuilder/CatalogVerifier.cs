@@ -9,10 +9,11 @@ namespace AstroPlanner.DataBuilder;
 /// </summary>
 internal static class CatalogVerifier
 {
-    public sealed record Expectations(int MinimumObjects, int MinimumStars, int MessierCount, int CaldwellCount, bool SpotChecks);
+    public sealed record Expectations(
+        int MinimumObjects, int MinimumStars, int MessierCount, int CaldwellCount, bool SpotChecks, int MinimumDoubleStarPairs = 0);
 
     /// <summary>What a full build from the real sources must contain.</summary>
-    public static readonly Expectations FullBuild = new(13_000, 80_000, 110, 109, SpotChecks: true);
+    public static readonly Expectations FullBuild = new(13_000, 80_000, 110, 109, SpotChecks: true, MinimumDoubleStarPairs: 2_500);
 
     public static IReadOnlyList<string> Verify(string path, Expectations expectations)
     {
@@ -55,6 +56,10 @@ internal static class CatalogVerifier
         Expect(messier == expectations.MessierCount, $"Messier objects: {messier}, expected {expectations.MessierCount}");
         Expect(caldwell == expectations.CaldwellCount, $"Caldwell objects: {caldwell}, expected {expectations.CaldwellCount}");
         Expect(Scalar("SELECT COUNT(*) FROM meta WHERE key = 'schema_version'") == 1, "meta.schema_version is missing");
+        var pairs = Scalar("SELECT COUNT(*) FROM double_stars");
+        Expect(pairs >= expectations.MinimumDoubleStarPairs, $"double-star pairs: {pairs} < {expectations.MinimumDoubleStarPairs}");
+        Expect(Scalar("SELECT COUNT(*) FROM double_stars d LEFT JOIN stars s ON s.hyg_id = d.hyg_id WHERE s.hyg_id IS NULL") == 0,
+            "double-star pairs point to missing stars");
 
         if (!expectations.SpotChecks)
         {
@@ -115,6 +120,30 @@ internal static class CatalogVerifier
         ExpectStar("Polaris", "UMi", 1.97);
         ExpectStar("Sirius", "CMa", -1.44);
         ExpectStar("Vega", "Lyr", 0.03);
+
+        // Schema 2: what HYG says about Sirius, and classic doubles of the WDS.
+        Expect(Scalar("SELECT COUNT(*) FROM stars WHERE proper_name = 'Sirius' AND spectral_type LIKE 'A%' AND distance_pc BETWEEN 2.6 AND 2.7") == 1,
+            "Sirius: spectral type A and a distance of 2.64 pc expected");
+
+        void ExpectPair(string star, string discoverer, double separationArcsec)
+        {
+            using var command = connection.CreateCommand();
+            command.CommandText = "SELECT d.separation_arcsec FROM double_stars d JOIN stars s ON s.hyg_id = d.hyg_id "
+                + "WHERE s.proper_name = $star AND d.discoverer = $discoverer";
+            command.Parameters.AddWithValue("$star", star);
+            command.Parameters.AddWithValue("$discoverer", discoverer);
+            if (command.ExecuteScalar() is not double separation)
+            {
+                failures.Add($"double star {star} ({discoverer}) is missing");
+                return;
+            }
+
+            Expect(Math.Abs(separation - separationArcsec) < 1, $"{star} ({discoverer}): separation {separation}″, expected about {separationArcsec}″");
+        }
+
+        ExpectPair("Albireo", "STFA 43", 34.3);
+        ExpectPair("Mizar", "STF1744", 14.4);
+        ExpectPair("Polaris", "STF  93", 18.4);
 
         return failures;
     }

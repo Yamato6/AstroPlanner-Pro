@@ -46,11 +46,27 @@ internal static class HygImporter
                 Magnitude: magnitude.Value,
                 ColorIndex: ParseOptional(row["ci"]),
                 ProperMotionRaMas: ParseOptional(row["pmra"]),
-                ProperMotionDecMas: ParseOptional(row["pmdec"])));
+                ProperMotionDecMas: ParseOptional(row["pmdec"]))
+            {
+                SpectralType = Text(Column(row, "spect")),
+                DistanceParsecs = ParseOptional(Column(row, "dist")) is { } distance && distance > 0 && distance < UnknownDistanceParsecs
+                    ? distance : null,
+                VariableName = Text(Column(row, "var")),
+                VariableMinimumMagnitude = ParseOptional(Column(row, "var_min")),
+                VariableMaximumMagnitude = ParseOptional(Column(row, "var_max")),
+                Component = ParseInt(Column(row, "comp")),
+                ComponentPrimary = ParseInt(Column(row, "comp_primary")),
+                MultipleSystem = Text(Column(row, "base"))
+            });
         }
 
         return [.. stars.OrderBy(s => s.HygId)];
     }
+
+    /// <summary>HYG's distance for "unknown" (parsecs).</summary>
+    private const double UnknownDistanceParsecs = 100_000;
+
+    private static string Column(IReadOnlyDictionary<string, string> row, string name) => row.TryGetValue(name, out var value) ? value : "";
 
     private static double NormalizeHours(double hours) => hours >= 24 ? hours - 24 : hours < 0 ? hours + 24 : hours;
 

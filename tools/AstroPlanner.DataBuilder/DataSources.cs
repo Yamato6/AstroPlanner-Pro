@@ -28,6 +28,14 @@ internal static class DataSources
         new Uri("https://codeberg.org/astronexus/hyg/media/commit/53e3df311869e813ace5f1ad2ec4ce909f13256c/data/hyg/CURRENT/hyg_v44.csv.gz"),
         "00b349893b9a53106dd488d8371e8d2fa586043e500bb3cdb8bff3931682197d", "v4.4", "CC BY-SA 4.0");
 
+    /// <summary>
+    /// Washington Double Star Catalog summary (USNO, served by Georgia State University; M6a). Only
+    /// over HTTP (the HTTPS certificate does not validate): the pinned SHA-256 guarantees the content.
+    /// </summary>
+    public static readonly DataSource Wds = new(
+        "wds/wdsweb_summ2.txt", new Uri("http://www.astro.gsu.edu/wds/Webtextfiles/wdsweb_summ2.txt"),
+        "937e5ffaba92e4bcee791b92c6b321f698dc7d048a5e44c96ce9684470aa544f", "2026-10-29", "Public domain (U.S. Naval Observatory)");
+
     /// <summary>d3-celestial files copied as-is to data/build/sky for the sky renderer (M2).</summary>
     public static readonly IReadOnlyList<DataSource> D3Celestial =
     [
@@ -49,5 +57,5 @@ internal static class DataSources
         "World_Atlas_2015.tif", new Uri("https://datapub.gfz.de/download/10.5880.GFZ.1.4.2016.001/World_Atlas_2015.zip"),
         "9725566ed4fcf1a8fa311654143bb024c4fe2a792b85356be99adce07e1e83c1", "2015 (published 2016)", "CC BY-NC 4.0");
 
-    public static IEnumerable<DataSource> All => new[] { OpenNgc, OpenNgcAddendum, Hyg }.Concat(D3Celestial);
+    public static IEnumerable<DataSource> All => new[] { OpenNgc, OpenNgcAddendum, Hyg, Wds }.Concat(D3Celestial);
 }
