@@ -141,7 +141,8 @@ internal static class TestShell
         IObjectInfoService? info = null,
         INameResolver? resolver = null,
         IImageDecoder? decoder = null,
-        ISmallBodyService? smallBodies = null)
+        ISmallBodyService? smallBodies = null,
+        ISatelliteService? satellites = null)
     {
         var logger = new NullLogger();
         var astronomy = new AstronomyService();
@@ -155,20 +156,21 @@ internal static class TestShell
         var targets = new TargetsViewModel(
             new FakeCelestialRepository(catalog ?? [TestCatalog.M42, TestCatalog.M31, TestCatalog.M13]),
             astronomy, context, settings, logbook, logger, equipmentState, weatherState);
-        var planViewModel = new SessionPlanViewModel(plan ?? new FakePlanService(), astronomy, context, weatherState, targets, logger,
-            equipmentState, time);
         var online = new OnlineInfoState();
+        var satelliteState = new SatelliteState(context, online, logger, time, satellites);
+        var planViewModel = new SessionPlanViewModel(plan ?? new FakePlanService(), astronomy, context, weatherState, targets, logger,
+            equipmentState, time, satelliteState);
         var framing = new FramingViewModel(tiles, decoder ?? new WpfImageDecoder(), equipmentState, online, logger, time);
         var about = new ObjectInfoViewModel(info, online, logger, time);
         var detail = new ObjectDetailViewModel(astronomy, context, weatherState, targets, planViewModel, logbook, framing, about);
         var sky = new SkyViewModel(context, targets, planViewModel, skyStore ?? new FakeSkyViewStore(), logger, time, equipmentState,
-            resolver, online);
-        var tonight = new TonightViewModel(context, weatherState, logbook, targets, equipmentState, planViewModel, astronomy);
+            resolver, online, satelliteState);
+        var tonight = new TonightViewModel(context, weatherState, logbook, targets, equipmentState, planViewModel, astronomy, satelliteState);
         var locationsViewModel = new LocationsViewModel(locations ?? new FakeLocationRepository(), settingsViewModel, context, logger, atlas);
         return new ShellViewModel(
             context, weatherState, tonight, targets, sky, detail, planViewModel, logbook, locationsViewModel, settingsViewModel,
             logger, time, updates, new EquipmentViewModel(equipmentState), online,
-            new SmallBodyState(context, online, logger, time, smallBodies));
+            new SmallBodyState(context, online, logger, time, smallBodies), satelliteState);
     }
 }
 

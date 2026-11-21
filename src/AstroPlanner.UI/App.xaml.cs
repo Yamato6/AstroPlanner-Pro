@@ -12,6 +12,7 @@ using AstroPlanner.Data.Repositories;
 using AstroPlanner.Data.Storage;
 using AstroPlanner.Online.Imaging;
 using AstroPlanner.Online.Info;
+using AstroPlanner.Online.Satellites;
 using AstroPlanner.Online.SmallBodies;
 using AstroPlanner.Online.Weather;
 using AstroPlanner.UI.Resources;
@@ -77,6 +78,22 @@ public partial class App : Application
                 });
         }
 
+        // CelesTrak blocks addresses that repeat failing requests: no retries at all, and the
+        // service itself pauses for 2 h after an error (CelesTrakService).
+        services.AddHttpClient(OnlineClients.CelesTrak, http =>
+            {
+                http.Timeout = Timeout.InfiniteTimeSpan;
+                http.DefaultRequestHeaders.UserAgent.ParseAdd($"AstroPlannerPro/{AppVersion.Current}");
+                http.DefaultRequestHeaders.UserAgent.ParseAdd("(+https://github.com/Yamato6/AstroPlanner-Pro)");
+            })
+            .AddStandardResilienceHandler(options =>
+            {
+                options.TotalRequestTimeout.Timeout = TimeSpan.FromSeconds(20);
+                options.AttemptTimeout.Timeout = TimeSpan.FromSeconds(20);
+                options.CircuitBreaker.SamplingDuration = TimeSpan.FromSeconds(40);
+                options.Retry.ShouldHandle = _ => ValueTask.FromResult(false);
+            });
+
         services.AddSingleton<IWeatherForecastService>(sp => new OpenMeteoForecastService(
             sp.GetRequiredService<IHttpClientFactory>().CreateClient(OnlineClients.OpenMeteo), sp.GetRequiredService<TimeProvider>(),
             sp.GetRequiredService<IOnlineCache>()));
@@ -96,6 +113,10 @@ public partial class App : Application
             sp.GetRequiredService<IHttpClientFactory>().CreateClient(OnlineClients.Mpc), sp.GetRequiredService<TimeProvider>(),
             sp.GetRequiredService<IOnlineCache>()));
         services.AddSingleton<SmallBodyState>();
+        services.AddSingleton<ISatelliteService>(sp => new CelesTrakService(
+            sp.GetRequiredService<IHttpClientFactory>().CreateClient(OnlineClients.CelesTrak), sp.GetRequiredService<TimeProvider>(),
+            sp.GetRequiredService<IOnlineCache>()));
+        services.AddSingleton<SatelliteState>();
         services.AddSingleton<IImageDecoder, WpfImageDecoder>();
         services.AddSingleton<OnlineInfoState>();
         services.AddSingleton<IUpdateChecker>(sp => new GitHubUpdateChecker(

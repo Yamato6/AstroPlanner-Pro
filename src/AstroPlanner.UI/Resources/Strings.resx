@@ -813,4 +813,25 @@
   <data name="SettingsSmallBodies" xml:space="preserve"><value>Comets and bright asteroids (Minor Planet Center)</value></data>
   <data name="SettingsSmallBodiesNote" xml:space="preserve"><value>Downloads orbital elements from minorplanetcenter.net (daily for comets, yearly for asteroids); sends nothing about you.</value></data>
   <data name="OnlineServiceSmallBodies" xml:space="preserve"><value>Comets and asteroids (MPC)</value></data>
+  <data name="SettingsSatellites" xml:space="preserve"><value>Bright satellites and space stations (CelesTrak)</value></data>
+  <data name="SettingsSatellitesNote" xml:space="preserve"><value>Downloads orbital elements from celestrak.org at most twice a day (pausing 2 h after an error); sends nothing about you.</value></data>
+  <data name="OnlineServiceSatellites" xml:space="preserve"><value>Satellites (CelesTrak)</value></data>
+  <data name="SkyLayerSatellites" xml:space="preserve"><value>Satellites</value></data>
+  <data name="SkySatelliteNextPassFormat" xml:space="preserve"><value>{0} · next pass {1:HH:mm}–{2:HH:mm}, max {3:0}° ({4})</value></data>
+  <data name="SkySatelliteNoPassFormat" xml:space="preserve"><value>{0} · no pass above 10° in the next 24 h</value></data>
+  <data name="SkySatelliteVisible" xml:space="preserve"><value>visible</value></data>
+  <data name="SkySatelliteNotVisible" xml:space="preserve"><value>not visible: daylight or Earth's shadow</value></data>
+  <data name="SatellitePassesTitle" xml:space="preserve"><value>Bright satellite passes tonight</value></data>
+  <data name="SatellitePassesTooltip" xml:space="preserve"><value>Visible part of each pass above 10°: the satellite is sunlit and the Sun is at least 6° below the horizon. Magnitudes from McCants' standard magnitudes.</value></data>
+  <data name="SatellitePassesOff" xml:space="preserve"><value>Satellites are turned off in Settings › Internet.</value></data>
+  <data name="SatellitePassesWaiting" xml:space="preserve"><value>Waiting for the satellite elements…</value></data>
+  <data name="SatellitePassesNone" xml:space="preserve"><value>No bright satellite is visible tonight.</value></data>
+  <data name="SatellitePassFormat" xml:space="preserve"><value>{0} · {1:HH:mm:ss}–{2:HH:mm:ss} · max {3:0}° · {4} → {5} · mag {6:0.0}</value></data>
+  <data name="AlertIssPassFormat" xml:space="preserve"><value>🛰 ISS pass tonight from {0:HH:mm}: max {1:0}°, {2} → {3}, mag {4:0.0}</value></data>
+  <data name="CompassPoints" xml:space="preserve"><value>N,NE,E,SE,S,SW,W,NW</value></data>
+  <data name="PlanCrossingFormat" xml:space="preserve"><value>{0} crosses the field {1:HH:mm:ss}–{2:HH:mm:ss}, mag {3:0.0}</value></data>
+  <data name="PlanCrossingNoMagnitudeFormat" xml:space="preserve"><value>{0} crosses the field {1:HH:mm:ss}–{2:HH:mm:ss}</value></data>
+  <data name="PdfCrossingsTitle" xml:space="preserve"><value>Satellites crossing the field (sunlit; the frames taken then may show a trail)</value></data>
+  <data name="ColumnSatellites" xml:space="preserve"><value>Sat.</value></data>
+  <data name="ColumnSatellitesTooltip" xml:space="preserve"><value>Sunlit bright satellites crossing the active rig's field (north up) during the block; red ticks on the timeline. Hover a number for the times.</value></data>
 </root>

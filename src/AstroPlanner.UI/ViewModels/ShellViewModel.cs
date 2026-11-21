@@ -44,10 +44,12 @@ public sealed partial class ShellViewModel : ObservableObject, IDisposable
         IUpdateChecker? updateChecker = null,
         EquipmentViewModel? equipment = null,
         OnlineInfoState? online = null,
-        SmallBodyState? smallBodies = null)
+        SmallBodyState? smallBodies = null,
+        SatelliteState? satellites = null)
     {
         _online = online ?? new OnlineInfoState();
         SmallBodies = smallBodies;
+        Satellites = satellites;
         Equipment = equipment;
         _context = context;
         _weather = weather;
@@ -74,11 +76,17 @@ public sealed partial class ShellViewModel : ObservableObject, IDisposable
         // The persisted settings win over runtime values.
         _weather.IsEnabled = settings.WeatherForecastEnabled;
         _weather.IsAstroEnabled = settings.AstroForecastEnabled;
-        _online.Apply(settings.SurveyImagesEnabled, settings.WikipediaEnabled, settings.NameResolverEnabled, settings.SmallBodiesEnabled);
+        _online.Apply(settings.SurveyImagesEnabled, settings.WikipediaEnabled, settings.NameResolverEnabled, settings.SmallBodiesEnabled,
+            settings.SatellitesEnabled);
         if (smallBodies is not null)
         {
             smallBodies.Changed += (_, _) => Targets.SetSmallBodies(smallBodies.Objects);
             Targets.CatalogLoaded += (_, _) => _ = smallBodies.RefreshSafeAsync();
+        }
+
+        if (satellites is not null)
+        {
+            Targets.CatalogLoaded += (_, _) => _ = satellites.RefreshSafeAsync();
         }
 
         _context.LocationName = DescribeLocation();
@@ -99,7 +107,8 @@ public sealed partial class ShellViewModel : ObservableObject, IDisposable
                 (_online.Images.Enabled, null, _online.Images.LastError, false),
                 (_online.Wikipedia.Enabled, null, _online.Wikipedia.LastError, false),
                 (_online.NameResolver.Enabled, null, _online.NameResolver.LastError, false),
-                (_online.SmallBodies.Enabled, null, _online.SmallBodies.LastError, false) };
+                (_online.SmallBodies.Enabled, null, _online.SmallBodies.LastError, false),
+                (_online.Satellites.Enabled, null, _online.Satellites.LastError, false) };
             if (!services.Any(s => s.Item1))
             {
                 return Strings.OnlineStatusOff;
@@ -122,6 +131,7 @@ public sealed partial class ShellViewModel : ObservableObject, IDisposable
         OnDemandLine(Strings.OnlineServiceWikipedia, _online.Wikipedia),
         OnDemandLine(Strings.OnlineServiceNameResolver, _online.NameResolver),
         OnDemandLine(Strings.OnlineServiceSmallBodies, _online.SmallBodies),
+        OnDemandLine(Strings.OnlineServiceSatellites, _online.Satellites),
         DisplayNames.Format(Strings.OnlineServiceLineFormat, Strings.OnlineServiceUpdates, Settings.CheckForUpdates ? Strings.OnlineServiceOn : Strings.OnlineServiceDisabled));
 
     private string ServiceLine(string name, bool enabled, DateTime? fetchedUtc, string? error, bool stale)
@@ -157,6 +167,9 @@ public sealed partial class ShellViewModel : ObservableObject, IDisposable
 
     /// <summary>Comets and asteroids of the catalog (null only in tests that do not need them).</summary>
     public SmallBodyState? SmallBodies { get; }
+
+    /// <summary>Satellites and tonight's passes (null only in tests that do not need them).</summary>
+    public SatelliteState? Satellites { get; }
 
     /// <summary>Cloud forecast for the active location.</summary>
     public WeatherState Weather => _weather;
@@ -217,8 +230,10 @@ public sealed partial class ShellViewModel : ObservableObject, IDisposable
             _ = _weather.RefreshSafeAsync();
         }
 
-        _online.Apply(settings.SurveyImagesEnabled, settings.WikipediaEnabled, settings.NameResolverEnabled, settings.SmallBodiesEnabled);
+        _online.Apply(settings.SurveyImagesEnabled, settings.WikipediaEnabled, settings.NameResolverEnabled, settings.SmallBodiesEnabled,
+            settings.SatellitesEnabled);
         _ = SmallBodies?.RefreshSafeAsync();
+        _ = Satellites?.RefreshSafeAsync();
     }
 
     // ─── Date and time ──────────────────────────────────────────────────

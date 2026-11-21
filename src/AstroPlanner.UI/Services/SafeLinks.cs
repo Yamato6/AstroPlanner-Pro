@@ -16,7 +16,9 @@ public static class SafeLinks
         // M4b: articles, images and their licenses, survey and name-resolver credits.
         "wikipedia.org", "wikimedia.org", "creativecommons.org", "cds.unistra.fr", "esa.int", "stsci.edu",
         // M5a: comet and asteroid elements.
-        "minorplanetcenter.net"
+        "minorplanetcenter.net",
+        // M5b: satellite elements.
+        "celestrak.org"
     ];
 
     public static bool IsAllowed(Uri? uri) =>

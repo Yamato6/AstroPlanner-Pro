@@ -5,6 +5,7 @@ using CommunityToolkit.Mvvm.Input;
 using AstroPlanner.Core.Algorithms;
 using AstroPlanner.Core.Imaging;
 using AstroPlanner.Core.Models;
+using AstroPlanner.Core.Satellites;
 using AstroPlanner.Core.Sky;
 using AstroPlanner.Core.SkyQuality;
 using AstroPlanner.SkyBridge;
@@ -70,6 +71,8 @@ public sealed partial class SkyViewModel : ObservableObject, IDisposable
     private bool _rendererReady;
     private DateTime? _frameEpochUtc;
     private DateTime? _tracksCenterUtc;
+    private DateTime? _satellitesCenterUtc;
+    private readonly SatelliteState? _satellites;
     private string? _sentSelectionId;
     private ITimer? _resyncTimer;
     private SynchronizationContext? _uiContext;
@@ -86,8 +89,10 @@ public sealed partial class SkyViewModel : ObservableObject, IDisposable
         TimeProvider? time = null,
         EquipmentState? equipment = null,
         INameResolver? nameResolver = null,
-        OnlineInfoState? online = null)
+        OnlineInfoState? online = null,
+        SatelliteState? satellites = null)
     {
+        _satellites = satellites;
         _equipment = equipment;
         _nameResolver = nameResolver;
         _online = online;
@@ -111,6 +116,7 @@ public sealed partial class SkyViewModel : ObservableObject, IDisposable
             Toggle("milkyWay", Strings.SkyLayerMilkyWay, _settings.MilkyWay),
             Toggle("deepSky", Strings.SkyLayerDeepSky, _settings.DeepSky),
             Toggle("bodies", Strings.SkyLayerBodies, _settings.Bodies),
+            Toggle("satellites", Strings.SkyLayerSatellites, _settings.Satellites),
             Toggle("labels", Strings.SkyLayerLabels, _settings.Labels),
             Toggle("altAzGrid", Strings.SkyLayerAltAzGrid, _settings.AltAzGrid),
             Toggle("equatorialGrid", Strings.SkyLayerEquatorialGrid, _settings.EquatorialGrid),
@@ -151,6 +157,16 @@ public sealed partial class SkyViewModel : ObservableObject, IDisposable
             MapVersion++;
             SendHighlights();
         };
+        if (_satellites is not null)
+        {
+            _satellites.Changed += (_, _) =>
+            {
+                if (_context.InputError is null && _satellites.Satellites.Count != _sentSatelliteCount)
+                {
+                    SendBodies(_clock.UtcNow);
+                }
+            };
+        }
         _context.Recalculated += (_, _) => OnContextRecalculated();
         _context.PropertyChanged += OnContextPropertyChanged;
         if (_equipment is not null)
@@ -443,7 +459,8 @@ public sealed partial class SkyViewModel : ObservableObject, IDisposable
             SendFrame(utc);
         }
 
-        if (_tracksCenterUtc is null || (utc - _tracksCenterUtc.Value).Duration() > TrackHalfWindow - TimeSpan.FromHours(1))
+        if (_tracksCenterUtc is null || (utc - _tracksCenterUtc.Value).Duration() > TrackHalfWindow - TimeSpan.FromHours(1)
+            || (_satellitesCenterUtc is { } satellites && (utc - satellites).Duration() > SatelliteTracks.HalfWindow - SatelliteResendMargin))
         {
             SendBodies(utc);
         }
@@ -613,7 +630,7 @@ public sealed partial class SkyViewModel : ObservableObject, IDisposable
         }
         else
         {
-            SkyOnlySelectionText = HoverText ?? BodyName(selection.Id);
+            SkyOnlySelectionText = SatelliteSelectionText(selection.Id) ?? HoverText ?? BodyName(selection.Id);
         }
 
         OnPropertyChanged(nameof(SelectedText));
@@ -687,9 +704,49 @@ public sealed partial class SkyViewModel : ObservableObject, IDisposable
         }
 
         _tracksCenterUtc = utc;
+        var satellites = SkySatellites(utc);
+        _satellitesCenterUtc = satellites.Count > 0 ? utc : null;
         Send(SkyMessageCodec.MovingBodies(SkyBridgeMapper.MovingBodies(
-            _context.Observer, utc, TrackHalfWindow, TrackStep, BodyDisplayName, SkySmallBodies(utc))));
+            _context.Observer, utc, TrackHalfWindow, TrackStep, BodyDisplayName, SkySmallBodies(utc), satellites)));
         SendAppearance(utc);
+    }
+
+    /// <summary>Most satellites drawn at once (those above the horizon in the ±15 min window, brightest first).</summary>
+    public const int SatelliteCountLimit = 60;
+
+    /// <summary>Satellite tracks are re-sent this long before the sky time leaves their ±15 min window.</summary>
+    private static readonly TimeSpan SatelliteResendMargin = TimeSpan.FromMinutes(5);
+
+    private int _sentSatelliteCount = -1;
+
+    private IReadOnlyList<SatelliteTrack> SkySatellites(DateTime utc)
+    {
+        _sentSatelliteCount = _satellites?.Satellites.Count ?? 0;
+        return _satellites is { IsEnabled: true, Satellites.Count: > 0 } state
+            ? SatelliteTracks.Get(state.Satellites, _context.Observer, utc, SatelliteCountLimit)
+            : [];
+    }
+
+    /// <summary>"ISS (ZARYA) · next pass 19:42–19:48, max 54°" for a satellite picked in the sky.</summary>
+    private string? SatelliteSelectionText(string id)
+    {
+        if (_satellites is null || !id.StartsWith("sat-", StringComparison.Ordinal)
+            || !int.TryParse(id.AsSpan(4), NumberStyles.Integer, CultureInfo.InvariantCulture, out var number)
+            || _satellites.Find(number) is not { } satellite)
+        {
+            return null;
+        }
+
+        var next = _satellites.NextPasses(number, _clock.UtcNow, 1);
+        if (next.Count == 0)
+        {
+            return DisplayNames.Format(Strings.SkySatelliteNoPassFormat, satellite.Name);
+        }
+
+        var pass = next[0];
+        return DisplayNames.Format(Strings.SkySatelliteNextPassFormat, satellite.Name,
+            TimeZoneInfo.ConvertTimeFromUtc(pass.RiseUtc, _context.TimeZone), TimeZoneInfo.ConvertTimeFromUtc(pass.SetUtc, _context.TimeZone),
+            pass.MaxAltitudeDegrees, pass.IsVisible ? Strings.SkySatelliteVisible : Strings.SkySatelliteNotVisible);
     }
 
     /// <summary>Faintest comet or asteroid drawn in the sky.</summary>
@@ -1176,6 +1233,7 @@ public sealed partial class SkyViewModel : ObservableObject, IDisposable
         Labels: Layer("labels"),
         Ground: Layer("ground"),
         SkyBrightness: Layer("skyBrightness"),
+        Satellites: Layer("satellites"),
         StarLimitMagnitude: Math.Clamp(StarLimitMagnitude, 3, 9.5),
         DeepSkyLimitMagnitude: _settings.DeepSkyLimitMagnitude);
 
@@ -1201,6 +1259,7 @@ public sealed partial class SkyViewModel : ObservableObject, IDisposable
         _settings.Labels = layers.Labels;
         _settings.Ground = layers.Ground;
         _settings.SkyBrightness = layers.SkyBrightness;
+        _settings.Satellites = layers.Satellites;
         _settings.StarLimitMagnitude = layers.StarLimitMagnitude;
         SaveSettings();
         Send(SkyMessageCodec.SetLayers(layers));

@@ -49,6 +49,9 @@ public sealed class ObserverSettings
     /// <summary>Comet and bright-asteroid elements from the Minor Planet Center (sends nothing about the user).</summary>
     public bool SmallBodiesEnabled { get; set; } = true;
 
+    /// <summary>Bright satellites and space stations from CelesTrak (sends nothing about the user).</summary>
+    public bool SatellitesEnabled { get; set; } = true;
+
     /// <summary>Check GitHub for a new version at startup.</summary>
     public bool CheckForUpdates { get; set; } = true;
 

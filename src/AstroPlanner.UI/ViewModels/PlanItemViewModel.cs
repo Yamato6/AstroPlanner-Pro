@@ -68,6 +68,17 @@ public sealed partial class PlanItemViewModel : ObservableObject
 
     public FeasibilityVerdict? Verdict => Feasibility?.Verdict;
 
+    /// <summary>Sunlit satellites crossing the rig's field during the block (computed in the background).</summary>
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(CrossingsSummary), nameof(CrossingsText))]
+    public partial IReadOnlyList<PlanCrossing> Crossings { get; set; } = [];
+
+    /// <summary>How many satellites cross the field, empty when none.</summary>
+    public string CrossingsSummary => Crossings.Count == 0 ? string.Empty : Crossings.Count.ToString(System.Globalization.CultureInfo.CurrentCulture);
+
+    /// <summary>One line per crossing ("ISS (ZARYA) crosses the field 21:14:05–21:14:12, mag −2.9"); null when none.</summary>
+    public string? CrossingsText => Crossings.Count == 0 ? null : string.Join(Environment.NewLine, Crossings.Select(c => c.Text));
+
     public string VerdictText => Feasibility is { } report ? FeasibilityText.Verdict(report.Verdict) : string.Empty;
 
     public bool HasBlock => Schedule?.HasBlock == true;

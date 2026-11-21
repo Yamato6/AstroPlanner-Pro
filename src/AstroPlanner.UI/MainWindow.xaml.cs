@@ -788,6 +788,15 @@ public partial class MainWindow : Window
                 line.LinePattern = ScottPlot.LinePattern.Dashed;
                 line.MarkerSize = 0;
             }
+
+            // Sunlit satellites crossing the field: a short tick above the block.
+            foreach (var crossing in row.CrossingsLocal ?? [])
+            {
+                var tick = plot.Add.Line(crossing.ToOADate(), y + 0.18, crossing.ToOADate(), y + 0.46);
+                tick.LineColor = Theme("DangerBrush");
+                tick.LineWidth = 2;
+                tick.MarkerSize = 0;
+            }
         }
 
         DateTime? now = _viewModel?.ObservationDateTime;
