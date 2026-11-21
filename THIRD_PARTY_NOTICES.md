@@ -96,6 +96,27 @@ Orbital elements of comets (`CometEls.txt`) and of the year's bright asteroids
 Credited in the app; the elements are only cached locally, not redistributed.
 `tests/fixtures/online/mpc-*.txt` are short excerpts used by the tests.
 
+### Satellite elements — CelesTrak, fetched at run time
+
+GP element sets (OMM) of the `visual` and `stations` groups from
+[CelesTrak](https://celestrak.org/) (T.S. Kelso), derived from the US Space Force's public data.
+Only cached locally, not redistributed; `tests/fixtures/online/celestrak-*.json` are the two
+answers of 2026-11-20 used by the tests.
+
+### Satellite magnitudes — McCants' quicksat.mag
+
+`src/AstroPlanner.Core/Algorithms/Data/satellite_magnitudes.dat` holds the intrinsic magnitudes
+(1000 km, full phase) of the 2,688 satellites brighter than 5.0 in Mike McCants'
+[quicksat.mag](https://www.mmccants.org/programs/qsmag.zip) (2026-09-14), freely distributed for
+satellite observers. Only the catalog number and the magnitude are kept.
+
+### SGP4 verification set — Vallado et al. (2006)
+
+`tests/fixtures/satellites/` holds the near-Earth cases of `SGP4-VER.TLE` and `tcppver.out`
+from D. Vallado, P. Crawford, R. Hujsak and T.S. Kelso, "Revisiting Spacetrack Report #3",
+AIAA 2006-6753, as distributed with their SGP4 code (CelesTrak) and with python-sgp4 (MIT).
+The SGP4 code in Core is our own implementation of the published algorithm.
+
 ### Name resolution — Sesame (CDS)
 
 [Sesame](https://cds.unistra.fr/cgi-bin/Sesame) name resolver (SIMBAD, NED, VizieR) of the CDS,

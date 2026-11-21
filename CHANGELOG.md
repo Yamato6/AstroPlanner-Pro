@@ -6,6 +6,32 @@ versions follow [Semantic Versioning](https://semver.org/). Versions up to 1.0.0
 
 ## [Unreleased] — 2.0.0
 
+### M5 — Dynamic objects (part 2: satellites)
+
+#### Added
+- **Satellites** from CelesTrak: the `visual` (~160 brightest) and `stations` groups in OMM/JSON
+  (six-digit catalog numbers), cached 12 h on disk and used offline. The client has no retries and
+  pauses 2 h after any error, as CelesTrak asks; modules docked to a station count once.
+- **SGP4 in Core** (`Core/Satellites/Sgp4`, near-Earth orbits): the verification set of Vallado et
+  al. (2006) reproduced to under 1 m; decayed orbits are reported. Two-line element reader for the
+  verification set. Deep-space orbits (period ≥ 225 min) are not supported (none in the two groups).
+- **Visual passes** (`SatelliteCalculator`): topocentric alt/az, range and range rate, a conical
+  Earth shadow, nautical-twilight darkness and McCants' magnitudes (embedded `satellite_magnitudes.dat`).
+  ISS passes checked against JPL Horizons' own ISS trajectory (rise/set within 30 s).
+- **Sky**: satellites above the horizon move with a fine track (±15 min every 10 s, re-sent as time
+  moves), a one-minute trail and a dim dot in the Earth's shadow; a "Satellites" layer; picking a
+  satellite names its next pass.
+- **Tonight**: "Bright satellite passes tonight" (known magnitude up to 3) and an ISS pass alert.
+- **Session plan**: the sunlit satellites crossing the active rig's field during each block
+  (`FieldCrossings`, 0.1 s near the field), as a count with times in the plan table, red ticks on
+  the timeline and a section in the PDF.
+- **Settings → Internet**: a toggle for CelesTrak; the top-bar status covers it.
+- `tools/fetch-horizons-fixtures.ps1 -SatellitesOnly` (the ISS fixture).
+
+#### Changed
+- Bridge: moving bodies may be `satellite`, with a per-sample `sunlit` array (null for the
+  others); layers gain `satellites`.
+
 ### M5 — Dynamic objects (part 1: comets, asteroids, Milky Way core)
 
 #### Added
