@@ -6,6 +6,31 @@ versions follow [Semantic Versioning](https://semver.org/). Versions up to 1.0.0
 
 ## [Unreleased] — 2.0.0
 
+### M6 — Polish and release (part 2: polish)
+
+#### Added
+- **Night-vision theme**: red on black for every window, the charts, the 3D sky (each pixel's
+  luminance drawn in red only) and the title bar on Windows 11. Toggle in the top bar, in
+  Settings › Display or with `Ctrl+Shift+N`; the choice is saved.
+- **Photographed logbook entries**: kind (observed / photographed), rig, sub length, ISO, gain,
+  number of subs and the image file (only its path is kept). Logging a target with a plan block
+  starts as photographed with the block's subs; otherwise the model's recommendation is ready.
+  Tonight's verdict, score and stack SNR are kept with the entry. The CSV export has the new
+  columns, and the Messier and Caldwell progress count photographed objects separately.
+- **Predictions vs results** in the Logbook: the model's score against your rating for each
+  photographed entry (scatter chart), the mean difference per verdict and the correlation.
+- **Settings › Advanced**: the feasibility model's tunable constants (seeing without a forecast,
+  core brightening, overhead, longest sub, the SNR thresholds, pixels to split a double), with
+  *Reset to defaults*. Only the changed values are stored.
+- Startup, catalog load and feasibility times in the log.
+
+#### Changed
+- app.db migration `0005_logbook_capture.sql`.
+- Every brush is used through `DynamicResource` (`Themes/Night.xaml` overrides `Themes/Dark.xaml`).
+- Accessibility: names for every focusable control of every window (sky, settings, logbook entry,
+  locations); a test walks the windows and another checks the WCAG AA contrast of both themes. The
+  primary blue and the danger red of the dark theme are slightly adjusted to pass it.
+
 ### M6 — Polish and release (part 1: star catalog)
 
 #### Added
