@@ -13,10 +13,16 @@
 param(
     [Parameter(Mandatory)] [string] $Version,
     [Parameter(Mandatory)] [string] $OutFile,
-    [string] $Changelog = (Join-Path (Split-Path -Parent $PSScriptRoot) 'CHANGELOG.md')
+    [string] $Changelog
 )
 
 $ErrorActionPreference = 'Stop'
+
+# Resolved here, not as the parameter's default: Windows PowerShell 5.1 leaves $PSScriptRoot empty
+# in param defaults when the script is run with -File.
+if (-not $Changelog) {
+    $Changelog = Join-Path (Split-Path -Parent (Split-Path -Parent $MyInvocation.MyCommand.Path)) 'CHANGELOG.md'
+}
 
 function Get-Section([string[]] $Lines, [string] $Name) {
     $heading = '## [' + $Name + ']'
