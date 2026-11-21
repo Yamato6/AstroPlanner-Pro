@@ -1,5 +1,6 @@
 using AstroPlanner.Core.Algorithms;
 using AstroPlanner.Core.Models;
+using AstroPlanner.Core.Satellites;
 using AstroPlanner.Core.Sky;
 
 namespace AstroPlanner.SkyBridge;
@@ -24,7 +25,8 @@ public static class SkyBridgeMapper
     /// <summary>
     /// Tracks of every body around <paramref name="utc"/> (± <paramref name="halfWindow"/>, every
     /// <paramref name="step"/>) for the renderer to interpolate: the Sun, the Moon, the planets and
-    /// the given comets and asteroids (only those with a known magnitude).
+    /// the given comets and asteroids (only those with a known magnitude), then the satellites with
+    /// their own short, fine tracks (<see cref="SatelliteTracks"/>).
     /// </summary>
     public static MovingBodiesPayload MovingBodies(
         ObserverLocation observer,
@@ -32,7 +34,8 @@ public static class SkyBridgeMapper
         TimeSpan halfWindow,
         TimeSpan step,
         Func<string, string>? displayName = null,
-        IReadOnlyList<CelestialObject>? smallBodies = null)
+        IReadOnlyList<CelestialObject>? smallBodies = null,
+        IReadOnlyList<SatelliteTrack>? satellites = null)
     {
         ArgumentNullException.ThrowIfNull(observer);
         var start = utc - halfWindow;
@@ -49,6 +52,7 @@ public static class SkyBridgeMapper
                     MovingBodyKind.Moon => "moon",
                     MovingBodyKind.Comet => "comet",
                     MovingBodyKind.Asteroid => "asteroid",
+                    MovingBodyKind.Satellite => "satellite",
                     _ => "planet"
                 },
                 displayName?.Invoke(track.State.Id) ?? track.State.Id,
@@ -61,8 +65,29 @@ public static class SkyBridgeMapper
                     SkyMessageCodec.FormatUtc(start),
                     step.TotalSeconds,
                     [.. track.Samples.SelectMany(s => new[] { s.J2000Direction.X, s.J2000Direction.Y, s.J2000Direction.Z })
-                        .Select(c => Math.Round(c, VectorDigits))])))
+                        .Select(c => Math.Round(c, VectorDigits))]))),
+            .. (satellites ?? []).Select(Satellite)
         ]);
+    }
+
+    private static MovingBodyDto Satellite(SatelliteTrack satellite)
+    {
+        var track = satellite.Track;
+        return new MovingBodyDto(
+            track.State.Id,
+            "satellite",
+            satellite.Name,
+            Math.Round(track.State.Magnitude, 2),
+            0,
+            Math.Round(track.State.PhaseAngleDegrees, 3),
+            track.State.IlluminatedFraction,
+            0,
+            new TrackDto(
+                SkyMessageCodec.FormatUtc(track.Samples[0].Utc),
+                track.Samples.Count > 1 ? (track.Samples[1].Utc - track.Samples[0].Utc).TotalSeconds : SatelliteTracks.Step.TotalSeconds,
+                [.. track.Samples.SelectMany(s => new[] { s.J2000Direction.X, s.J2000Direction.Y, s.J2000Direction.Z })
+                    .Select(c => Math.Round(c, VectorDigits))]),
+            [.. satellite.Sunlit.Select(lit => lit ? 1 : 0)]);
     }
 
     /// <summary>

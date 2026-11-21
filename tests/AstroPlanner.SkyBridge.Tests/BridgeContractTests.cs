@@ -5,6 +5,8 @@ using System.Text.Json;
 using AstroPlanner.Core.Algorithms;
 using AstroPlanner.Core.Models;
 using AstroPlanner.Core.Services;
+using AstroPlanner.Core.Sky;
+using AstroPlanner.Core.Satellites;
 
 namespace AstroPlanner.SkyBridge.Tests;
 
@@ -32,7 +34,8 @@ public sealed class BridgeContractTests
     internal static IReadOnlyDictionary<string, string> OutgoingSamples()
     {
         var mask = new HorizonMask([new HorizonPoint(0, 5), new HorizonPoint(90, 12.5), new HorizonPoint(200, 3)]);
-        var bodies = SkyBridgeMapper.MovingBodies(Aguascalientes, Utc, TimeSpan.FromMinutes(10), TimeSpan.FromMinutes(10));
+        var bodies = SkyBridgeMapper.MovingBodies(Aguascalientes, Utc, TimeSpan.FromMinutes(10), TimeSpan.FromMinutes(10),
+            satellites: [SampleSatellite()]);
         return new Dictionary<string, string>(StringComparer.Ordinal)
         {
             [SkyMessageTypes.Init] = SkyMessageCodec.Init(new InitPayload(
@@ -41,7 +44,7 @@ public sealed class BridgeContractTests
             [SkyMessageTypes.SetTime] = SkyMessageCodec.SetTime(new TimePayload(SkyMessageCodec.FormatUtc(Utc), 60)),
             [SkyMessageTypes.SetTimeRate] = SkyMessageCodec.SetTimeRate(new TimeRatePayload(0)),
             [SkyMessageTypes.FrameTransform] = SkyMessageCodec.FrameTransform(SkyBridgeMapper.ToPayload(SkyFrame.Compute(Aguascalientes, Utc))),
-            [SkyMessageTypes.MovingBodies] = SkyMessageCodec.MovingBodies(bodies with { Bodies = [.. bodies.Bodies.Take(3)] }),
+            [SkyMessageTypes.MovingBodies] = SkyMessageCodec.MovingBodies(bodies with { Bodies = [.. bodies.Bodies.Take(3), bodies.Bodies[^1]] }),
             [SkyMessageTypes.SetLayers] = SkyMessageCodec.SetLayers(new SkyLayers(EquatorialGrid: true, StarLimitMagnitude: 7)),
             [SkyMessageTypes.SetHighlights] = SkyMessageCodec.SetHighlights(new HighlightsPayload(["M42", "NGC 7000"])),
             [SkyMessageTypes.SelectObject] = SkyMessageCodec.SelectObject(new SelectionPayload(SkyObjectKinds.DeepSky, "M42")),
@@ -195,6 +198,32 @@ public sealed class BridgeContractTests
         payload.Bodies[2].Name.Should().Be("MERCURY");
         payload.Bodies.Should().AllSatisfy(b => b.Track.Vectors.Should().HaveCount(145 * 3));
         payload.Bodies[0].Track.StartUtc.Should().Be("2026-03-19T14:00:00.000Z");
+    }
+
+    /// <summary>A three-sample satellite track (the real ones have 181), sunlit, then in the shadow, then sunlit.</summary>
+    private static SatelliteTrack SampleSatellite()
+    {
+        var state = new MovingBodyState(SatelliteTracks.Id(25544), MovingBodyKind.Satellite, new HorizontalCoordinates(40, 120),
+            new EquatorialCoordinates(6, 10), -3.1, 0, 35, 1, 0);
+        TrackSample Sample(int seconds, double x, double y) =>
+            new(Utc.AddSeconds(seconds), new Vector3d(x, y, Math.Sqrt(1 - (x * x) - (y * y))));
+        return new SatelliteTrack("ISS (ZARYA)", new MovingBodyTrack(state, [Sample(-10, 0.6, 0.2), Sample(0, 0.58, 0.25), Sample(10, 0.55, 0.3)]),
+            [true, false, true]);
+    }
+
+    [Fact]
+    public void MovingBodies_SatellitesKeepTheirOwnShortTrack()
+    {
+        var payload = SkyBridgeMapper.MovingBodies(Aguascalientes, Utc, TimeSpan.FromHours(12), TimeSpan.FromMinutes(10), satellites: [SampleSatellite()]);
+
+        var satellite = payload.Bodies[^1];
+        satellite.Should().BeEquivalentTo(new { Id = "sat-25544", Kind = "satellite", Name = "ISS (ZARYA)", Magnitude = -3.1 },
+            o => o.ExcludingMissingMembers());
+        satellite.Track.StartUtc.Should().Be("2026-03-20T01:59:50.000Z");
+        satellite.Track.StepSeconds.Should().Be(10);
+        satellite.Track.Vectors.Should().HaveCount(9);
+        satellite.Sunlit.Should().Equal(1, 0, 1);
+        payload.Bodies.Take(payload.Bodies.Count - 1).Should().OnlyContain(b => b.Sunlit == null);
     }
 
     [Fact]

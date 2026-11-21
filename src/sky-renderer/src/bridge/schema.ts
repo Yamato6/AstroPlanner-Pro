@@ -39,6 +39,7 @@ export const layersSchema = z.strictObject({
   labels: z.boolean(),
   ground: z.boolean(),
   skyBrightness: z.boolean(),
+  satellites: z.boolean(),
   starLimitMagnitude: z.number().min(-2).max(12),
   deepSkyLimitMagnitude: z.number().min(-2).max(20),
 });
@@ -77,7 +78,7 @@ const frameTransformPayload = z.strictObject({
 
 const movingBodySchema = z.strictObject({
   id: text,
-  kind: z.enum(['sun', 'moon', 'planet', 'comet', 'asteroid']),
+  kind: z.enum(['sun', 'moon', 'planet', 'comet', 'asteroid', 'satellite']),
   name: text,
   magnitude: z.number(),
   diameterArcsec: z.number().min(0),
@@ -92,6 +93,11 @@ const movingBodySchema = z.strictObject({
       .min(3)
       .refine((v) => v.length % 3 === 0, 'vectors must be x, y, z triples'),
   }),
+  /** Satellites only: 1 = sunlit, 0 = in the Earth's shadow, per track sample. */
+  sunlit: z
+    .array(z.union([z.literal(0), z.literal(1)]))
+    .max(2000)
+    .nullable(),
 });
 
 const movingBodiesPayload = z.strictObject({ bodies: z.array(movingBodySchema).max(128) });

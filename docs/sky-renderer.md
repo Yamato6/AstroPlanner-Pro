@@ -104,8 +104,8 @@ TypeScript (zod) schemas: `src/sky-renderer/src/bridge/schema.ts`.
 | `setObserver` | site, minimum altitude, horizon mask, refraction model scaled for the site (M3) |
 | `setTime` / `setTimeRate` | sky time and rate (0 = paused, 1 = real time, 3600 = 1 h/s) |
 | `frameTransform` | the matrix parameters above |
-| `movingBodies` | Sun, Moon, planets: magnitude, size, phase, bright limb, track |
-| `setLayers` | stars, constellation lines/names/boundaries, Milky Way, deep sky, bodies, labels, grids, ecliptic, meridian, ground; star and DSO limits |
+| `movingBodies` | Sun, Moon, planets, comets, asteroids (M5a) and satellites (M5b): magnitude, size, phase, bright limb, track; satellites carry their own short track (±15 min every 10 s) and a `sunlit` flag per sample (null for the others) |
+| `setLayers` | stars, constellation lines/names/boundaries, Milky Way, deep sky, bodies, satellites, labels, grids, ecliptic, meridian, ground; star and DSO limits |
 | `setHighlights` | ids of the session plan |
 | `selectObject` | selection (also renderer → C#) |
 | `centerOn` | turn the view to a J2000 direction (optionally change the FOV) |
