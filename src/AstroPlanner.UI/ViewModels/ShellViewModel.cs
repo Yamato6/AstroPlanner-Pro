@@ -99,6 +99,10 @@ public sealed partial class ShellViewModel : ObservableObject, IDisposable
             horizonMask: locations.ActiveLocation?.HorizonMask ?? HorizonMask.Flat);
     }
 
+    /// <summary>Switches the night-vision theme on or off (Ctrl+Shift+N).</summary>
+    [RelayCommand]
+    private void ToggleNightTheme() => IsNightTheme = !IsNightTheme;
+
     /// <summary>Night-vision theme (top bar toggle, Ctrl+Shift+N); saved at once.</summary>
     public bool IsNightTheme
     {

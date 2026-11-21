@@ -242,6 +242,10 @@ public sealed partial class SessionPlanViewModel : ObservableObject
     /// <summary>CSV content of the plan (see <see cref="PlanExport"/>).</summary>
     public string BuildCsv(CultureInfo culture) => PlanExport.BuildCsv(ChronologicalItems, culture);
 
+    /// <summary>File name offered when the plan is exported: "AstroPlannerPro-plan-2026-01-15.pdf" (the observing date).</summary>
+    public string SuggestedFileName(string extension) =>
+        string.Create(CultureInfo.InvariantCulture, $"AstroPlannerPro-plan-{_context.ObservationDateTime:yyyy-MM-dd}.{extension}");
+
     /// <summary>iCalendar content of the scheduled blocks (see <see cref="PlanCalendarExport"/>).</summary>
     public string BuildIcs() =>
         PlanCalendarExport.BuildIcs(ChronologicalItems, _context.ToUtc, _time.GetUtcNow().UtcDateTime, _context.LocationName);

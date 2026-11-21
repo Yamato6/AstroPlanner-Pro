@@ -209,8 +209,9 @@ public partial class MainWindow : Window
     }
 
     /// <summary>
-    /// Keyboard shortcuts: Ctrl+F search, F5 now, Ctrl+, settings, Ctrl+P print the plan,
-    /// Ctrl+E export the plan, F1 about.
+    /// Keyboard shortcuts that open dialogs or move the focus: Ctrl+F search, Ctrl+, settings,
+    /// Ctrl+P print the plan, Ctrl+E export the plan, F1 about, and the sky keys. F5 (now) and
+    /// Ctrl+Shift+N (night vision) are key bindings to view-model commands in the XAML.
     /// </summary>
     private void OnPreviewKeyDown(object sender, KeyEventArgs e)
     {
@@ -226,12 +227,6 @@ public partial class MainWindow : Window
                     SearchBox.Focus();
                     SearchBox.SelectAll();
                 }, DispatcherPriority.Input);
-                break;
-            case Key.N when Keyboard.Modifiers == (ModifierKeys.Control | ModifierKeys.Shift):
-                if (_viewModel is not null) _viewModel.IsNightTheme = !_viewModel.IsNightTheme;
-                break;
-            case Key.F5 when none:
-                _viewModel?.SetNowCommand.Execute(null);
                 break;
             case Key.OemComma when ctrl:
                 OnSettingsClicked(sender, e);
@@ -369,23 +364,8 @@ public partial class MainWindow : Window
     private static void CommitFocusedTextBox() =>
         (Keyboard.FocusedElement as TextBox)?.GetBindingExpression(TextBox.TextProperty)?.UpdateSource();
 
-    private void OnExportPlanClicked(object sender, RoutedEventArgs e)
-    {
-        CommitFocusedTextBox();
-        if (_viewModel is null || _viewModel.Plan.Items.Count == 0) return;
-
-        var dialog = new Microsoft.Win32.SaveFileDialog
-        {
-            Title = Strings.PlanExportDialogTitle,
-            Filter = Strings.CsvFileFilter,
-            FileName = string.Create(CultureInfo.InvariantCulture, $"AstroPlannerPro-plan-{_viewModel.ObservationDate:yyyy-MM-dd}.csv")
-        };
-
-        if (dialog.ShowDialog(this) == true)
-        {
-            _viewModel.Plan.Export(dialog.FileName);
-        }
-    }
+    private void OnExportPlanClicked(object sender, RoutedEventArgs e) =>
+        ExportPlan(Strings.PlanExportDialogTitle, Strings.CsvFileFilter, "csv", (plan, path) => plan.Export(path));
 
     private void OnExportPlanPdfClicked(object sender, RoutedEventArgs e) =>
         ExportPlan(Strings.PlanExportPdfDialogTitle, Strings.PdfFileFilter, "pdf", (plan, path) => plan.ExportPdf(path));
@@ -402,7 +382,7 @@ public partial class MainWindow : Window
         {
             Title = title,
             Filter = filter,
-            FileName = string.Create(CultureInfo.InvariantCulture, $"AstroPlannerPro-plan-{_viewModel.ObservationDate:yyyy-MM-dd}.{extension}")
+            FileName = _viewModel.Plan.SuggestedFileName(extension)
         };
 
         if (dialog.ShowDialog(this) == true)
@@ -430,7 +410,7 @@ public partial class MainWindow : Window
         {
             Title = Strings.LogbookExportDialogTitle,
             Filter = Strings.CsvFileFilter,
-            FileName = string.Create(CultureInfo.InvariantCulture, $"AstroPlannerPro-logbook-{DateTime.Now:yyyy-MM-dd}.csv")
+            FileName = LogbookViewModel.SuggestedExportFileName(DateTime.Now)
         };
 
         if (dialog.ShowDialog(this) == true)

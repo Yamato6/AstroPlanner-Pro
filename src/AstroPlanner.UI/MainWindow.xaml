@@ -150,6 +150,11 @@
             </Style.Triggers>
         </Style>
     </Window.Resources>
+    <!-- Shortcuts that only run a command; those that open dialogs or move the focus are in OnPreviewKeyDown. -->
+    <Window.InputBindings>
+        <KeyBinding Key="F5" Command="{Binding SetNowCommand}"/>
+        <KeyBinding Key="N" Modifiers="Control+Shift" Command="{Binding ToggleNightThemeCommand}"/>
+    </Window.InputBindings>
     <Grid Margin="16">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
