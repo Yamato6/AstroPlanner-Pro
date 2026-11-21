@@ -16,5 +16,7 @@ coordinates are those of Aguascalientes city centre, rounded to 2 decimals as th
 
 | `mpc-cometels-excerpt.txt` | 8 lines of `https://minorplanetcenter.net/iau/MPCORB/CometEls.txt` (2026-11-20) |
 | `mpc-bright-2026-excerpt.txt` | first 6 lines of `https://minorplanetcenter.net/iau/Ephemerides/Bright/2026/Soft00Bright.txt` |
+| `celestrak-visual.json` | `https://celestrak.org/NORAD/elements/gp.php?GROUP=visual&FORMAT=JSON` (2026-11-20, 157 objects) |
+| `celestrak-stations.json` | `https://celestrak.org/NORAD/elements/gp.php?GROUP=stations&FORMAT=JSON` (2026-11-20, 17 objects) |
 
 To refresh them, repeat the requests with `curl` and update the expected values in the tests.
