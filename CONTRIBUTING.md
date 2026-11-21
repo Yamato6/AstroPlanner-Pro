@@ -4,7 +4,7 @@ Thanks for your interest! Issues and pull requests are welcome.
 
 ## Before you start
 
-- Read the [specification](ASTROPLANNER_PRO_SPEC.md) and [docs/architecture.md](docs/architecture.md).
+- Read [docs/architecture.md](docs/architecture.md) and the other notes in [docs/](docs).
 - For anything larger than a fix, open an issue first so we can agree on the approach.
 - By contributing you agree that your work is licensed under the [MIT license](LICENSE).
 

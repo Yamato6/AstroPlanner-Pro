@@ -18,7 +18,7 @@
 
 > **v2.0.0** — the first release of AstroPlanner Pro, the astrophotography successor of
 > [AstroPlanner v1](https://github.com/Yamato6/AstroPlanner) (whose full history it keeps).
-> **[Download it](#download-and-install)** · [what's new](CHANGELOG.md) · [specification](ASTROPLANNER_PRO_SPEC.md)
+> **[Download it](#download-and-install)** · [what's new](CHANGELOG.md) · [architecture](docs/architecture.md)
 
 ![A short tour: Tonight's best targets for the active rig, the catalog planner, the live 3D sky around Orion with time running, the feasibility of the Orion Nebula and its block in My plan](docs/screenshots/demo.gif)
 
@@ -137,8 +137,8 @@ AstroPlanner v1 answers "what can I *see* tonight?". AstroPlanner Pro answers **
 *photograph* tonight, from here, with my equipment — and how should I do it?"**: an equipment
 inventory (field of view, image scale, longest sub), an explainable capture-feasibility score per
 target, light-pollution-aware sky brightness, a live 2D/3D sky rendered with three.js in WebView2,
-survey imagery for framing and a session planner. See the [specification](ASTROPLANNER_PRO_SPEC.md)
-and the [CHANGELOG](CHANGELOG.md).
+survey imagery for framing and a session planner. See the [CHANGELOG](CHANGELOG.md) for the whole
+story, milestone by milestone.
 
 ## Download and install
 
@@ -218,9 +218,9 @@ Requires the .NET 10 SDK and Node.js 22.12+ (the UI build compiles the sky rende
 [docs/sky-renderer.md](docs/sky-renderer.md)). Every push runs CI (build with warnings as errors, tests, coverage with an
 85 % line-coverage gate on Core, a check of the committed catalog database); a `v*` tag publishes the `.exe`, the installer and the checksums to a
 draft release whose notes come from this CHANGELOG ([docs/signing.md](docs/signing.md) explains the optional
-code signing). Start with [CONTRIBUTING.md](CONTRIBUTING.md) and [docs/architecture.md](docs/architecture.md);
-every online service is listed in [docs/external-services.md](docs/external-services.md), and
-contributor notes are in the docs.
+code signing). Start with [CONTRIBUTING.md](CONTRIBUTING.md) and [docs/architecture.md](docs/architecture.md),
+and every online service is listed in [docs/external-services.md](docs/external-services.md).
+Security issues: see [SECURITY.md](SECURITY.md).
 
 <details>
 <summary><b>Architecture</b></summary>
