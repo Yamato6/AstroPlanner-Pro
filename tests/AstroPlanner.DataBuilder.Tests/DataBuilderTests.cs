@@ -176,10 +176,67 @@ public sealed class HygImporterTests
     }
 
     [Fact]
+    public void Import_KeepsSpectralTypeDistanceVariabilityAndMultiplicity()
+    {
+        var stars = HygImporter.Import(Fixtures.HygRows());
+        var sirius = stars.Single(s => s.ProperName == "Sirius");
+        var vega = stars.Single(s => s.ProperName == "Vega");
+
+        sirius.SpectralType.Should().Be("A0m...");
+        sirius.DistanceParsecs.Should().Be(2.6371);
+        sirius.MultipleSystem.Should().Be("Gl 244");
+        sirius.Component.Should().Be(1);
+        sirius.ComponentPrimary.Should().Be(sirius.HygId);
+        vega.SpectralType.Should().Be("A0Vvar");
+        stars.Should().OnlyContain(s => s.DistanceParsecs == null || s.DistanceParsecs < 100_000);
+    }
+
+    [Fact]
     public void Import_HonoursTheLimitingMagnitude()
     {
         HygImporter.Import(Fixtures.HygRows(), limitingMagnitude: 2).Select(s => s.ProperName)
             .Should().Equal("Polaris", "Sirius", "Vega");
+    }
+}
+
+public sealed class WdsImporterTests
+{
+    [Fact]
+    public void Parse_ReadsTheFixedColumns()
+    {
+        var albireo = Fixtures.WdsLines().Select(WdsImporter.Parse).OfType<WdsImporter.WdsPair>().Single(p => p.Discoverer == "STFA 43");
+
+        albireo.Should().BeEquivalentTo(new
+        {
+            WdsId = "19307+2758",
+            Components = "AB",
+            FirstYear = 1755,
+            LastYear = 2025,
+            PositionAngleDegrees = 54.0,
+            SeparationArcsec = 34.3,
+            PrimaryMagnitude = 3.19,
+            SecondaryMagnitude = 4.68,
+            SpectralType = "K3II+B9.5"
+        }, o => o.ExcludingMissingMembers());
+        albireo.RightAscensionHours.Should().BeApproximately(19 + (30 / 60.0) + (43.29 / 3600), 1e-9);
+        albireo.DeclinationDegrees.Should().BeApproximately(27 + (57 / 60.0) + (34.9 / 3600), 1e-9);
+        WdsImporter.Parse("garbage line").Should().BeNull();
+        WdsImporter.Parse("<pre>").Should().BeNull();
+    }
+
+    [Fact]
+    public void Import_KeepsSplittablePairs_AndMatchesThemToHygStars()
+    {
+        var stars = HygImporter.Import(Fixtures.HygRows());
+
+        var (pairs, selected, unmatched) = WdsImporter.Import(Fixtures.WdsLines(), stars);
+
+        // Polaris Aa,Ab (0.1") is too close and Sirius Ba,Bb has a faint primary; Albireo and eps Lyr are not in the HYG excerpt.
+        selected.Should().Be(4);
+        unmatched.Should().Be(2);
+        pairs.Select(p => (p.Discoverer, p.HygId)).Should().Equal(("STF  93", 11734), ("AGC   1", 32263));
+        pairs[1].Should().BeEquivalentTo(new { Components = "AB", SeparationArcsec = 11.1, SecondaryMagnitude = 8.44, PositionAngleDegrees = 59.0 },
+            o => o.ExcludingMissingMembers());
     }
 }
 
@@ -199,7 +256,7 @@ public sealed class CatalogBuildTests : IDisposable
     private string Build(string name)
     {
         var path = Path.Combine(_directory, name);
-        CatalogBuild.Run(Fixtures.OpenNgcRows(), Fixtures.HygRows(), Fixtures.Curation, path);
+        CatalogBuild.Run(Fixtures.OpenNgcRows(), Fixtures.HygRows(), Fixtures.Curation, path, Fixtures.WdsLines());
         return path;
     }
 
@@ -209,7 +266,7 @@ public sealed class CatalogBuildTests : IDisposable
         var path = Build("catalogs.sqlite");
 
         var failures = CatalogVerifier.Verify(path, new CatalogVerifier.Expectations(
-            MinimumObjects: 14, MinimumStars: 4, MessierCount: 7, CaldwellCount: 3, SpotChecks: false));
+            MinimumObjects: 14, MinimumStars: 4, MessierCount: 7, CaldwellCount: 3, SpotChecks: false, MinimumDoubleStarPairs: 2));
 
         failures.Should().BeEmpty();
     }
@@ -226,9 +283,12 @@ public sealed class CatalogBuildTests : IDisposable
     [Fact]
     public void Build_ReportsCountsAndDifferences()
     {
-        var result = CatalogBuild.Run(Fixtures.OpenNgcRows(), Fixtures.HygRows(), Fixtures.Curation, Path.Combine(_directory, "r.sqlite"));
+        var result = CatalogBuild.Run(Fixtures.OpenNgcRows(), Fixtures.HygRows(), Fixtures.Curation, Path.Combine(_directory, "r.sqlite"),
+            Fixtures.WdsLines());
 
         result.StarCount.Should().Be(4);
+        result.DoubleStarPairs.Should().Be(2);
+        result.Report.Should().Contain("WDS 2026-10-29: 4 pairs selected").And.Contain("2 matched to 2 HYG stars, 2 unmatched");
         result.Report.Should().Contain("Galaxy: 3").And.Contain("Constellation differences with OpenNGC (0");
     }
 
@@ -246,6 +306,8 @@ internal static class Fixtures
         using var reader = new StreamReader(Path("openngc", "sample.csv"));
         return [.. Csv.Read(reader, ';')];
     }
+
+    public static IReadOnlyList<string> WdsLines() => File.ReadAllLines(Path("wds", "sample.txt"));
 
     public static List<IReadOnlyDictionary<string, string>> HygRows()
     {

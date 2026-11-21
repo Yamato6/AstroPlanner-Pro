@@ -12,6 +12,7 @@
   <ItemGroup>
     <None Include="..\fixtures\openngc\*.csv" Link="fixtures\openngc\%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
     <None Include="..\fixtures\hyg\*.csv" Link="fixtures\hyg\%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="..\fixtures\wds\*.txt" Link="fixtures\wds\%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
     <None Include="..\fixtures\sky\*.json" Link="fixtures\sky\%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
     <None Include="..\..\data\curated\messier.json" Link="fixtures\curated\messier.json" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>

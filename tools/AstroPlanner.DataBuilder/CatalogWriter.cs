@@ -15,7 +15,8 @@ internal static class CatalogWriter
         string path,
         IReadOnlyList<CatalogEntry> objects,
         IReadOnlyList<StarEntry> stars,
-        IReadOnlyDictionary<string, string> metadata)
+        IReadOnlyDictionary<string, string> metadata,
+        IReadOnlyList<DoubleStarEntry>? doubles = null)
     {
         ArgumentNullException.ThrowIfNull(path);
         ArgumentNullException.ThrowIfNull(objects);
@@ -40,6 +41,7 @@ internal static class CatalogWriter
                 WriteMeta(connection, transaction, metadata);
                 WriteObjects(connection, transaction, objects);
                 WriteStars(connection, transaction, stars);
+                WriteDoubles(connection, transaction, doubles ?? []);
                 transaction.Commit();
             }
 
@@ -94,16 +96,38 @@ internal static class CatalogWriter
         using var insert = Command(connection, transaction,
             """
             INSERT INTO stars (hyg_id, hip, hd, hr, proper_name, bayer, flamsteed, constellation, ra_hours, dec_degrees,
-                magnitude, color_index, pm_ra_mas, pm_dec_mas)
-            VALUES ($id, $hip, $hd, $hr, $proper, $bayer, $flam, $con, $ra, $dec, $mag, $ci, $pmra, $pmdec)
+                magnitude, color_index, pm_ra_mas, pm_dec_mas, spectral_type, distance_pc, variable, var_min, var_max,
+                component, comp_primary, system)
+            VALUES ($id, $hip, $hd, $hr, $proper, $bayer, $flam, $con, $ra, $dec, $mag, $ci, $pmra, $pmdec, $spect, $dist,
+                $var, $varmin, $varmax, $comp, $primary, $system)
             """,
-            "$id", "$hip", "$hd", "$hr", "$proper", "$bayer", "$flam", "$con", "$ra", "$dec", "$mag", "$ci", "$pmra", "$pmdec");
+            "$id", "$hip", "$hd", "$hr", "$proper", "$bayer", "$flam", "$con", "$ra", "$dec", "$mag", "$ci", "$pmra", "$pmdec",
+            "$spect", "$dist", "$var", "$varmin", "$varmax", "$comp", "$primary", "$system");
 
         foreach (var star in stars.OrderBy(s => s.HygId))
         {
             Run(insert, star.HygId, star.Hip, star.Hd, star.Hr, star.ProperName, star.Bayer, star.Flamsteed, star.Constellation,
                 Round(star.RightAscensionHours, 7), Round(star.DeclinationDegrees, 6), star.Magnitude, star.ColorIndex,
-                star.ProperMotionRaMas, star.ProperMotionDecMas);
+                star.ProperMotionRaMas, star.ProperMotionDecMas, star.SpectralType,
+                star.DistanceParsecs is { } distance ? Round(distance, 4) : null, star.VariableName,
+                star.VariableMinimumMagnitude, star.VariableMaximumMagnitude, star.Component, star.ComponentPrimary, star.MultipleSystem);
+        }
+    }
+
+    private static void WriteDoubles(SqliteConnection connection, SqliteTransaction transaction, IReadOnlyList<DoubleStarEntry> doubles)
+    {
+        using var insert = Command(connection, transaction,
+            """
+            INSERT INTO double_stars (hyg_id, wds_id, discoverer, components, first_year, last_year, pa_degrees,
+                separation_arcsec, magnitude1, magnitude2, spectral_type)
+            VALUES ($hyg, $wds, $disc, $comp, $first, $last, $pa, $sep, $m1, $m2, $spect)
+            """,
+            "$hyg", "$wds", "$disc", "$comp", "$first", "$last", "$pa", "$sep", "$m1", "$m2", "$spect");
+
+        foreach (var pair in doubles)
+        {
+            Run(insert, pair.HygId, pair.WdsId, pair.Discoverer, pair.Components, pair.FirstYear, pair.LastYear,
+                pair.PositionAngleDegrees, pair.SeparationArcsec, pair.PrimaryMagnitude, pair.SecondaryMagnitude, pair.SpectralType);
         }
     }
 

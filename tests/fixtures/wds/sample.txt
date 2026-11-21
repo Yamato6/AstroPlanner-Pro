@@ -1,0 +1,11 @@
+<pre>
+    WDS   Discovr Comp  EPOCH      #  THETA       RHO     Magnitudes Spectral  Prop Mot  2nd PM   DM Desig Note     Precise       
+Identifier             Frst Last      Fst Lst First  Last  Pri   Sec  Type      RA" DEC" RA" DEC"                 Coordinate      
+
+02318+8916WRH  39Aa,Ab 1937 2023   14 250 293   0.2   0.1  2.3   4.3  F7:Ib-IIv +038-015          +88    8 NO   023149.09+891550.7
+02318+8916STF  93AB    1779 2016   65 203 236  17.3  18.4  2.04  9.1  F7Ib+F3V  +038-015 +042-014 +88    8 NV   023149.09+891550.7
+06451-1643AGC   1AB    1862 2024 2064  85  59  10.2  11.1 -1.47  8.44 A1Vm+DA2  -055-122 -055-122 -16 1591 NO P 064508.92-164258.0
+06451-1643AGC   1Ba,Bb 1920 1975    8  51 144   0.8   1.5  8.44 12.6  DA2       -055-122                   NU   064508.92-164302.0
+18443+3940STF2382AB    1777 2025  681  45 342   4.0   2.1  5.15  6.10 A4V+F1V   +011+061 +002+047 +39 3509 NO   184420.34+394012.4
+19307+2758STFA 43AB    1755 2025  296  58  54  34.2  34.3  3.19  4.68 K3II+B9.5 +006-015 -001-001          NS   193043.29+275734.9
+garbage line

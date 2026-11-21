@@ -4,6 +4,7 @@ using System.Text.Encodings.Web;
 using System.Text.Json;
 using System.Text.Unicode;
 using AstroPlanner.Core.Algorithms;
+using AstroPlanner.Core.Sky;
 using Microsoft.Data.Sqlite;
 
 namespace AstroPlanner.DataBuilder;
@@ -41,14 +42,6 @@ internal static class SkyDataBuilder
         "stars.bin", "star-names.json", "dsos.bin", "dsos.json",
         "constellation-lines.bin", "constellation-bounds.bin", "milkyway.bin", "constellation-labels.json"
     ];
-
-    private static readonly Dictionary<string, string> Greek = new(StringComparer.Ordinal)
-    {
-        ["Alp"] = "α", ["Bet"] = "β", ["Gam"] = "γ", ["Del"] = "δ", ["Eps"] = "ε", ["Zet"] = "ζ",
-        ["Eta"] = "η", ["The"] = "θ", ["Iot"] = "ι", ["Kap"] = "κ", ["Lam"] = "λ", ["Mu"] = "μ",
-        ["Nu"] = "ν", ["Xi"] = "ξ", ["Omi"] = "ο", ["Pi"] = "π", ["Rho"] = "ρ", ["Sig"] = "σ",
-        ["Tau"] = "τ", ["Ups"] = "υ", ["Phi"] = "φ", ["Chi"] = "χ", ["Psi"] = "ψ", ["Ome"] = "ω"
-    };
 
     private static readonly JsonWriterOptions JsonOptions = new()
     {
@@ -147,30 +140,9 @@ internal static class SkyDataBuilder
         return (records.Count, names.Count);
     }
 
-    /// <summary>"Sirius", "α CMa", "β¹ Cyg", "61 Cyg" or null.</summary>
-    internal static string? StarLabel(string? properName, string? bayer, int? flamsteed, string constellation)
-    {
-        if (!string.IsNullOrWhiteSpace(properName))
-        {
-            return properName.Trim();
-        }
-
-        if (!string.IsNullOrWhiteSpace(bayer))
-        {
-            var parts = bayer.Split('-');
-            var letter = Greek.TryGetValue(parts[0], out var greek) ? greek : parts[0];
-            var suffix = parts.Length > 1 ? Superscript(parts[1]) : string.Empty;
-            return $"{letter}{suffix} {constellation}";
-        }
-
-        return flamsteed is { } number ? string.Create(CultureInfo.InvariantCulture, $"{number} {constellation}") : null;
-    }
-
-    private static string Superscript(string digits) =>
-        string.Concat(digits.Select(c => c switch
-        {
-            '1' => '¹', '2' => '²', '3' => '³', >= '0' and <= '9' => (char)('⁰' + (c - '0')), _ => c
-        }));
+    /// <summary>"Sirius", "α CMa", "β¹ Cyg", "61 Cyg" or null (<see cref="StarNames.Label"/>).</summary>
+    internal static string? StarLabel(string? properName, string? bayer, int? flamsteed, string constellation) =>
+        StarNames.Label(properName, bayer, flamsteed, constellation);
 
     private static int WriteDsos(SqliteConnection connection, string outputDirectory)
     {

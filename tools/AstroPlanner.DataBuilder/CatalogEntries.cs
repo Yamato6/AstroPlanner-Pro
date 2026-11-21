@@ -49,4 +49,26 @@ internal sealed record StarEntry(
     double Magnitude,
     double? ColorIndex,
     double? ProperMotionRaMas,
-    double? ProperMotionDecMas);
+    double? ProperMotionDecMas)
+{
+    /// <summary>MK spectral type as HYG gives it (e.g. "A0m..."), null when unknown.</summary>
+    public string? SpectralType { get; init; }
+
+    /// <summary>Distance in parsecs, null when unknown (HYG's 100000).</summary>
+    public double? DistanceParsecs { get; init; }
+
+    /// <summary>Variable-star designation (e.g. "Alp CMa" style or a GCVS name), null when not variable.</summary>
+    public string? VariableName { get; init; }
+
+    /// <summary>Magnitude range of a variable: brightest (<see cref="VariableMinimumMagnitude"/>) and faintest.</summary>
+    public double? VariableMinimumMagnitude { get; init; }
+
+    public double? VariableMaximumMagnitude { get; init; }
+
+    /// <summary>HYG multiple-system grouping: the component number, its primary's HYG id and the system's base name.</summary>
+    public int? Component { get; init; }
+
+    public int? ComponentPrimary { get; init; }
+
+    public string? MultipleSystem { get; init; }
+}
