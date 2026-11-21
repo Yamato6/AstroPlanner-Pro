@@ -143,6 +143,35 @@ public static class DisplayNames
         return points[index];
     }
 
+    /// <summary>"Photographed" or "Observed".</summary>
+    public static string LogKind(ObservationLogEntry entry)
+    {
+        ArgumentNullException.ThrowIfNull(entry);
+        return entry.IsPhotographed ? Strings.LogKindPhotographed : Strings.LogKindObserved;
+    }
+
+    /// <summary>"Rig · 120 s × 30 · ISO 800 · 1 h 0 min" for a photographed entry; empty otherwise.</summary>
+    public static string Capture(ObservationLogEntry entry)
+    {
+        ArgumentNullException.ThrowIfNull(entry);
+        if (!entry.IsPhotographed || entry.Capture is not { } capture)
+        {
+            return "";
+        }
+
+        var parts = new List<string>();
+        if (capture.RigName.Length > 0) parts.Add(capture.RigName);
+        if (capture.SubSeconds is { } sub)
+        {
+            parts.Add(capture.SubCount is { } count ? Format(Strings.CaptureSubsFormat, sub, count) : Format(Strings.CaptureSubFormat, sub));
+        }
+
+        if (capture.Iso is { } iso) parts.Add(Format(Strings.CaptureIsoFormat, iso));
+        if (capture.Gain is { } gain) parts.Add(Format(Strings.CaptureGainFormat, gain));
+        if (capture.TotalIntegration is { } total) parts.Add(Duration(total));
+        return string.Join(" · ", parts);
+    }
+
     public static string Format(string format, params object?[] args) =>
         string.Format(CultureInfo.CurrentCulture, format, args);
 }

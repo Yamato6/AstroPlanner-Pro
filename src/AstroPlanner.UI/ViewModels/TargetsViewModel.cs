@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.ComponentModel.DataAnnotations;
 using System.IO;
 using System.Text.Json;
@@ -221,7 +222,10 @@ public sealed partial class TargetsViewModel : ObservableValidator, IDisposable
         {
             IsBusy = true;
             ErrorMessage = null;
+            var watch = System.Diagnostics.Stopwatch.StartNew();
             var objects = await _repository.GetAllAsync();
+            _logger.LogInfo(string.Create(CultureInfo.InvariantCulture,
+                $"Catalog loaded: {objects.Count} objects in {watch.ElapsedMilliseconds} ms."));
             _allObjects.Clear();
             _allObjects.AddRange(objects.Select(item => new CelestialObjectRowViewModel(item)));
             if (_pendingSmallBodies is { } pending)
@@ -494,7 +498,7 @@ public sealed partial class TargetsViewModel : ObservableValidator, IDisposable
         var forecast = FeasibilityRequests.Forecast(_weather);
         var key = new FeasibilityKey(night.WindowStartLocal, _context.Observer, _context.TimeZoneId, _context.MinimumAltitude,
             _context.HorizonMask, rig, _context.EffectiveZenithSqm, _context.Darkness, _context.ExtinctionCoefficient, forecast?.FetchedAtUtc,
-            _weather?.AstroForecast?.FetchedAtUtc);
+            _weather?.AstroForecast?.FetchedAtUtc, _context.Tuning);
         if (key == _feasibilityKey)
         {
             return;
@@ -531,11 +535,15 @@ public sealed partial class TargetsViewModel : ObservableValidator, IDisposable
         try
         {
             var targets = rows.Select(row => row.Target).ToList();
+            var watch = System.Diagnostics.Stopwatch.StartNew();
             var reports = await Task.Run(() => _feasibilityCalculator.EvaluateAll(targets, request, cancellationToken), cancellationToken);
             if (key != _feasibilityKey)
             {
                 return;
             }
+
+            _logger.LogInfo(string.Create(CultureInfo.InvariantCulture,
+                $"Feasibility: {targets.Count} objects in {watch.ElapsedMilliseconds} ms."));
 
             for (var index = 0; index < rows.Count; index++)
             {
@@ -657,5 +665,5 @@ public sealed partial class TargetsViewModel : ObservableValidator, IDisposable
     private sealed record FeasibilityKey(
         DateTime WindowStart, ObserverLocation Observer, string TimeZoneId, double MinimumAltitude, HorizonMask Horizon,
         RigSetup? Rig, double ZenithSqm, DarknessDefinition Darkness, double Extinction, DateTime? ForecastFetchedUtc,
-        DateTime? AstroForecastFetchedUtc);
+        DateTime? AstroForecastFetchedUtc, FeasibilityTuning Tuning);
 }

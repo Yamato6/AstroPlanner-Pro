@@ -109,7 +109,7 @@ TypeScript (zod) schemas: `src/sky-renderer/src/bridge/schema.ts`.
 | `setHighlights` | ids of the session plan |
 | `selectObject` | selection (also renderer → C#) |
 | `centerOn` | turn the view to a J2000 direction (optionally change the FOV) |
-| `setViewMode`, `setTheme` | dome / all-sky / finder; dark / night |
+| `setViewMode`, `setTheme` | dome / all-sky / finder; dark / night (an SVG colour matrix in `index.html` keeps each pixel's luminance in the red channel only) |
 | `setFov` | camera frame: visible, width and height (degrees), rotation, center (J2000, or null = middle of the view), label |
 | `setSkyAppearance` | sampled zenith brightness and limiting magnitude (start, step, two arrays) |
 

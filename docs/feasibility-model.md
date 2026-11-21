@@ -218,8 +218,15 @@ unless noted. It covers sanity scenarios, monotonicity and edge cases.
   forecast both follow the night (§11).
 - No star trailing beyond the NPF limit, no field rotation for alt-az beyond the default limit,
   no dew or wind.
-- The thresholds and weights are deliberately simple and tunable. Predictions can be compared with
-  real results once the logbook stores them (spec §8.7, M6).
+- The thresholds and weights are deliberately simple and tunable. **Settings › Advanced** exposes
+  the ones a user can calibrate (`FeasibilityTuning`): seeing without a forecast, core
+  brightening, overhead between subs, longest sub, the three stack-SNR thresholds and the pixels
+  needed to split a double. Only changed values are stored, so the others follow future defaults.
+- **Predictions vs results** (spec §8.7): a photographed logbook entry keeps the verdict, score and
+  stack SNR of tonight's report. The Logbook compares the score with the user's 1–5 rating mapped
+  to 0–100 (1★ = 0, 5★ = 100): the mean difference per verdict and overall, and the Pearson
+  correlation from 3 entries (`PredictionComparison`). Results always better than predicted
+  suggest lower SNR thresholds or more core brightening; always worse, the opposite.
 
 ## 10. Session planner (spec §4.6)
 

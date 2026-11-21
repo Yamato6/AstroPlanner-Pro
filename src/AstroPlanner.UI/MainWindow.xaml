@@ -12,7 +12,7 @@
         Height="800" Width="1400" MinHeight="640" MinWidth="1080"
         WindowStartupLocation="CenterScreen"
         PreviewKeyDown="OnPreviewKeyDown"
-        Background="{StaticResource WindowBackgroundBrush}">
+        Background="{DynamicResource WindowBackgroundBrush}">
     <Window.Resources>
         <!-- Shared colors and styles: Themes/Dark.xaml -->
         <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>
@@ -24,10 +24,10 @@
         <converters:ImageBytesConverter x:Key="ImageBytesConverter"/>
         <converters:BooleanToTextConverter x:Key="ActiveMarkConverter" TrueText="●" FalseText=""/>
         <Style TargetType="TextBlock">
-            <Setter Property="Foreground" Value="{StaticResource NightTextBrush}"/>
+            <Setter Property="Foreground" Value="{DynamicResource NightTextBrush}"/>
         </Style>
         <Style TargetType="Label">
-            <Setter Property="Foreground" Value="{StaticResource LabelTextBrush}"/>
+            <Setter Property="Foreground" Value="{DynamicResource LabelTextBrush}"/>
             <Setter Property="FontWeight" Value="SemiBold"/>
             <Setter Property="Margin" Value="0,0,6,0"/>
         </Style>
@@ -35,9 +35,9 @@
         <Style TargetType="CheckBox" BasedOn="{StaticResource DarkCheckBoxStyle}"/>
         <!-- Segmented buttons of the sky view modes (3D / all-sky / finder) -->
         <Style x:Key="SkyModeButtonStyle" TargetType="RadioButton">
-            <Setter Property="Foreground" Value="{StaticResource StrongTextBrush}"/>
-            <Setter Property="Background" Value="{StaticResource ControlRaisedBrush}"/>
-            <Setter Property="BorderBrush" Value="{StaticResource ControlBorderBrush}"/>
+            <Setter Property="Foreground" Value="{DynamicResource StrongTextBrush}"/>
+            <Setter Property="Background" Value="{DynamicResource ControlRaisedBrush}"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource ControlBorderBrush}"/>
             <Setter Property="Padding" Value="10,6"/>
             <Setter Property="Margin" Value="0,0,3,0"/>
             <Setter Property="Cursor" Value="Hand"/>
@@ -54,19 +54,19 @@
             </Setter>
             <Style.Triggers>
                 <Trigger Property="IsMouseOver" Value="True">
-                    <Setter Property="BorderBrush" Value="{StaticResource AccentBrush}"/>
+                    <Setter Property="BorderBrush" Value="{DynamicResource AccentBrush}"/>
                 </Trigger>
                 <Trigger Property="IsChecked" Value="True">
-                    <Setter Property="Background" Value="{StaticResource PrimaryBrush}"/>
-                    <Setter Property="BorderBrush" Value="{StaticResource PrimaryBorderBrush}"/>
-                    <Setter Property="Foreground" Value="White"/>
+                    <Setter Property="Background" Value="{DynamicResource PrimaryBrush}"/>
+                    <Setter Property="BorderBrush" Value="{DynamicResource PrimaryBorderBrush}"/>
+                    <Setter Property="Foreground" Value="{DynamicResource HighlightTextBrush}"/>
                 </Trigger>
             </Style.Triggers>
         </Style>
         <Style x:Key="FilterLabelStyle" TargetType="TextBlock">
             <Setter Property="VerticalAlignment" Value="Center"/>
             <Setter Property="Margin" Value="0,0,6,0"/>
-            <Setter Property="Foreground" Value="{StaticResource LabelTextBrush}"/>
+            <Setter Property="Foreground" Value="{DynamicResource LabelTextBrush}"/>
             <Setter Property="FontWeight" Value="SemiBold"/>
         </Style>
         <Style x:Key="CenteredCellStyle" TargetType="TextBlock">
@@ -74,7 +74,7 @@
         </Style>
         <Style x:Key="ObservedCellStyle" TargetType="TextBlock">
             <Setter Property="TextAlignment" Value="Center"/>
-            <Setter Property="Foreground" Value="{StaticResource SuccessSoftBrush}"/>
+            <Setter Property="Foreground" Value="{DynamicResource SuccessSoftBrush}"/>
             <Setter Property="FontWeight" Value="Bold"/>
             <Setter Property="ToolTip" Value="{x:Static res:Strings.ObservedTooltip}"/>
         </Style>
@@ -90,7 +90,7 @@
             <Setter Property="ToolTip" Value="{x:Static res:Strings.MoonDistanceTooltip}"/>
             <Style.Triggers>
                 <DataTrigger Binding="{Binding MoonInterferes}" Value="True">
-                    <Setter Property="Foreground" Value="{StaticResource WarningBrush}"/>
+                    <Setter Property="Foreground" Value="{DynamicResource WarningBrush}"/>
                     <Setter Property="FontWeight" Value="SemiBold"/>
                     <Setter Property="ToolTip" Value="{x:Static res:Strings.MoonInterferesTooltip}"/>
                 </DataTrigger>
@@ -102,7 +102,7 @@
             <Setter Property="ToolTip" Value="{x:Static res:Strings.MoonDistanceTooltip}"/>
             <Style.Triggers>
                 <DataTrigger Binding="{Binding Row.MoonInterferes}" Value="True">
-                    <Setter Property="Foreground" Value="{StaticResource WarningBrush}"/>
+                    <Setter Property="Foreground" Value="{DynamicResource WarningBrush}"/>
                     <Setter Property="FontWeight" Value="SemiBold"/>
                     <Setter Property="ToolTip" Value="{x:Static res:Strings.MoonInterferesTooltip}"/>
                 </DataTrigger>
@@ -110,42 +110,42 @@
         </Style>
         <Style x:Key="PlanStatusCellStyle" TargetType="TextBlock">
             <Setter Property="TextAlignment" Value="Center"/>
-            <Setter Property="Foreground" Value="{StaticResource SuccessBrush}"/>
+            <Setter Property="Foreground" Value="{DynamicResource SuccessBrush}"/>
             <Style.Triggers>
                 <DataTrigger Binding="{Binding Row.IsVisible}" Value="False">
-                    <Setter Property="Foreground" Value="{StaticResource DangerBrush}"/>
+                    <Setter Property="Foreground" Value="{DynamicResource DangerBrush}"/>
                 </DataTrigger>
             </Style.Triggers>
         </Style>
         <Style x:Key="StatusCellStyle" TargetType="TextBlock">
             <Setter Property="TextAlignment" Value="Center"/>
-            <Setter Property="Foreground" Value="{StaticResource SuccessBrush}"/>
+            <Setter Property="Foreground" Value="{DynamicResource SuccessBrush}"/>
             <Style.Triggers>
                 <DataTrigger Binding="{Binding IsVisible}" Value="False">
-                    <Setter Property="Foreground" Value="{StaticResource DangerBrush}"/>
+                    <Setter Property="Foreground" Value="{DynamicResource DangerBrush}"/>
                 </DataTrigger>
             </Style.Triggers>
         </Style>
         <!-- Feasibility verdict: green when good, amber when marginal, red when unlikely or impossible -->
         <Style x:Key="VerdictCellStyle" TargetType="TextBlock">
             <Setter Property="TextAlignment" Value="Center"/>
-            <Setter Property="Foreground" Value="{StaticResource NightMutedTextBrush}"/>
+            <Setter Property="Foreground" Value="{DynamicResource NightMutedTextBrush}"/>
             <Style.Triggers>
                 <DataTrigger Binding="{Binding Verdict}" Value="Excellent">
-                    <Setter Property="Foreground" Value="{StaticResource SuccessBrush}"/>
+                    <Setter Property="Foreground" Value="{DynamicResource SuccessBrush}"/>
                     <Setter Property="FontWeight" Value="SemiBold"/>
                 </DataTrigger>
                 <DataTrigger Binding="{Binding Verdict}" Value="Good">
-                    <Setter Property="Foreground" Value="{StaticResource SuccessSoftBrush}"/>
+                    <Setter Property="Foreground" Value="{DynamicResource SuccessSoftBrush}"/>
                 </DataTrigger>
                 <DataTrigger Binding="{Binding Verdict}" Value="Marginal">
-                    <Setter Property="Foreground" Value="{StaticResource WarningBrush}"/>
+                    <Setter Property="Foreground" Value="{DynamicResource WarningBrush}"/>
                 </DataTrigger>
                 <DataTrigger Binding="{Binding Verdict}" Value="Unlikely">
-                    <Setter Property="Foreground" Value="{StaticResource DangerBrush}"/>
+                    <Setter Property="Foreground" Value="{DynamicResource DangerBrush}"/>
                 </DataTrigger>
                 <DataTrigger Binding="{Binding Verdict}" Value="NotPossible">
-                    <Setter Property="Foreground" Value="{StaticResource PlaceholderTextBrush}"/>
+                    <Setter Property="Foreground" Value="{DynamicResource PlaceholderTextBrush}"/>
                 </DataTrigger>
             </Style.Triggers>
         </Style>
@@ -159,13 +159,13 @@
         </Grid.RowDefinitions>
 
         <!-- New version banner (only when there is one) -->
-        <Border Grid.Row="2" Margin="0,0,0,4" Padding="12,8" CornerRadius="6" Background="{StaticResource BannerBrush}"
-                BorderBrush="{StaticResource AccentBrush}" BorderThickness="1"
+        <Border Grid.Row="2" Margin="0,0,0,4" Padding="12,8" CornerRadius="6" Background="{DynamicResource BannerBrush}"
+                BorderBrush="{DynamicResource AccentBrush}" BorderThickness="1"
                 Visibility="{Binding HasUpdate, Converter={StaticResource BooleanToVisibilityConverter}}">
             <DockPanel>
                 <Button DockPanel.Dock="Right" Style="{StaticResource SecondaryButtonStyle}" Content="{x:Static res:Strings.UpdateNotNow}"
                         Command="{Binding DismissUpdateCommand}"/>
-                <TextBlock VerticalAlignment="Center" Foreground="White">
+                <TextBlock VerticalAlignment="Center" Foreground="{DynamicResource HighlightTextBrush}">
                     <Run Text="{Binding UpdateBannerText, Mode=OneWay}"/>
                     <Hyperlink NavigateUri="{Binding AvailableUpdate.Url}" RequestNavigate="OnLinkClicked"><Run Text="{x:Static res:Strings.UpdateDownload}"/></Hyperlink>
                 </TextBlock>
@@ -173,7 +173,7 @@
         </Border>
 
         <!-- Header: observer summary and observation date -->
-        <Border Grid.Row="0" Padding="12" Background="{StaticResource NightPanelBrush}" CornerRadius="8" Margin="0,0,0,12">
+        <Border Grid.Row="0" Padding="12" Background="{DynamicResource NightPanelBrush}" CornerRadius="8" Margin="0,0,0,12">
             <Grid>
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="Auto"/>
@@ -184,11 +184,11 @@
                     <ColumnDefinition Width="Auto"/>
                 </Grid.ColumnDefinitions>
                 <StackPanel Grid.Column="0" Margin="0,0,24,0" VerticalAlignment="Center">
-                    <TextBlock Foreground="White" FontSize="24" FontWeight="SemiBold" Text="{x:Static res:Strings.AppName}"/>
-                    <TextBlock Foreground="{StaticResource NightMutedTextBrush}" FontSize="12" Text="{x:Static res:Strings.AppTagline}"/>
+                    <TextBlock Foreground="{DynamicResource HighlightTextBrush}" FontSize="24" FontWeight="SemiBold" Text="{x:Static res:Strings.AppName}"/>
+                    <TextBlock Foreground="{DynamicResource NightMutedTextBrush}" FontSize="12" Text="{x:Static res:Strings.AppTagline}"/>
                 </StackPanel>
                 <StackPanel Grid.Column="1" Margin="0,0,14,0">
-                    <TextBlock Foreground="{StaticResource TabTextBrush}" Text="{x:Static res:Strings.HeaderLocalDateTime}"/>
+                    <TextBlock Foreground="{DynamicResource TabTextBrush}" Text="{x:Static res:Strings.HeaderLocalDateTime}"/>
                     <StackPanel Orientation="Horizontal" Margin="0,2,0,0">
                         <DatePicker Width="124" Style="{StaticResource DarkDatePickerStyle}"
                                     AutomationProperties.Name="{x:Static res:Strings.HeaderObservationDate}"
@@ -199,7 +199,7 @@
                                   AutomationProperties.AutomationId="HourCombo" AutomationProperties.Name="{x:Static res:Strings.HeaderHour}"
                                   ItemsSource="{Binding Hours}" ItemStringFormat="00"
                                   SelectedItem="{Binding ObservationHour}"/>
-                        <TextBlock Text=":" Foreground="White" Margin="3,0" VerticalAlignment="Center"/>
+                        <TextBlock Text=":" Foreground="{DynamicResource HighlightTextBrush}" Margin="3,0" VerticalAlignment="Center"/>
                         <ComboBox Style="{StaticResource DarkComboBoxStyle}"
                                   Width="58" MaxDropDownHeight="240"
                                   ToolTip="{x:Static res:Strings.HeaderMinute}"
@@ -215,18 +215,18 @@
                     </StackPanel>
                 </StackPanel>
                 <StackPanel Grid.Column="2" Margin="0,0,14,0">
-                    <TextBlock Foreground="{StaticResource TabTextBrush}" Text="{x:Static res:Strings.HeaderTimeZone}"/>
-                    <TextBlock Foreground="White" Text="{Binding Observer.TimeZoneId}"/>
+                    <TextBlock Foreground="{DynamicResource TabTextBrush}" Text="{x:Static res:Strings.HeaderTimeZone}"/>
+                    <TextBlock Foreground="{DynamicResource HighlightTextBrush}" Text="{Binding Observer.TimeZoneId}"/>
                 </StackPanel>
                 <StackPanel Grid.Column="3" Margin="0,0,12,0">
-                    <TextBlock Foreground="{StaticResource TabTextBrush}" Text="{x:Static res:Strings.HeaderActiveLocation}" TextTrimming="CharacterEllipsis"/>
-                    <TextBlock Foreground="White" Text="{Binding ActiveLocationName}" TextTrimming="CharacterEllipsis" ToolTip="{Binding ActiveLocationName}"/>
-                    <TextBlock Foreground="{StaticResource TabTextBrush}" Text="{Binding LocationSummary}" TextTrimming="CharacterEllipsis"/>
+                    <TextBlock Foreground="{DynamicResource TabTextBrush}" Text="{x:Static res:Strings.HeaderActiveLocation}" TextTrimming="CharacterEllipsis"/>
+                    <TextBlock Foreground="{DynamicResource HighlightTextBrush}" Text="{Binding ActiveLocationName}" TextTrimming="CharacterEllipsis" ToolTip="{Binding ActiveLocationName}"/>
+                    <TextBlock Foreground="{DynamicResource TabTextBrush}" Text="{Binding LocationSummary}" TextTrimming="CharacterEllipsis"/>
                 </StackPanel>
                 <!-- Active rig (spec §10): drives the camera frame and the feasibility verdicts -->
                 <StackPanel Grid.Column="4" Margin="0,0,14,0"
                             Visibility="{Binding Equipment, Converter={StaticResource NullToCollapsedConverter}}">
-                    <TextBlock Foreground="{StaticResource TabTextBrush}" Text="{x:Static res:Strings.HeaderActiveRig}"/>
+                    <TextBlock Foreground="{DynamicResource TabTextBrush}" Text="{x:Static res:Strings.HeaderActiveRig}"/>
                     <ComboBox Style="{StaticResource DarkComboBoxStyle}" Width="220" Margin="0,2,0,0"
                               AutomationProperties.AutomationId="ActiveRigCombo" AutomationProperties.Name="{x:Static res:Strings.HeaderActiveRig}"
                               ToolTip="{x:Static res:Strings.HeaderActiveRigTooltip}"
@@ -234,7 +234,7 @@
                               SelectedValuePath="Rig.Id" SelectedValue="{Binding Equipment.ActiveRigId}"/>
                 </StackPanel>
                 <StackPanel Grid.Column="5" Orientation="Horizontal" VerticalAlignment="Center">
-                    <TextBlock VerticalAlignment="Center" Margin="0,0,10,0" FontSize="15" Foreground="{StaticResource TabTextBrush}"
+                    <TextBlock VerticalAlignment="Center" Margin="0,0,10,0" FontSize="15" Foreground="{DynamicResource TabTextBrush}"
                                Text="{Binding OnlineStatusGlyph}" ToolTip="{Binding OnlineStatusTooltip}"
                                AutomationProperties.Name="{Binding OnlineStatusText}" AutomationProperties.HelpText="{x:Static res:Strings.OnlineStatusName}"/>
                     <Button Style="{StaticResource SecondaryButtonStyle}" Content="{x:Static res:Strings.HeaderSettings}" Click="OnSettingsClicked"
@@ -243,9 +243,13 @@
                             ToolTip="{x:Static res:Strings.HeaderResetTooltip}"/>
                     <Button Style="{StaticResource PrimaryButtonStyle}" Content="{x:Static res:Strings.HeaderNow}" Command="{Binding SetNowCommand}"
                             ToolTip="{x:Static res:Strings.HeaderNowTooltip}"/>
-                    <CheckBox VerticalAlignment="Center" Margin="12,0,0,0" Foreground="White" Content="{x:Static res:Strings.HeaderLive}"
+                    <CheckBox VerticalAlignment="Center" Margin="12,0,0,0" Foreground="{DynamicResource HighlightTextBrush}" Content="{x:Static res:Strings.HeaderLive}"
                               IsChecked="{Binding IsLive}"
                               ToolTip="{x:Static res:Strings.HeaderLiveTooltip}"/>
+                    <CheckBox VerticalAlignment="Center" Margin="12,0,0,0" Foreground="{DynamicResource HighlightTextBrush}" Content="{x:Static res:Strings.HeaderNightVision}"
+                              AutomationProperties.AutomationId="NightVisionToggle"
+                              IsChecked="{Binding IsNightTheme}"
+                              ToolTip="{x:Static res:Strings.HeaderNightVisionTooltip}"/>
                     <Button Style="{StaticResource SecondaryButtonStyle}" Margin="12,0,0,0" Content="?" Width="34"
                             Click="OnAboutClicked" ToolTip="{x:Static res:Strings.HeaderAboutTooltip}"
                             AutomationProperties.Name="{x:Static res:Strings.HeaderAboutName}"/>
@@ -254,56 +258,56 @@
         </Border>
 
         <UniformGrid Grid.Row="1" Columns="6" Margin="0,0,0,12">
-            <Border Background="{StaticResource NightCardBrush}" CornerRadius="7" Padding="14" Margin="0,0,6,0">
+            <Border Background="{DynamicResource NightCardBrush}" CornerRadius="7" Padding="14" Margin="0,0,6,0">
                 <StackPanel>
-                    <TextBlock Foreground="{StaticResource NightMutedTextBrush}" Text="{x:Static res:Strings.CardCatalogObjects}"/>
-                    <TextBlock Foreground="White" FontSize="24" FontWeight="SemiBold" Text="{Binding Targets.CatalogCount}"/>
-                    <TextBlock Foreground="{StaticResource NightMutedTextBrush}" FontSize="12" Text="{Binding Tonight.ObservedSummaryText}"
+                    <TextBlock Foreground="{DynamicResource NightMutedTextBrush}" Text="{x:Static res:Strings.CardCatalogObjects}"/>
+                    <TextBlock Foreground="{DynamicResource HighlightTextBrush}" FontSize="24" FontWeight="SemiBold" Text="{Binding Targets.CatalogCount}"/>
+                    <TextBlock Foreground="{DynamicResource NightMutedTextBrush}" FontSize="12" Text="{Binding Tonight.ObservedSummaryText}"
                                ToolTip="{x:Static res:Strings.CardObservedTooltip}"/>
                 </StackPanel>
             </Border>
-            <Border Background="{StaticResource NightCardBrush}" CornerRadius="7" Padding="14" Margin="6,0">
+            <Border Background="{DynamicResource NightCardBrush}" CornerRadius="7" Padding="14" Margin="6,0">
                 <StackPanel>
-                    <TextBlock Foreground="{StaticResource NightMutedTextBrush}" Text="{x:Static res:Strings.CardVisibleObjects}"/>
-                    <TextBlock Foreground="{StaticResource SuccessSoftBrush}" FontSize="24" FontWeight="SemiBold" Text="{Binding Targets.VisibleObjectsCount}"/>
+                    <TextBlock Foreground="{DynamicResource NightMutedTextBrush}" Text="{x:Static res:Strings.CardVisibleObjects}"/>
+                    <TextBlock Foreground="{DynamicResource SuccessSoftBrush}" FontSize="24" FontWeight="SemiBold" Text="{Binding Targets.VisibleObjectsCount}"/>
                 </StackPanel>
             </Border>
             <!-- Dark night: end → start of astronomical twilight (Sun at -18°) -->
-            <Border Background="{StaticResource NightCardBrush}" CornerRadius="7" Padding="14" Margin="6,0"
+            <Border Background="{DynamicResource NightCardBrush}" CornerRadius="7" Padding="14" Margin="6,0"
                     ToolTip="{x:Static res:Strings.CardDarkNightTooltip}">
                 <StackPanel>
-                    <TextBlock Foreground="{StaticResource NightMutedTextBrush}" Text="{x:Static res:Strings.CardDarkNight}"/>
-                    <TextBlock Foreground="{StaticResource DarknessBrush}" FontSize="24" FontWeight="SemiBold" Text="{Binding Tonight.DarkNightText}"/>
-                    <TextBlock Foreground="{StaticResource NightMutedTextBrush}" FontSize="12" Text="{Binding Tonight.SunTimesText}"
+                    <TextBlock Foreground="{DynamicResource NightMutedTextBrush}" Text="{x:Static res:Strings.CardDarkNight}"/>
+                    <TextBlock Foreground="{DynamicResource DarknessBrush}" FontSize="24" FontWeight="SemiBold" Text="{Binding Tonight.DarkNightText}"/>
+                    <TextBlock Foreground="{DynamicResource NightMutedTextBrush}" FontSize="12" Text="{Binding Tonight.SunTimesText}"
                                TextTrimming="CharacterEllipsis" ToolTip="{Binding Tonight.SunTimesText}"/>
                 </StackPanel>
             </Border>
-            <Border Background="{StaticResource NightCardBrush}" CornerRadius="7" Padding="14" Margin="6,0"
+            <Border Background="{DynamicResource NightCardBrush}" CornerRadius="7" Padding="14" Margin="6,0"
                     ToolTip="{x:Static res:Strings.CardMoonTooltip}">
                 <StackPanel>
-                    <TextBlock Foreground="{StaticResource NightMutedTextBrush}" Text="{x:Static res:Strings.CardMoon}"/>
-                    <TextBlock Foreground="{StaticResource MoonBrush}" FontSize="24" FontWeight="SemiBold" Text="{Binding Tonight.MoonIlluminationText}"/>
-                    <TextBlock Foreground="{StaticResource NightMutedTextBrush}" FontSize="12" Text="{Binding Tonight.MoonDetailText}" TextTrimming="CharacterEllipsis"/>
+                    <TextBlock Foreground="{DynamicResource NightMutedTextBrush}" Text="{x:Static res:Strings.CardMoon}"/>
+                    <TextBlock Foreground="{DynamicResource MoonBrush}" FontSize="24" FontWeight="SemiBold" Text="{Binding Tonight.MoonIlluminationText}"/>
+                    <TextBlock Foreground="{DynamicResource NightMutedTextBrush}" FontSize="12" Text="{Binding Tonight.MoonDetailText}" TextTrimming="CharacterEllipsis"/>
                 </StackPanel>
             </Border>
             <!-- Cloud forecast during the dark night (Open-Meteo) -->
-            <Border Background="{StaticResource NightCardBrush}" CornerRadius="7" Padding="14" Margin="6,0"
+            <Border Background="{DynamicResource NightCardBrush}" CornerRadius="7" Padding="14" Margin="6,0"
                     ToolTip="{Binding Tonight.CloudDetailText}">
                 <StackPanel>
-                    <TextBlock Foreground="{StaticResource NightMutedTextBrush}" Text="{x:Static res:Strings.CardClouds}"/>
-                    <TextBlock Foreground="{StaticResource LabelTextBrush}" FontSize="24" FontWeight="SemiBold" Text="{Binding Tonight.CloudCoverText}"/>
-                    <TextBlock Foreground="{StaticResource NightMutedTextBrush}" FontSize="12" Text="{Binding Tonight.CloudDetailText}" TextTrimming="CharacterEllipsis"/>
+                    <TextBlock Foreground="{DynamicResource NightMutedTextBrush}" Text="{x:Static res:Strings.CardClouds}"/>
+                    <TextBlock Foreground="{DynamicResource LabelTextBrush}" FontSize="24" FontWeight="SemiBold" Text="{Binding Tonight.CloudCoverText}"/>
+                    <TextBlock Foreground="{DynamicResource NightMutedTextBrush}" FontSize="12" Text="{Binding Tonight.CloudDetailText}" TextTrimming="CharacterEllipsis"/>
                     <!-- Attribution required by the Open-Meteo CC BY 4.0 license -->
-                    <TextBlock FontSize="10" Margin="0,2,0,0" Foreground="{StaticResource PlaceholderTextBrush}">
+                    <TextBlock FontSize="10" Margin="0,2,0,0" Foreground="{DynamicResource PlaceholderTextBrush}">
                         <Run Text="{x:Static res:Strings.CardDataAttribution}"/>
                         <Hyperlink NavigateUri="https://open-meteo.com/" RequestNavigate="OnLinkClicked">Open-Meteo.com</Hyperlink>
                     </TextBlock>
                 </StackPanel>
             </Border>
-            <Border Background="{StaticResource NightCardBrush}" CornerRadius="7" Padding="14" Margin="6,0,0,0">
+            <Border Background="{DynamicResource NightCardBrush}" CornerRadius="7" Padding="14" Margin="6,0,0,0">
                 <StackPanel>
-                    <TextBlock Foreground="{StaticResource NightMutedTextBrush}" Text="{x:Static res:Strings.CardMinimumAltitude}"/>
-                    <TextBlock Foreground="{StaticResource WarningBrush}" FontSize="24" FontWeight="SemiBold">
+                    <TextBlock Foreground="{DynamicResource NightMutedTextBrush}" Text="{x:Static res:Strings.CardMinimumAltitude}"/>
+                    <TextBlock Foreground="{DynamicResource WarningBrush}" FontSize="24" FontWeight="SemiBold">
                         <Run Text="{Binding Observer.MinimumAltitude, StringFormat={}{0:0.#}}"/><Run Text="°"/>
                     </TextBlock>
                 </StackPanel>
@@ -322,25 +326,25 @@
                         <RowDefinition Height="*"/>
                     </Grid.RowDefinitions>
                     <UniformGrid Columns="3" Margin="0,0,0,12">
-                        <Border Background="{StaticResource NightCardBrush}" CornerRadius="7" Padding="14" Margin="0,0,6,0">
+                        <Border Background="{DynamicResource NightCardBrush}" CornerRadius="7" Padding="14" Margin="0,0,6,0">
                             <StackPanel>
-                                <TextBlock Foreground="{StaticResource NightMutedTextBrush}" Text="{x:Static res:Strings.TonightRigCard}"/>
-                                <TextBlock Foreground="White" FontSize="16" FontWeight="SemiBold" Text="{Binding Tonight.ActiveRigText}" TextWrapping="Wrap"/>
+                                <TextBlock Foreground="{DynamicResource NightMutedTextBrush}" Text="{x:Static res:Strings.TonightRigCard}"/>
+                                <TextBlock Foreground="{DynamicResource HighlightTextBrush}" FontSize="16" FontWeight="SemiBold" Text="{Binding Tonight.ActiveRigText}" TextWrapping="Wrap"/>
                             </StackPanel>
                         </Border>
-                        <Border Background="{StaticResource NightCardBrush}" CornerRadius="7" Padding="14" Margin="6,0,0,0"
+                        <Border Background="{DynamicResource NightCardBrush}" CornerRadius="7" Padding="14" Margin="6,0,0,0"
                                 ToolTip="{x:Static res:Strings.TonightSkyCardTooltip}">
                             <StackPanel>
-                                <TextBlock Foreground="{StaticResource NightMutedTextBrush}" Text="{x:Static res:Strings.TonightSkyCard}"/>
-                                <TextBlock Foreground="{StaticResource DarknessBrush}" FontSize="16" FontWeight="SemiBold" Text="{Binding Tonight.SiteSkyText}" TextWrapping="Wrap"/>
+                                <TextBlock Foreground="{DynamicResource NightMutedTextBrush}" Text="{x:Static res:Strings.TonightSkyCard}"/>
+                                <TextBlock Foreground="{DynamicResource DarknessBrush}" FontSize="16" FontWeight="SemiBold" Text="{Binding Tonight.SiteSkyText}" TextWrapping="Wrap"/>
                             </StackPanel>
                         </Border>
-                        <Border Background="{StaticResource NightCardBrush}" CornerRadius="7" Padding="14" Margin="6,0,0,0"
+                        <Border Background="{DynamicResource NightCardBrush}" CornerRadius="7" Padding="14" Margin="6,0,0,0"
                                 ToolTip="{x:Static res:Strings.TonightConditionsCardTooltip}">
                             <StackPanel>
-                                <TextBlock Foreground="{StaticResource NightMutedTextBrush}" Text="{x:Static res:Strings.TonightConditionsCard}"/>
-                                <TextBlock Foreground="White" FontSize="16" FontWeight="SemiBold" Text="{Binding Tonight.ConditionsText}" TextWrapping="Wrap"/>
-                                <TextBlock Foreground="{StaticResource NightMutedTextBrush}" Text="{Binding Tonight.ConditionsDetailText}" TextWrapping="Wrap"/>
+                                <TextBlock Foreground="{DynamicResource NightMutedTextBrush}" Text="{x:Static res:Strings.TonightConditionsCard}"/>
+                                <TextBlock Foreground="{DynamicResource HighlightTextBrush}" FontSize="16" FontWeight="SemiBold" Text="{Binding Tonight.ConditionsText}" TextWrapping="Wrap"/>
+                                <TextBlock Foreground="{DynamicResource NightMutedTextBrush}" Text="{Binding Tonight.ConditionsDetailText}" TextWrapping="Wrap"/>
                             </StackPanel>
                         </Border>
                     </UniformGrid>
@@ -348,7 +352,7 @@
                         <ItemsControl ItemsSource="{Binding Tonight.Alerts}" Focusable="False" Margin="0,0,0,8">
                             <ItemsControl.ItemTemplate>
                                 <DataTemplate>
-                                    <TextBlock Foreground="{StaticResource WarningBrush}" FontWeight="SemiBold" TextWrapping="Wrap" Text="{Binding}"/>
+                                    <TextBlock Foreground="{DynamicResource WarningBrush}" FontWeight="SemiBold" TextWrapping="Wrap" Text="{Binding}"/>
                                 </DataTemplate>
                             </ItemsControl.ItemTemplate>
                         </ItemsControl>
@@ -357,19 +361,19 @@
                                 Click="OnMilkyWayClicked"/>
                         <TextBlock FontSize="16" FontWeight="SemiBold" Text="{x:Static res:Strings.SatellitePassesTitle}"
                                    ToolTip="{x:Static res:Strings.SatellitePassesTooltip}"/>
-                        <TextBlock Foreground="{StaticResource NightMutedTextBrush}" TextWrapping="Wrap" Text="{Binding Tonight.SatellitePassesHint}"
+                        <TextBlock Foreground="{DynamicResource NightMutedTextBrush}" TextWrapping="Wrap" Text="{Binding Tonight.SatellitePassesHint}"
                                    Visibility="{Binding Tonight.SatellitePassesHint, Converter={StaticResource NullToCollapsedConverter}}"/>
                         <ItemsControl ItemsSource="{Binding Tonight.SatellitePasses}" Focusable="False" Margin="0,2,0,10"
                                       AutomationProperties.Name="{x:Static res:Strings.SatellitePassesTitle}">
                             <ItemsControl.ItemTemplate>
                                 <DataTemplate>
-                                    <TextBlock Foreground="{StaticResource NightTextBrush}" TextWrapping="Wrap" Text="{Binding}"/>
+                                    <TextBlock Foreground="{DynamicResource NightTextBrush}" TextWrapping="Wrap" Text="{Binding}"/>
                                 </DataTemplate>
                             </ItemsControl.ItemTemplate>
                         </ItemsControl>
                         <TextBlock FontSize="18" FontWeight="SemiBold" Text="{x:Static res:Strings.BestTargetsTitle}"/>
-                        <TextBlock Foreground="{StaticResource NightMutedTextBrush}" TextWrapping="Wrap" Text="{x:Static res:Strings.BestTargetsExplanation}"/>
-                        <TextBlock Margin="0,6,0,0" Foreground="{StaticResource WarningBrush}" TextWrapping="Wrap" Text="{Binding Tonight.BestTargetsHint}"
+                        <TextBlock Foreground="{DynamicResource NightMutedTextBrush}" TextWrapping="Wrap" Text="{x:Static res:Strings.BestTargetsExplanation}"/>
+                        <TextBlock Margin="0,6,0,0" Foreground="{DynamicResource WarningBrush}" TextWrapping="Wrap" Text="{Binding Tonight.BestTargetsHint}"
                                    Visibility="{Binding Tonight.BestTargetsHint, Converter={StaticResource NullToCollapsedConverter}}"/>
                     </StackPanel>
                     <DataGrid Grid.Row="2" Style="{StaticResource NightDataGridStyle}" ItemsSource="{Binding Tonight.BestTargets}"
@@ -407,8 +411,8 @@
 
                     <!-- Left panel: filters + table -->
                     <Border Grid.Column="0" Padding="1"
-                            Background="{StaticResource SurfaceBrush}"
-                            BorderBrush="{StaticResource NightBorderBrush}" BorderThickness="1" CornerRadius="6">
+                            Background="{DynamicResource SurfaceBrush}"
+                            BorderBrush="{DynamicResource NightBorderBrush}" BorderThickness="1" CornerRadius="6">
                         <Grid Margin="8">
                             <Grid.RowDefinitions>
                                 <RowDefinition Height="Auto"/>
@@ -420,12 +424,12 @@
                             <WrapPanel Grid.Row="0" Margin="0,0,0,2">
                                 <!-- Search by id, name or constellation (accent-insensitive) -->
                                 <Grid Width="210" Margin="0,0,12,6">
-                                    <TextBox x:Name="SearchBox" Padding="22,3,4,3" Background="{StaticResource SurfaceBrush}"
+                                    <TextBox x:Name="SearchBox" Padding="22,3,4,3" Background="{DynamicResource SurfaceBrush}"
                                              AutomationProperties.Name="{x:Static res:Strings.SearchName}"
                                              Text="{Binding Targets.SearchText, UpdateSourceTrigger=PropertyChanged}"
                                              ToolTip="{x:Static res:Strings.SearchTooltip}"/>
-                                    <TextBlock Text="⌕" Foreground="{StaticResource NightMutedTextBrush}" Margin="7,0,0,1" VerticalAlignment="Center" IsHitTestVisible="False"/>
-                                    <TextBlock Text="{x:Static res:Strings.SearchPlaceholder}" Foreground="{StaticResource PlaceholderTextBrush}" Margin="24,0,0,0"
+                                    <TextBlock Text="⌕" Foreground="{DynamicResource NightMutedTextBrush}" Margin="7,0,0,1" VerticalAlignment="Center" IsHitTestVisible="False"/>
+                                    <TextBlock Text="{x:Static res:Strings.SearchPlaceholder}" Foreground="{DynamicResource PlaceholderTextBrush}" Margin="24,0,0,0"
                                                VerticalAlignment="Center" IsHitTestVisible="False">
                                         <TextBlock.Style>
                                             <Style TargetType="TextBlock">
@@ -497,10 +501,10 @@
 
                             <!-- Status / errors -->
                             <StackPanel Grid.Row="1" Margin="0,0,0,6">
-                                <TextBlock Foreground="{StaticResource DangerBrush}" TextWrapping="Wrap"
+                                <TextBlock Foreground="{DynamicResource DangerBrush}" TextWrapping="Wrap"
                                            Text="{Binding Targets.ErrorMessage}"/>
                                 <!-- Invalid input warning; the table keeps the last valid calculation -->
-                                <TextBlock Foreground="{StaticResource DangerBrush}" TextWrapping="Wrap" FontWeight="SemiBold"
+                                <TextBlock Foreground="{DynamicResource DangerBrush}" TextWrapping="Wrap" FontWeight="SemiBold"
                                            Text="{Binding Targets.ValidationMessage}">
                                     <TextBlock.Style>
                                         <Style TargetType="TextBlock">
@@ -513,7 +517,7 @@
                                     </TextBlock.Style>
                                 </TextBlock>
                                 <!-- Day or twilight warning at the chosen time -->
-                                <TextBlock Foreground="{StaticResource WarningBrush}" TextWrapping="Wrap" FontWeight="SemiBold"
+                                <TextBlock Foreground="{DynamicResource WarningBrush}" TextWrapping="Wrap" FontWeight="SemiBold"
                                            Text="{Binding Tonight.SkyBanner}">
                                     <TextBlock.Style>
                                         <Style TargetType="TextBlock">
@@ -526,12 +530,12 @@
                                     </TextBlock.Style>
                                 </TextBlock>
                                 <StackPanel Orientation="Horizontal">
-                                    <TextBlock Foreground="{StaticResource NightMutedTextBrush}" TextWrapping="Wrap"
+                                    <TextBlock Foreground="{DynamicResource NightMutedTextBrush}" TextWrapping="Wrap"
                                                Text="{Binding Targets.Objects.Count, Mode=OneWay, StringFormat={x:Static res:Strings.ShowingObjectsFormat}}"/>
-                                    <TextBlock Foreground="{StaticResource NightMutedTextBrush}" Margin="12,0,0,0" FontStyle="Italic"
+                                    <TextBlock Foreground="{DynamicResource NightMutedTextBrush}" Margin="12,0,0,0" FontStyle="Italic"
                                                Text="{x:Static res:Strings.CalculatingNight}"
                                                Visibility="{Binding Targets.IsCalculatingNight, Converter={StaticResource BooleanToVisibilityConverter}}"/>
-                                    <TextBlock Foreground="{StaticResource NightMutedTextBrush}" Margin="12,0,0,0" FontStyle="Italic"
+                                    <TextBlock Foreground="{DynamicResource NightMutedTextBrush}" Margin="12,0,0,0" FontStyle="Italic"
                                                Text="{x:Static res:Strings.CalculatingFeasibility}"
                                                Visibility="{Binding Targets.IsCalculatingFeasibility, Converter={StaticResource BooleanToVisibilityConverter}}"/>
                                 </StackPanel>
@@ -593,8 +597,8 @@
 
                     <!-- Right panel: altitude chart -->
                     <Border Grid.Column="2" Padding="8"
-                            Background="{StaticResource SurfaceBrush}"
-                            BorderBrush="{StaticResource NightBorderBrush}" BorderThickness="1" CornerRadius="6">
+                            Background="{DynamicResource SurfaceBrush}"
+                            BorderBrush="{DynamicResource NightBorderBrush}" BorderThickness="1" CornerRadius="6">
                         <Grid>
                             <Grid.RowDefinitions>
                                 <RowDefinition Height="Auto"/>
@@ -620,25 +624,25 @@
                         <ColumnDefinition Width="290"/>
                     </Grid.ColumnDefinitions>
                     <!-- 3D sky (WebView2 + three.js renderer, src/sky-renderer) -->
-                    <Border Grid.Column="0" BorderBrush="{StaticResource NightBorderBrush}" BorderThickness="1" CornerRadius="6"
-                            Background="#050B16" ClipToBounds="True"
+                    <Border Grid.Column="0" BorderBrush="{DynamicResource NightBorderBrush}" BorderThickness="1" CornerRadius="6"
+                            Background="{DynamicResource SkyCanvasBrush}" ClipToBounds="True"
                             Visibility="{Binding Sky.IsRendererAvailable, Converter={StaticResource BooleanToVisibilityConverter}}">
                         <sky:SkyHost x:Name="SkyHostView"/>
                     </Border>
                     <!-- Fallback without WebView2: the 2D chart of v1 -->
                     <DockPanel Grid.Column="0"
                                Visibility="{Binding Sky.IsRendererAvailable, Converter={StaticResource InverseBooleanToVisibilityConverter}}">
-                        <TextBlock DockPanel.Dock="Top" Margin="0,0,0,8" TextWrapping="Wrap" Foreground="{StaticResource WarningBrush}"
+                        <TextBlock DockPanel.Dock="Top" Margin="0,0,0,8" TextWrapping="Wrap" Foreground="{DynamicResource WarningBrush}"
                                    Text="{Binding Sky.RendererMessage}"/>
-                        <Border Padding="8" Background="{StaticResource SurfaceBrush}"
-                                BorderBrush="{StaticResource NightBorderBrush}" BorderThickness="1" CornerRadius="6">
+                        <Border Padding="8" Background="{DynamicResource SurfaceBrush}"
+                                BorderBrush="{DynamicResource NightBorderBrush}" BorderThickness="1" CornerRadius="6">
                             <ScottPlot:WpfPlot x:Name="SkyPlot" MouseLeftButtonUp="OnSkyPlotClicked"/>
                         </Border>
                     </DockPanel>
                     <ScrollViewer Grid.Column="1" Margin="12,0,0,0" VerticalScrollBarVisibility="Auto">
                         <StackPanel Margin="4,4,4,0">
                             <TextBlock FontSize="18" FontWeight="SemiBold" Text="{x:Static res:Strings.SkyTitle}"/>
-                            <TextBlock Margin="0,6,0,0" Foreground="{StaticResource NightMutedTextBrush}" TextWrapping="Wrap"
+                            <TextBlock Margin="0,6,0,0" Foreground="{DynamicResource NightMutedTextBrush}" TextWrapping="Wrap"
                                        Text="{x:Static res:Strings.SkyHelp}"
                                        Visibility="{Binding Sky.IsRendererAvailable, Converter={StaticResource BooleanToVisibilityConverter}}"/>
 
@@ -672,7 +676,7 @@
                                             Content="{x:Static res:Strings.SkyPause}" ToolTip="{x:Static res:Strings.SkyPlayTooltip}"
                                             Visibility="{Binding Sky.IsPlaying, Converter={StaticResource BooleanToVisibilityConverter}}"/>
                                     <TextBlock Margin="10,0,4,0" VerticalAlignment="Center" Text="{x:Static res:Strings.SkyRateLabel}"/>
-                                    <ComboBox Width="70" ItemsSource="{Binding Sky.Rates}" SelectedItem="{Binding Sky.SelectedRate}"
+                                    <ComboBox Width="70" Style="{StaticResource DarkComboBoxStyle}" ItemsSource="{Binding Sky.Rates}" SelectedItem="{Binding Sky.SelectedRate}" AutomationProperties.Name="{x:Static res:Strings.SkyRateLabel}"
                                               ItemStringFormat="{x:Static res:Strings.SkyRateFormat}"/>
                                     <Button Margin="6,0,0,0" Style="{StaticResource SecondaryButtonStyle}" Command="{Binding Sky.NowCommand}"
                                             Content="{x:Static res:Strings.SkyNow}"/>
@@ -693,14 +697,14 @@
                                 <DockPanel>
                                     <Button DockPanel.Dock="Right" Margin="6,0,0,0" Style="{StaticResource SecondaryButtonStyle}"
                                             Command="{Binding Sky.SearchCommand}" Content="{x:Static res:Strings.SkySearchButton}"/>
-                                    <TextBox x:Name="SkySearchBox" Text="{Binding Sky.SearchText, UpdateSourceTrigger=PropertyChanged}"
+                                    <TextBox x:Name="SkySearchBox" Text="{Binding Sky.SearchText, UpdateSourceTrigger=PropertyChanged}" AutomationProperties.Name="{x:Static res:Strings.SkySearchHeader}"
                                              ToolTip="{x:Static res:Strings.SkySearchTooltip}">
                                         <TextBox.InputBindings>
                                             <KeyBinding Key="Enter" Command="{Binding Sky.SearchCommand}"/>
                                         </TextBox.InputBindings>
                                     </TextBox>
                                 </DockPanel>
-                                <TextBlock Margin="0,4,0,0" Foreground="{StaticResource WarningBrush}" TextWrapping="Wrap"
+                                <TextBlock Margin="0,4,0,0" Foreground="{DynamicResource WarningBrush}" TextWrapping="Wrap"
                                            Text="{Binding Sky.SearchMessage}" Visibility="{Binding Sky.SearchMessage, Converter={StaticResource NullToCollapsedConverter}}"/>
                             </StackPanel>
 
@@ -717,7 +721,7 @@
                                     Command="{Binding Sky.OpenFinderChartCommand}" Content="{x:Static res:Strings.SkyOpenFinderChart}"
                                     ToolTip="{x:Static res:Strings.SkyOpenFinderChartTooltip}" IsEnabled="{Binding Sky.HasCatalogSelection}"
                                     Visibility="{Binding Sky.IsRendererAvailable, Converter={StaticResource BooleanToVisibilityConverter}}"/>
-                            <TextBlock Margin="0,6,0,0" Foreground="{StaticResource NightMutedTextBrush}" TextWrapping="Wrap"
+                            <TextBlock Margin="0,6,0,0" Foreground="{DynamicResource NightMutedTextBrush}" TextWrapping="Wrap"
                                        Text="{Binding Sky.HoverText, StringFormat={x:Static res:Strings.SkyHoverFormat}}"
                                        Visibility="{Binding Sky.HoverText, Converter={StaticResource NullToCollapsedConverter}}"/>
 
@@ -736,17 +740,17 @@
                                     <TextBlock DockPanel.Dock="Right" Width="32" TextAlignment="Right"
                                                Text="{Binding Sky.StarLimitMagnitude, StringFormat=0.0}"/>
                                     <Slider Minimum="3" Maximum="9.5" TickFrequency="0.5" IsSnapToTickEnabled="True"
-                                            Value="{Binding Sky.StarLimitMagnitude, Delay=150}"/>
+                                            Value="{Binding Sky.StarLimitMagnitude, Delay=150}" AutomationProperties.Name="{x:Static res:Strings.SkyStarLimit}"/>
                                 </DockPanel>
                                 <CheckBox Margin="0,8,0,0" Content="{x:Static res:Strings.SkyShowStats}" IsChecked="{Binding Sky.ShowStats}"/>
-                                <TextBlock Margin="0,4,0,0" Foreground="{StaticResource NightMutedTextBrush}" Text="{Binding Sky.StatsText}"
+                                <TextBlock Margin="0,4,0,0" Foreground="{DynamicResource NightMutedTextBrush}" Text="{Binding Sky.StatsText}"
                                            Visibility="{Binding Sky.StatsText, Converter={StaticResource NullToCollapsedConverter}}"/>
 
                                 <!-- Sky brightness -->
                                 <TextBlock Margin="0,14,0,4" FontWeight="SemiBold" Text="{x:Static res:Strings.SkyBrightnessHeader}"/>
                                 <TextBlock TextWrapping="Wrap" Text="{Binding Sky.SkyBrightnessText}"
                                            Visibility="{Binding Sky.SkyBrightnessText, Converter={StaticResource NullToCollapsedConverter}}"/>
-                                <TextBlock Margin="0,2,0,0" Foreground="{StaticResource NightMutedTextBrush}" TextWrapping="Wrap" Text="{Binding Sky.SiteSqmText}"/>
+                                <TextBlock Margin="0,2,0,0" Foreground="{DynamicResource NightMutedTextBrush}" TextWrapping="Wrap" Text="{Binding Sky.SiteSqmText}"/>
 
                                 <!-- Camera field of view -->
                                 <TextBlock Margin="0,14,0,4" FontWeight="SemiBold" Text="{x:Static res:Strings.SkyFovHeader}"/>
@@ -754,7 +758,7 @@
                                 <StackPanel Margin="0,6,0,0" IsEnabled="{Binding Sky.IsFovVisible}">
                                     <TextBlock Margin="0,0,0,2" Text="{x:Static res:Strings.SkySensorLabel}"/>
                                     <ComboBox Style="{StaticResource DarkComboBoxStyle}" ItemsSource="{Binding Sky.SensorPresets}"
-                                              SelectedItem="{Binding Sky.SelectedSensorPreset}"/>
+                                              SelectedItem="{Binding Sky.SelectedSensorPreset}" AutomationProperties.Name="{x:Static res:Strings.SkySensorLabel}"/>
                                     <Grid Margin="0,6,0,0">
                                         <Grid.ColumnDefinitions>
                                             <ColumnDefinition Width="*"/>
@@ -768,40 +772,40 @@
                                             <RowDefinition Height="Auto"/>
                                         </Grid.RowDefinitions>
                                         <TextBlock Grid.Row="0" Grid.Column="0" Text="{x:Static res:Strings.SkySensorWidth}"/>
-                                        <TextBox Grid.Row="1" Grid.Column="0" Text="{Binding Sky.SensorWidthMm, Delay=400, UpdateSourceTrigger=PropertyChanged}"/>
+                                        <TextBox Grid.Row="1" Grid.Column="0" Text="{Binding Sky.SensorWidthMm, Delay=400, UpdateSourceTrigger=PropertyChanged}" AutomationProperties.Name="{x:Static res:Strings.SkySensorWidth}"/>
                                         <TextBlock Grid.Row="0" Grid.Column="2" Text="{x:Static res:Strings.SkySensorHeight}"/>
-                                        <TextBox Grid.Row="1" Grid.Column="2" Text="{Binding Sky.SensorHeightMm, Delay=400, UpdateSourceTrigger=PropertyChanged}"/>
+                                        <TextBox Grid.Row="1" Grid.Column="2" Text="{Binding Sky.SensorHeightMm, Delay=400, UpdateSourceTrigger=PropertyChanged}" AutomationProperties.Name="{x:Static res:Strings.SkySensorHeight}"/>
                                         <TextBlock Grid.Row="2" Grid.Column="0" Margin="0,6,0,0" Text="{x:Static res:Strings.SkyFocalLength}"/>
-                                        <TextBox Grid.Row="3" Grid.Column="0" Text="{Binding Sky.FocalLengthMm, Delay=400, UpdateSourceTrigger=PropertyChanged}"/>
+                                        <TextBox Grid.Row="3" Grid.Column="0" Text="{Binding Sky.FocalLengthMm, Delay=400, UpdateSourceTrigger=PropertyChanged}" AutomationProperties.Name="{x:Static res:Strings.SkyFocalLength}"/>
                                         <TextBlock Grid.Row="2" Grid.Column="2" Margin="0,6,0,0" Text="{x:Static res:Strings.SkyFovRotation}"
                                                    ToolTip="{x:Static res:Strings.SkyFovRotationTooltip}"/>
-                                        <TextBox Grid.Row="3" Grid.Column="2" Text="{Binding Sky.FovRotationDegrees, Delay=400, UpdateSourceTrigger=PropertyChanged}"
+                                        <TextBox Grid.Row="3" Grid.Column="2" Text="{Binding Sky.FovRotationDegrees, Delay=400, UpdateSourceTrigger=PropertyChanged}" AutomationProperties.Name="{x:Static res:Strings.SkyFovRotation}"
                                                  ToolTip="{x:Static res:Strings.SkyFovRotationTooltip}"/>
                                     </Grid>
                                     <TextBlock Margin="0,6,0,0" FontWeight="SemiBold" Text="{Binding Sky.FovText}" TextWrapping="Wrap"/>
-                                    <TextBlock Foreground="{StaticResource NightMutedTextBrush}" TextWrapping="Wrap"
+                                    <TextBlock Foreground="{DynamicResource NightMutedTextBrush}" TextWrapping="Wrap"
                                                Text="{Binding Sky.FovRigName, StringFormat={x:Static res:Strings.SkyFovFromRigFormat}}"
                                                Visibility="{Binding Sky.FovRigName, Converter={StaticResource NullToCollapsedConverter}}"/>
-                                    <TextBlock Foreground="{StaticResource NightMutedTextBrush}" Text="{Binding Sky.FovCenterText}"
+                                    <TextBlock Foreground="{DynamicResource NightMutedTextBrush}" Text="{Binding Sky.FovCenterText}"
                                                Visibility="{Binding Sky.FovCenterText, Converter={StaticResource NullToCollapsedConverter}}"/>
-                                    <TextBlock Margin="0,4,0,0" Foreground="{StaticResource NightMutedTextBrush}" TextWrapping="Wrap"
+                                    <TextBlock Margin="0,4,0,0" Foreground="{DynamicResource NightMutedTextBrush}" TextWrapping="Wrap"
                                                Text="{x:Static res:Strings.SkyFovHelp}"/>
                                 </StackPanel>
                             </StackPanel>
 
                             <!-- Legend of the 2D fallback chart -->
                             <StackPanel Visibility="{Binding Sky.IsRendererAvailable, Converter={StaticResource InverseBooleanToVisibilityConverter}}">
-                                <TextBlock Margin="0,14,0,0" Foreground="{StaticResource NightMutedTextBrush}" TextWrapping="Wrap"
+                                <TextBlock Margin="0,14,0,0" Foreground="{DynamicResource NightMutedTextBrush}" TextWrapping="Wrap"
                                            Text="{x:Static res:Strings.SkyExplanation}"/>
                                 <TextBlock Margin="0,14,0,4" FontWeight="SemiBold" Text="{x:Static res:Strings.SkyLegend}"/>
-                                <TextBlock Foreground="{StaticResource AccentBrush}" Text="{x:Static res:Strings.SkyLegendVisible}"/>
-                                <TextBlock Foreground="{StaticResource PlaceholderTextBrush}" Text="{x:Static res:Strings.SkyLegendBelow}"/>
-                                <TextBlock Foreground="{StaticResource WarningBrush}" Text="{x:Static res:Strings.SkyLegendInPlan}"/>
-                                <TextBlock Foreground="White" Text="{x:Static res:Strings.SkyLegendSelected}"/>
-                                <TextBlock Foreground="{StaticResource MoonBrush}" Text="{x:Static res:Strings.SkyLegendMoon}"/>
-                                <TextBlock Foreground="{StaticResource PlanetBrush}" Text="{x:Static res:Strings.SkyLegendPlanet}"/>
-                                <TextBlock Foreground="{StaticResource WarningBrush}" Text="{x:Static res:Strings.SkyLegendMinimumAltitude}"/>
-                                <TextBlock Margin="0,10,0,0" Foreground="{StaticResource NightMutedTextBrush}" TextWrapping="Wrap"
+                                <TextBlock Foreground="{DynamicResource AccentBrush}" Text="{x:Static res:Strings.SkyLegendVisible}"/>
+                                <TextBlock Foreground="{DynamicResource PlaceholderTextBrush}" Text="{x:Static res:Strings.SkyLegendBelow}"/>
+                                <TextBlock Foreground="{DynamicResource WarningBrush}" Text="{x:Static res:Strings.SkyLegendInPlan}"/>
+                                <TextBlock Foreground="{DynamicResource HighlightTextBrush}" Text="{x:Static res:Strings.SkyLegendSelected}"/>
+                                <TextBlock Foreground="{DynamicResource MoonBrush}" Text="{x:Static res:Strings.SkyLegendMoon}"/>
+                                <TextBlock Foreground="{DynamicResource PlanetBrush}" Text="{x:Static res:Strings.SkyLegendPlanet}"/>
+                                <TextBlock Foreground="{DynamicResource WarningBrush}" Text="{x:Static res:Strings.SkyLegendMinimumAltitude}"/>
+                                <TextBlock Margin="0,10,0,0" Foreground="{DynamicResource NightMutedTextBrush}" TextWrapping="Wrap"
                                            Text="{x:Static res:Strings.SkyFiltersNote}"/>
                             </StackPanel>
                         </StackPanel>
@@ -813,7 +817,7 @@
                 <Grid Margin="16">
                     <TextBlock Text="{x:Static res:Strings.DetailEmpty}"
                                HorizontalAlignment="Center" VerticalAlignment="Center"
-                               Foreground="{StaticResource NightMutedTextBrush}"
+                               Foreground="{DynamicResource NightMutedTextBrush}"
                                FontSize="16">
                         <TextBlock.Style>
                             <Style TargetType="TextBlock">
@@ -826,8 +830,8 @@
                             </Style>
                         </TextBlock.Style>
                     </TextBlock>
-                    <Border Padding="18" Background="{StaticResource NightPanelBrush}"
-                            BorderBrush="{StaticResource NightBorderBrush}" BorderThickness="1" CornerRadius="6">
+                    <Border Padding="18" Background="{DynamicResource NightPanelBrush}"
+                            BorderBrush="{DynamicResource NightBorderBrush}" BorderThickness="1" CornerRadius="6">
                         <Border.Style>
                             <Style TargetType="Border">
                                 <Setter Property="Visibility" Value="Visible"/>
@@ -859,10 +863,10 @@
                                            Visibility="{Binding IsPlanet, Converter={StaticResource InverseBooleanToVisibilityConverter}}"/>
                             </StackPanel>
                             <TextBlock Grid.Row="1" Grid.ColumnSpan="3" Margin="0,6,0,18"
-                                       Foreground="{StaticResource NightMutedTextBrush}"
+                                       Foreground="{DynamicResource NightMutedTextBrush}"
                                        Text="{Binding Target.Type, Converter={StaticResource DisplayNameConverter}, StringFormat={x:Static res:Strings.DetailTypeFormat}}"/>
                             <StackPanel Grid.Row="2" Grid.Column="0">
-                                <TextBlock Foreground="{StaticResource NightMutedTextBrush}" Text="{x:Static res:Strings.DetailAstronomicalInfo}"/>
+                                <TextBlock Foreground="{DynamicResource NightMutedTextBrush}" Text="{x:Static res:Strings.DetailAstronomicalInfo}"/>
                                 <TextBlock Margin="0,6,0,0" Text="{Binding Constellation, StringFormat={x:Static res:Strings.DetailConstellationFormat}}"/>
                                 <TextBlock Text="{Binding Magnitude, StringFormat={x:Static res:Strings.DetailMagnitudeFormat}}"/>
                                 <TextBlock Text="{Binding SizeText}" Visibility="{Binding SizeText, Converter={StaticResource NullToCollapsedConverter}}"/>
@@ -883,23 +887,23 @@
                                 <!-- Stars: spectral type, colour, distance, variability; doubles: their pairs -->
                                 <TextBlock Text="{Binding StarText}" TextWrapping="Wrap" Margin="0,0,12,0"
                                            Visibility="{Binding StarText, Converter={StaticResource NullToCollapsedConverter}}"/>
-                                <TextBlock Margin="0,6,0,0" Foreground="{StaticResource NightMutedTextBrush}" Text="{x:Static res:Strings.DetailDoubleStarTitle}"
+                                <TextBlock Margin="0,6,0,0" Foreground="{DynamicResource NightMutedTextBrush}" Text="{x:Static res:Strings.DetailDoubleStarTitle}"
                                            Visibility="{Binding DoubleStarText, Converter={StaticResource NullToCollapsedConverter}}"/>
                                 <TextBlock Text="{Binding DoubleStarText}" TextWrapping="Wrap" Margin="0,0,12,0"
                                            Visibility="{Binding DoubleStarText, Converter={StaticResource NullToCollapsedConverter}}"/>
                             </StackPanel>
                             <StackPanel Grid.Row="2" Grid.Column="1">
-                                <TextBlock Foreground="{StaticResource NightMutedTextBrush}" Text="{x:Static res:Strings.DetailCurrentPosition}"/>
+                                <TextBlock Foreground="{DynamicResource NightMutedTextBrush}" Text="{x:Static res:Strings.DetailCurrentPosition}"/>
                                 <TextBlock Margin="0,6,0,0" Text="{Binding Coordinates.AltitudeDegrees, StringFormat={x:Static res:Strings.DetailAltitudeFormat}}"/>
                                 <TextBlock Text="{Binding Coordinates.AzimuthDegrees, StringFormat={x:Static res:Strings.DetailAzimuthFormat}}"/>
                                 <TextBlock Text="{Binding VisibilityStatus, StringFormat={x:Static res:Strings.DetailStatusFormat}}"/>
                                 <TextBlock Text="{Binding MoonSeparationDegrees, StringFormat={x:Static res:Strings.DetailMoonDistanceFormat}}"/>
-                                <TextBlock Margin="0,8,12,0" Foreground="{StaticResource WarningBrush}" FontWeight="SemiBold" TextWrapping="Wrap"
+                                <TextBlock Margin="0,8,12,0" Foreground="{DynamicResource WarningBrush}" FontWeight="SemiBold" TextWrapping="Wrap"
                                            Text="{Binding MoonWarning}"
                                            Visibility="{Binding HasMoonWarning, Converter={StaticResource BooleanToVisibilityConverter}}"/>
                             </StackPanel>
                             <StackPanel Grid.Row="2" Grid.Column="2">
-                                <TextBlock Foreground="{StaticResource NightMutedTextBrush}" Text="{x:Static res:Strings.DetailNightEvents}"/>
+                                <TextBlock Foreground="{DynamicResource NightMutedTextBrush}" Text="{x:Static res:Strings.DetailNightEvents}"/>
                                 <TextBlock Margin="0,6,0,0" Text="{Binding RiseTimeLocal, StringFormat={x:Static res:Strings.DetailRiseFormat}, TargetNullValue={x:Static res:Strings.DetailRiseNone}}"/>
                                 <TextBlock Text="{Binding VisibilityStartTimeLocal, StringFormat={x:Static res:Strings.DetailThresholdFormat}, TargetNullValue={x:Static res:Strings.DetailThresholdNone}}"/>
                                 <TextBlock Text="{Binding BestObservationTimeLocal, StringFormat={x:Static res:Strings.DetailCulminationFormat}}"/>
@@ -925,13 +929,13 @@
                             <!-- Capture feasibility (spec §8.6): every factor with its value and impact -->
                             <StackPanel Grid.Row="3" Grid.ColumnSpan="3" Margin="0,20,0,0"
                                         DataContext="{Binding DataContext.Detail, RelativeSource={RelativeSource AncestorType=Window}}">
-                                <TextBlock Foreground="{StaticResource NightMutedTextBrush}" Text="{x:Static res:Strings.DetailFeasibilityTitle}"/>
-                                <TextBlock Margin="0,6,0,0" TextWrapping="Wrap" Foreground="{StaticResource NightMutedTextBrush}"
+                                <TextBlock Foreground="{DynamicResource NightMutedTextBrush}" Text="{x:Static res:Strings.DetailFeasibilityTitle}"/>
+                                <TextBlock Margin="0,6,0,0" TextWrapping="Wrap" Foreground="{DynamicResource NightMutedTextBrush}"
                                            Text="{x:Static res:Strings.DetailFeasibilityNone}"
                                            Visibility="{Binding HasFeasibility, Converter={StaticResource InverseBooleanToVisibilityConverter}}"/>
                                 <StackPanel Visibility="{Binding HasFeasibility, Converter={StaticResource BooleanToVisibilityConverter}}">
                                     <TextBlock Margin="0,6,0,0" FontSize="18" FontWeight="SemiBold" Text="{Binding FeasibilityHeadline}"/>
-                                    <TextBlock Margin="0,4,0,0" TextWrapping="Wrap" Foreground="{StaticResource SuccessSoftBrush}" Text="{Binding RecommendedText}"
+                                    <TextBlock Margin="0,4,0,0" TextWrapping="Wrap" Foreground="{DynamicResource SuccessSoftBrush}" Text="{Binding RecommendedText}"
                                                Visibility="{Binding RecommendedText, Converter={StaticResource NullToCollapsedConverter}}"/>
                                     <ItemsControl Margin="0,8,0,0" ItemsSource="{Binding FeasibilityLines}"
                                                   AutomationProperties.Name="{x:Static res:Strings.DetailFeasibilityTitle}">
@@ -940,13 +944,13 @@
                                                 <TextBlock Margin="0,1" TextWrapping="Wrap" Text="{Binding Text, StringFormat=• {0}}">
                                                     <TextBlock.Style>
                                                         <Style TargetType="TextBlock">
-                                                            <Setter Property="Foreground" Value="White"/>
+                                                            <Setter Property="Foreground" Value="{DynamicResource HighlightTextBrush}"/>
                                                             <Style.Triggers>
                                                                 <DataTrigger Binding="{Binding IsNegative}" Value="True">
-                                                                    <Setter Property="Foreground" Value="{StaticResource WarningBrush}"/>
+                                                                    <Setter Property="Foreground" Value="{DynamicResource WarningBrush}"/>
                                                                 </DataTrigger>
                                                                 <DataTrigger Binding="{Binding IsPositive}" Value="True">
-                                                                    <Setter Property="Foreground" Value="{StaticResource SuccessSoftBrush}"/>
+                                                                    <Setter Property="Foreground" Value="{DynamicResource SuccessSoftBrush}"/>
                                                                 </DataTrigger>
                                                             </Style.Triggers>
                                                         </Style>
@@ -955,7 +959,7 @@
                                             </DataTemplate>
                                         </ItemsControl.ItemTemplate>
                                     </ItemsControl>
-                                    <TextBlock Margin="0,8,0,0" FontSize="11" TextWrapping="Wrap" Foreground="{StaticResource PlaceholderTextBrush}"
+                                    <TextBlock Margin="0,8,0,0" FontSize="11" TextWrapping="Wrap" Foreground="{DynamicResource PlaceholderTextBrush}"
                                                Text="{x:Static res:Strings.DetailFeasibilityDisclaimer}"/>
                                 </StackPanel>
                             </StackPanel>
@@ -967,7 +971,7 @@
                                 </Grid.ColumnDefinitions>
                                 <StackPanel Margin="0,0,20,0"
                                             DataContext="{Binding DataContext.Detail.Framing, RelativeSource={RelativeSource AncestorType=Window}}">
-                                    <TextBlock Foreground="{StaticResource NightMutedTextBrush}" Text="{x:Static res:Strings.DetailFramingTitle}"
+                                    <TextBlock Foreground="{DynamicResource NightMutedTextBrush}" Text="{x:Static res:Strings.DetailFramingTitle}"
                                                ToolTip="{x:Static res:Strings.DetailFramingTooltip}"/>
                                     <TextBlock Margin="0,4,0,0" Text="{Binding FieldText}"
                                                Visibility="{Binding FieldText, Converter={StaticResource NullToCollapsedConverter}}"/>
@@ -992,7 +996,7 @@
                                             <Canvas Visibility="{Binding HasOutline, Converter={StaticResource BooleanToVisibilityConverter}}">
                                                 <Ellipse Canvas.Left="{Binding OutlineLeft}" Canvas.Top="{Binding OutlineTop}"
                                                          Width="{Binding OutlineWidth}" Height="{Binding OutlineHeight}"
-                                                         Stroke="{StaticResource WarningBrush}" StrokeThickness="1.5" RenderTransformOrigin="0.5,0.5">
+                                                         Stroke="{DynamicResource WarningBrush}" StrokeThickness="1.5" RenderTransformOrigin="0.5,0.5">
                                                     <Ellipse.RenderTransform>
                                                         <RotateTransform Angle="{Binding OutlineAngle}"/>
                                                     </Ellipse.RenderTransform>
@@ -1000,29 +1004,29 @@
                                             </Canvas>
                                         </Grid>
                                     </Viewbox>
-                                    <TextBlock Margin="0,6,0,0" TextWrapping="Wrap" Foreground="{StaticResource NightMutedTextBrush}" Text="{Binding StatusText}"
+                                    <TextBlock Margin="0,6,0,0" TextWrapping="Wrap" Foreground="{DynamicResource NightMutedTextBrush}" Text="{Binding StatusText}"
                                                Visibility="{Binding StatusText, Converter={StaticResource NullToCollapsedConverter}}"/>
-                                    <TextBlock Margin="0,4,0,0" FontSize="11" TextWrapping="Wrap" Foreground="{StaticResource PlaceholderTextBrush}"
+                                    <TextBlock Margin="0,4,0,0" FontSize="11" TextWrapping="Wrap" Foreground="{DynamicResource PlaceholderTextBrush}"
                                                Text="{Binding AttributionText}"
                                                Visibility="{Binding AttributionText, Converter={StaticResource NullToCollapsedConverter}}"/>
                                 </StackPanel>
                                 <StackPanel Grid.Column="1"
                                             DataContext="{Binding DataContext.Detail.About, RelativeSource={RelativeSource AncestorType=Window}}">
-                                    <TextBlock Foreground="{StaticResource NightMutedTextBrush}" Text="{x:Static res:Strings.DetailInfoTitle}"/>
-                                    <TextBlock Margin="0,6,0,0" TextWrapping="Wrap" Foreground="{StaticResource NightMutedTextBrush}" Text="{Binding StatusText}"
+                                    <TextBlock Foreground="{DynamicResource NightMutedTextBrush}" Text="{x:Static res:Strings.DetailInfoTitle}"/>
+                                    <TextBlock Margin="0,6,0,0" TextWrapping="Wrap" Foreground="{DynamicResource NightMutedTextBrush}" Text="{Binding StatusText}"
                                                Visibility="{Binding StatusText, Converter={StaticResource NullToCollapsedConverter}}"/>
                                     <StackPanel Visibility="{Binding HasSummary, Converter={StaticResource BooleanToVisibilityConverter}}">
                                         <TextBlock Margin="0,6,0,0" FontSize="16" FontWeight="SemiBold" TextWrapping="Wrap" Text="{Binding Summary.Title}"/>
-                                        <TextBlock TextWrapping="Wrap" Foreground="{StaticResource NightMutedTextBrush}" Text="{Binding Summary.Description}"/>
+                                        <TextBlock TextWrapping="Wrap" Foreground="{DynamicResource NightMutedTextBrush}" Text="{Binding Summary.Description}"/>
                                         <Image Margin="0,8,0,0" MaxHeight="220" HorizontalAlignment="Left" Stretch="Uniform"
                                                Source="{Binding ImageContent, Converter={StaticResource ImageBytesConverter}}"
                                                Visibility="{Binding ImageContent, Converter={StaticResource NullToCollapsedConverter}}"
                                                AutomationProperties.Name="{Binding Summary.Image.FileName}"/>
-                                        <TextBlock Margin="0,2,0,0" FontSize="11" TextWrapping="Wrap" Foreground="{StaticResource PlaceholderTextBrush}"
+                                        <TextBlock Margin="0,2,0,0" FontSize="11" TextWrapping="Wrap" Foreground="{DynamicResource PlaceholderTextBrush}"
                                                    Text="{Binding ImageCreditText}"
                                                    Visibility="{Binding ImageCreditText, Converter={StaticResource NullToCollapsedConverter}}"/>
                                         <TextBlock Margin="0,8,0,0" TextWrapping="Wrap" Text="{Binding Summary.Extract}"/>
-                                        <TextBlock Margin="0,6,0,0" FontSize="11" Foreground="{StaticResource PlaceholderTextBrush}"
+                                        <TextBlock Margin="0,6,0,0" FontSize="11" Foreground="{DynamicResource PlaceholderTextBrush}"
                                                    Text="{x:Static res:Strings.InfoTextCredit}"/>
                                         <WrapPanel Margin="0,8,0,0">
                                             <Button Style="{StaticResource SecondaryButtonStyle}" Content="{x:Static res:Strings.InfoOpenArticle}"
@@ -1071,18 +1075,18 @@
                                     Click="OnPrintPlanClicked"/>
                         </StackPanel>
                         <StackPanel VerticalAlignment="Center">
-                            <TextBlock Foreground="{StaticResource NightMutedTextBrush}" TextWrapping="Wrap"
+                            <TextBlock Foreground="{DynamicResource NightMutedTextBrush}" TextWrapping="Wrap"
                                        Text="{x:Static res:Strings.PlanExplanation}"/>
-                            <TextBlock Foreground="{StaticResource SuccessSoftBrush}" Text="{Binding Plan.StatusMessage}" TextWrapping="Wrap"/>
+                            <TextBlock Foreground="{DynamicResource SuccessSoftBrush}" Text="{Binding Plan.StatusMessage}" TextWrapping="Wrap"/>
                         </StackPanel>
                     </DockPanel>
 
                     <TextBlock Grid.Row="1" Margin="0,0,0,6" Text="{Binding Plan.ScheduleSummary}" TextWrapping="Wrap"
-                               Foreground="{StaticResource NightTextBrush}" FontWeight="SemiBold"/>
+                               Foreground="{DynamicResource NightTextBrush}" FontWeight="SemiBold"/>
 
                     <TextBlock Grid.Row="2" Grid.RowSpan="2" Text="{x:Static res:Strings.PlanEmpty}"
                                HorizontalAlignment="Center" VerticalAlignment="Center"
-                               Foreground="{StaticResource NightMutedTextBrush}" FontSize="16">
+                               Foreground="{DynamicResource NightMutedTextBrush}" FontSize="16">
                         <TextBlock.Style>
                             <Style TargetType="TextBlock">
                                 <Setter Property="Visibility" Value="Collapsed"/>
@@ -1096,8 +1100,8 @@
                     </TextBlock>
 
                     <!-- Timeline (drawn by the code-behind from Plan.Timeline) -->
-                    <Border Grid.Row="2" Margin="0,0,0,8" Padding="4" Background="{StaticResource NightPanelBrush}"
-                            BorderBrush="{StaticResource NightBorderBrush}" BorderThickness="1" CornerRadius="6">
+                    <Border Grid.Row="2" Margin="0,0,0,8" Padding="4" Background="{DynamicResource NightPanelBrush}"
+                            BorderBrush="{DynamicResource NightBorderBrush}" BorderThickness="1" CornerRadius="6">
                         <Border.Style>
                             <Style TargetType="Border">
                                 <Style.Triggers>
@@ -1110,8 +1114,8 @@
                         <ScottPlot:WpfPlot x:Name="TimelinePlot" AutomationProperties.Name="{x:Static res:Strings.PlanTimelineTitle}"/>
                     </Border>
 
-                    <Border Grid.Row="3" Padding="8" Background="{StaticResource SurfaceBrush}"
-                            BorderBrush="{StaticResource NightBorderBrush}" BorderThickness="1" CornerRadius="6">
+                    <Border Grid.Row="3" Padding="8" Background="{DynamicResource SurfaceBrush}"
+                            BorderBrush="{DynamicResource NightBorderBrush}" BorderThickness="1" CornerRadius="6">
                         <Border.Style>
                             <Style TargetType="Border">
                                 <Style.Triggers>
@@ -1177,7 +1181,7 @@
                                     </DataGridTemplateColumn.Header>
                                     <DataGridTemplateColumn.CellTemplate>
                                         <DataTemplate>
-                                            <TextBlock HorizontalAlignment="Center" VerticalAlignment="Center" Foreground="{StaticResource DangerBrush}"
+                                            <TextBlock HorizontalAlignment="Center" VerticalAlignment="Center" Foreground="{DynamicResource DangerBrush}"
                                                        Text="{Binding CrossingsSummary}" ToolTip="{Binding CrossingsText}"/>
                                         </DataTemplate>
                                     </DataGridTemplateColumn.CellTemplate>
@@ -1186,7 +1190,7 @@
                                     <DataGridTemplateColumn.CellTemplate>
                                         <DataTemplate>
                                             <TextBox Text="{Binding Note, UpdateSourceTrigger=LostFocus}"
-                                                     BorderBrush="{StaticResource GridLineBrush}" Padding="4,1"
+                                                     BorderBrush="{DynamicResource GridLineBrush}" Padding="4,1"
                                                      AutomationProperties.Name="{x:Static res:Strings.PlanNoteName}"
                                                      ToolTip="{x:Static res:Strings.PlanNoteTooltip}"/>
                                         </DataTemplate>
@@ -1208,7 +1212,7 @@
                     <!-- Checklist (spec §4.6) -->
                     <DockPanel Grid.Row="4" Margin="0,8,0,0">
                         <TextBlock DockPanel.Dock="Left" VerticalAlignment="Center" Margin="0,0,12,0" FontWeight="SemiBold"
-                                   Foreground="{StaticResource NightTextBrush}" Text="{x:Static res:Strings.ChecklistTitle}"/>
+                                   Foreground="{DynamicResource NightTextBrush}" Text="{x:Static res:Strings.ChecklistTitle}"/>
                         <Button DockPanel.Dock="Right" Style="{StaticResource SecondaryButtonStyle}" Content="{x:Static res:Strings.ChecklistReset}"
                                 ToolTip="{x:Static res:Strings.ChecklistResetTooltip}" Command="{Binding Plan.ResetChecklistCommand}"/>
                         <ItemsControl ItemsSource="{Binding Plan.Checklist}" Focusable="False">
@@ -1233,38 +1237,47 @@
                         <RowDefinition Height="Auto"/>
                         <RowDefinition Height="*"/>
                     </Grid.RowDefinitions>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="14"/>
+                        <ColumnDefinition Width="400"/>
+                    </Grid.ColumnDefinitions>
 
                     <!-- Messier marathon progress and export -->
-                    <DockPanel Grid.Row="0" Margin="0,0,0,10" LastChildFill="True">
+                    <DockPanel Grid.Row="0" Grid.ColumnSpan="3" Margin="0,0,0,10" LastChildFill="True">
                         <Button DockPanel.Dock="Right" VerticalAlignment="Top" Style="{StaticResource SecondaryButtonStyle}" Content="{x:Static res:Strings.PlanExportCsv}"
                                 ToolTip="{x:Static res:Strings.LogbookExportTooltip}"
                                 Click="OnExportLogbookClicked"/>
                         <StackPanel VerticalAlignment="Center">
                             <StackPanel Orientation="Horizontal">
                                 <TextBlock FontSize="16" FontWeight="SemiBold" Text="{x:Static res:Strings.LogbookMessierMarathon}"/>
-                                <TextBlock FontSize="16" Margin="10,0,0,0" Foreground="{StaticResource SuccessSoftBrush}" FontWeight="SemiBold"
+                                <TextBlock FontSize="16" Margin="10,0,0,0" Foreground="{DynamicResource SuccessSoftBrush}" FontWeight="SemiBold"
                                            Text="{Binding MessierProgressText}"/>
+                                <TextBlock FontSize="13" Margin="12,0,0,0" VerticalAlignment="Center" Foreground="{DynamicResource NightMutedTextBrush}"
+                                           Text="{Binding MessierPhotographedText}"/>
                             </StackPanel>
                             <ProgressBar Width="360" Height="8" Margin="0,6,0,0" HorizontalAlignment="Left"
                                          Minimum="0" Maximum="100" Value="{Binding MessierProgressPercent, Mode=OneWay}"
                                          AutomationProperties.Name="{x:Static res:Strings.LogbookMessierProgressName}"/>
                             <StackPanel Orientation="Horizontal" Margin="0,8,0,0">
                                 <TextBlock FontSize="14" FontWeight="SemiBold" Text="{x:Static res:Strings.CatalogCaldwell}"/>
-                                <TextBlock FontSize="14" Margin="10,0,0,0" Foreground="{StaticResource SuccessSoftBrush}" FontWeight="SemiBold"
+                                <TextBlock FontSize="14" Margin="10,0,0,0" Foreground="{DynamicResource SuccessSoftBrush}" FontWeight="SemiBold"
                                            Text="{Binding CaldwellProgressText}"/>
+                                <TextBlock FontSize="13" Margin="12,0,0,0" VerticalAlignment="Center" Foreground="{DynamicResource NightMutedTextBrush}"
+                                           Text="{Binding CaldwellPhotographedText}"/>
                             </StackPanel>
                             <ProgressBar Width="360" Height="6" Margin="0,4,0,0" HorizontalAlignment="Left"
                                          Minimum="0" Maximum="100" Value="{Binding CaldwellProgressPercent, Mode=OneWay}"
                                          AutomationProperties.Name="{x:Static res:Strings.LogbookCaldwellProgressName}"/>
-                            <TextBlock Margin="0,6,0,0" Foreground="{StaticResource NightMutedTextBrush}" TextWrapping="Wrap"
+                            <TextBlock Margin="0,6,0,0" Foreground="{DynamicResource NightMutedTextBrush}" TextWrapping="Wrap"
                                        Text="{x:Static res:Strings.LogbookExplanation}"/>
-                            <TextBlock Foreground="{StaticResource SuccessSoftBrush}" Text="{Binding StatusMessage}" TextWrapping="Wrap"/>
+                            <TextBlock Foreground="{DynamicResource SuccessSoftBrush}" Text="{Binding StatusMessage}" TextWrapping="Wrap"/>
                         </StackPanel>
                     </DockPanel>
 
                     <TextBlock Grid.Row="1" Text="{x:Static res:Strings.LogbookEmpty}"
                                HorizontalAlignment="Center" VerticalAlignment="Center"
-                               Foreground="{StaticResource NightMutedTextBrush}" FontSize="16">
+                               Foreground="{DynamicResource NightMutedTextBrush}" FontSize="16">
                         <TextBlock.Style>
                             <Style TargetType="TextBlock">
                                 <Setter Property="Visibility" Value="Collapsed"/>
@@ -1276,8 +1289,8 @@
                             </Style>
                         </TextBlock.Style>
                     </TextBlock>
-                    <Border Grid.Row="1" Padding="8" Background="{StaticResource SurfaceBrush}"
-                            BorderBrush="{StaticResource NightBorderBrush}" BorderThickness="1" CornerRadius="6">
+                    <Border Grid.Row="1" Padding="8" Background="{DynamicResource SurfaceBrush}"
+                            BorderBrush="{DynamicResource NightBorderBrush}" BorderThickness="1" CornerRadius="6">
                         <Border.Style>
                             <Style TargetType="Border">
                                 <Style.Triggers>
@@ -1290,16 +1303,19 @@
                         <DataGrid Style="{StaticResource NightDataGridStyle}" ItemsSource="{Binding Entries}">
                             <DataGrid.Columns>
                                 <DataGridTextColumn Header="{x:Static res:Strings.ColumnDate}" Binding="{Binding ObservedAtLocal, StringFormat=yyyy-MM-dd HH:mm}" Width="120"/>
-                                <DataGridTextColumn Header="{x:Static res:Strings.ColumnId}" Binding="{Binding ObjectId}" Width="66"/>
-                                <DataGridTextColumn Header="{x:Static res:Strings.ColumnName}" Binding="{Binding ObjectName}" Width="190" ElementStyle="{StaticResource TrimmedCellStyle}"/>
-                                <DataGridTextColumn Header="{x:Static res:Strings.ColumnLocation}" Binding="{Binding Location}" Width="150" ElementStyle="{StaticResource TrimmedCellStyle}"/>
-                                <DataGridTextColumn Header="{x:Static res:Strings.ColumnEquipment}" Binding="{Binding Equipment}" Width="150" ElementStyle="{StaticResource TrimmedCellStyle}"/>
+                                <DataGridTextColumn Header="{x:Static res:Strings.ColumnId}" Binding="{Binding ObjectId}" Width="80" ElementStyle="{StaticResource TrimmedCellStyle}"/>
+                                <DataGridTextColumn Header="{x:Static res:Strings.ColumnName}" Binding="{Binding ObjectName}" Width="150" ElementStyle="{StaticResource TrimmedCellStyle}"/>
+                                <DataGridTextColumn Header="{x:Static res:Strings.ColumnKind}" Binding="{Binding Converter={StaticResource DisplayNameConverter}}" Width="96"/>
+                                <DataGridTextColumn Header="{x:Static res:Strings.ColumnCapture}" Width="200" ElementStyle="{StaticResource TrimmedCellStyle}"
+                                                    Binding="{Binding Converter={StaticResource DisplayNameConverter}, ConverterParameter=capture}"/>
+                                <DataGridTextColumn Header="{x:Static res:Strings.ColumnLocation}" Binding="{Binding Location}" Width="120" ElementStyle="{StaticResource TrimmedCellStyle}"/>
+                                <DataGridTextColumn Header="{x:Static res:Strings.ColumnEquipment}" Binding="{Binding Equipment}" Width="120" ElementStyle="{StaticResource TrimmedCellStyle}"/>
                                 <DataGridTextColumn Header="{x:Static res:Strings.ColumnSeeing}" Binding="{Binding Seeing}" Width="60" ElementStyle="{StaticResource CenteredCellStyle}"/>
                                 <DataGridTextColumn Header="{x:Static res:Strings.ColumnTransparency}" Binding="{Binding Transparency}" Width="64" ElementStyle="{StaticResource CenteredCellStyle}"/>
                                 <DataGridTextColumn Header="{x:Static res:Strings.ColumnRating}" Binding="{Binding RatingStars}" Width="86">
                                     <DataGridTextColumn.ElementStyle>
                                         <Style TargetType="TextBlock">
-                                            <Setter Property="Foreground" Value="{StaticResource WarningBrush}"/>
+                                            <Setter Property="Foreground" Value="{DynamicResource WarningBrush}"/>
                                         </Style>
                                     </DataGridTextColumn.ElementStyle>
                                 </DataGridTextColumn>
@@ -1308,6 +1324,7 @@
                                     <DataGridTemplateColumn.CellTemplate>
                                         <DataTemplate>
                                             <Button Style="{StaticResource GridButtonStyle}" Content="{x:Static res:Strings.LogbookDelete}"
+                                                    AutomationProperties.Name="{x:Static res:Strings.LogbookDeleteName}"
                                                     Command="{Binding DataContext.Logbook.DeleteCommand, RelativeSource={RelativeSource AncestorType=Window}}"
                                                     CommandParameter="{Binding}"/>
                                         </DataTemplate>
@@ -1315,6 +1332,28 @@
                                 </DataGridTemplateColumn>
                             </DataGrid.Columns>
                         </DataGrid>
+                    </Border>
+
+                    <!-- Predictions vs results (spec §8.7): the model's score against the user's rating -->
+                    <Border Grid.Row="1" Grid.Column="2" Padding="12" Background="{DynamicResource NightPanelBrush}"
+                            BorderBrush="{DynamicResource NightBorderBrush}" BorderThickness="1" CornerRadius="6">
+                        <DockPanel>
+                            <TextBlock DockPanel.Dock="Top" FontSize="15" FontWeight="SemiBold" Text="{x:Static res:Strings.PredictionsTitle}"/>
+                            <TextBlock DockPanel.Dock="Top" Margin="0,4,0,8" FontSize="12" TextWrapping="Wrap"
+                                       Foreground="{DynamicResource NightMutedTextBrush}" Text="{x:Static res:Strings.PredictionsExplanation}"/>
+                            <TextBlock DockPanel.Dock="Top" TextWrapping="Wrap" Text="{Binding PredictionSummaryText}"
+                                       AutomationProperties.AutomationId="PredictionSummary"/>
+                            <ItemsControl DockPanel.Dock="Top" Margin="0,6,0,0" Focusable="False" ItemsSource="{Binding PredictionLines}">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <TextBlock Margin="0,1" FontSize="12" TextWrapping="Wrap" Text="{Binding}"/>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                            <ScottPlot:WpfPlot x:Name="PredictionPlot" Margin="0,8,0,0" MinHeight="220"
+                                               AutomationProperties.Name="{x:Static res:Strings.PredictionsChartName}"
+                                               Visibility="{Binding HasPredictions, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+                        </DockPanel>
                     </Border>
                 </Grid>
             </TabItem>
@@ -1327,15 +1366,15 @@
                         <RowDefinition Height="*"/>
                     </Grid.RowDefinitions>
                     <StackPanel Margin="0,0,0,8">
-                        <TextBlock Foreground="{StaticResource NightMutedTextBrush}" TextWrapping="Wrap" Text="{x:Static res:Strings.EquipmentExplanation}"/>
+                        <TextBlock Foreground="{DynamicResource NightMutedTextBrush}" TextWrapping="Wrap" Text="{x:Static res:Strings.EquipmentExplanation}"/>
                         <TextBlock Margin="0,4,0,0" TextWrapping="Wrap" Text="{Binding StatusMessage}"
                                    Visibility="{Binding StatusMessage, Converter={StaticResource NullToCollapsedConverter}}">
                             <TextBlock.Style>
                                 <Style TargetType="TextBlock">
-                                    <Setter Property="Foreground" Value="{StaticResource SuccessSoftBrush}"/>
+                                    <Setter Property="Foreground" Value="{DynamicResource SuccessSoftBrush}"/>
                                     <Style.Triggers>
                                         <DataTrigger Binding="{Binding HasError}" Value="True">
-                                            <Setter Property="Foreground" Value="{StaticResource DangerBrush}"/>
+                                            <Setter Property="Foreground" Value="{DynamicResource DangerBrush}"/>
                                         </DataTrigger>
                                     </Style.Triggers>
                                 </Style>
@@ -1380,8 +1419,8 @@
                                                  AutomationProperties.Name="{x:Static res:Strings.FieldFocalMultiplier}"/>
                                         <TextBlock Margin="0,8,0,0" Text="{x:Static res:Strings.FieldNotes}"/>
                                         <TextBox Width="320" HorizontalAlignment="Left" Text="{Binding RigNotes}" AutomationProperties.Name="{x:Static res:Strings.FieldNotes}"/>
-                                        <Border Margin="0,12,0,0" Padding="10" Background="{StaticResource NightCardBrush}" CornerRadius="6" MaxWidth="640" HorizontalAlignment="Left">
-                                            <TextBlock TextWrapping="Wrap" Text="{Binding DerivedText}" Foreground="{StaticResource LabelTextBrush}"/>
+                                        <Border Margin="0,12,0,0" Padding="10" Background="{DynamicResource NightCardBrush}" CornerRadius="6" MaxWidth="640" HorizontalAlignment="Left">
+                                            <TextBlock TextWrapping="Wrap" Text="{Binding DerivedText}" Foreground="{DynamicResource LabelTextBrush}"/>
                                         </Border>
                                         <StackPanel Orientation="Horizontal" Margin="0,12,0,0">
                                             <Button Style="{StaticResource PrimaryButtonStyle}" Content="{x:Static res:Strings.EquipmentSave}" Command="{Binding SaveRigCommand}"/>
@@ -1591,7 +1630,7 @@
 
                     <!-- Save the site in use -->
                     <StackPanel Grid.Row="0" Margin="0,0,0,10">
-                        <TextBlock Foreground="{StaticResource NightMutedTextBrush}" TextWrapping="Wrap" Margin="0,0,0,8"
+                        <TextBlock Foreground="{DynamicResource NightMutedTextBrush}" TextWrapping="Wrap" Margin="0,0,0,8"
                                    Text="{x:Static res:Strings.LocationsHint}"/>
                         <StackPanel Orientation="Horizontal">
                             <TextBlock Style="{StaticResource FilterLabelStyle}" Text="{x:Static res:Strings.LocationsNewName}"/>
@@ -1601,12 +1640,12 @@
                                     ToolTip="{x:Static res:Strings.LocationsSaveCurrentTooltip}"
                                     Command="{Binding SaveCurrentCommand}"/>
                         </StackPanel>
-                        <TextBlock Foreground="{StaticResource DangerBrush}" Text="{Binding StatusMessage}" TextWrapping="Wrap"
+                        <TextBlock Foreground="{DynamicResource DangerBrush}" Text="{Binding StatusMessage}" TextWrapping="Wrap"
                                    Visibility="{Binding StatusMessage, Converter={StaticResource NullToCollapsedConverter}}"/>
                     </StackPanel>
 
-                    <Border Grid.Row="1" Padding="8" Background="{StaticResource SurfaceBrush}"
-                            BorderBrush="{StaticResource NightBorderBrush}" BorderThickness="1" CornerRadius="6">
+                    <Border Grid.Row="1" Padding="8" Background="{DynamicResource SurfaceBrush}"
+                            BorderBrush="{DynamicResource NightBorderBrush}" BorderThickness="1" CornerRadius="6">
                         <DataGrid Style="{StaticResource NightDataGridStyle}" ItemsSource="{Binding Locations}"
                                   SelectedItem="{Binding SelectedLocation}">
                             <DataGrid.Columns>
@@ -1645,11 +1684,11 @@
                     </Border>
 
                     <!-- Details of the selected site: horizon profile and SQM -->
-                    <Border Grid.Row="2" Margin="0,10,0,0" Padding="10" Background="{StaticResource SurfaceBrush}"
-                            BorderBrush="{StaticResource NightBorderBrush}" BorderThickness="1" CornerRadius="6">
+                    <Border Grid.Row="2" Margin="0,10,0,0" Padding="10" Background="{DynamicResource SurfaceBrush}"
+                            BorderBrush="{DynamicResource NightBorderBrush}" BorderThickness="1" CornerRadius="6">
                         <StackPanel>
                             <TextBlock FontWeight="SemiBold" Text="{x:Static res:Strings.LocationsDetailsHeader}"/>
-                            <TextBlock Margin="0,4,0,0" Foreground="{StaticResource NightMutedTextBrush}" TextWrapping="Wrap"
+                            <TextBlock Margin="0,4,0,0" Foreground="{DynamicResource NightMutedTextBrush}" TextWrapping="Wrap"
                                        Text="{x:Static res:Strings.LocationsDetailsHint}"/>
                             <Grid Margin="0,8,0,0" Height="230" IsEnabled="{Binding HasSelection}">
                                 <Grid.ColumnDefinitions>
@@ -1688,14 +1727,14 @@
                                 <StackPanel Grid.Column="2">
                                     <TextBlock Text="{x:Static res:Strings.LocationsSqmLabel}" ToolTip="{x:Static res:Strings.LocationsSqmTooltip}"/>
                                     <TextBox x:Name="SqmBox" Margin="0,4,0,0" Width="110" HorizontalAlignment="Left"
-                                             Text="{Binding ZenithSqmText, UpdateSourceTrigger=PropertyChanged}"
+                                             Text="{Binding ZenithSqmText, UpdateSourceTrigger=PropertyChanged}" AutomationProperties.Name="{x:Static res:Strings.LocationsSqmLabel}"
                                              ToolTip="{x:Static res:Strings.LocationsSqmTooltip}"/>
-                                    <TextBlock Margin="0,4,0,0" Foreground="{StaticResource NightMutedTextBrush}" Text="{Binding BortleText}"
+                                    <TextBlock Margin="0,4,0,0" Foreground="{DynamicResource NightMutedTextBrush}" Text="{Binding BortleText}"
                                                Visibility="{Binding BortleText, Converter={StaticResource NullToCollapsedConverter}}"/>
-                                    <TextBlock Margin="0,6,0,0" Foreground="{StaticResource NightMutedTextBrush}" TextWrapping="Wrap"
+                                    <TextBlock Margin="0,6,0,0" Foreground="{DynamicResource NightMutedTextBrush}" TextWrapping="Wrap"
                                                Text="{Binding AtlasSqmText}"
                                                Visibility="{Binding AtlasSqmText, Converter={StaticResource NullToCollapsedConverter}}"/>
-                                    <TextBlock Margin="0,6,0,0" Foreground="{StaticResource NightMutedTextBrush}" TextWrapping="Wrap"
+                                    <TextBlock Margin="0,6,0,0" Foreground="{DynamicResource NightMutedTextBrush}" TextWrapping="Wrap"
                                                Text="{x:Static res:Strings.LocationsSqmTooltip}"/>
                                     <StackPanel Orientation="Horizontal" Margin="0,10,0,0">
                                         <Button Style="{StaticResource PrimaryButtonStyle}" Margin="0"
@@ -1707,10 +1746,10 @@
                                                Visibility="{Binding DetailsMessage, Converter={StaticResource NullToCollapsedConverter}}">
                                         <TextBlock.Style>
                                             <Style TargetType="TextBlock">
-                                                <Setter Property="Foreground" Value="{StaticResource SuccessSoftBrush}"/>
+                                                <Setter Property="Foreground" Value="{DynamicResource SuccessSoftBrush}"/>
                                                 <Style.Triggers>
                                                     <DataTrigger Binding="{Binding DetailsHasError}" Value="True">
-                                                        <Setter Property="Foreground" Value="{StaticResource DangerBrush}"/>
+                                                        <Setter Property="Foreground" Value="{DynamicResource DangerBrush}"/>
                                                     </DataTrigger>
                                                 </Style.Triggers>
                                             </Style>

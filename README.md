@@ -43,6 +43,8 @@
 
 ![The all-sky chart at dusk from Mexico City: sunlit satellites (labelled) with their trails, comets and asteroids, the planets and the 16 mm camera frame](docs/screenshots/sky-satellites.png)
 
+![Night vision: the Tonight tab in red on black, the whole app, its charts and the title bar, for use at the telescope](docs/screenshots/night-vision.png)
+
 ![A double star in the object detail: Albireo with its pairs from the Washington Double Star Catalog, its spectral type and distance, and why the 16 mm lens cannot split it](docs/screenshots/double-star.png)
 
 ![A finder chart of M42: gnomonic, north up, east left, star magnitudes, the 650 mm camera frame and a scale bar](docs/screenshots/sky-finder.png)
@@ -116,7 +118,14 @@
   equatorial mounts. It shows a timeline and lets you set priorities and lock blocks. A checklist
   covers batteries, dew heater, focus and calibration frames. Export it as PDF, CSV or `.ics`, or
   print it.
-- 📓 **Logbook**: record what you observe and track your Messier marathon and Caldwell progress.
+- 📓 **Logbook**: record what you observe or photograph and track your Messier marathon and Caldwell
+  progress (observed and photographed). A photographed entry keeps the rig, subs, ISO/gain, the
+  image file and tonight's prediction; *Predictions vs results* compares the model's scores with
+  your ratings, and Settings › Advanced lets you recalibrate it.
+- 🔴 **Night vision**: a red-on-black theme for the whole app, the charts, the 3D sky and the title
+  bar (`Ctrl+Shift+N`), so your eyes stay dark-adapted at the telescope.
+- ♿ **Accessible**: every control has a name for screen readers, and the text of both themes
+  meets WCAG AA contrast (both checked by the tests).
 - ↪️ **Import from AstroPlanner v1**: on first run, your v1 settings, plan and logbook are offered
   for import (the v1 files are only read).
 - ⏱️ **Live mode**: follows the clock and refreshes everything every minute.
@@ -145,6 +154,10 @@ survey imagery for framing. See the [specification](ASTROPLANNER_PRO_SPEC.md) an
 | `Ctrl+F` | Search | `Ctrl+P` | Print the plan |
 | `F5` | Current time | `Ctrl+E` | Export the plan to CSV (PDF and `.ics` in the *My plan* tab) |
 | `Ctrl+,` | Settings | `F1` | About |
+| `Ctrl+Shift+N` | Night vision on/off | | |
+
+In the **Sky** tab (outside a text box): `Space` plays or pauses, `/` finds an object, `1` and `2`
+switch between the 3D dome and the all-sky chart, and `F` shows or hides the camera frame.
 
 Your data (settings, sites, plan, logbook) is stored in `%LocalAppData%\AstroPlannerPro\app.db`
 (SQLite). AstroPlanner v1's data is only read when you import it, never changed, and both apps

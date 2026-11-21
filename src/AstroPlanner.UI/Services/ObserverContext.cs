@@ -55,6 +55,9 @@ public interface IObserverContext : INotifyPropertyChanged, INotifyDataErrorInfo
     /// <summary>V extinction coefficient, mag/air mass (Settings).</summary>
     double ExtinctionCoefficient { get; set; }
 
+    /// <summary>The user's calibration of the feasibility model (Settings › Advanced).</summary>
+    FeasibilityTuning Tuning { get; set; }
+
     /// <summary>Message for the first invalid input (latitude, longitude, minimum altitude), or null.</summary>
     string? InputError { get; }
 
@@ -160,6 +163,9 @@ public sealed partial class ObserverContext(IAstronomyService astronomy, TimePro
     public partial double ExtinctionCoefficient { get; set; } = Airmass.DefaultExtinctionCoefficient;
 
     [ObservableProperty]
+    public partial FeasibilityTuning Tuning { get; set; } = new();
+
+    [ObservableProperty]
     public partial string? InputError { get; private set; }
 
     [ObservableProperty]
@@ -246,6 +252,7 @@ public sealed partial class ObserverContext(IAstronomyService astronomy, TimePro
     partial void OnZenithSqmChanged(double? value) => RecalculateIfReady();
     partial void OnDarknessChanged(DarknessDefinition value) => RecalculateIfReady();
     partial void OnExtinctionCoefficientChanged(double value) => RecalculateIfReady();
+    partial void OnTuningChanged(FeasibilityTuning value) => RecalculateIfReady();
 
     private void RecalculateIfReady()
     {

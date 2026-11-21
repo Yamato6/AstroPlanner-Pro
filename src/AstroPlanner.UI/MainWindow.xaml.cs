@@ -89,6 +89,8 @@ public partial class MainWindow : Window
             _viewModel.Sky.ShowSkyRequested -= OnShowSkyRequested;
             _viewModel.Locations.PropertyChanged -= OnLocationsPropertyChanged;
             _viewModel.Plan.TimelineChanged -= OnPlanTimelineChanged;
+            _viewModel.Settings.Theme.Changed -= OnThemeChanged;
+            _viewModel.Logbook.Changed -= OnLogbookChanged;
         }
 
         _viewModel = e.NewValue as ShellViewModel;
@@ -102,8 +104,26 @@ public partial class MainWindow : Window
             _viewModel.Sky.ShowSkyRequested += OnShowSkyRequested;
             _viewModel.Locations.PropertyChanged += OnLocationsPropertyChanged;
             _viewModel.Plan.TimelineChanged += OnPlanTimelineChanged;
+            _viewModel.Settings.Theme.Changed += OnThemeChanged;
+            _viewModel.Logbook.Changed += OnLogbookChanged;
         }
     }
+
+    /// <summary>The charts read their colors when drawn: redraw them with the new theme's.</summary>
+    private void OnThemeChanged(object? sender, EventArgs e)
+    {
+        if (_viewModel is null) return;
+        UpdateChart(_viewModel.Detail);
+        UpdateSkyMap(_viewModel.Sky);
+        UpdateHorizonPlot(_viewModel.Locations);
+        UpdateTimeline(_viewModel.Plan.Timeline);
+        UpdatePredictionPlot(_viewModel.Logbook);
+    }
+
+    private void OnLogbookChanged() => Dispatcher.BeginInvoke(() =>
+    {
+        if (_viewModel is not null) UpdatePredictionPlot(_viewModel.Logbook);
+    });
 
     private void OnPlanTimelineChanged(object? sender, EventArgs e) => UpdateTimeline(_viewModel?.Plan.Timeline);
 
@@ -114,6 +134,8 @@ public partial class MainWindow : Window
         await _viewModel.LoadCommand.ExecuteAsync(null);
         UpdateChart(_viewModel.Detail);
         UpdateSkyMap(_viewModel.Sky);
+        PredictionPlot.UserInputProcessor.IsEnabled = false;
+        UpdatePredictionPlot(_viewModel.Logbook);
         if (SkyQuery().Length > 0)
         {
             Tabs.SelectedItem = SkyTab;
@@ -203,6 +225,9 @@ public partial class MainWindow : Window
                     SearchBox.Focus();
                     SearchBox.SelectAll();
                 }, DispatcherPriority.Input);
+                break;
+            case Key.N when Keyboard.Modifiers == (ModifierKeys.Control | ModifierKeys.Shift):
+                if (_viewModel is not null) _viewModel.IsNightTheme = !_viewModel.IsNightTheme;
                 break;
             case Key.F5 when none:
                 _viewModel?.SetNowCommand.Execute(null);
@@ -554,7 +579,7 @@ public partial class MainWindow : Window
 
             if (point.IsSelected)
             {
-                plot.Add.Marker(x, y, ScottPlot.MarkerShape.OpenCircle, size + 12, ScottPlot.Colors.White);
+                plot.Add.Marker(x, y, ScottPlot.MarkerShape.OpenCircle, size + 12, Theme("HighlightTextBrush"));
             }
 
             if (!point.HasLabel)
@@ -816,14 +841,44 @@ public partial class MainWindow : Window
         plot.Axes.SetLimitsX(timeline.WindowStartLocal.ToOADate(), timeline.WindowEndLocal.ToOADate());
         plot.Axes.SetLimitsY(0.4, count + 0.6);
         TimelinePlot.Refresh();
+    }
 
-        ScottPlot.Color VerdictColor(Core.Imaging.Feasibility.FeasibilityVerdict? verdict) => verdict switch
+    private ScottPlot.Color VerdictColor(Core.Imaging.Feasibility.FeasibilityVerdict? verdict) => verdict switch
+    {
+        Core.Imaging.Feasibility.FeasibilityVerdict.Excellent => Theme("SuccessBrush"),
+        Core.Imaging.Feasibility.FeasibilityVerdict.Good => Theme("SuccessSoftBrush"),
+        Core.Imaging.Feasibility.FeasibilityVerdict.Marginal => Theme("WarningBrush"),
+        Core.Imaging.Feasibility.FeasibilityVerdict.Unlikely => Theme("DangerBrush"),
+        _ => Theme("PlaceholderTextBrush")
+    };
+
+    /// <summary>
+    /// Predictions vs results (spec §8.7): one point per photographed entry, predicted score
+    /// against the rating, colored by verdict; the dashed line is where a perfect model would put them.
+    /// </summary>
+    private void UpdatePredictionPlot(LogbookViewModel logbook)
+    {
+        var plot = PredictionPlot.Plot;
+        plot.Clear();
+        plot.FigureBackground.Color = Theme("NightPanelBrush");
+        plot.DataBackground.Color = Theme("SurfaceBrush");
+        plot.Axes.Color(Theme("NightMutedTextBrush"));
+        plot.Grid.MajorLineColor = Theme("NightBorderBrush");
+        plot.Axes.Bottom.Label.Text = Strings.PredictionsAxisScore;
+        plot.Axes.Left.Label.Text = Strings.PredictionsAxisRating;
+        plot.Axes.Bottom.Label.ForeColor = Theme("NightMutedTextBrush");
+        plot.Axes.Left.Label.ForeColor = Theme("NightMutedTextBrush");
+
+        var ideal = plot.Add.Line(0, 1, 100, 5);
+        ideal.LineColor = Theme("NightMutedTextBrush").WithAlpha(0.6);
+        ideal.LinePattern = ScottPlot.LinePattern.Dashed;
+        foreach (var point in logbook.Predictions.Points)
         {
-            Core.Imaging.Feasibility.FeasibilityVerdict.Excellent => Theme("SuccessBrush"),
-            Core.Imaging.Feasibility.FeasibilityVerdict.Good => Theme("SuccessSoftBrush"),
-            Core.Imaging.Feasibility.FeasibilityVerdict.Marginal => Theme("WarningBrush"),
-            Core.Imaging.Feasibility.FeasibilityVerdict.Unlikely => Theme("DangerBrush"),
-            _ => Theme("PlaceholderTextBrush")
-        };
+            plot.Add.Marker(point.PredictedScore, point.Rating, ScottPlot.MarkerShape.FilledCircle, 9, VerdictColor(point.Verdict));
+        }
+
+        plot.Axes.SetLimitsX(0, 100);
+        plot.Axes.SetLimitsY(0.5, 5.5);
+        PredictionPlot.Refresh();
     }
 }

@@ -1,3 +1,5 @@
+using System.Diagnostics;
+using System.Globalization;
 using System.IO;
 using System.Net.Http;
 using System.Windows;
@@ -140,6 +142,7 @@ public partial class App : Application
         services.AddSingleton<IObserverContext, ObserverContext>();
         services.AddSingleton<WeatherState>();
         services.AddSingleton<EquipmentState>();
+        services.AddSingleton<ThemeState>();
 
         // View models
         services.AddSingleton<SettingsViewModel>();
@@ -193,8 +196,17 @@ public partial class App : Application
 
         OfferV1Import(_serviceProvider.GetRequiredService<V1ImportService>());
 
+        // The saved theme before the first window is created (SettingsViewModel loads it).
+        var theme = _serviceProvider.GetRequiredService<ThemeState>();
+        _ = _serviceProvider.GetRequiredService<SettingsViewModel>();
+        ThemeManager.Apply(this, theme.Current);
+        theme.Changed += (_, _) => ThemeManager.Apply(this, theme.Current);
+
         var mainWindow = _serviceProvider.GetRequiredService<MainWindow>();
         mainWindow.DataContext = _serviceProvider.GetRequiredService<ShellViewModel>();
+        // Startup time (spec §14 budget): process start → first frame of the window (Tonight).
+        mainWindow.ContentRendered += (_, _) => _logger.LogInfo(string.Create(CultureInfo.InvariantCulture,
+            $"Window shown {(DateTime.Now - Process.GetCurrentProcess().StartTime).TotalMilliseconds:0} ms after the process started."));
         mainWindow.RememberPlacement(new WindowPlacementStore());
         mainWindow.Show();
 

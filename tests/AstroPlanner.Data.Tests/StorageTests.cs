@@ -92,7 +92,7 @@ public sealed class AppDatabaseTests : TempFolderTest
     [Fact]
     public void DatabaseFromANewerVersion_IsRejected()
     {
-        new AppDatabase(DatabasePath, null, [(5, "0005_future.sql", "SELECT 1;")]).Initialize();
+        new AppDatabase(DatabasePath, null, [(99, "0099_future.sql", "SELECT 1;")]).Initialize();
 
         var act = new AppDatabase(DatabasePath).Initialize;
 
@@ -215,6 +215,57 @@ public sealed class SqliteStoreTests : TempFolderTest
         service.Save([entry, entry]);
 
         new SqliteLogbookService(Database()).Load().Should().Equal(entry);
+    }
+
+    [Fact]
+    public void Logbook_RoundTripsPhotographedEntries_WithTheirCaptureAndPrediction()
+    {
+        var photographed = new ObservationLogEntry(Guid.NewGuid(), "M42", "Orion Nebula", new DateTime(2026, 1, 15, 22, 30, 0),
+            "Home", "Rokinon 135", 3, 4, 4, "")
+        {
+            Kind = LogEntryKind.Photographed,
+            Capture = new CaptureDetails { RigId = "rig-1", RigName = "Rokinon 135", SubSeconds = 30.5, Iso = 800, SubCount = 120, ImagePath = @"C:\Astro\m42.tif" },
+            Prediction = new PredictionSummary(Core.Imaging.Feasibility.FeasibilityVerdict.Good, 64, 18.5) { SubSeconds = 30, SubCount = 110 }
+        };
+        var bare = new ObservationLogEntry(Guid.NewGuid(), "M31", "Andromeda", new DateTime(2026, 1, 16, 21, 0, 0), "", "", 3, 3, 3, "")
+        {
+            Kind = LogEntryKind.Photographed,
+            Capture = new CaptureDetails()
+        };
+        var observed = new ObservationLogEntry(Guid.NewGuid(), "M13", "Hercules", new DateTime(2026, 1, 17, 5, 0, 0), "", "", 3, 3, 3, "")
+        {
+            Capture = new CaptureDetails { RigName = "ignored" },
+            Prediction = new PredictionSummary(Core.Imaging.Feasibility.FeasibilityVerdict.Good, 50, 10)
+        };
+        var service = new SqliteLogbookService(Database());
+
+        service.Save([photographed, bare, observed]);
+
+        var loaded = new SqliteLogbookService(Database()).Load();
+        loaded.Should().HaveCount(3);
+        loaded[0].Should().Be(photographed);
+        loaded[1].Should().Be(bare);
+        loaded[2].Capture.Should().BeNull("an observed entry has no capture");
+        loaded[2].Prediction.Should().Be(observed.Prediction);
+    }
+
+    [Fact]
+    public void Logbook_IgnoresAPredictionItCannotRead()
+    {
+        var database = Database();
+        var entry = new ObservationLogEntry(Guid.NewGuid(), "M42", "Orion Nebula", new DateTime(2026, 1, 15, 22, 30, 0), "", "", 3, 3, 3, "");
+        new SqliteLogbookService(database).Save([entry]);
+        using (var connection = database.Open())
+        using (var command = connection.CreateCommand())
+        {
+            command.CommandText = "UPDATE logbook SET prediction = '{not json', kind = 'Unknown'";
+            command.ExecuteNonQuery();
+        }
+
+        var loaded = new SqliteLogbookService(database).Load().Single();
+
+        loaded.Prediction.Should().BeNull();
+        loaded.Kind.Should().Be(LogEntryKind.Observed);
     }
 
     [Fact]

@@ -1,5 +1,6 @@
 using System.Globalization;
 using System.Text.Json;
+using AstroPlanner.Core.Imaging.Feasibility;
 using AstroPlanner.Core.Interfaces;
 using AstroPlanner.Core.Models;
 using Microsoft.Data.Sqlite;
@@ -168,13 +169,15 @@ public sealed class SqliteLogbookService(AppDatabase database) : IObservationLog
         using var connection = _database.Open();
         using var command = connection.CreateCommand();
         command.CommandText = """
-            SELECT id, object_id, object_name, observed_at_local, location, equipment, seeing, transparency, rating, notes
+            SELECT id, object_id, object_name, observed_at_local, location, equipment, seeing, transparency, rating, notes,
+                   kind, rig_id, rig_name, sub_seconds, iso, gain, sub_count, image_path, prediction
             FROM logbook ORDER BY observed_at_local, id
             """;
         using var reader = command.ExecuteReader();
         var entries = new List<ObservationLogEntry>();
         while (reader.Read())
         {
+            var kind = Enum.TryParse<LogEntryKind>(reader.GetString(10), out var parsed) ? parsed : LogEntryKind.Observed;
             entries.Add(new ObservationLogEntry(
                 Guid.Parse(reader.GetString(0)),
                 reader.GetString(1),
@@ -185,11 +188,62 @@ public sealed class SqliteLogbookService(AppDatabase database) : IObservationLog
                 reader.GetInt32(6),
                 reader.GetInt32(7),
                 reader.GetInt32(8),
-                reader.GetString(9)));
+                reader.GetString(9))
+            {
+                Kind = kind,
+                Capture = kind == LogEntryKind.Photographed
+                    ? new CaptureDetails
+                    {
+                        RigId = Text(reader, 11),
+                        RigName = Text(reader, 12) ?? "",
+                        SubSeconds = reader.IsDBNull(13) ? null : reader.GetDouble(13),
+                        Iso = reader.IsDBNull(14) ? null : reader.GetInt32(14),
+                        Gain = reader.IsDBNull(15) ? null : reader.GetInt32(15),
+                        SubCount = reader.IsDBNull(16) ? null : reader.GetInt32(16),
+                        ImagePath = Text(reader, 17)
+                    }
+                    : null,
+                Prediction = ReadPrediction(Text(reader, 18))
+            });
         }
 
         return entries;
     }
+
+    private static string? Text(SqliteDataReader reader, int ordinal) => reader.IsDBNull(ordinal) ? null : reader.GetString(ordinal);
+
+    /// <summary>The stored prediction, or null when there is none or it cannot be read (it is never essential).</summary>
+    private static PredictionSummary? ReadPrediction(string? json)
+    {
+        if (string.IsNullOrEmpty(json))
+        {
+            return null;
+        }
+
+        try
+        {
+            var stored = JsonSerializer.Deserialize<StoredPrediction>(json, PredictionOptions);
+            return stored is null || !Enum.TryParse<FeasibilityVerdict>(stored.Verdict, out var verdict)
+                ? null
+                : new PredictionSummary(verdict, stored.Score, stored.Snr) { SubSeconds = stored.SubSeconds, SubCount = stored.SubCount };
+        }
+        catch (JsonException)
+        {
+            return null;
+        }
+    }
+
+    private static string? WritePrediction(PredictionSummary? prediction) =>
+        prediction is null
+            ? null
+            : JsonSerializer.Serialize(new StoredPrediction(prediction.Verdict.ToString(), prediction.Score,
+                double.IsFinite(prediction.SignalToNoise) ? prediction.SignalToNoise : 0, prediction.SubSeconds, prediction.SubCount),
+                PredictionOptions);
+
+    private static readonly JsonSerializerOptions PredictionOptions = new(JsonSerializerDefaults.Web);
+
+    /// <summary>The JSON of the prediction column: the verdict by name, so that the enum can grow.</summary>
+    private sealed record StoredPrediction(string Verdict, int Score, double Snr, double? SubSeconds, int? SubCount);
 
     public void Save(IEnumerable<ObservationLogEntry> entries)
     {
@@ -199,15 +253,21 @@ public sealed class SqliteLogbookService(AppDatabase database) : IObservationLog
         Sql.Execute(connection, transaction, "DELETE FROM logbook");
         using var insert = Sql.Command(connection, transaction,
             """
-            INSERT INTO logbook (id, object_id, object_name, observed_at_local, location, equipment, seeing, transparency, rating, notes)
-            VALUES ($id, $object, $name, $at, $location, $equipment, $seeing, $transparency, $rating, $notes)
+            INSERT INTO logbook (id, object_id, object_name, observed_at_local, location, equipment, seeing, transparency, rating, notes,
+                                 kind, rig_id, rig_name, sub_seconds, iso, gain, sub_count, image_path, prediction)
+            VALUES ($id, $object, $name, $at, $location, $equipment, $seeing, $transparency, $rating, $notes,
+                    $kind, $rig, $rigName, $sub, $iso, $gain, $count, $image, $prediction)
             """,
-            "$id", "$object", "$name", "$at", "$location", "$equipment", "$seeing", "$transparency", "$rating", "$notes");
+            "$id", "$object", "$name", "$at", "$location", "$equipment", "$seeing", "$transparency", "$rating", "$notes",
+            "$kind", "$rig", "$rigName", "$sub", "$iso", "$gain", "$count", "$image", "$prediction");
         foreach (var entry in entries.Where(e => !string.IsNullOrWhiteSpace(e.ObjectId)).DistinctBy(e => e.Id))
         {
+            var capture = entry.IsPhotographed ? entry.Capture : null;
             Sql.Run(insert, entry.Id.ToString("D"), entry.ObjectId, entry.ObjectName ?? string.Empty,
                 entry.ObservedAtLocal.ToString(DateFormat, CultureInfo.InvariantCulture), entry.Location ?? string.Empty,
-                entry.Equipment ?? string.Empty, entry.Seeing, entry.Transparency, entry.Rating, entry.Notes ?? string.Empty);
+                entry.Equipment ?? string.Empty, entry.Seeing, entry.Transparency, entry.Rating, entry.Notes ?? string.Empty,
+                entry.Kind.ToString(), Sql.Db(capture?.RigId), Sql.Db(capture?.RigName), Sql.Db(capture?.SubSeconds), Sql.Db(capture?.Iso),
+                Sql.Db(capture?.Gain), Sql.Db(capture?.SubCount), Sql.Db(capture?.ImagePath), Sql.Db(WritePrediction(entry.Prediction)));
         }
 
         transaction.Commit();
@@ -303,6 +363,9 @@ public static class HorizonMaskJson
 /// <summary>Command helpers shared by the stores.</summary>
 internal static class Sql
 {
+    /// <summary>A parameter value: null becomes SQL NULL.</summary>
+    public static object Db(object? value) => value ?? DBNull.Value;
+
     public static void Execute(SqliteConnection connection, SqliteTransaction transaction, string sql)
     {
         using var command = connection.CreateCommand();

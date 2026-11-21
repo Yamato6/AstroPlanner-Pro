@@ -61,9 +61,24 @@ public sealed class ObserverSettings
     /// <summary>V extinction coefficient of the site, magnitudes per air mass (spec §6).</summary>
     public double ExtinctionCoefficient { get; set; } = Airmass.DefaultExtinctionCoefficient;
 
+    /// <summary>Colors of the app: the dark theme or the red night-vision one (spec §4.10).</summary>
+    public AppTheme Theme { get; set; } = AppTheme.Dark;
+
+    /// <summary>User calibration of the feasibility model (Settings › Advanced); empty = the defaults.</summary>
+    public FeasibilityTuning Tuning { get; set; } = new();
+
     public ObserverLocation ToObserverLocation() =>
         new(LatitudeDegrees, LongitudeDegrees, ElevationMeters);
 
     /// <summary>The saved time zone; the local one if the id no longer exists (e.g. after an OS change).</summary>
     public TimeZoneInfo GetTimeZone() => TimeZoneConversion.FindOrLocal(TimeZoneId);
+}
+
+/// <summary>Colors of the app. New values are appended so that stored names stay valid.</summary>
+public enum AppTheme
+{
+    Dark,
+
+    /// <summary>Dim red on black, to keep the eyes dark-adapted at the telescope.</summary>
+    Night
 }

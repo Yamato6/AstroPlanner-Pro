@@ -73,6 +73,7 @@ public sealed partial class SkyViewModel : ObservableObject, IDisposable
     private DateTime? _tracksCenterUtc;
     private DateTime? _satellitesCenterUtc;
     private readonly SatelliteState? _satellites;
+    private readonly ThemeState? _theme;
     private string? _sentSelectionId;
     private ITimer? _resyncTimer;
     private SynchronizationContext? _uiContext;
@@ -90,8 +91,15 @@ public sealed partial class SkyViewModel : ObservableObject, IDisposable
         EquipmentState? equipment = null,
         INameResolver? nameResolver = null,
         OnlineInfoState? online = null,
-        SatelliteState? satellites = null)
+        SatelliteState? satellites = null,
+        ThemeState? theme = null)
     {
+        _theme = theme;
+        if (theme is not null)
+        {
+            theme.Changed += (_, _) => Send(SkyMessageCodec.SetTheme(new ThemePayload(theme.SkyTheme)));
+        }
+
         _satellites = satellites;
         _equipment = equipment;
         _nameResolver = nameResolver;
@@ -660,7 +668,7 @@ public sealed partial class SkyViewModel : ObservableObject, IDisposable
     private void SendAll()
     {
         Send(SkyMessageCodec.Init(new InitPayload(
-            $"https://{SkyHost.DataHost}/", RefractionModel.Standard, Layers(), ViewMode, "dark", ShowStats)));
+            $"https://{SkyHost.DataHost}/", RefractionModel.Standard, Layers(), ViewMode, _theme?.SkyTheme ?? "dark", ShowStats)));
         SendSiteAndTime();
         Send(SkyMessageCodec.CenterOn(CenterOnView()));
         SendHighlights();

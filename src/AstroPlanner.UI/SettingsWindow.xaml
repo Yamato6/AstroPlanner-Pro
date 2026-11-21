@@ -7,15 +7,15 @@
         SizeToContent="Height"
         MinHeight="480"
         WindowStartupLocation="CenterOwner"
-        Background="{StaticResource DialogBackgroundBrush}">
+        Background="{DynamicResource DialogBackgroundBrush}">
     <Window.Resources>
         <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>
         <!-- Colors and templates: Themes/Dark.xaml -->
         <Style TargetType="TextBlock">
-            <Setter Property="Foreground" Value="{StaticResource NightTextBrush}"/>
+            <Setter Property="Foreground" Value="{DynamicResource NightTextBrush}"/>
         </Style>
         <Style TargetType="Label">
-            <Setter Property="Foreground" Value="{StaticResource LabelTextBrush}"/>
+            <Setter Property="Foreground" Value="{DynamicResource LabelTextBrush}"/>
             <Setter Property="VerticalContentAlignment" Value="Center"/>
         </Style>
         <Style TargetType="TextBox" BasedOn="{StaticResource DarkTextBoxStyle}">
@@ -27,7 +27,7 @@
             <Setter Property="MaxDropDownHeight" Value="320"/>
         </Style>
         <Style TargetType="CheckBox" BasedOn="{StaticResource DarkCheckBoxStyle}">
-            <Setter Property="Foreground" Value="{StaticResource NightTextBrush}"/>
+            <Setter Property="Foreground" Value="{DynamicResource NightTextBrush}"/>
             <Setter Property="FontWeight" Value="Normal"/>
         </Style>
         <!-- Keyed, not implicit (same as in LogEntryWindow). -->
@@ -40,7 +40,7 @@
     <ScrollViewer VerticalScrollBarVisibility="Auto">
         <StackPanel Margin="28">
             <TextBlock FontSize="24" FontWeight="SemiBold" Text="{x:Static res:Strings.SettingsWindowTitle}"/>
-            <TextBlock Margin="0,4,0,22" Foreground="{StaticResource NightMutedTextBrush}"
+            <TextBlock Margin="0,4,0,22" Foreground="{DynamicResource NightMutedTextBrush}"
                        Text="{x:Static res:Strings.SettingsIntro}"/>
 
             <Grid>
@@ -62,40 +62,40 @@
                 <Label Grid.Row="0" Content="{x:Static res:Strings.SettingsCity}"/>
                 <ComboBox Grid.Row="0" Grid.Column="1"
                           ItemsSource="{Binding Cities}"
-                          SelectedItem="{Binding SelectedCity}"
+                          SelectedItem="{Binding SelectedCity}" AutomationProperties.Name="{x:Static res:Strings.SettingsCity}"
                           DisplayMemberPath="DisplayName"
                           IsEnabled="{Binding IsCitySelectionEnabled}"/>
 
                 <Label Grid.Row="1" Content="{x:Static res:Strings.SettingsLatitude}"/>
                 <TextBox Grid.Row="1" Grid.Column="1"
-                         Text="{Binding Latitude, UpdateSourceTrigger=PropertyChanged}"
+                         Text="{Binding Latitude, UpdateSourceTrigger=PropertyChanged}" AutomationProperties.Name="{x:Static res:Strings.SettingsLatitude}"
                          IsEnabled="{Binding IsManualFieldsEnabled}"/>
 
                 <Label Grid.Row="2" Content="{x:Static res:Strings.SettingsLongitude}"/>
                 <TextBox Grid.Row="2" Grid.Column="1"
-                         Text="{Binding Longitude, UpdateSourceTrigger=PropertyChanged}"
+                         Text="{Binding Longitude, UpdateSourceTrigger=PropertyChanged}" AutomationProperties.Name="{x:Static res:Strings.SettingsLongitude}"
                          IsEnabled="{Binding IsManualFieldsEnabled}"/>
 
                 <Label Grid.Row="3" Content="{x:Static res:Strings.SettingsElevation}"/>
                 <TextBox Grid.Row="3" Grid.Column="1"
-                         Text="{Binding Elevation, UpdateSourceTrigger=PropertyChanged}"
+                         Text="{Binding Elevation, UpdateSourceTrigger=PropertyChanged}" AutomationProperties.Name="{x:Static res:Strings.SettingsElevation}"
                          IsEnabled="{Binding IsManualFieldsEnabled}"/>
 
                 <Label Grid.Row="4" Content="{x:Static res:Strings.SettingsTimeZone}"/>
                 <ComboBox Grid.Row="4" Grid.Column="1"
                           ItemsSource="{Binding AvailableTimeZones}"
-                          SelectedItem="{Binding SelectedTimeZone}"
+                          SelectedItem="{Binding SelectedTimeZone}" AutomationProperties.Name="{x:Static res:Strings.SettingsTimeZone}"
                           DisplayMemberPath="Id"
                           IsEnabled="{Binding IsManualFieldsEnabled}"/>
 
                 <Label Grid.Row="5" Content="{x:Static res:Strings.SettingsMinimumAltitude}"/>
                 <TextBox Grid.Row="5" Grid.Column="1"
-                         Text="{Binding MinimumAltitude, UpdateSourceTrigger=PropertyChanged}"/>
+                         Text="{Binding MinimumAltitude, UpdateSourceTrigger=PropertyChanged}" AutomationProperties.Name="{x:Static res:Strings.SettingsMinimumAltitude}"/>
 
                 <Label Grid.Row="6" Content="{x:Static res:Strings.SettingsMaximumMagnitude}"
                        ToolTip="{x:Static res:Strings.SettingsMaximumMagnitudeTooltip}"/>
                 <TextBox Grid.Row="6" Grid.Column="1"
-                         Text="{Binding MaximumMagnitude, UpdateSourceTrigger=PropertyChanged}"/>
+                         Text="{Binding MaximumMagnitude, UpdateSourceTrigger=PropertyChanged}" AutomationProperties.Name="{x:Static res:Strings.SettingsMaximumMagnitude}"/>
 
                 <Button Grid.Row="7" Grid.Column="1" HorizontalAlignment="Left" Margin="0,10,0,0"
                         Style="{StaticResource SecondaryButtonStyle}"
@@ -103,39 +103,45 @@
                         Command="{Binding UseManualLocationCommand}"/>
             </Grid>
 
+            <!-- Display (spec §4.10) -->
+            <TextBlock Margin="0,22,0,6" FontSize="15" FontWeight="SemiBold" Text="{x:Static res:Strings.SettingsDisplay}"/>
+            <CheckBox Margin="0,4" IsChecked="{Binding IsNightTheme}" Content="{x:Static res:Strings.SettingsNightTheme}"/>
+            <TextBlock Margin="23,2,0,8" Foreground="{DynamicResource NightMutedTextBrush}" TextWrapping="Wrap" FontSize="12"
+                       Text="{x:Static res:Strings.SettingsNightThemeNote}"/>
+
             <!-- Features that use the internet: each one can be turned off -->
             <TextBlock Margin="0,22,0,6" FontSize="15" FontWeight="SemiBold" Text="{x:Static res:Strings.SettingsInternet}"/>
             <CheckBox Margin="0,4" IsChecked="{Binding WeatherForecastEnabled}"
                       Content="{x:Static res:Strings.SettingsCloudForecast}"/>
-            <TextBlock Margin="23,2,0,8" Foreground="{StaticResource NightMutedTextBrush}" TextWrapping="Wrap" FontSize="12"
+            <TextBlock Margin="23,2,0,8" Foreground="{DynamicResource NightMutedTextBrush}" TextWrapping="Wrap" FontSize="12"
                        Text="{x:Static res:Strings.SettingsCloudForecastNote}"/>
             <CheckBox Margin="0,4" IsChecked="{Binding AstroForecastEnabled}"
                       Content="{x:Static res:Strings.SettingsAstroForecast}"/>
-            <TextBlock Margin="23,2,0,8" Foreground="{StaticResource NightMutedTextBrush}" TextWrapping="Wrap" FontSize="12"
+            <TextBlock Margin="23,2,0,8" Foreground="{DynamicResource NightMutedTextBrush}" TextWrapping="Wrap" FontSize="12"
                        Text="{x:Static res:Strings.SettingsAstroForecastNote}"/>
             <CheckBox Margin="0,4" IsChecked="{Binding SurveyImagesEnabled}"
                       Content="{x:Static res:Strings.SettingsSurveyImages}"/>
-            <TextBlock Margin="23,2,0,8" Foreground="{StaticResource NightMutedTextBrush}" TextWrapping="Wrap" FontSize="12"
+            <TextBlock Margin="23,2,0,8" Foreground="{DynamicResource NightMutedTextBrush}" TextWrapping="Wrap" FontSize="12"
                        Text="{x:Static res:Strings.SettingsSurveyImagesNote}"/>
             <CheckBox Margin="0,4" IsChecked="{Binding WikipediaEnabled}"
                       Content="{x:Static res:Strings.SettingsWikipedia}"/>
-            <TextBlock Margin="23,2,0,8" Foreground="{StaticResource NightMutedTextBrush}" TextWrapping="Wrap" FontSize="12"
+            <TextBlock Margin="23,2,0,8" Foreground="{DynamicResource NightMutedTextBrush}" TextWrapping="Wrap" FontSize="12"
                        Text="{x:Static res:Strings.SettingsWikipediaNote}"/>
             <CheckBox Margin="0,4" IsChecked="{Binding NameResolverEnabled}"
                       Content="{x:Static res:Strings.SettingsNameResolver}"/>
-            <TextBlock Margin="23,2,0,8" Foreground="{StaticResource NightMutedTextBrush}" TextWrapping="Wrap" FontSize="12"
+            <TextBlock Margin="23,2,0,8" Foreground="{DynamicResource NightMutedTextBrush}" TextWrapping="Wrap" FontSize="12"
                        Text="{x:Static res:Strings.SettingsNameResolverNote}"/>
             <CheckBox Margin="0,4" IsChecked="{Binding SmallBodiesEnabled}"
                       Content="{x:Static res:Strings.SettingsSmallBodies}"/>
-            <TextBlock Margin="23,2,0,8" Foreground="{StaticResource NightMutedTextBrush}" TextWrapping="Wrap" FontSize="12"
+            <TextBlock Margin="23,2,0,8" Foreground="{DynamicResource NightMutedTextBrush}" TextWrapping="Wrap" FontSize="12"
                        Text="{x:Static res:Strings.SettingsSmallBodiesNote}"/>
             <CheckBox Margin="0,4" IsChecked="{Binding SatellitesEnabled}"
                       Content="{x:Static res:Strings.SettingsSatellites}"/>
-            <TextBlock Margin="23,2,0,8" Foreground="{StaticResource NightMutedTextBrush}" TextWrapping="Wrap" FontSize="12"
+            <TextBlock Margin="23,2,0,8" Foreground="{DynamicResource NightMutedTextBrush}" TextWrapping="Wrap" FontSize="12"
                        Text="{x:Static res:Strings.SettingsSatellitesNote}"/>
             <CheckBox Margin="0,4" IsChecked="{Binding CheckForUpdates}"
                       Content="{x:Static res:Strings.SettingsCheckForUpdates}"/>
-            <TextBlock Margin="23,2,0,8" Foreground="{StaticResource NightMutedTextBrush}" TextWrapping="Wrap" FontSize="12"
+            <TextBlock Margin="23,2,0,8" Foreground="{DynamicResource NightMutedTextBrush}" TextWrapping="Wrap" FontSize="12"
                        Text="{x:Static res:Strings.SettingsCheckForUpdatesNote}"/>
             <StackPanel Orientation="Horizontal" Margin="0,4"
                         Visibility="{Binding HasCache, Converter={StaticResource BooleanToVisibilityConverter}}">
@@ -155,7 +161,60 @@
                          ToolTip="{x:Static res:Strings.SettingsExtinctionTooltip}"/>
             </StackPanel>
 
-            <TextBlock Margin="0,16,0,0" TextWrapping="Wrap" Foreground="{StaticResource DangerSoftBrush}">
+            <!-- Advanced: the feasibility model's tunable constants (spec §8.7) -->
+            <TextBlock Margin="0,22,0,2" FontSize="15" FontWeight="SemiBold" Text="{x:Static res:Strings.SettingsAdvanced}"/>
+            <TextBlock Margin="0,0,0,8" Foreground="{DynamicResource NightMutedTextBrush}" TextWrapping="Wrap" FontSize="12"
+                       Text="{x:Static res:Strings.SettingsAdvancedNote}"/>
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="255"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
+                <Label Grid.Row="0" Content="{x:Static res:Strings.AdvancedSeeing}" ToolTip="{x:Static res:Strings.AdvancedSeeingTooltip}"/>
+                <TextBox Grid.Row="0" Grid.Column="1" Width="80" HorizontalAlignment="Left"
+                         Text="{Binding TuningSeeingArcsec, UpdateSourceTrigger=PropertyChanged}"
+                         AutomationProperties.Name="{x:Static res:Strings.AdvancedSeeing}" ToolTip="{x:Static res:Strings.AdvancedSeeingTooltip}"/>
+                <Label Grid.Row="1" Content="{x:Static res:Strings.AdvancedCoreBrightening}" ToolTip="{x:Static res:Strings.AdvancedCoreBrighteningTooltip}"/>
+                <TextBox Grid.Row="1" Grid.Column="1" Width="80" HorizontalAlignment="Left"
+                         Text="{Binding TuningCoreBrighteningMagnitudes, UpdateSourceTrigger=PropertyChanged}"
+                         AutomationProperties.Name="{x:Static res:Strings.AdvancedCoreBrightening}" ToolTip="{x:Static res:Strings.AdvancedCoreBrighteningTooltip}"/>
+                <Label Grid.Row="2" Content="{x:Static res:Strings.AdvancedOverhead}" ToolTip="{x:Static res:Strings.AdvancedOverheadTooltip}"/>
+                <TextBox Grid.Row="2" Grid.Column="1" Width="80" HorizontalAlignment="Left"
+                         Text="{Binding TuningOverheadSeconds, UpdateSourceTrigger=PropertyChanged}"
+                         AutomationProperties.Name="{x:Static res:Strings.AdvancedOverhead}" ToolTip="{x:Static res:Strings.AdvancedOverheadTooltip}"/>
+                <Label Grid.Row="3" Content="{x:Static res:Strings.AdvancedMaximumSub}" ToolTip="{x:Static res:Strings.AdvancedMaximumSubTooltip}"/>
+                <TextBox Grid.Row="3" Grid.Column="1" Width="80" HorizontalAlignment="Left"
+                         Text="{Binding TuningMaximumSubSeconds, UpdateSourceTrigger=PropertyChanged}"
+                         AutomationProperties.Name="{x:Static res:Strings.AdvancedMaximumSub}" ToolTip="{x:Static res:Strings.AdvancedMaximumSubTooltip}"/>
+                <Label Grid.Row="4" Content="{x:Static res:Strings.AdvancedSnr}" ToolTip="{x:Static res:Strings.AdvancedSnrTooltip}"/>
+                <StackPanel Grid.Row="4" Grid.Column="1" Orientation="Horizontal">
+                    <TextBox Width="60" Margin="0,4,8,4" Text="{Binding TuningSnrMarginal, UpdateSourceTrigger=PropertyChanged}"
+                             AutomationProperties.Name="{x:Static res:Strings.AdvancedSnrMarginalName}" ToolTip="{x:Static res:Strings.AdvancedSnrTooltip}"/>
+                    <TextBox Width="60" Margin="0,4,8,4" Text="{Binding TuningSnrGood, UpdateSourceTrigger=PropertyChanged}"
+                             AutomationProperties.Name="{x:Static res:Strings.AdvancedSnrGoodName}" ToolTip="{x:Static res:Strings.AdvancedSnrTooltip}"/>
+                    <TextBox Width="60" Text="{Binding TuningSnrExcellent, UpdateSourceTrigger=PropertyChanged}"
+                             AutomationProperties.Name="{x:Static res:Strings.AdvancedSnrExcellentName}" ToolTip="{x:Static res:Strings.AdvancedSnrTooltip}"/>
+                </StackPanel>
+                <Label Grid.Row="5" Content="{x:Static res:Strings.AdvancedSplitPixels}" ToolTip="{x:Static res:Strings.AdvancedSplitPixelsTooltip}"/>
+                <TextBox Grid.Row="5" Grid.Column="1" Width="80" HorizontalAlignment="Left"
+                         Text="{Binding TuningDoubleStarSplitPixels, UpdateSourceTrigger=PropertyChanged}"
+                         AutomationProperties.Name="{x:Static res:Strings.AdvancedSplitPixels}" ToolTip="{x:Static res:Strings.AdvancedSplitPixelsTooltip}"/>
+                <Button Grid.Row="6" Grid.Column="1" HorizontalAlignment="Left" Margin="0,8,0,0"
+                        Style="{StaticResource SecondaryButtonStyle}"
+                        Content="{x:Static res:Strings.AdvancedReset}" ToolTip="{x:Static res:Strings.AdvancedResetTooltip}"
+                        Command="{Binding ResetTuningCommand}"/>
+            </Grid>
+
+            <TextBlock Margin="0,16,0,0" TextWrapping="Wrap" Foreground="{DynamicResource DangerSoftBrush}">
                 <TextBlock.Style>
                     <Style TargetType="TextBlock">
                         <Setter Property="Visibility" Value="Collapsed"/>
@@ -169,7 +228,7 @@
                 <Run Text="{Binding StatusMessage, Mode=OneWay}"/>
             </TextBlock>
 
-            <TextBlock Margin="0,16,0,0" TextWrapping="Wrap" Foreground="{StaticResource SuccessSoftBrush}">
+            <TextBlock Margin="0,16,0,0" TextWrapping="Wrap" Foreground="{DynamicResource SuccessSoftBrush}">
                 <TextBlock.Style>
                     <Style TargetType="TextBlock">
                         <Setter Property="Visibility" Value="Visible"/>

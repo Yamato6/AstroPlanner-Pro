@@ -14,6 +14,12 @@
     <canvas id="sky"></canvas>
     <canvas id="overlay"></canvas>
     <div id="tooltip" hidden></div>
+    <!-- Night-vision theme: the luminance of every pixel, drawn in red only (no green or blue light). -->
+    <svg id="filters" width="0" height="0" aria-hidden="true">
+      <filter id="night-red" color-interpolation-filters="sRGB">
+        <feColorMatrix type="matrix" values="0.30 0.59 0.11 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 1 0" />
+      </filter>
+    </svg>
     <script type="module" src="/src/main.ts"></script>
   </body>
 </html>

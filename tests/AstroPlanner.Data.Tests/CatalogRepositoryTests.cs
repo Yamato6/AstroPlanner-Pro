@@ -134,6 +134,21 @@ public sealed class SqliteCatalogRepositoryTests(CatalogFixture fixture) : IClas
     }
 
     [Fact]
+    [Trait("Category", "Performance")]
+    public async Task Catalog_LoadsWithinTheStartupBudget()
+    {
+        // Part of the 2 s budget to the first frame (spec §5): extraction of a fresh copy included.
+        var directory = Path.Combine(fixture.Directory, "fresh");
+        var watch = System.Diagnostics.Stopwatch.StartNew();
+
+        var objects = await SqliteCatalogRepository.FromEmbedded(directory).GetAllAsync();
+
+        watch.Stop();
+        objects.Should().HaveCountGreaterThan(22_000);
+        watch.Elapsed.Should().BeLessThan(PerformanceBudget.Of(TimeSpan.FromSeconds(1.5)));
+    }
+
+    [Fact]
     public async Task GetAllAsync_ReturnsTheSameListEveryTime()
     {
         var again = await fixture.Repository.GetAllAsync();
