@@ -4,7 +4,49 @@ All notable changes to AstroPlanner Pro. Format based on [Keep a Changelog](http
 versions follow [Semantic Versioning](https://semver.org/). Versions up to 1.0.0 are the original
 [AstroPlanner](https://github.com/Yamato6/AstroPlanner) (in Spanish), translated here.
 
-## [Unreleased] — 2.0.0
+## [2.0.0] — 2026-11-21
+
+AstroPlanner Pro: the v1 visual-observing planner rebuilt as an **astrophotography planner**. It
+answers "what can I photograph tonight, from here, with my gear — and how?".
+
+### Highlights
+- **Capture feasibility** for every object with your rig: an explainable verdict and score (sky
+  brightness from the light-pollution atlas, Moon, clouds, framing, sub length, sampling, SNR),
+  and the suggested subs, ISO/gain and best window.
+- **Session planner**: your targets scheduled across the night, with a timeline, locks,
+  priorities and exports to PDF, CSV and calendar (`.ics`).
+- **Live 3D/2D sky** (three.js in WebView2): stars to mag 9, deep-sky objects, planets, comets,
+  asteroids and bright satellites, your camera frame and your site's horizon.
+- **Catalogs**: the whole NGC/IC (13,000+ objects), Messier and Caldwell, 8,920 stars to mag 6.5
+  and 2,975 double-star pairs; comets, asteroids and satellites updated online.
+- **Online, optional and private**: forecasts (Open-Meteo, 7Timer!), survey images for framing,
+  Wikipedia descriptions, name search — each with a toggle, an offline cache, and only rounded
+  coordinates sent.
+- **Logbook** with photographed sessions and *Predictions vs results*; **night-vision** theme;
+  accessible to screen readers.
+
+### Upgrading from AstroPlanner v1
+AstroPlanner Pro is a separate app: it installs side by side with v1 and keeps its data in
+`%LocalAppData%\AstroPlannerPro`. On first start it offers to import v1's settings, plan and
+logbook (v1's files are only read). Uninstalling either app keeps the other's data.
+
+### Requirements
+Windows 10 (1809) or 11, x64. The 3D sky needs the Microsoft Edge WebView2 Runtime (built into
+Windows 11); without it the sky uses 2D charts. The release is not code-signed yet, so SmartScreen
+may ask for confirmation.
+
+### M6 — Polish and release (part 3: release)
+
+#### Added
+- The installer checks for the WebView2 Runtime and, when it is missing, offers to open
+  Microsoft's download page (it never downloads anything itself). It also installs
+  `THIRD_PARTY_NOTICES.md`; it builds with Inno Setup 6 or 7.
+- Release notes come from this CHANGELOG (`tools/release-notes.ps1`); the portable zip is checked
+  for the exe, LICENSE, README and the third-party notices.
+- Optional code signing through SignPath Foundation, skipped until it is configured
+  ([docs/signing.md](docs/signing.md)).
+- [docs/architecture.md](docs/architecture.md), [docs/external-services.md](docs/external-services.md),
+  [CONTRIBUTING.md](CONTRIBUTING.md); a demo GIF and download instructions in the README.
 
 ### M6 — Polish and release (part 2: polish)
 

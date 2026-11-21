@@ -16,14 +16,11 @@
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-green" alt="MIT license"></a>
 </p>
 
-> **Status: work in progress (v2.0 under development).** AstroPlanner Pro is based on
-> [AstroPlanner v1](https://github.com/Yamato6/AstroPlanner), whose full history it keeps.
-> Milestones M0 (English, .NET 10, new architecture), M1 (data foundation: the full NGC/IC
-> catalog, saved sites, refined events, v1 import), M2 (the live 2D/3D sky) and M3 (equipment,
-> light-pollution-aware sky quality, the capture-feasibility model and the session planner), M4
-> (forecasts, framing preview, Wikipedia, name search) and M5 (comets, asteroids, the Milky Way
-> core and satellites) are done. What is left (polish and the v2.0.0 release) is in the
-> [specification](ASTROPLANNER_PRO_SPEC.md).
+> **v2.0.0** — the first release of AstroPlanner Pro, the astrophotography successor of
+> [AstroPlanner v1](https://github.com/Yamato6/AstroPlanner) (whose full history it keeps).
+> **[Download it](#download-and-install)** · [what's new](CHANGELOG.md) · [specification](ASTROPLANNER_PRO_SPEC.md)
+
+![A short tour: Tonight's best targets for the active rig, the catalog planner, the live 3D sky around Orion with time running, the feasibility of the Orion Nebula and its block in My plan](docs/screenshots/demo.gif)
 
 ![Tonight: the active rig (Canon T7 + Rokinon 16 mm on a tripod), the site's sky quality from the light-pollution atlas, the comet of the night and the Milky Way core alerts, tonight's bright satellite passes and the best targets for that gear, each with its verdict, score and suggested capture](docs/screenshots/tonight.png)
 
@@ -51,7 +48,7 @@
 
 ![The 3D sky with the site's horizon profile (trees and buildings) drawn as a silhouette](docs/screenshots/sky-horizon.png)
 
-## What it does today
+## What it does
 
 - **What can I photograph tonight, with my gear?** Every object gets an honest, explainable
   estimate for the active rig: a verdict (Excellent → Not possible), a score and the reasons. They
@@ -134,14 +131,34 @@ It works offline; the internet is only used for the forecasts, the survey images
 name search, comet and asteroid elements, satellite elements and the new-version notice, each of
 which can be turned off.
 
-## Where it is going (v2.0)
+## Why AstroPlanner Pro
 
-AstroPlanner v1 answers "what can I *see* tonight?". AstroPlanner Pro will answer **"what can I
+AstroPlanner v1 answers "what can I *see* tonight?". AstroPlanner Pro answers **"what can I
 *photograph* tonight, from here, with my equipment — and how should I do it?"**: an equipment
-inventory (field of view, image scale, maximum exposure), an explainable capture-feasibility score per
-target, light-pollution-aware sky brightness, a live 2D/3D sky rendered with three.js in WebView2, and
-survey imagery for framing. See the [specification](ASTROPLANNER_PRO_SPEC.md) and the
-[CHANGELOG](CHANGELOG.md).
+inventory (field of view, image scale, longest sub), an explainable capture-feasibility score per
+target, light-pollution-aware sky brightness, a live 2D/3D sky rendered with three.js in WebView2,
+survey imagery for framing and a session planner. See the [specification](ASTROPLANNER_PRO_SPEC.md)
+and the [CHANGELOG](CHANGELOG.md).
+
+## Download and install
+
+Get the latest version from **[Releases](https://github.com/Yamato6/AstroPlanner-Pro/releases/latest)**:
+
+- **`AstroPlannerPro_<version>_Setup.exe`** — the installer. It installs for your user only (no
+  administrator rights), adds a Start menu entry and an uninstaller, and updates an earlier
+  version in place.
+- **`AstroPlannerPro_<version>_win-x64_portable.zip`** — a single `.exe`, no installation; unzip
+  it anywhere and run it.
+- **`SHA256SUMS.txt`** — check a download with `Get-FileHash <file> -Algorithm SHA256`.
+
+Windows 10 (1809) or 11, x64; .NET is included. The 3D sky uses the Microsoft Edge **WebView2
+Runtime**, built into Windows 11; if it is missing, the installer offers to open Microsoft's page
+for it, and the app uses its 2D sky charts meanwhile. The release is not code-signed yet, so
+SmartScreen may show "Windows protected your PC": choose *More info* → *Run anyway*.
+
+**Coming from AstroPlanner v1?** Both apps install side by side. On its first start AstroPlanner
+Pro offers to import v1's settings, plan and logbook (v1's files are only read). Uninstalling
+keeps your data in `%LocalAppData%\AstroPlannerPro`.
 
 ## Getting started
 
@@ -192,7 +209,7 @@ shows whether the services are online, offline (showing saved data) or off.
 ```bash
 dotnet build AstroPlanner.slnx -warnaserror
 dotnet run --project src/AstroPlanner.UI
-dotnet test AstroPlanner.slnx          # ~600 tests, no network
+dotnet test AstroPlanner.slnx          # ~840 tests, no network
 cd src/sky-renderer && npm ci && npm test   # renderer: ~150 Vitest tests (the UI build runs npm itself)
 dotnet run --project tools/AstroPlanner.DataBuilder -- all   # rebuild the catalogs (downloads the sources)
 ```
@@ -200,7 +217,10 @@ dotnet run --project tools/AstroPlanner.DataBuilder -- all   # rebuild the catal
 Requires the .NET 10 SDK and Node.js 22.12+ (the UI build compiles the sky renderer; see
 [docs/sky-renderer.md](docs/sky-renderer.md)). Every push runs CI (build with warnings as errors, tests, coverage with an
 85 % line-coverage gate on Core, a check of the committed catalog database); a `v*` tag publishes the `.exe`, the installer and the checksums to a
-draft release. Contributor notes are in the docs.
+draft release whose notes come from this CHANGELOG ([docs/signing.md](docs/signing.md) explains the optional
+code signing). Start with [CONTRIBUTING.md](CONTRIBUTING.md) and [docs/architecture.md](docs/architecture.md);
+every online service is listed in [docs/external-services.md](docs/external-services.md), and
+contributor notes are in the docs.
 
 <details>
 <summary><b>Architecture</b></summary>
