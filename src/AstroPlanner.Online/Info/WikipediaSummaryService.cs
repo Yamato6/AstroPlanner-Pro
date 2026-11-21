@@ -31,7 +31,8 @@ public sealed partial class WikipediaSummaryService(HttpClient http, IOnlineCach
     private static readonly string[] AstronomicalWords =
     [
         "galaxy", "galaxies", "nebula", "cluster", "star", "planet", "constellation", "supernova", "remnant",
-        "asterism", "association", "nova", "quasar", "solar system", "h ii", "interstellar", "molecular cloud"
+        "asterism", "association", "nova", "quasar", "solar system", "h ii", "interstellar", "molecular cloud",
+        "comet", "asteroid", "minor planet", "galactic"
     ];
 
     private readonly TimeProvider _time = timeProvider ?? TimeProvider.System;
@@ -48,6 +49,34 @@ public sealed partial class WikipediaSummaryService(HttpClient http, IOnlineCach
         {
             titles.Add(planet == Planet.Mercury ? "Mercury (planet)" : planet.ToString());
             return titles;
+        }
+
+        if (target.Type == CelestialObjectType.MilkyWayCore)
+        {
+            titles.Add("Galactic Center");
+            return titles;
+        }
+
+        if (target.Orbit is { } orbit)
+        {
+            // "4 Vesta"; "2P/Encke"; "C/2023 A3 (Tsuchinshan-ATLAS)"; then "Comet Encke".
+            var name = orbit.Name;
+            if (orbit.Kind == SmallBodyKind.Asteroid)
+            {
+                titles.Add(name.Length > 0 ? $"{orbit.Designation.Trim('(', ')')} {name}" : orbit.Designation.Trim('(', ')'));
+            }
+            else
+            {
+                titles.Add(name.Length == 0 ? orbit.Designation
+                    : orbit.Designation.Contains('/', StringComparison.Ordinal) ? $"{orbit.Designation} ({name})"
+                    : $"{orbit.Designation}/{name}");
+                if (name.Length > 0)
+                {
+                    titles.Add($"Comet {name}");
+                }
+            }
+
+            return [.. titles.Distinct(StringComparer.OrdinalIgnoreCase)];
         }
 
         if (target.MessierNumber is { } messier)
