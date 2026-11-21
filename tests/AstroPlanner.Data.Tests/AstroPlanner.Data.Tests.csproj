@@ -8,6 +8,11 @@
     <ProjectReference Include="..\..\src\AstroPlanner.Data\AstroPlanner.Data.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Compile Include="..\Shared\PerformanceBudget.cs" Link="Shared\PerformanceBudget.cs" />
+    <Using Include="AstroPlanner.Testing" />
+  </ItemGroup>
+
   <!-- Files written by AstroPlanner v1 (current and older formats) for the importer tests. -->
   <ItemGroup>
     <None Include="..\fixtures\v1\**\*.json" Link="fixtures\v1\%(RecursiveDir)%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
