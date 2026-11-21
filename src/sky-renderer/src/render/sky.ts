@@ -111,6 +111,9 @@ const MILKY_WAY_OPACITY = 0.22;
 const FINDER_LABELS = 60;
 const CARDINALS = ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW'] as const;
 const FOV_COLOR = '#ff6f6f';
+/** Satellite trail: the last minute of the path, in 5 s pieces. */
+const SATELLITE_TRAIL_STEPS = 12;
+const SATELLITE_TRAIL_STEP_MS = 5000;
 
 function color(rgb: readonly [number, number, number]): THREE.Color {
   return new THREE.Color(rgb[0], rgb[1], rgb[2]);
@@ -985,8 +988,12 @@ export class SkyView {
       });
     }
 
-    if (this.layers.bodies) {
-      for (const track of this.bodies) {
+    for (const track of this.bodies) {
+      if (track.body.kind === 'satellite') {
+        if (this.layers.satellites) {
+          this.drawSatellite(track, utcMs, labels ? label : null);
+        }
+      } else if (this.layers.bodies) {
         this.drawBody(track, utcMs, labels ? label : null);
       }
     }
@@ -1200,7 +1207,7 @@ export class SkyView {
     }
     const g = this.overlay;
     const body = track.body;
-    const minimumRadius = { planet: 2.5, comet: 3, asteroid: 1.8, sun: 6, moon: 6 }[body.kind];
+    const minimumRadius = { planet: 2.5, comet: 3, asteroid: 1.8, satellite: 2, sun: 6, moon: 6 }[body.kind];
     const radius = Math.max(minimumRadius, ((body.diameterArcsec / 3600) * this.pixelsPerDegree) / 2);
 
     if (body.kind === 'sun') {
@@ -1234,6 +1241,67 @@ export class SkyView {
     if (label) {
       g.textAlign = 'left';
       label(body.name, p.x + radius + 4, p.y - radius - 2, palette.bodyLabel, true);
+    }
+  }
+
+  /** Whether a satellite's short track covers the instant (outside it the satellite is not drawn). */
+  private inTrack(track: BodyTrack, utcMs: number): boolean {
+    const count = Math.floor(track.body.track.vectors.length / 3);
+    const span = (count - 1) * track.body.track.stepSeconds * 1000;
+    return utcMs >= track.startMs && utcMs <= track.startMs + span;
+  }
+
+  /** Whether the Sun lights a satellite at the instant (nearest track sample). */
+  private isSunlit(track: BodyTrack, utcMs: number): boolean {
+    const index = Math.round((utcMs - track.startMs) / (track.body.track.stepSeconds * 1000));
+    return (track.body.sunlit?.[index] ?? 1) === 1;
+  }
+
+  /**
+   * A satellite: a dot, bright while sunlit and dim in the Earth's shadow, with a fading trail of
+   * the last minute of its path.
+   */
+  private drawSatellite(
+    track: BodyTrack,
+    utcMs: number,
+    label: ((text: string, x: number, y: number, style: string, force?: boolean) => void) | null,
+  ): void {
+    if (!this.inTrack(track, utcMs)) {
+      return;
+    }
+    const p = this.place(this.bodyPosition(track, utcMs));
+    if (!p) {
+      return;
+    }
+    const g = this.overlay;
+    const lit = this.isSunlit(track, utcMs);
+    const rgb = lit ? '226, 238, 255' : '110, 118, 134';
+    let previous: ScreenPoint = p;
+    g.lineWidth = 1.5;
+    g.lineCap = 'round';
+    for (let k = 1; k <= SATELLITE_TRAIL_STEPS; k++) {
+      const t = utcMs - k * SATELLITE_TRAIL_STEP_MS;
+      if (t < track.startMs) {
+        break;
+      }
+      const q = this.place(this.bodyPosition(track, t));
+      if (!q) {
+        break;
+      }
+      g.strokeStyle = `rgba(${rgb}, ${(0.6 * (1 - k / (SATELLITE_TRAIL_STEPS + 1))).toFixed(3)})`;
+      g.beginPath();
+      g.moveTo(previous.x, previous.y);
+      g.lineTo(q.x, q.y);
+      g.stroke();
+      previous = q;
+    }
+    g.fillStyle = `rgb(${rgb})`;
+    g.beginPath();
+    g.arc(p.x, p.y, lit ? 2.4 : 1.6, 0, Math.PI * 2);
+    g.fill();
+    if (label && lit) {
+      g.textAlign = 'left';
+      label(track.body.name, p.x + 6, p.y - 4, palette.bodyLabel);
     }
   }
 
@@ -1353,21 +1421,23 @@ export class SkyView {
 
   *candidates(utcMs: number): Generator<PickCandidate> {
     const pixelsPerDegree = this.pixelsPerDegree;
-    if (this.layers.bodies) {
-      for (const track of this.bodies) {
-        const p = this.place(this.bodyPosition(track, utcMs), 0);
-        if (p) {
-          const radius = Math.max(4, ((track.body.diameterArcsec / 3600) * pixelsPerDegree) / 2);
-          yield {
-            kind: 'body',
-            id: track.body.id,
-            label: track.body.name,
-            x: p.x,
-            y: p.y,
-            weight: 20,
-            radius,
-          };
-        }
+    for (const track of this.bodies) {
+      const satellite = track.body.kind === 'satellite';
+      if (satellite ? !this.layers.satellites || !this.inTrack(track, utcMs) : !this.layers.bodies) {
+        continue;
+      }
+      const p = this.place(this.bodyPosition(track, utcMs), 0);
+      if (p) {
+        const radius = Math.max(4, ((track.body.diameterArcsec / 3600) * pixelsPerDegree) / 2);
+        yield {
+          kind: 'body',
+          id: track.body.id,
+          label: track.body.name,
+          x: p.x,
+          y: p.y,
+          weight: 20,
+          radius,
+        };
       }
     }
     if (this.layers.deepSky) {

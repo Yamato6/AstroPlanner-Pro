@@ -25,6 +25,7 @@
       "labels": true,
       "ground": true,
       "skyBrightness": true,
+      "satellites": true,
       "starLimitMagnitude": 8.5,
       "deepSkyLimitMagnitude": 12
     },

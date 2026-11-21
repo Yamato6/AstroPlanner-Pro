@@ -60,13 +60,23 @@ lists M102 as a duplicate of M101; the app keeps the usual identification, as v1
 | License | astropy is **BSD-3-Clause**; the table is a published scientific catalogue (NASA/CDS). |
 | Used for | Embedded in `AstroPlanner.Core` (`Algorithms/Data/`): IAU constellation of any position, including the planets. Verified with the eight test positions of the VI/42 ReadMe and against the constellations of all 13,371 OpenNGC objects (0 differences). |
 
+## Satellite magnitudes — McCants' quicksat.mag (M5b)
+
+| | |
+|---|---|
+| Source | Mike McCants, `quicksat.mag` in https://www.mmccants.org/programs/qsmag.zip (file dated 2026-09-14), downloaded 2026-11-20 |
+| Files (SHA-256) | `qsmag.zip` `5228cbb2f68e2a28f3b6c5a6604352ae8c633757829edf34443ca7299a65f974`, `quicksat.mag` `955ad6f65e49dc8d95a2bc00f2930a9bcce9fb31dd7ccdfdfa64c3f145c91b67` |
+| Derived | `src/AstroPlanner.Core/Algorithms/Data/satellite_magnitudes.dat` (2,688 satellites brighter than 5.0: catalog number and intrinsic magnitude), SHA-256 `d31a7aca0277bebb983b86b1a46319c69d5862123fe2bb757d98ec80c30d8489` |
+| License | Freely distributed for satellite observers; only the factual magnitudes are kept, credited in THIRD_PARTY_NOTICES. |
+| Used for | Embedded in `AstroPlanner.Core`: intrinsic magnitude (1000 km, full phase) of a satellite, scaled by range and phase. |
+
 ## JPL Horizons — test fixtures
 
 | | |
 |---|---|
 | Source | NASA/JPL Horizons API 1.2, https://ssd.jpl.nasa.gov/api/horizons.api |
 | Fetched | 2026-11-19, once, by `tools/fetch-horizons-fixtures.ps1` (the query is in each file header) |
-| Files | `tests/fixtures/horizons/*.csv`: apparent azimuth/elevation every minute of the Sun (Aguascalientes, Madrid, Oslo) and Jupiter and Saturn |
+| Files | `tests/fixtures/horizons/*.csv`: apparent azimuth/elevation every minute of the Sun (Aguascalientes, Madrid, Oslo) and Jupiter and Saturn; geocentric RA/Dec of comets and Vesta (M5a); the ISS (-125544) from Buenos Aires with range (M5b, `-SatellitesOnly`) |
 | License | U.S. government work (public domain) |
 | Used for | Tests only: rise, set, twilight and culmination times must agree within one minute. |
 

@@ -16,7 +16,9 @@
 param(
     [string] $OutputDirectory,
     # Fetch only the small-body RA/Dec fixtures (M5), leaving the alt/az ones untouched.
-    [switch] $SmallBodiesOnly
+    [switch] $SmallBodiesOnly,
+    # Fetch only the ISS topocentric fixture (M5b), leaving the others untouched.
+    [switch] $SatellitesOnly
 )
 
 $ErrorActionPreference = 'Stop'
@@ -42,7 +44,7 @@ $fixtures = @(
 New-Item -ItemType Directory -Force $OutputDirectory | Out-Null
 $OutputDirectory = (Resolve-Path $OutputDirectory).Path
 
-foreach ($fixture in $(if ($SmallBodiesOnly) { @() } else { $fixtures })) {
+foreach ($fixture in $(if ($SmallBodiesOnly -or $SatellitesOnly) { @() } else { $fixtures })) {
     $query = [ordered]@{
         format      = 'json'
         COMMAND     = "'$($fixture.Command)'"
@@ -99,7 +101,7 @@ $smallBodies = @(
     @{ Name = 'asteroid_4_2026-11'; Command = '4;'; Start = '2026-11-05'; Stop = '2026-12-05' }
 )
 
-foreach ($fixture in $smallBodies) {
+foreach ($fixture in $(if ($SatellitesOnly) { @() } else { $smallBodies })) {
     $query = [ordered]@{
         format      = 'json'
         COMMAND     = "'$($fixture.Command)'"
@@ -135,6 +137,58 @@ foreach ($fixture in $smallBodies) {
         $parts = $row.Split(',') | ForEach-Object { $_.Trim() }
         $utc = [datetime]::ParseExact($parts[0], 'yyyy-MMM-dd HH:mm', [cultureinfo]::InvariantCulture)
         $lines += '{0},{1},{2},{3}' -f $utc.ToString('yyyy-MM-ddTHH:mm', [cultureinfo]::InvariantCulture), $parts[3], $parts[4], $parts[5]
+    }
+
+    $path = Join-Path $OutputDirectory "$($fixture.Name).csv"
+    [IO.File]::WriteAllLines($path, [string[]]$lines, (New-Object Text.UTF8Encoding $false))
+    Write-Host "$($fixture.Name): $($lines.Count - 3) rows"
+}
+
+# Satellites (M5b): the ISS (Horizons id -125544, NASA's own trajectory) seen from Buenos Aires,
+# apparent airless azimuth/elevation and range every minute; only the rows above -1 deg are kept.
+# The CelesTrak elements of the same day are in tests/fixtures/online/celestrak-stations.json.
+$iss = @{ Name = 'iss_buenosaires_2026-11-21'; Command = '-125544'; Site = '-58.38,-34.60,0.025'
+          Start = '2026-11-21 00:00'; Stop = '2026-11-22 12:00' }
+foreach ($fixture in $(if ($SmallBodiesOnly) { @() } else { @($iss) })) {
+    $query = [ordered]@{
+        format      = 'json'
+        COMMAND     = "'$($fixture.Command)'"
+        OBJ_DATA    = "'NO'"
+        MAKE_EPHEM  = "'YES'"
+        EPHEM_TYPE  = "'OBSERVER'"
+        CENTER      = "'coord@399'"
+        COORD_TYPE  = "'GEODETIC'"
+        SITE_COORD  = "'$($fixture.Site)'"
+        START_TIME  = "'$($fixture.Start)'"
+        STOP_TIME   = "'$($fixture.Stop)'"
+        STEP_SIZE   = "'1 m'"
+        QUANTITIES  = "'4,20'"
+        CSV_FORMAT  = "'YES'"
+        ANG_FORMAT  = "'DEG'"
+    }
+    $queryString = ($query.GetEnumerator() | ForEach-Object {
+        "$($_.Key)=$([uri]::EscapeDataString($_.Value))"
+    }) -join '&'
+
+    $response = Invoke-RestMethod -Uri "https://ssd.jpl.nasa.gov/api/horizons.api?$queryString" `
+        -UserAgent 'AstroPlannerPro-dev (+https://github.com/Yamato6/AstroPlanner-Pro)'
+    $text = $response.result
+    $start = $text.IndexOf('$$SOE')
+    $end = $text.IndexOf('$$EOE')
+    if ($start -lt 0 -or $end -lt 0) { throw "Unexpected Horizons output for $($fixture.Name):`n$text" }
+
+    $lines = @(
+        "# JPL Horizons $($response.signature.version), fetched $(Get-Date -Format 'yyyy-MM-dd') by tools/fetch-horizons-fixtures.ps1 -SatellitesOnly"
+        "# target=$($fixture.Command) (ISS) site(lon,lat,km)=$($fixture.Site) apparent=AIRLESS quantities=4,20 step=1m; rows above -1 deg only"
+        'utc,azimuth_deg,elevation_deg,range_km'
+    )
+    foreach ($row in $text.Substring($start + 5, $end - $start - 5).Trim() -split "`n") {
+        $parts = $row.Split(',') | ForEach-Object { $_.Trim() }
+        if ([double]::Parse($parts[4], [cultureinfo]::InvariantCulture) -le -1) { continue }
+        $utc = [datetime]::ParseExact($parts[0], 'yyyy-MMM-dd HH:mm', [cultureinfo]::InvariantCulture)
+        $rangeKm = [double]::Parse($parts[5], [cultureinfo]::InvariantCulture) * 149597870.7
+        $lines += '{0},{1},{2},{3}' -f $utc.ToString('yyyy-MM-ddTHH:mm', [cultureinfo]::InvariantCulture), $parts[3], $parts[4],
+            $rangeKm.ToString('F3', [cultureinfo]::InvariantCulture)
     }
 
     $path = Join-Path $OutputDirectory "$($fixture.Name).csv"

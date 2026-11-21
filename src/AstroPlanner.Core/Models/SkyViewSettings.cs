@@ -14,6 +14,7 @@ public sealed class SkyViewSettings
     public bool MilkyWay { get; set; } = true;
     public bool DeepSky { get; set; } = true;
     public bool Bodies { get; set; } = true;
+    public bool Satellites { get; set; } = true;
     public bool Labels { get; set; } = true;
     public bool Ground { get; set; } = true;
 

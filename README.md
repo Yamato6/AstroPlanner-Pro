@@ -20,11 +20,12 @@
 > [AstroPlanner v1](https://github.com/Yamato6/AstroPlanner), whose full history it keeps.
 > Milestones M0 (English, .NET 10, new architecture), M1 (data foundation: the full NGC/IC
 > catalog, saved sites, refined events, v1 import), M2 (the live 2D/3D sky) and M3 (equipment,
-> light-pollution-aware sky quality, the capture-feasibility model and the session planner) are
-> done. The rest of the roadmap (online enrichment, comets and satellites) is in the
+> light-pollution-aware sky quality, the capture-feasibility model and the session planner), M4
+> (forecasts, framing preview, Wikipedia, name search) and M5 (comets, asteroids, the Milky Way
+> core and satellites) are done. What is left (polish and the v2.0.0 release) is in the
 > [specification](ASTROPLANNER_PRO_SPEC.md).
 
-![Tonight: the active rig (Canon T7 + Rokinon 16 mm on a tripod), the site's sky quality from the light-pollution atlas and the best targets for that gear, each with its verdict, score and suggested capture](docs/screenshots/tonight.png)
+![Tonight: the active rig (Canon T7 + Rokinon 16 mm on a tripod), the site's sky quality from the light-pollution atlas, the comet of the night and the Milky Way core alerts, tonight's bright satellite passes and the best targets for that gear, each with its verdict, score and suggested capture](docs/screenshots/tonight.png)
 
 ![Why this verdict? The feasibility breakdown of the Orion Nebula: sky at the target, signal-to-noise, usable hours after clouds, Moon, framing, sub length and sampling](docs/screenshots/feasibility.png)
 
@@ -39,6 +40,8 @@
 ![The live sky: looking north from Mexico City, with constellations, Messier objects, the Milky Way outline and the frame-rate overlay](docs/screenshots/sky.png)
 
 ![The all-sky chart: the whole sky above the horizon, zenith in the middle, north up and east left, with the camera frame on M42](docs/screenshots/sky-allsky.png)
+
+![The all-sky chart at dusk from Mexico City: sunlit satellites (labelled) with their trails, comets and asteroids, the planets and the 16 mm camera frame](docs/screenshots/sky-satellites.png)
 
 ![A finder chart of M42: gnomonic, north up, east left, star magnitudes, the 650 mm camera frame and a scale bar](docs/screenshots/sky-finder.png)
 
@@ -84,6 +87,10 @@
   Orbits are computed for any eccentricity and checked against JPL Horizons.
 - 🌌 **Milky Way core**: the galactic centre as a wide-field target, tonight's window in a dark,
   Moon-free sky (or the next good night), and a 12-month planner with the best nights.
+- 🛰️ **Satellites**: the ~160 brightest satellites and the space stations from CelesTrak, moving
+  across the live sky with a short trail (dimmed in the Earth's shadow), tonight's visible bright
+  passes with an ISS alert, and the sunlit satellites that will cross your camera's field during
+  each planned block (on the timeline and in the PDF), so you know which frames may get a trail.
 - 🌠 **Live sky**: a GPU-rendered sky dome (three.js in WebView2) with 83k stars, constellations,
   the Milky Way, 13k deep-sky objects and the Sun, Moon (with its phase) and planets, all
   positioned by the same tested astronomy core as the tables. Play time at up to ×3600, step by
@@ -108,8 +115,8 @@
 - ⏱️ **Live mode**: follows the clock and refreshes everything every minute.
 
 It works offline; the internet is only used for the forecasts, the survey images, descriptions,
-name search, comet and asteroid elements and the new-version notice, each of which can be turned
-off.
+name search, comet and asteroid elements, satellite elements and the new-version notice, each of
+which can be turned off.
 
 ## Where it is going (v2.0)
 
@@ -152,6 +159,8 @@ AstroPlanner Pro has no accounts and collects no data. It only connects to:
   sky search finds nothing in the catalog, receiving the **name you typed**;
 - **minorplanetcenter.net**, for comet (daily) and bright-asteroid (yearly) orbital elements
   (nothing about you is sent);
+- **celestrak.org**, for the orbital elements of the bright satellites and space stations, at most
+  twice a day and never again for 2 hours after an error (nothing about you is sent);
 - **api.github.com**, to check for a new version (nothing about you is sent).
 
 Each one can be turned off in **Settings → Internet connection**, where the saved answers (kept in
@@ -242,6 +251,12 @@ installer/                Inno Setup script
   comet formula (H + 5 log Δ + 2.5 K log r) and the IAU H-G system for asteroids.
 - **Milky Way core:** Sgr A* as a fixed target; a night counts as good with at least 30 minutes of
   the core above 10° in astronomical darkness with the Moon down.
+- **Satellites:** our own SGP4 (near-Earth orbits, Vallado et al. 2006, WGS-72), which reproduces
+  the paper's verification set to under a metre; CelesTrak GP elements in OMM form. Against JPL
+  Horizons' own ISS trajectory a few hours after the elements' epoch: altitude within 0.6°, rise
+  and set at 10° within 30 s. A pass is visible while the satellite is sunlit (conical Earth shadow)
+  and the Sun is at least 6° below the horizon. Magnitudes from McCants' intrinsic magnitudes
+  (1000 km, full phase) with range and phase; satellites without one show no magnitude.
 - **Wall-clock time → UTC:** sites store both the IANA and the Windows time zone id and convert
   with `TimeZoneInfo`; times skipped by daylight saving time move forward one hour.
 

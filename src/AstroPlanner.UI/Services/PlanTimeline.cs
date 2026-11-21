@@ -11,13 +11,23 @@ public readonly record struct LocalSpan(DateTime Start, DateTime End);
 /// <summary>One row of the session timeline (one plan item, in priority order).</summary>
 /// <param name="Usable">When the target could be imaged tonight (dark, above the limits).</param>
 /// <param name="Block">Its scheduled block; null when it got none.</param>
+/// <param name="CrossingsLocal">When sunlit satellites cross the rig's field during the block (null = none or not computed yet).</param>
 public sealed record PlanTimelineRow(
     string Label,
     IReadOnlyList<LocalSpan> Usable,
     LocalSpan? Block,
     FeasibilityVerdict? Verdict,
     DateTime? MeridianFlipLocal,
-    bool Locked);
+    bool Locked,
+    IReadOnlyList<DateTime>? CrossingsLocal = null);
+
+/// <summary>A satellite crossing the field of a planned block, in local time, with its display line.</summary>
+public sealed record PlanCrossing(string Name, DateTime EnterLocal, DateTime ExitLocal, double? Magnitude)
+{
+    public string Text => Magnitude is { } magnitude
+        ? DisplayNames.Format(Resources.Strings.PlanCrossingFormat, Name, EnterLocal, ExitLocal, magnitude)
+        : DisplayNames.Format(Resources.Strings.PlanCrossingNoMagnitudeFormat, Name, EnterLocal, ExitLocal);
+}
 
 /// <summary>
 /// The scheduled night as the Plan tab and the PDF draw it (spec §4.6 timeline): the window
@@ -54,7 +64,8 @@ public sealed record PlanTimeline(
                 item.Schedule is { StartLocal: { } start, EndLocal: { } end } ? new LocalSpan(start, end) : null,
                 item.Feasibility?.Verdict,
                 item.MeridianFlipLocal,
-                item.IsLocked));
+                item.IsLocked,
+                item.Crossings.Count == 0 ? null : [.. item.Crossings.Select(c => c.EnterLocal)]));
         }
 
         return new PlanTimeline(

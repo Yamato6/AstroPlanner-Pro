@@ -97,6 +97,7 @@ public sealed record SkyLayers(
     bool Labels = true,
     bool Ground = true,
     bool SkyBrightness = true,
+    bool Satellites = true,
     double StarLimitMagnitude = 8.5,
     double DeepSkyLimitMagnitude = 12.0);
 
@@ -142,7 +143,10 @@ public sealed record FrameTransformPayload(
 /// <summary>A sampled body track: J2000-frame unit vectors (x, y, z flattened) every <c>stepSeconds</c>.</summary>
 public sealed record TrackDto(string StartUtc, double StepSeconds, IReadOnlyList<double> Vectors);
 
-/// <summary>A Sun/Moon/planet with its track.</summary>
+/// <summary>
+/// A Sun/Moon/planet/comet/asteroid/satellite with its track. <c>Sunlit</c> (satellites only, else
+/// null) says for each track sample whether the Sun lights the satellite (1) or it is in the Earth's shadow (0).
+/// </summary>
 public sealed record MovingBodyDto(
     string Id,
     string Kind,
@@ -152,7 +156,8 @@ public sealed record MovingBodyDto(
     double PhaseAngleDegrees,
     double IlluminatedFraction,
     double BrightLimbAngleDegrees,
-    TrackDto Track);
+    TrackDto Track,
+    IReadOnlyList<int>? Sunlit = null);
 
 public sealed record MovingBodiesPayload(IReadOnlyList<MovingBodyDto> Bodies);
 

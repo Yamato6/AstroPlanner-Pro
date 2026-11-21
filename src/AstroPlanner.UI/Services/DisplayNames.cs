@@ -96,6 +96,14 @@ public static class DisplayNames
     };
 
     /// <summary>Formats a resource string with the current culture.</summary>
+    /// <summary>Eight-point compass direction of an azimuth (north = 0°, east = 90°): "N", "NE", …</summary>
+    public static string Compass(double azimuthDegrees)
+    {
+        var points = Strings.CompassPoints.Split(',');
+        var index = (int)Math.Round((((azimuthDegrees % 360) + 360) % 360) / 45) % 8;
+        return points[index];
+    }
+
     public static string Format(string format, params object?[] args) =>
         string.Format(CultureInfo.CurrentCulture, format, args);
 }

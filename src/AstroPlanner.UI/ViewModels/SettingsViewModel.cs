@@ -103,6 +103,10 @@ public sealed partial class SettingsViewModel : ObservableValidator
     [ObservableProperty]
     public partial bool SmallBodiesEnabled { get; set; } = true;
 
+    /// <summary>Bright satellites and space stations (CelesTrak).</summary>
+    [ObservableProperty]
+    public partial bool SatellitesEnabled { get; set; } = true;
+
     /// <summary>Check for a new version at startup.</summary>
     [ObservableProperty]
     public partial bool CheckForUpdates { get; set; } = true;
@@ -234,6 +238,7 @@ public sealed partial class SettingsViewModel : ObservableValidator
                 WikipediaEnabled = WikipediaEnabled,
                 NameResolverEnabled = NameResolverEnabled,
                 SmallBodiesEnabled = SmallBodiesEnabled,
+                SatellitesEnabled = SatellitesEnabled,
                 CheckForUpdates = CheckForUpdates,
                 Darkness = AllowNauticalTwilight ? DarknessDefinition.Nautical : DarknessDefinition.Astronomical,
                 ExtinctionCoefficient = ExtinctionCoefficient
@@ -314,6 +319,7 @@ public sealed partial class SettingsViewModel : ObservableValidator
         WikipediaEnabled = settings.WikipediaEnabled;
         NameResolverEnabled = settings.NameResolverEnabled;
         SmallBodiesEnabled = settings.SmallBodiesEnabled;
+        SatellitesEnabled = settings.SatellitesEnabled;
         CheckForUpdates = settings.CheckForUpdates;
         AllowNauticalTwilight = settings.Darkness == DarknessDefinition.Nautical;
         ExtinctionCoefficient = settings.ExtinctionCoefficient;

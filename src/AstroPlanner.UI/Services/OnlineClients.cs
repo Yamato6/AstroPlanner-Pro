@@ -11,5 +11,9 @@ public static class OnlineClients
     public const string Sesame = "sesame";
     public const string Mpc = "mpc";
 
+    /// <summary>CelesTrak: registered without retries (it blocks clients that repeat failing requests).</summary>
+    public const string CelesTrak = "celestrak";
+
+    /// <summary>The clients with the standard resilience pipeline (retries with backoff).</summary>
     public static IReadOnlyList<string> All { get; } = [OpenMeteo, SevenTimer, GitHub, Hips, Wikipedia, Sesame, Mpc];
 }

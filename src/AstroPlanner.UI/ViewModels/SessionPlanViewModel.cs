@@ -9,6 +9,7 @@ using AstroPlanner.Core.Imaging.Feasibility;
 using AstroPlanner.Core.Interfaces;
 using AstroPlanner.Core.Models;
 using AstroPlanner.Core.Planning;
+using AstroPlanner.Core.Satellites;
 using AstroPlanner.UI.Resources;
 using AstroPlanner.UI.Services;
 using static AstroPlanner.UI.Services.DisplayNames;
@@ -35,6 +36,12 @@ public sealed partial class SessionPlanViewModel : ObservableObject
     /// <summary>Usable samples per object id in the last schedule (for <see cref="AutoPrioritizeCommand"/>).</summary>
     private readonly Dictionary<string, int> _usableSamples = new(StringComparer.Ordinal);
 
+    private readonly SatelliteState? _satellites;
+    private int _crossingsVersion;
+
+    /// <summary>The background search for satellite crossings of the planned blocks (tests await it).</summary>
+    public Task CrossingsTask { get; private set; } = Task.CompletedTask;
+
     /// <summary>True while values are set by code, so that the change callbacks do not save or reschedule.</summary>
     private bool _updating;
 
@@ -46,8 +53,15 @@ public sealed partial class SessionPlanViewModel : ObservableObject
         TargetsViewModel targets,
         IAppLogger logger,
         EquipmentState? equipment = null,
-        TimeProvider? time = null)
+        TimeProvider? time = null,
+        SatelliteState? satellites = null)
     {
+        _satellites = satellites;
+        if (_satellites is not null)
+        {
+            _satellites.Changed += (_, _) => UpdateCrossings();
+        }
+
         _planService = planService;
         _astronomy = astronomy;
         _context = context;
@@ -491,8 +505,108 @@ public sealed partial class SessionPlanViewModel : ObservableObject
         }
 
         TimelineChanged?.Invoke(this, EventArgs.Empty);
+        UpdateCrossings();
 
         DateTime ToLocal(DateTime utc) => TimeZoneConversion.ToLocal(utc, request.TimeZone);
+    }
+
+    /// <summary>
+    /// Looks in the background for sunlit satellites crossing the active rig's field (north up) during
+    /// each scheduled block, then marks them on the items and the timeline.
+    /// </summary>
+    private void UpdateCrossings()
+    {
+        var version = ++_crossingsVersion;
+        var rig = _equipment?.ActiveRig;
+        if (_satellites is not { IsEnabled: true, Satellites.Count: > 0 } satellites || rig is null || Timeline is null)
+        {
+            foreach (var item in Items.Where(i => i.Crossings.Count > 0))
+            {
+                item.Crossings = [];
+            }
+
+            CrossingsTask = Task.CompletedTask;
+            return;
+        }
+
+        var jobs = new List<(PlanItemViewModel Item, CameraField Field, DateTime StartUtc, DateTime EndUtc)>();
+        foreach (var item in Items)
+        {
+            if (item.Schedule is { StartLocal: { } start, EndLocal: { } end } && end > start)
+            {
+                var startUtc = _context.ToUtc(start);
+                var endUtc = _context.ToUtc(end);
+                if (CenterJ2000(item.Row.Target, startUtc + ((endUtc - startUtc) / 2)) is { } center)
+                {
+                    jobs.Add((item, new CameraField(center, rig.FieldOfView.WidthDegrees, rig.FieldOfView.HeightDegrees), startUtc, endUtc));
+                }
+            }
+        }
+
+        CrossingsTask = ComputeCrossingsAsync(jobs, satellites.Satellites, _context.Observer, _context.TimeZone, version);
+    }
+
+    private EquatorialCoordinates? CenterJ2000(CelestialObject target, DateTime utc)
+    {
+        if (target.Orbit is not null)
+        {
+            return _astronomy.GetSmallBodyPosition(target, utc)?.AstrometricJ2000;
+        }
+
+        if (target.Planet is not null)
+        {
+            return _astronomy.GetPlanetPosition(target, utc) is { } planet
+                ? Precession.Precess(planet.Equatorial, AstronomyMath.ToJulianDate(utc), J2000JulianDate)
+                : null;
+        }
+
+        return target.Coordinates;
+    }
+
+    private const double J2000JulianDate = 2451545.0;
+
+    private async Task ComputeCrossingsAsync(
+        List<(PlanItemViewModel Item, CameraField Field, DateTime StartUtc, DateTime EndUtc)> jobs,
+        IReadOnlyList<TrackedSatellite> satellites, ObserverLocation observer, TimeZoneInfo zone, int version)
+    {
+        try
+        {
+            var results = await Task.Run(() => jobs
+                .Select(job => FieldCrossings.Find(satellites, observer, job.Field, job.StartUtc, job.EndUtc))
+                .ToList());
+            if (version != _crossingsVersion)
+            {
+                return;
+            }
+
+            var computed = new HashSet<PlanItemViewModel>();
+            for (var index = 0; index < jobs.Count; index++)
+            {
+                jobs[index].Item.Crossings = [.. results[index].Select(c => new PlanCrossing(c.Name,
+                    TimeZoneConversion.ToLocal(c.EnterUtc, zone), TimeZoneConversion.ToLocal(c.ExitUtc, zone), c.Magnitude))];
+                computed.Add(jobs[index].Item);
+            }
+
+            foreach (var item in Items.Where(i => !computed.Contains(i) && i.Crossings.Count > 0))
+            {
+                item.Crossings = [];
+            }
+
+            if (Timeline is { } timeline)
+            {
+                Timeline = timeline with
+                {
+                    Rows = [.. timeline.Rows.Select(row => Items.FirstOrDefault(i => i.Id == row.Label) is { Crossings.Count: > 0 } item
+                        ? row with { CrossingsLocal = [.. item.Crossings.Select(c => c.EnterLocal)] }
+                        : row with { CrossingsLocal = null })]
+                };
+                TimelineChanged?.Invoke(this, EventArgs.Empty);
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError("Could not look for satellite crossings of the planned blocks.", ex);
+        }
     }
 
     /// <summary>Keys of the checklist, in display order (saved by key).</summary>

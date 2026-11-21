@@ -355,6 +355,18 @@
                         <Button Style="{StaticResource SecondaryButtonStyle}" HorizontalAlignment="Left" Margin="0,0,0,10"
                                 Content="{x:Static res:Strings.MilkyWayOpen}" ToolTip="{x:Static res:Strings.MilkyWayOpenTooltip}"
                                 Click="OnMilkyWayClicked"/>
+                        <TextBlock FontSize="16" FontWeight="SemiBold" Text="{x:Static res:Strings.SatellitePassesTitle}"
+                                   ToolTip="{x:Static res:Strings.SatellitePassesTooltip}"/>
+                        <TextBlock Foreground="{StaticResource NightMutedTextBrush}" TextWrapping="Wrap" Text="{Binding Tonight.SatellitePassesHint}"
+                                   Visibility="{Binding Tonight.SatellitePassesHint, Converter={StaticResource NullToCollapsedConverter}}"/>
+                        <ItemsControl ItemsSource="{Binding Tonight.SatellitePasses}" Focusable="False" Margin="0,2,0,10"
+                                      AutomationProperties.Name="{x:Static res:Strings.SatellitePassesTitle}">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <TextBlock Foreground="{StaticResource NightTextBrush}" TextWrapping="Wrap" Text="{Binding}"/>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
                         <TextBlock FontSize="18" FontWeight="SemiBold" Text="{x:Static res:Strings.BestTargetsTitle}"/>
                         <TextBlock Foreground="{StaticResource NightMutedTextBrush}" TextWrapping="Wrap" Text="{x:Static res:Strings.BestTargetsExplanation}"/>
                         <TextBlock Margin="0,6,0,0" Foreground="{StaticResource WarningBrush}" TextWrapping="Wrap" Text="{Binding Tonight.BestTargetsHint}"
@@ -1152,6 +1164,17 @@
                                 <DataGridTextColumn Header="{x:Static res:Strings.ColumnMaximumAltitude}" Binding="{Binding MaximumAltitudeDegrees, StringFormat={}{0:0}°}" Width="66" ElementStyle="{StaticResource NumericCellStyle}"/>
                                 <DataGridTextColumn Header="{x:Static res:Strings.ColumnClouds}" Binding="{Binding CloudCoverAtCulmination, StringFormat={x:Static res:Strings.PercentFormat}, TargetNullValue='—'}" Width="58" ElementStyle="{StaticResource NumericCellStyle}"/>
                                 <DataGridTextColumn Header="{x:Static res:Strings.ColumnMoon}" Binding="{Binding Row.MoonSeparationDegrees, StringFormat={}{0:0}°}" Width="52" ElementStyle="{StaticResource PlanMoonCellStyle}"/>
+                                <DataGridTemplateColumn Width="44">
+                                    <DataGridTemplateColumn.Header>
+                                        <TextBlock Text="{x:Static res:Strings.ColumnSatellites}" ToolTip="{x:Static res:Strings.ColumnSatellitesTooltip}"/>
+                                    </DataGridTemplateColumn.Header>
+                                    <DataGridTemplateColumn.CellTemplate>
+                                        <DataTemplate>
+                                            <TextBlock HorizontalAlignment="Center" VerticalAlignment="Center" Foreground="{StaticResource DangerBrush}"
+                                                       Text="{Binding CrossingsSummary}" ToolTip="{Binding CrossingsText}"/>
+                                        </DataTemplate>
+                                    </DataGridTemplateColumn.CellTemplate>
+                                </DataGridTemplateColumn>
                                 <DataGridTemplateColumn Header="{x:Static res:Strings.ColumnNotes}" Width="*" MinWidth="140">
                                     <DataGridTemplateColumn.CellTemplate>
                                         <DataTemplate>

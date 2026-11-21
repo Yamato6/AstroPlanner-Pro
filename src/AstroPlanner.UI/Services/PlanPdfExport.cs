@@ -35,6 +35,7 @@ public static class PlanPdfExport
     private static readonly XColor Muted = XColor.FromArgb(100, 100, 100);
     private static readonly XColor Rule = XColor.FromArgb(200, 200, 200);
     private static readonly XColor HeaderFill = XColor.FromArgb(235, 238, 243);
+    private static readonly XColor CrossingInk = XColor.FromArgb(200, 40, 40);
 
     /// <summary>Column titles and widths (points) of the table.</summary>
     private static (string Title, double Width)[] Columns =>
@@ -82,6 +83,7 @@ public static class PlanPdfExport
         }
 
         DrawTable(writer, content.Items);
+        DrawCrossings(writer, content.Items);
         DrawChecklist(writer, content.Checklist);
         writer.Finish();
         document.Save(stream, closeStream: false);
@@ -142,6 +144,11 @@ public static class PlanPdfExport
             {
                 g.DrawLine(new XPen(Ink, 1.2) { DashStyle = XDashStyle.Dash }, X(flip), y, X(flip), y + RowHeight - 4);
             }
+
+            foreach (var crossing in row.CrossingsLocal ?? [])
+            {
+                g.DrawLine(new XPen(CrossingInk, 1.2), X(crossing), y - 1, X(crossing), y + 4);
+            }
         }
 
         writer.Y = bottom + 14;
@@ -199,6 +206,25 @@ public static class PlanPdfExport
 
         writer.Y += RowHeight;
         g.DrawLine(new XPen(Rule, 0.5), Margin, writer.Y, Margin + writer.ContentWidth, writer.Y);
+    }
+
+    /// <summary>The satellites crossing the field of each block, one line each (nothing when there are none).</summary>
+    private static void DrawCrossings(PageWriter writer, IReadOnlyList<PlanItemViewModel> items)
+    {
+        var lines = items.SelectMany(item => item.Crossings.Select(c => $"{item.Row.Title}: {c.Text}")).ToList();
+        if (lines.Count == 0)
+        {
+            return;
+        }
+
+        writer.EnsureSpace(RowHeight * 3);
+        writer.Text(Strings.PdfCrossingsTitle, writer.BoldFont, Ink);
+        foreach (var line in lines)
+        {
+            writer.Text(line, writer.Font, Ink);
+        }
+
+        writer.Y += 8;
     }
 
     private static void DrawChecklist(PageWriter writer, IReadOnlyList<(string Text, bool Done)> checklist)

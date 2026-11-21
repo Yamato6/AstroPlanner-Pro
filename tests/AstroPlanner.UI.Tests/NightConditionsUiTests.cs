@@ -119,7 +119,7 @@ public sealed class NightConditionsUiTests
         {
             IsManualLocation = true, LatitudeDegrees = 21.88, LongitudeDegrees = -102.29, ElevationMeters = 1888,
             TimeZoneId = "Central Standard Time (Mexico)", CityId = null, AstroForecastEnabled = false, WeatherForecastEnabled = false,
-            SurveyImagesEnabled = false, WikipediaEnabled = false, NameResolverEnabled = false, SmallBodiesEnabled = false
+            SurveyImagesEnabled = false, WikipediaEnabled = false, NameResolverEnabled = false, SmallBodiesEnabled = false, SatellitesEnabled = false
         };
 
         var shell = await CreateAsync(null, astro, settings);
@@ -127,7 +127,9 @@ public sealed class NightConditionsUiTests
 
         astro.Calls.Should().Be(0);
         shell.Tonight.ConditionsText.Should().Be(Strings.ConditionsAstroDisabled);
-        shell.Tonight.Alerts.Should().BeEmpty();
+        // No dew or wind alert; only the Milky Way core one, found in the background, may be there.
+        await shell.Tonight.MilkyWayTask;
+        shell.Tonight.Alerts.Should().OnlyContain(a => a.StartsWith("🌌", StringComparison.Ordinal));
         shell.OnlineStatusText.Should().Be(Strings.OnlineStatusOff);
         shell.Targets.AllObjects.Single(r => r.Id == "M42").Feasibility!.Reasons.Should().NotContain(r => r.Factor == FeasibilityFactor.Seeing);
     }

@@ -129,6 +129,10 @@
                       Content="{x:Static res:Strings.SettingsSmallBodies}"/>
             <TextBlock Margin="23,2,0,8" Foreground="{StaticResource NightMutedTextBrush}" TextWrapping="Wrap" FontSize="12"
                        Text="{x:Static res:Strings.SettingsSmallBodiesNote}"/>
+            <CheckBox Margin="0,4" IsChecked="{Binding SatellitesEnabled}"
+                      Content="{x:Static res:Strings.SettingsSatellites}"/>
+            <TextBlock Margin="23,2,0,8" Foreground="{StaticResource NightMutedTextBrush}" TextWrapping="Wrap" FontSize="12"
+                       Text="{x:Static res:Strings.SettingsSatellitesNote}"/>
             <CheckBox Margin="0,4" IsChecked="{Binding CheckForUpdates}"
                       Content="{x:Static res:Strings.SettingsCheckForUpdates}"/>
             <TextBlock Margin="23,2,0,8" Foreground="{StaticResource NightMutedTextBrush}" TextWrapping="Wrap" FontSize="12"

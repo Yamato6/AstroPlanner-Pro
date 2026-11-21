@@ -121,7 +121,7 @@ public sealed class SmallBodiesUiTests
         var disabled = await CreateAsync(mpc, new ObserverSettings
         {
             IsManualLocation = true, LatitudeDegrees = 21.88, LongitudeDegrees = -102.29, TimeZoneId = "Central Standard Time (Mexico)",
-            CityId = null, SmallBodiesEnabled = false
+            CityId = null, SmallBodiesEnabled = false, SatellitesEnabled = false
         });
         mpc.Calls.Should().Be(0);
         disabled.Targets.AllObjects.Should().NotContain(r => r.Target.IsSmallBody);

@@ -27,6 +27,8 @@ public sealed partial class TonightViewModel : ObservableObject, IDisposable
     private readonly List<string> _conditionAlerts = [];
     private string? _cometAlert;
     private string? _milkyWayAlert;
+    private string? _issAlert;
+    private readonly SatelliteState? _satellites;
     private (DateTime Night, ObserverLocation Site)? _milkyWayKey;
     private CancellationTokenSource? _milkyWayCancellation;
 
@@ -40,9 +42,16 @@ public sealed partial class TonightViewModel : ObservableObject, IDisposable
         TargetsViewModel? targets = null,
         EquipmentState? equipment = null,
         SessionPlanViewModel? plan = null,
-        IAstronomyService? astronomy = null)
+        IAstronomyService? astronomy = null,
+        SatelliteState? satellites = null)
     {
         _astronomy = astronomy;
+        _satellites = satellites;
+        if (_satellites is not null)
+        {
+            _satellites.Changed += (_, _) => UpdateSatellitePasses();
+        }
+
         _context = context;
         _weather = weather;
         _logbook = logbook;
@@ -100,6 +109,10 @@ public sealed partial class TonightViewModel : ObservableObject, IDisposable
             }
         };
         _logbook.Changed += () => OnPropertyChanged(nameof(ObservedSummaryText));
+        if (_satellites is not null)
+        {
+            UpdateSatellitePasses();
+        }
     }
 
     /// <summary>Best targets tonight for the active rig, by feasibility score.</summary>
@@ -150,11 +163,68 @@ public sealed partial class TonightViewModel : ObservableObject, IDisposable
     private void RebuildAlerts()
     {
         Alerts.Clear();
-        foreach (var alert in _conditionAlerts.Append(_cometAlert).Append(_milkyWayAlert).OfType<string>())
+        foreach (var alert in _conditionAlerts.Append(_cometAlert).Append(_milkyWayAlert).Append(_issAlert).OfType<string>())
         {
             Alerts.Add(alert);
         }
     }
+
+    /// <summary>Faintest satellite listed among tonight's bright passes.</summary>
+    public const double BrightPassMagnitudeLimit = 3.0;
+
+    /// <summary>Most passes listed.</summary>
+    public const int BrightPassCount = 6;
+
+    /// <summary>
+    /// Tonight's visible passes of bright satellites (known magnitude up to
+    /// <see cref="BrightPassMagnitudeLimit"/>), in time order: "ISS (ZARYA) · 19:42–19:48 · max 54° · NW → SE · mag −3.1".
+    /// </summary>
+    public ObservableCollection<string> SatellitePasses { get; } = [];
+
+    /// <summary>Why there are no passes (service off, still computing, none tonight); null when there are some.</summary>
+    [ObservableProperty]
+    public partial string? SatellitePassesHint { get; private set; } = Strings.SatellitePassesOff;
+
+    /// <summary>The bright passes and the alert for the ISS's best visible pass tonight.</summary>
+    private void UpdateSatellitePasses()
+    {
+        SatellitePasses.Clear();
+        if (_satellites is not { IsEnabled: true })
+        {
+            SatellitePassesHint = Strings.SatellitePassesOff;
+            _issAlert = null;
+            RebuildAlerts();
+            return;
+        }
+
+        var bright = _satellites.Passes
+            .Where(p => p.BrightestMagnitude is { } m && m <= BrightPassMagnitudeLimit)
+            .Take(BrightPassCount)
+            .ToList();
+        foreach (var pass in bright)
+        {
+            SatellitePasses.Add(PassText(pass));
+        }
+
+        SatellitePassesHint = bright.Count > 0 ? null
+            : _satellites.Satellites.Count == 0 ? Strings.SatellitePassesWaiting
+            : Strings.SatellitePassesNone;
+        var iss = _satellites.Passes.Where(p => p.CatalogNumber == IssCatalogNumber).MinBy(p => p.BrightestMagnitude ?? 99);
+        _issAlert = iss is null ? null
+            : Format(Strings.AlertIssPassFormat, Local(iss.VisibleStartUtc!.Value), iss.MaxAltitudeDegrees, DisplayNames.Compass(iss.RiseAzimuthDegrees),
+                DisplayNames.Compass(iss.SetAzimuthDegrees), iss.BrightestMagnitude ?? double.NaN);
+        RebuildAlerts();
+    }
+
+    /// <summary>NORAD number of the International Space Station.</summary>
+    public const int IssCatalogNumber = 25544;
+
+    private string PassText(SatellitePass pass) =>
+        Format(Strings.SatellitePassFormat, pass.Name, Local(pass.VisibleStartUtc!.Value), Local(pass.VisibleEndUtc!.Value),
+            pass.MaxAltitudeDegrees, DisplayNames.Compass(pass.RiseAzimuthDegrees), DisplayNames.Compass(pass.SetAzimuthDegrees),
+            pass.BrightestMagnitude ?? double.NaN);
+
+    private DateTime Local(DateTime utc) => TimeZoneInfo.ConvertTimeFromUtc(utc, _context.TimeZone);
 
     /// <summary>The brightest comet observable in darkness tonight, with its best window.</summary>
     private void UpdateCometAlert()

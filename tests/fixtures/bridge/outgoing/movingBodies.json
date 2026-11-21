@@ -26,7 +26,8 @@
             -0.0141257,
             -0.0061295
           ]
-        }
+        },
+        "sunlit": null
       },
       {
         "id": "Moon",
@@ -51,7 +52,8 @@
             0.1662836,
             0.1268031
           ]
-        }
+        },
+        "sunlit": null
       },
       {
         "id": "Mercury",
@@ -76,7 +78,38 @@
             -0.3493426,
             -0.1292783
           ]
-        }
+        },
+        "sunlit": null
+      },
+      {
+        "id": "sat-25544",
+        "kind": "satellite",
+        "name": "ISS (ZARYA)",
+        "magnitude": -3.1,
+        "diameterArcsec": 0,
+        "phaseAngleDegrees": 35,
+        "illuminatedFraction": 1,
+        "brightLimbAngleDegrees": 0,
+        "track": {
+          "startUtc": "2026-03-20T01:59:50.000Z",
+          "stepSeconds": 10,
+          "vectors": [
+            0.6,
+            0.2,
+            0.7745967,
+            0.58,
+            0.25,
+            0.7753064,
+            0.55,
+            0.3,
+            0.7794229
+          ]
+        },
+        "sunlit": [
+          1,
+          0,
+          1
+        ]
       }
     ]
   }

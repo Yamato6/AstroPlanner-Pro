@@ -34,17 +34,21 @@ public sealed class OnlineInfoState
     /// <summary>Comet and asteroid elements (MPC), refreshed daily.</summary>
     public OnlineServiceStatus SmallBodies { get; } = new();
 
+    /// <summary>Satellite elements (CelesTrak), refreshed twice a day.</summary>
+    public OnlineServiceStatus Satellites { get; } = new();
+
     /// <summary>A toggle or an outcome changed.</summary>
     public event EventHandler? Changed;
 
-    public void Apply(bool images, bool wikipedia, bool nameResolver, bool smallBodies = true)
+    public void Apply(bool images, bool wikipedia, bool nameResolver, bool smallBodies = true, bool satellites = true)
     {
         var changed = Images.Enabled != images || Wikipedia.Enabled != wikipedia || NameResolver.Enabled != nameResolver
-            || SmallBodies.Enabled != smallBodies;
+            || SmallBodies.Enabled != smallBodies || Satellites.Enabled != satellites;
         Images.Enabled = images;
         Wikipedia.Enabled = wikipedia;
         NameResolver.Enabled = nameResolver;
         SmallBodies.Enabled = smallBodies;
+        Satellites.Enabled = satellites;
         if (changed)
         {
             OnChanged();

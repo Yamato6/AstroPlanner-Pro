@@ -23,8 +23,8 @@ describe('bridge', () => {
     expect(parseHostMessage({ v: 1, type: 'eval', payload: {} })).toBeNull();
   });
 
-  it('accepts comets and asteroids as moving bodies (M5)', () => {
-    const body = (kind: string) => ({
+  it('accepts comets, asteroids and satellites as moving bodies (M5)', () => {
+    const body = (kind: string, sunlit: number[] | null = null) => ({
       id: kind === 'comet' ? 'C/2026 Z9' : '(4)',
       kind,
       name: kind,
@@ -34,12 +34,15 @@ describe('bridge', () => {
       illuminatedFraction: 0.93,
       brightLimbAngleDegrees: 250,
       track: { startUtc: '2026-01-16T03:00:00Z', stepSeconds: 600, vectors: [1, 0, 0, 0, 1, 0] },
+      sunlit,
     });
-    const message = (kind: string) => ({ v: 1, type: 'movingBodies', payload: { bodies: [body(kind)] } });
+    const message = (b: object) => ({ v: 1, type: 'movingBodies', payload: { bodies: [b] } });
 
-    expect(parseHostMessage(message('comet'))).not.toBeNull();
-    expect(parseHostMessage(message('asteroid'))).not.toBeNull();
-    expect(parseHostMessage(message('satellite'))).toBeNull();
+    expect(parseHostMessage(message(body('comet')))).not.toBeNull();
+    expect(parseHostMessage(message(body('asteroid')))).not.toBeNull();
+    expect(parseHostMessage(message(body('satellite', [1, 0])))).not.toBeNull();
+    expect(parseHostMessage(message(body('satellite', [1, 2])))).toBeNull();
+    expect(parseHostMessage(message(body('rocket')))).toBeNull();
   });
 
   it('validates outgoing messages before posting', () => {
