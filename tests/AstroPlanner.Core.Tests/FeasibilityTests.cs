@@ -320,6 +320,7 @@ public sealed class FeasibilityTests(ITestOutputHelper output)
     }
 
     [Fact]
+    [Trait("Category", "Performance")]
     public void WholeCatalog_IsEvaluatedQuickly_InTheOrderGiven()
     {
         var random = new Random(42);
