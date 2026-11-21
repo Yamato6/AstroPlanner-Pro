@@ -395,22 +395,22 @@ public sealed class SkyViewModelTests
         var (shell, channel) = await CreateAsync();
         shell.Targets.SelectById("M42");
         var skyShown = 0;
-        shell.Sky.ShowSkyRequested += (_, _) => skyShown++;
+        shell.Sky.Modes.ShowSkyRequested += (_, _) => skyShown++;
 
-        shell.Sky.IsAllSkyMode = true;
+        shell.Sky.Modes.IsAllSkyMode = true;
         channel.Last("setViewMode").GetProperty("mode").GetString().Should().Be("allSky");
         _store.Saved.ViewMode.Should().Be("allSky");
-        shell.Sky.IsDomeMode.Should().BeFalse();
+        shell.Sky.Modes.IsDomeMode.Should().BeFalse();
 
         channel.Receive("""{"v":1,"type":"shortcut","payload":{"action":"viewDome"}}""");
-        shell.Sky.ViewMode.Should().Be("dome");
+        shell.Sky.Modes.ViewMode.Should().Be("dome");
         channel.Receive("""{"v":1,"type":"shortcut","payload":{"action":"viewAllSky"}}""");
-        shell.Sky.ViewMode.Should().Be("allSky");
+        shell.Sky.Modes.ViewMode.Should().Be("allSky");
 
         // "Finder chart" (Detail, Targets, Sky): shows the Sky tab, centred on the selection.
-        shell.Sky.OpenFinderChartCommand.Execute(null);
+        shell.Sky.Modes.OpenFinderChartCommand.Execute(null);
         skyShown.Should().Be(1);
-        shell.Sky.IsFinderMode.Should().BeTrue();
+        shell.Sky.Modes.IsFinderMode.Should().BeTrue();
         ShouldPointAt(channel.Last("centerOn"), TestCatalog.M42.Coordinates);
         channel.Last("centerOn").GetProperty("fovDegrees").GetDouble().Should().Be(10);
 
@@ -442,7 +442,7 @@ public sealed class SkyViewModelTests
 
         shell.Targets.SelectById("M42");
         ShouldPointAt(channel.Last("setFov").GetProperty("center"), TestCatalog.M42.Coordinates);
-        shell.Sky.FinderFovDegrees.Should().BeApproximately(3 * 1.9655, 1e-3);
+        shell.Sky.Modes.FinderFovDegrees.Should().BeApproximately(3 * 1.9655, 1e-3);
 
         // A drag in the renderer is remembered, not echoed back.
         var sent = channel.Count("setFov");
@@ -488,11 +488,11 @@ public sealed class SkyViewModelTests
     public async Task ExportedImages_GetADescriptiveName()
     {
         var (shell, _) = await CreateAsync();
-        shell.Sky.SuggestedImageFileName().Should().Be("AstroPlannerPro-dome-2026-01-15-2200.png");
+        shell.Sky.Modes.SuggestedImageFileName().Should().Be("AstroPlannerPro-dome-2026-01-15-2200.png");
 
         shell.Targets.SelectById("M42");
-        shell.Sky.IsFinderMode = true;
-        shell.Sky.SuggestedImageFileName().Should().Be("AstroPlannerPro-finder-M42-2026-01-15-2200.png");
+        shell.Sky.Modes.IsFinderMode = true;
+        shell.Sky.Modes.SuggestedImageFileName().Should().Be("AstroPlannerPro-finder-M42-2026-01-15-2200.png");
     }
 }
 

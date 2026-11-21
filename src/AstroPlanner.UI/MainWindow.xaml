@@ -612,7 +612,7 @@
                             <DockPanel Grid.Row="0">
                                 <Button DockPanel.Dock="Right" Style="{StaticResource SecondaryButtonStyle}" Padding="10,4"
                                         Content="{x:Static res:Strings.SkyOpenFinderChart}" ToolTip="{x:Static res:Strings.SkyOpenFinderChartTooltip}"
-                                        Command="{Binding Sky.OpenFinderChartCommand}" IsEnabled="{Binding Detail.HasSelection}"/>
+                                        Command="{Binding Sky.Modes.OpenFinderChartCommand}" IsEnabled="{Binding Detail.HasSelection}"/>
                                 <TextBlock FontSize="18" FontWeight="SemiBold" VerticalAlignment="Center" TextTrimming="CharacterEllipsis"
                                            Text="{Binding Detail.ChartTitle}"/>
                             </DockPanel>
@@ -659,11 +659,11 @@
                                             Content="{x:Static res:Strings.SkyExportImage}" ToolTip="{x:Static res:Strings.SkyExportImageTooltip}"
                                             Click="OnSkyExportClicked"/>
                                     <StackPanel Orientation="Horizontal">
-                                        <RadioButton GroupName="SkyMode" Style="{StaticResource SkyModeButtonStyle}" IsChecked="{Binding Sky.IsDomeMode}"
+                                        <RadioButton GroupName="SkyMode" Style="{StaticResource SkyModeButtonStyle}" IsChecked="{Binding Sky.Modes.IsDomeMode}"
                                                      Content="{x:Static res:Strings.SkyViewDome}" ToolTip="{x:Static res:Strings.SkyViewDomeTooltip}"/>
-                                        <RadioButton GroupName="SkyMode" Style="{StaticResource SkyModeButtonStyle}" IsChecked="{Binding Sky.IsAllSkyMode}"
+                                        <RadioButton GroupName="SkyMode" Style="{StaticResource SkyModeButtonStyle}" IsChecked="{Binding Sky.Modes.IsAllSkyMode}"
                                                      Content="{x:Static res:Strings.SkyViewAllSky}" ToolTip="{x:Static res:Strings.SkyViewAllSkyTooltip}"/>
-                                        <RadioButton GroupName="SkyMode" Style="{StaticResource SkyModeButtonStyle}" IsChecked="{Binding Sky.IsFinderMode}"
+                                        <RadioButton GroupName="SkyMode" Style="{StaticResource SkyModeButtonStyle}" IsChecked="{Binding Sky.Modes.IsFinderMode}"
                                                      Content="{x:Static res:Strings.SkyViewFinder}" ToolTip="{x:Static res:Strings.SkyViewFinderTooltip}"/>
                                     </StackPanel>
                                 </DockPanel>
@@ -723,7 +723,7 @@
                                         Content="{x:Static res:Strings.SkyOpenDetails}" IsEnabled="{Binding Sky.HasCatalogSelection}"/>
                             </StackPanel>
                             <Button Margin="0,6,0,0" HorizontalAlignment="Left" Style="{StaticResource SecondaryButtonStyle}"
-                                    Command="{Binding Sky.OpenFinderChartCommand}" Content="{x:Static res:Strings.SkyOpenFinderChart}"
+                                    Command="{Binding Sky.Modes.OpenFinderChartCommand}" Content="{x:Static res:Strings.SkyOpenFinderChart}"
                                     ToolTip="{x:Static res:Strings.SkyOpenFinderChartTooltip}" IsEnabled="{Binding Sky.HasCatalogSelection}"
                                     Visibility="{Binding Sky.IsRendererAvailable, Converter={StaticResource BooleanToVisibilityConverter}}"/>
                             <TextBlock Margin="0,6,0,0" Foreground="{DynamicResource NightMutedTextBrush}" TextWrapping="Wrap"
@@ -929,7 +929,7 @@
                                 <Button Style="{StaticResource SecondaryButtonStyle}" Content="{x:Static res:Strings.SkyOpenFinderChart}"
                                         HorizontalAlignment="Left" Margin="0,8,0,0"
                                         ToolTip="{x:Static res:Strings.SkyOpenFinderChartTooltip}"
-                                        Command="{Binding DataContext.Sky.OpenFinderChartCommand, RelativeSource={RelativeSource AncestorType=Window}}"/>
+                                        Command="{Binding DataContext.Sky.Modes.OpenFinderChartCommand, RelativeSource={RelativeSource AncestorType=Window}}"/>
                             </StackPanel>
                             <!-- Capture feasibility (spec §8.6): every factor with its value and impact -->
                             <StackPanel Grid.Row="3" Grid.ColumnSpan="3" Margin="0,20,0,0"

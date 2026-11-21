@@ -16,10 +16,10 @@ namespace AstroPlanner.UI.ViewModels;
 /// <summary>
 /// The sky tab (spec §4.2, §5.3). Coordinates the WebView2 renderer through an
 /// <see cref="ISkyChannel"/> and its parts: <see cref="Time"/> (the sky clock), <see cref="Layers"/>,
-/// <see cref="Camera"/> (the camera frame) and <see cref="Search"/>; the time-dependent messages go
-/// through <see cref="SkyBodyFeed"/>. It keeps the selection in step with Targets, the view modes
-/// (3D dome, all-sky chart, finder chart) and, without WebView2, the 2D chart
-/// (<see cref="Map"/>).
+/// <see cref="Camera"/> (the camera frame), <see cref="Search"/>, <see cref="Modes"/> (dome, all-sky,
+/// finder chart) and <see cref="Map"/> (the 2D chart without WebView2); the time-dependent messages
+/// go through <see cref="SkyBodyFeed"/>. It keeps the selection in step with Targets and shows the
+/// renderer's state, hover, statistics and the sky brightness.
 /// </summary>
 public sealed partial class SkyViewModel : ObservableObject, IDisposable
 {
@@ -53,8 +53,8 @@ public sealed partial class SkyViewModel : ObservableObject, IDisposable
         Layers = new SkyLayersViewModel(_session);
         Camera = new SkyCameraFrameViewModel(_session, equipment, SelectedDirection);
         Search = new SkySearchViewModel(_session, () => _targets.AllObjects, _targets.SelectById, CenterOn, nameResolver, online);
-        var settings = _session.Settings;
-        ViewMode = settings.ViewMode is SkyViewModes.AllSky or SkyViewModes.Finder ? settings.ViewMode : SkyViewModes.Dome;
+        Modes = new SkyModesViewModel(_session, () => Camera.IsFovVisible ? Camera.CameraFov : null,
+            () => SelectedDirection() ?? Camera.Center, () => _targets.SelectedObject?.Id);
         Time = new SkyTimeViewModel(_session, _feed);
         Time.Resynced += (_, _) => UpdateSkyBrightnessText();
 
@@ -106,6 +106,9 @@ public sealed partial class SkyViewModel : ObservableObject, IDisposable
     /// <summary>The search box (catalog, then CDS Sesame).</summary>
     public SkySearchViewModel Search { get; }
 
+    /// <summary>The view modes: 3D dome, all-sky chart and finder chart.</summary>
+    public SkyModesViewModel Modes { get; }
+
     /// <summary>The 2D chart shown without WebView2.</summary>
     public SkyMapViewModel Map { get; }
 
@@ -136,9 +139,6 @@ public sealed partial class SkyViewModel : ObservableObject, IDisposable
 
     /// <summary>Raised when the user asks to see the selected object's details.</summary>
     public event EventHandler? OpenDetailsRequested;
-
-    /// <summary>Raised when an action elsewhere (Detail, Targets) wants the Sky tab shown.</summary>
-    public event EventHandler? ShowSkyRequested;
 
     public string SelectedText => SkyOnlySelectionText
         ?? (_targets.SelectedObject is { } selected
@@ -233,10 +233,10 @@ public sealed partial class SkyViewModel : ObservableObject, IDisposable
                 FocusSearchRequested?.Invoke(this, EventArgs.Empty);
                 break;
             case SkyShortcuts.ViewDome:
-                SetViewMode(SkyViewModes.Dome);
+                Modes.SetViewMode(SkyViewModes.Dome);
                 break;
             case SkyShortcuts.ViewAllSky:
-                SetViewMode(SkyViewModes.AllSky);
+                Modes.SetViewMode(SkyViewModes.AllSky);
                 break;
             case SkyShortcuts.ToggleFov:
                 Camera.IsFovVisible = !Camera.IsFovVisible;
@@ -276,7 +276,7 @@ public sealed partial class SkyViewModel : ObservableObject, IDisposable
     private void SendAll()
     {
         _session.Send(SkyMessageCodec.Init(new InitPayload(
-            $"https://{SkyHost.DataHost}/", RefractionModel.Standard, Layers.Layers(), ViewMode, _theme?.SkyTheme ?? "dark", Layers.ShowStats)));
+            $"https://{SkyHost.DataHost}/", RefractionModel.Standard, Layers.Layers(), Modes.ViewMode, _theme?.SkyTheme ?? "dark", Layers.ShowStats)));
         SendSiteAndTime();
         _session.Send(SkyMessageCodec.CenterOn(CenterOnView()));
         SendHighlights();
@@ -284,9 +284,9 @@ public sealed partial class SkyViewModel : ObservableObject, IDisposable
         SendSelectionIfChanged();
         Camera.CenterOnSelectionIfUnset();
         Camera.Send();
-        if (ViewMode == SkyViewModes.Finder)
+        if (Modes.IsFinderMode)
         {
-            CenterFinder();
+            Modes.CenterFinder();
         }
     }
 
@@ -407,81 +407,6 @@ public sealed partial class SkyViewModel : ObservableObject, IDisposable
     private Vector3d? SelectedDirection() =>
         _targets.SelectedObject is { } selected && Context.InputError is null ? DirectionOf(selected.Target) : null;
 
-    // ---- view modes (3D dome, all-sky chart, finder chart) -----------------------------------------
-
-    /// <summary>Current renderer mode, as a protocol name (<see cref="SkyViewModes"/>).</summary>
-    [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(IsDomeMode), nameof(IsAllSkyMode), nameof(IsFinderMode))]
-    public partial string ViewMode { get; private set; } = SkyViewModes.Dome;
-
-    public bool IsDomeMode
-    {
-        get => ViewMode == SkyViewModes.Dome;
-        set { if (value) SetViewMode(SkyViewModes.Dome); }
-    }
-
-    public bool IsAllSkyMode
-    {
-        get => ViewMode == SkyViewModes.AllSky;
-        set { if (value) SetViewMode(SkyViewModes.AllSky); }
-    }
-
-    public bool IsFinderMode
-    {
-        get => ViewMode == SkyViewModes.Finder;
-        set { if (value) SetViewMode(SkyViewModes.Finder); }
-    }
-
-    /// <summary>
-    /// Field of the finder chart: three times the camera field when the overlay is on (so that
-    /// the frame and its surroundings show), else the remembered field.
-    /// </summary>
-    public double FinderFovDegrees => Camera.IsFovVisible && Camera.CameraFov is { } fov
-        ? Math.Clamp(3 * Math.Max(fov.WidthDegrees, fov.HeightDegrees), 1, 60)
-        : Math.Clamp(_session.Settings.FinderFovDegrees, 1, 60);
-
-    private void SetViewMode(string mode)
-    {
-        if (mode == ViewMode)
-        {
-            return;
-        }
-
-        ViewMode = mode;
-        _session.Settings.ViewMode = mode;
-        _session.SaveSettings();
-        _session.Send(SkyMessageCodec.SetViewMode(new ViewModePayload(mode)));
-        if (mode == SkyViewModes.Finder)
-        {
-            CenterFinder();
-        }
-    }
-
-    /// <summary>The finder chart is centred on the selected object, else on the camera field.</summary>
-    private void CenterFinder()
-    {
-        if ((SelectedDirection() ?? Camera.Center) is { } center)
-        {
-            var v = SkyBridgeMapper.ToVector(center);
-            _session.Send(SkyMessageCodec.CenterOn(new CenterOnPayload(v.X, v.Y, v.Z, FinderFovDegrees)));
-        }
-    }
-
-    /// <summary>Finder chart of the selected object ("Open finder chart" in Detail and Targets).</summary>
-    [RelayCommand]
-    private void OpenFinderChart()
-    {
-        ShowSkyRequested?.Invoke(this, EventArgs.Empty);
-        if (ViewMode == SkyViewModes.Finder)
-        {
-            CenterFinder();
-        }
-        else
-        {
-            SetViewMode(SkyViewModes.Finder);
-        }
-    }
-
     /// <summary>A new selection moves the camera field onto it and recentres the finder chart.</summary>
     private void FollowSelection()
     {
@@ -491,20 +416,10 @@ public sealed partial class SkyViewModel : ObservableObject, IDisposable
         }
 
         Camera.MoveTo(direction);
-        if (ViewMode == SkyViewModes.Finder)
+        if (Modes.IsFinderMode)
         {
-            CenterFinder();
+            Modes.CenterFinder();
         }
-    }
-
-    /// <summary>File name offered when the view is exported as PNG.</summary>
-    public string SuggestedImageFileName()
-    {
-        var subject = ViewMode == SkyViewModes.Finder && _targets.SelectedObject is { } selected
-            ? "-" + string.Concat(selected.Id.Split(System.IO.Path.GetInvalidFileNameChars().Append(' ').ToArray()))
-            : "";
-        return string.Create(CultureInfo.InvariantCulture,
-            $"AstroPlannerPro-{ViewMode}{subject}-{TimeZoneInfo.ConvertTimeFromUtc(_session.Clock.UtcNow, Context.TimeZone):yyyy-MM-dd-HHmm}.png");
     }
 
     // ---- sky brightness -----------------------------------------------------------------------------

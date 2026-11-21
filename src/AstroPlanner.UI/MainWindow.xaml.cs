@@ -87,7 +87,7 @@ public partial class MainWindow : Window
             _viewModel.Sky.Map.PropertyChanged -= OnSkyMapPropertyChanged;
             _viewModel.Sky.FocusSearchRequested -= OnSkyFocusSearch;
             _viewModel.Sky.OpenDetailsRequested -= OnSkyOpenDetails;
-            _viewModel.Sky.ShowSkyRequested -= OnShowSkyRequested;
+            _viewModel.Sky.Modes.ShowSkyRequested -= OnShowSkyRequested;
             _viewModel.Locations.PropertyChanged -= OnLocationsPropertyChanged;
             _viewModel.Plan.TimelineChanged -= OnPlanTimelineChanged;
             _viewModel.Settings.Theme.Changed -= OnThemeChanged;
@@ -102,7 +102,7 @@ public partial class MainWindow : Window
             _viewModel.Sky.Map.PropertyChanged += OnSkyMapPropertyChanged;
             _viewModel.Sky.FocusSearchRequested += OnSkyFocusSearch;
             _viewModel.Sky.OpenDetailsRequested += OnSkyOpenDetails;
-            _viewModel.Sky.ShowSkyRequested += OnShowSkyRequested;
+            _viewModel.Sky.Modes.ShowSkyRequested += OnShowSkyRequested;
             _viewModel.Locations.PropertyChanged += OnLocationsPropertyChanged;
             _viewModel.Plan.TimelineChanged += OnPlanTimelineChanged;
             _viewModel.Settings.Theme.Changed += OnThemeChanged;
@@ -250,10 +250,10 @@ public partial class MainWindow : Window
                 OnSkyFocusSearch(this, EventArgs.Empty);
                 break;
             case Key.D1 or Key.NumPad1 when none && Tabs.SelectedItem == SkyTab && Keyboard.FocusedElement is not TextBox:
-                if (_viewModel is not null) _viewModel.Sky.IsDomeMode = true;
+                if (_viewModel is not null) _viewModel.Sky.Modes.IsDomeMode = true;
                 break;
             case Key.D2 or Key.NumPad2 when none && Tabs.SelectedItem == SkyTab && Keyboard.FocusedElement is not TextBox:
-                if (_viewModel is not null) _viewModel.Sky.IsAllSkyMode = true;
+                if (_viewModel is not null) _viewModel.Sky.Modes.IsAllSkyMode = true;
                 break;
             case Key.F when none && Tabs.SelectedItem == SkyTab && Keyboard.FocusedElement is not TextBox:
                 if (_viewModel is not null) _viewModel.Sky.Camera.IsFovVisible = !_viewModel.Sky.Camera.IsFovVisible;
@@ -323,7 +323,7 @@ public partial class MainWindow : Window
         {
             Title = Strings.SkyExportDialogTitle,
             Filter = Strings.PngFileFilter,
-            FileName = _viewModel.Sky.SuggestedImageFileName()
+            FileName = _viewModel.Sky.Modes.SuggestedImageFileName()
         };
 
         if (dialog.ShowDialog(this) != true) return;
