@@ -130,15 +130,17 @@ public sealed class SqliteCatalogRepositoryTests(CatalogFixture fixture) : IClas
     }
 
     [Fact]
-    public async Task WithPlanets_AppendsTheSevenPlanets()
+    public async Task WithPlanets_AppendsTheSevenPlanets_AndTheMilkyWayCore()
     {
         var repository = new CatalogWithPlanetsRepository(fixture.Repository);
 
         var objects = await repository.GetAllAsync();
 
-        objects.Should().HaveCount(_objects.Count + 7);
+        objects.Should().HaveCount(_objects.Count + 8);
         objects.Where(o => o.IsPlanet).Select(o => o.CommonName)
             .Should().Equal("Mercury", "Venus", "Mars", "Jupiter", "Saturn", "Uranus", "Neptune");
+        objects[^1].Type.Should().Be(CelestialObjectType.MilkyWayCore);
+        objects[^1].Constellation.Should().Be("Sagittarius");
     }
 
     private static HashSet<string> ConstellationNames() =>
