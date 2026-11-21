@@ -243,6 +243,10 @@ public sealed partial class ObjectDetailViewModel : ObservableObject
             MaximumAltitudeDegrees = events.MaximumAltitudeDegrees,
             Magnitude = _astronomy.GetApparentMagnitude(item.Target, utc),
             Planet = _astronomy.GetPlanetPosition(item.Target, utc),
+            SmallBodyText = _astronomy.GetSmallBodyPosition(item.Target, utc) is { } body && item.Target.Orbit is { } orbit
+                ? DisplayNames.Format(Strings.DetailSmallBodyFormat, body.SunDistanceAu, body.DistanceAu, body.ElongationDegrees,
+                    orbit.Source, AstronomyMath.FromJulianDate(orbit.Elements.EpochJulianDate))
+                : null,
             MoonSeparationDegrees = moonSeparation,
             CloudCoverAtCulmination = _weather.CloudCoverAtLocal(events.CulminationLocal),
             MoonWarning = moonInterferes

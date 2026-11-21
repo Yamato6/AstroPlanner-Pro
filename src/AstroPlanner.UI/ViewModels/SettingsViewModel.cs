@@ -99,6 +99,10 @@ public sealed partial class SettingsViewModel : ObservableValidator
     [ObservableProperty]
     public partial bool NameResolverEnabled { get; set; } = true;
 
+    /// <summary>Comets and bright asteroids (Minor Planet Center).</summary>
+    [ObservableProperty]
+    public partial bool SmallBodiesEnabled { get; set; } = true;
+
     /// <summary>Check for a new version at startup.</summary>
     [ObservableProperty]
     public partial bool CheckForUpdates { get; set; } = true;
@@ -229,6 +233,7 @@ public sealed partial class SettingsViewModel : ObservableValidator
                 SurveyImagesEnabled = SurveyImagesEnabled,
                 WikipediaEnabled = WikipediaEnabled,
                 NameResolverEnabled = NameResolverEnabled,
+                SmallBodiesEnabled = SmallBodiesEnabled,
                 CheckForUpdates = CheckForUpdates,
                 Darkness = AllowNauticalTwilight ? DarknessDefinition.Nautical : DarknessDefinition.Astronomical,
                 ExtinctionCoefficient = ExtinctionCoefficient
@@ -308,6 +313,7 @@ public sealed partial class SettingsViewModel : ObservableValidator
         SurveyImagesEnabled = settings.SurveyImagesEnabled;
         WikipediaEnabled = settings.WikipediaEnabled;
         NameResolverEnabled = settings.NameResolverEnabled;
+        SmallBodiesEnabled = settings.SmallBodiesEnabled;
         CheckForUpdates = settings.CheckForUpdates;
         AllowNauticalTwilight = settings.Darkness == DarknessDefinition.Nautical;
         ExtinctionCoefficient = settings.ExtinctionCoefficient;

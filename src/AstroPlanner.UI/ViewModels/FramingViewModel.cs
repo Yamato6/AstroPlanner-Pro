@@ -122,7 +122,7 @@ public sealed partial class FramingViewModel : ObservableObject, IDisposable
         string? message = _tiles is null || SelectedSurvey is null ? Strings.FramingUnavailable
             : !_online.Images.Enabled ? Strings.FramingDisabled
             : _target is null ? ""
-            : _target.IsPlanet ? Strings.FramingPlanet
+            : _target.IsMoving ? Strings.FramingPlanet
             : rig is null ? Strings.FramingNoRig
             : null;
         FieldText = rig is null ? "" : DisplayNames.Format(Strings.FramingFieldFormat, rig.Name, rig.FieldOfView.WidthDegrees, rig.FieldOfView.HeightDegrees);

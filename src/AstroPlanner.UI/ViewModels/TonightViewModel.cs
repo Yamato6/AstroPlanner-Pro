@@ -2,7 +2,9 @@ using System.Collections.ObjectModel;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using AstroPlanner.Core.Imaging.Feasibility;
+using AstroPlanner.Core.Interfaces;
 using AstroPlanner.Core.Models;
+using AstroPlanner.Core.Planning;
 using AstroPlanner.UI.Resources;
 using AstroPlanner.UI.Services;
 using static AstroPlanner.UI.Services.DisplayNames;
@@ -13,7 +15,7 @@ namespace AstroPlanner.UI.ViewModels;
 /// Tonight at a glance: dark night, Sun times, Moon, clouds, day/twilight warning, Messier
 /// marathon progress, the site's sky quality and the best targets for the active rig (spec §4.1).
 /// </summary>
-public sealed partial class TonightViewModel : ObservableObject
+public sealed partial class TonightViewModel : ObservableObject, IDisposable
 {
     private readonly IObserverContext _context;
     private readonly WeatherState _weather;
@@ -21,6 +23,12 @@ public sealed partial class TonightViewModel : ObservableObject
     private readonly TargetsViewModel? _targets;
     private readonly EquipmentState? _equipment;
     private readonly SessionPlanViewModel? _plan;
+    private readonly IAstronomyService? _astronomy;
+    private readonly List<string> _conditionAlerts = [];
+    private string? _cometAlert;
+    private string? _milkyWayAlert;
+    private (DateTime Night, ObserverLocation Site)? _milkyWayKey;
+    private CancellationTokenSource? _milkyWayCancellation;
 
     /// <summary>How many targets the "best targets" list shows.</summary>
     public const int BestTargetCount = 12;
@@ -31,8 +39,10 @@ public sealed partial class TonightViewModel : ObservableObject
         LogbookViewModel logbook,
         TargetsViewModel? targets = null,
         EquipmentState? equipment = null,
-        SessionPlanViewModel? plan = null)
+        SessionPlanViewModel? plan = null,
+        IAstronomyService? astronomy = null)
     {
+        _astronomy = astronomy;
         _context = context;
         _weather = weather;
         _logbook = logbook;
@@ -42,6 +52,8 @@ public sealed partial class TonightViewModel : ObservableObject
         if (_targets is not null)
         {
             _targets.FeasibilityUpdated += (_, _) => UpdateBestTargets();
+            _targets.NightEphemeridesUpdated += (_, _) => UpdateCometAlert();
+            _targets.SmallBodiesChanged += (_, _) => UpdateCometAlert();
             _targets.PropertyChanged += (_, e) =>
             {
                 if (e.PropertyName == nameof(TargetsViewModel.IsCalculatingFeasibility))
@@ -72,6 +84,7 @@ public sealed partial class TonightViewModel : ObservableObject
         {
             OnSkyChanged();
             UpdateConditions();
+            UpdateMilkyWay();
         };
         _weather.Changed += (_, _) =>
         {
@@ -114,8 +127,103 @@ public sealed partial class TonightViewModel : ObservableObject
     [ObservableProperty]
     public partial string ConditionsDetailText { get; private set; } = "";
 
-    /// <summary>Dew and wind warnings for tonight with the active rig; empty when there are none.</summary>
+    /// <summary>
+    /// Tonight's alerts (spec §4.1): dew and wind for the active rig, the comet of the night and the
+    /// Milky Way core window; empty when there are none.
+    /// </summary>
     public ObservableCollection<string> Alerts { get; } = [];
+
+    /// <summary>The year planner of the Milky Way core for the current site; null without the astronomy service.</summary>
+    public MilkyWayPlannerViewModel? CreateMilkyWayPlanner() =>
+        _astronomy is null ? null : new MilkyWayPlannerViewModel(_astronomy, _context);
+
+    public void Dispose()
+    {
+        _milkyWayCancellation?.Cancel();
+        _milkyWayCancellation?.Dispose();
+        _milkyWayCancellation = null;
+    }
+
+    /// <summary>The background search for the next good Milky Way night, for tests.</summary>
+    public Task MilkyWayTask { get; private set; } = Task.CompletedTask;
+
+    private void RebuildAlerts()
+    {
+        Alerts.Clear();
+        foreach (var alert in _conditionAlerts.Append(_cometAlert).Append(_milkyWayAlert).OfType<string>())
+        {
+            Alerts.Add(alert);
+        }
+    }
+
+    /// <summary>The brightest comet observable in darkness tonight, with its best window.</summary>
+    private void UpdateCometAlert()
+    {
+        var comet = _targets?.AllObjects
+            .Where(r => r.Target.Type == CelestialObjectType.Comet && r.IsObservableTonight && double.IsFinite(r.ApparentMagnitude))
+            .MinBy(r => r.ApparentMagnitude);
+        _cometAlert = comet is null ? null
+            : Format(Strings.AlertCometFormat, SmallBodyName(comet.Target), comet.ApparentMagnitude, comet.BestWindowText);
+        RebuildAlerts();
+    }
+
+    /// <summary>The Milky Way core tonight, or the next good night (searched in the background).</summary>
+    private void UpdateMilkyWay()
+    {
+        if (_astronomy is null || _context.Night is not { } night || _context.InputError is not null)
+        {
+            return;
+        }
+
+        var key = (night.WindowStartLocal.Date, _context.Observer);
+        if (key == _milkyWayKey)
+        {
+            return;
+        }
+
+        _milkyWayKey = key;
+        _milkyWayCancellation?.Cancel();
+        _milkyWayCancellation?.Dispose();
+        var cancellation = _milkyWayCancellation = new CancellationTokenSource();
+        var (astronomy, observer, zone) = (_astronomy, _context.Observer, _context.TimeZone);
+        var date = DateOnly.FromDateTime(night.WindowStartLocal);
+        var tonight = MilkyWayPlanner.Night(astronomy, observer, zone, date);
+        if (tonight.IsGood)
+        {
+            _milkyWayAlert = Format(Strings.AlertMilkyWayTonightFormat, tonight.StartLocal, tonight.EndLocal, Duration(tonight.CoreMoonFree));
+            RebuildAlerts();
+            MilkyWayTask = Task.CompletedTask;
+            return;
+        }
+
+        _milkyWayAlert = null;
+        RebuildAlerts();
+        MilkyWayTask = FindNextMilkyWayAsync(astronomy, observer, zone, date, key, cancellation.Token);
+    }
+
+    private async Task FindNextMilkyWayAsync(
+        IAstronomyService astronomy, ObserverLocation observer, TimeZoneInfo zone, DateOnly date, (DateTime, ObserverLocation) key,
+        CancellationToken cancellationToken)
+    {
+        try
+        {
+            var nights = await Task.Run(() => MilkyWayPlanner.Nights(astronomy, observer, zone, date.AddDays(1), 365,
+                cancellationToken: cancellationToken), cancellationToken);
+            if (key != _milkyWayKey)
+            {
+                return;
+            }
+
+            _milkyWayAlert = MilkyWayPlanner.NextGood(nights) is { } next
+                ? Format(Strings.AlertMilkyWayNextFormat, next.Date.ToDateTime(TimeOnly.MinValue), next.StartLocal, next.EndLocal)
+                : null;
+            RebuildAlerts();
+        }
+        catch (OperationCanceledException)
+        {
+            // Another night or site was chosen.
+        }
+    }
 
     /// <summary>Adds a target to the session plan.</summary>
     [RelayCommand]
@@ -219,7 +327,19 @@ public sealed partial class TonightViewModel : ObservableObject
     /// <summary>Seeing, transparency, dew and wind of the dark night (spec §4.1) and their warnings.</summary>
     private void UpdateConditions()
     {
-        Alerts.Clear();
+        _conditionAlerts.Clear();
+        try
+        {
+            UpdateConditionsCore();
+        }
+        finally
+        {
+            RebuildAlerts();
+        }
+    }
+
+    private void UpdateConditionsCore()
+    {
         var conditions = _weather.GetNightConditions(_equipment?.ActiveRig?.Mount.Kind);
         var zone = _context.TimeZone;
 
@@ -253,13 +373,13 @@ public sealed partial class TonightViewModel : ObservableObject
 
         if (conditions.DewRisk != Core.Weather.DewRisk.None && conditions.DewRiskFromUtc is { } from)
         {
-            Alerts.Add(Format(conditions.DewRisk == Core.Weather.DewRisk.High ? Strings.AlertDewHighFormat : Strings.AlertDewModerateFormat,
+            _conditionAlerts.Add(Format(conditions.DewRisk == Core.Weather.DewRisk.High ? Strings.AlertDewHighFormat : Strings.AlertDewModerateFormat,
                 Local(from), conditions.MinimumDewMarginC));
         }
 
         if (conditions.WindWarning)
         {
-            Alerts.Add(Format(Strings.AlertWindFormat, conditions.MaximumGustKmh, conditions.GustLimitKmh));
+            _conditionAlerts.Add(Format(Strings.AlertWindFormat, conditions.MaximumGustKmh, conditions.GustLimitKmh));
         }
 
         DateTime Local(DateTime utc) => TimeZoneInfo.ConvertTimeFromUtc(utc, zone);

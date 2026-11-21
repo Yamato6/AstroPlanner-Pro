@@ -223,6 +223,11 @@ public sealed partial class TargetsViewModel : ObservableValidator, IDisposable
             var objects = await _repository.GetAllAsync();
             _allObjects.Clear();
             _allObjects.AddRange(objects.Select(item => new CelestialObjectRowViewModel(item)));
+            if (_pendingSmallBodies is { } pending)
+            {
+                _allObjects.AddRange(pending.Where(b => b.IsSmallBody).Select(b => new CelestialObjectRowViewModel(b)));
+            }
+
             _nightKey = null;
 
             ConstellationFilters =
@@ -242,6 +247,43 @@ public sealed partial class TargetsViewModel : ObservableValidator, IDisposable
         }
         finally { IsBusy = false; }
     }
+
+    /// <summary>
+    /// Replaces the comets and asteroids of the catalog (spec §4.3) without reloading the deep-sky
+    /// objects. Their night ephemerides and feasibility are recalculated; a selected comet or
+    /// asteroid stays selected when it is still in the list.
+    /// </summary>
+    public void SetSmallBodies(IReadOnlyList<CelestialObject> bodies)
+    {
+        ArgumentNullException.ThrowIfNull(bodies);
+        if (_allObjects.Count == 0)
+        {
+            _pendingSmallBodies = bodies;   // added when the catalog loads
+            return;
+        }
+
+        var selectedId = SelectedObject is { Target.IsSmallBody: true } selected ? selected.Id : null;
+        _allObjects.RemoveAll(row => row.Target.IsSmallBody);
+        _allObjects.AddRange(bodies.Where(b => b.IsSmallBody).Select(b => new CelestialObjectRowViewModel(b)));
+        _pendingSmallBodies = null;
+        _nightKey = null;
+        _feasibilityKey = null;
+        RefreshObservedMarks();
+        SmallBodiesChanged?.Invoke(this, EventArgs.Empty);
+        RecalculateAndFilter();
+        if (selectedId is not null)
+        {
+            SelectById(selectedId);
+        }
+    }
+
+    private IReadOnlyList<CelestialObject>? _pendingSmallBodies;
+
+    /// <summary>Raised when every object's night ephemeris (best window, maximum altitude) was recalculated.</summary>
+    public event EventHandler? NightEphemeridesUpdated;
+
+    /// <summary>Raised when the comets and asteroids of the catalog were replaced.</summary>
+    public event EventHandler? SmallBodiesChanged;
 
     [RelayCommand]
     private void ResetFilters()
@@ -352,7 +394,7 @@ public sealed partial class TargetsViewModel : ObservableValidator, IDisposable
                 _astronomy.GetApparentMagnitude(item.Target, utc),
                 horizon);
 
-            if (item.IsPlanet)
+            if (item.Target.IsMoving)
             {
                 item.Constellation = _astronomy.GetConstellation(item.Target, utc).Name;
             }
@@ -412,6 +454,8 @@ public sealed partial class TargetsViewModel : ObservableValidator, IDisposable
             {
                 rows[index].Night = ephemerides[index];
             }
+
+            NightEphemeridesUpdated?.Invoke(this, EventArgs.Empty);
 
             if (OnlyObservableTonight)
             {
@@ -587,7 +631,7 @@ public sealed partial class TargetsViewModel : ObservableValidator, IDisposable
         CatalogCaldwell => item.Target.CaldwellNumber is not null,
         CatalogNgc => item.Target.IsInCatalog("NGC"),
         CatalogIc => item.Target.IsInCatalog("IC"),
-        CatalogSolarSystem => item.IsPlanet,
+        CatalogSolarSystem => item.Target.IsMoving,
         _ => true
     };
 

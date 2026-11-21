@@ -50,6 +50,12 @@ public sealed class CelestialObjectObservation
 
     public bool IsPlanet => Planet is not null;
 
+    /// <summary>
+    /// For comets and asteroids: "r 1.23 AU · Δ 0.85 AU · elongation 75°" and the elements' source
+    /// and epoch; null for other objects.
+    /// </summary>
+    public string? SmallBodyText { get; init; }
+
     /// <summary>Forecast cloud cover (%) at culmination; null without a forecast.</summary>
     public int? CloudCoverAtCulmination { get; init; }
 

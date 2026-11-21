@@ -125,6 +125,10 @@
                       Content="{x:Static res:Strings.SettingsNameResolver}"/>
             <TextBlock Margin="23,2,0,8" Foreground="{StaticResource NightMutedTextBrush}" TextWrapping="Wrap" FontSize="12"
                        Text="{x:Static res:Strings.SettingsNameResolverNote}"/>
+            <CheckBox Margin="0,4" IsChecked="{Binding SmallBodiesEnabled}"
+                      Content="{x:Static res:Strings.SettingsSmallBodies}"/>
+            <TextBlock Margin="23,2,0,8" Foreground="{StaticResource NightMutedTextBrush}" TextWrapping="Wrap" FontSize="12"
+                       Text="{x:Static res:Strings.SettingsSmallBodiesNote}"/>
             <CheckBox Margin="0,4" IsChecked="{Binding CheckForUpdates}"
                       Content="{x:Static res:Strings.SettingsCheckForUpdates}"/>
             <TextBlock Margin="23,2,0,8" Foreground="{StaticResource NightMutedTextBrush}" TextWrapping="Wrap" FontSize="12"
@@ -158,7 +162,7 @@
                         </Style.Triggers>
                     </Style>
                 </TextBlock.Style>
-                <Run Text="{Binding StatusMessage}"/>
+                <Run Text="{Binding StatusMessage, Mode=OneWay}"/>
             </TextBlock>
 
             <TextBlock Margin="0,16,0,0" TextWrapping="Wrap" Foreground="{StaticResource SuccessSoftBrush}">
@@ -172,7 +176,7 @@
                         </Style.Triggers>
                     </Style>
                 </TextBlock.Style>
-                <Run Text="{Binding StatusMessage}"/>
+                <Run Text="{Binding StatusMessage, Mode=OneWay}"/>
             </TextBlock>
 
             <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,22,0,0">

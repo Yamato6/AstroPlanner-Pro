@@ -1,0 +1,33 @@
+<Window x:Class="AstroPlanner.UI.MilkyWayWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:res="clr-namespace:AstroPlanner.UI.Resources"
+        xmlns:ScottPlot="clr-namespace:ScottPlot.WPF;assembly=ScottPlot.WPF"
+        Title="{x:Static res:Strings.MilkyWayWindowTitle}"
+        Width="900" Height="640"
+        ShowInTaskbar="False"
+        WindowStartupLocation="CenterOwner"
+        Background="{StaticResource DialogBackgroundBrush}">
+    <Grid Margin="20">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="2*"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+        <TextBlock FontSize="20" FontWeight="SemiBold" Foreground="White" Text="{x:Static res:Strings.MilkyWayWindowTitle}"/>
+        <TextBlock Grid.Row="1" Margin="0,4,0,8" Foreground="{StaticResource NightMutedTextBrush}" TextWrapping="Wrap">
+            <Run Text="{Binding SubtitleText, Mode=OneWay}"/>
+            <Run Text="{x:Static res:Strings.MilkyWayLegend}"/>
+        </TextBlock>
+        <ScottPlot:WpfPlot x:Name="NightsPlot" Grid.Row="2" AutomationProperties.Name="{x:Static res:Strings.MilkyWayWindowTitle}"/>
+        <TextBlock Grid.Row="3" Margin="0,12,0,4" FontWeight="SemiBold" Foreground="{StaticResource NightTextBrush}"
+                   Text="{x:Static res:Strings.MilkyWayBestNights}"/>
+        <Grid Grid.Row="4">
+            <TextBlock Foreground="{StaticResource WarningBrush}" TextWrapping="Wrap" Text="{Binding StatusText}"/>
+            <ListBox ItemsSource="{Binding BestNights}" DisplayMemberPath="Text" Background="Transparent" BorderThickness="0"
+                     Foreground="{StaticResource NightTextBrush}" AutomationProperties.Name="{x:Static res:Strings.MilkyWayBestNights}"/>
+        </Grid>
+    </Grid>
+</Window>

@@ -352,6 +352,9 @@
                                 </DataTemplate>
                             </ItemsControl.ItemTemplate>
                         </ItemsControl>
+                        <Button Style="{StaticResource SecondaryButtonStyle}" HorizontalAlignment="Left" Margin="0,0,0,10"
+                                Content="{x:Static res:Strings.MilkyWayOpen}" ToolTip="{x:Static res:Strings.MilkyWayOpenTooltip}"
+                                Click="OnMilkyWayClicked"/>
                         <TextBlock FontSize="18" FontWeight="SemiBold" Text="{x:Static res:Strings.BestTargetsTitle}"/>
                         <TextBlock Foreground="{StaticResource NightMutedTextBrush}" TextWrapping="Wrap" Text="{x:Static res:Strings.BestTargetsExplanation}"/>
                         <TextBlock Margin="0,6,0,0" Foreground="{StaticResource WarningBrush}" TextWrapping="Wrap" Text="{Binding Tonight.BestTargetsHint}"
@@ -862,6 +865,9 @@
                                     <TextBlock Text="{Binding Planet.IlluminatedFraction, StringFormat={x:Static res:Strings.DetailPhaseFormat}}"/>
                                     <TextBlock Text="{Binding Planet.ElongationDegrees, StringFormat={x:Static res:Strings.DetailElongationFormat}}"/>
                                 </StackPanel>
+                                <!-- Comets and asteroids: distances and where the orbit comes from -->
+                                <TextBlock Text="{Binding SmallBodyText}" TextWrapping="Wrap" Margin="0,0,12,0"
+                                           Visibility="{Binding SmallBodyText, Converter={StaticResource NullToCollapsedConverter}}"/>
                             </StackPanel>
                             <StackPanel Grid.Row="2" Grid.Column="1">
                                 <TextBlock Foreground="{StaticResource NightMutedTextBrush}" Text="{x:Static res:Strings.DetailCurrentPosition}"/>
