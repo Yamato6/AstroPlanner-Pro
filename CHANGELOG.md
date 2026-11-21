@@ -4,6 +4,8 @@ All notable changes to AstroPlanner Pro. Format based on [Keep a Changelog](http
 versions follow [Semantic Versioning](https://semver.org/). Versions up to 1.0.0 are the original
 [AstroPlanner](https://github.com/Yamato6/AstroPlanner) (in Spanish), translated here.
 
+## [Unreleased]
+
 ## [2.0.0] — 2026-11-21
 
 AstroPlanner Pro: the v1 visual-observing planner rebuilt as an **astrophotography planner**. It
@@ -541,7 +543,8 @@ Also includes the changes of 0.4, which was never released on its own.
 
 - First Windows executable: table of visible Messier objects and altitude chart.
 
-[Unreleased]: https://github.com/Yamato6/AstroPlanner-Pro/compare/v1.0.0...HEAD
+[Unreleased]: https://github.com/Yamato6/AstroPlanner-Pro/compare/v2.0.0...HEAD
+[2.0.0]: https://github.com/Yamato6/AstroPlanner-Pro/compare/v1.0.0...v2.0.0
 [1.0.0]: https://github.com/Yamato6/AstroPlanner/compare/v0.8.0...v1.0.0
 [0.8.0]: https://github.com/Yamato6/AstroPlanner/compare/v0.7.0...v0.8.0
 [0.7.0]: https://github.com/Yamato6/AstroPlanner/compare/v0.6.0...v0.7.0

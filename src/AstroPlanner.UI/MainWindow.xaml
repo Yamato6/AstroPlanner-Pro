@@ -150,6 +150,11 @@
             </Style.Triggers>
         </Style>
     </Window.Resources>
+    <!-- Shortcuts that only run a command; those that open dialogs or move the focus are in OnPreviewKeyDown. -->
+    <Window.InputBindings>
+        <KeyBinding Key="F5" Command="{Binding SetNowCommand}"/>
+        <KeyBinding Key="N" Modifiers="Control+Shift" Command="{Binding ToggleNightThemeCommand}"/>
+    </Window.InputBindings>
     <Grid Margin="16">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
@@ -607,7 +612,7 @@
                             <DockPanel Grid.Row="0">
                                 <Button DockPanel.Dock="Right" Style="{StaticResource SecondaryButtonStyle}" Padding="10,4"
                                         Content="{x:Static res:Strings.SkyOpenFinderChart}" ToolTip="{x:Static res:Strings.SkyOpenFinderChartTooltip}"
-                                        Command="{Binding Sky.OpenFinderChartCommand}" IsEnabled="{Binding Detail.HasSelection}"/>
+                                        Command="{Binding Sky.Modes.OpenFinderChartCommand}" IsEnabled="{Binding Detail.HasSelection}"/>
                                 <TextBlock FontSize="18" FontWeight="SemiBold" VerticalAlignment="Center" TextTrimming="CharacterEllipsis"
                                            Text="{Binding Detail.ChartTitle}"/>
                             </DockPanel>
@@ -654,11 +659,11 @@
                                             Content="{x:Static res:Strings.SkyExportImage}" ToolTip="{x:Static res:Strings.SkyExportImageTooltip}"
                                             Click="OnSkyExportClicked"/>
                                     <StackPanel Orientation="Horizontal">
-                                        <RadioButton GroupName="SkyMode" Style="{StaticResource SkyModeButtonStyle}" IsChecked="{Binding Sky.IsDomeMode}"
+                                        <RadioButton GroupName="SkyMode" Style="{StaticResource SkyModeButtonStyle}" IsChecked="{Binding Sky.Modes.IsDomeMode}"
                                                      Content="{x:Static res:Strings.SkyViewDome}" ToolTip="{x:Static res:Strings.SkyViewDomeTooltip}"/>
-                                        <RadioButton GroupName="SkyMode" Style="{StaticResource SkyModeButtonStyle}" IsChecked="{Binding Sky.IsAllSkyMode}"
+                                        <RadioButton GroupName="SkyMode" Style="{StaticResource SkyModeButtonStyle}" IsChecked="{Binding Sky.Modes.IsAllSkyMode}"
                                                      Content="{x:Static res:Strings.SkyViewAllSky}" ToolTip="{x:Static res:Strings.SkyViewAllSkyTooltip}"/>
-                                        <RadioButton GroupName="SkyMode" Style="{StaticResource SkyModeButtonStyle}" IsChecked="{Binding Sky.IsFinderMode}"
+                                        <RadioButton GroupName="SkyMode" Style="{StaticResource SkyModeButtonStyle}" IsChecked="{Binding Sky.Modes.IsFinderMode}"
                                                      Content="{x:Static res:Strings.SkyViewFinder}" ToolTip="{x:Static res:Strings.SkyViewFinderTooltip}"/>
                                     </StackPanel>
                                 </DockPanel>
@@ -667,45 +672,45 @@
                             <!-- Time control -->
                             <StackPanel Visibility="{Binding Sky.IsRendererAvailable, Converter={StaticResource BooleanToVisibilityConverter}}">
                                 <TextBlock Margin="0,14,0,4" FontWeight="SemiBold" Text="{x:Static res:Strings.SkyTimeHeader}"/>
-                                <TextBlock FontSize="15" Text="{Binding Sky.SkyTimeText}"/>
+                                <TextBlock FontSize="15" Text="{Binding Sky.Time.SkyTimeText}"/>
                                 <StackPanel Orientation="Horizontal" Margin="0,6,0,0">
-                                    <Button Style="{StaticResource PrimaryButtonStyle}" MinWidth="78" Command="{Binding Sky.PlayCommand}"
+                                    <Button Style="{StaticResource PrimaryButtonStyle}" MinWidth="78" Command="{Binding Sky.Time.PlayCommand}"
                                             Content="{x:Static res:Strings.SkyPlay}" ToolTip="{x:Static res:Strings.SkyPlayTooltip}"
-                                            Visibility="{Binding Sky.IsPlaying, Converter={StaticResource InverseBooleanToVisibilityConverter}}"/>
-                                    <Button Style="{StaticResource PrimaryButtonStyle}" MinWidth="78" Command="{Binding Sky.PauseCommand}"
+                                            Visibility="{Binding Sky.Time.IsPlaying, Converter={StaticResource InverseBooleanToVisibilityConverter}}"/>
+                                    <Button Style="{StaticResource PrimaryButtonStyle}" MinWidth="78" Command="{Binding Sky.Time.PauseCommand}"
                                             Content="{x:Static res:Strings.SkyPause}" ToolTip="{x:Static res:Strings.SkyPlayTooltip}"
-                                            Visibility="{Binding Sky.IsPlaying, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+                                            Visibility="{Binding Sky.Time.IsPlaying, Converter={StaticResource BooleanToVisibilityConverter}}"/>
                                     <TextBlock Margin="10,0,4,0" VerticalAlignment="Center" Text="{x:Static res:Strings.SkyRateLabel}"/>
-                                    <ComboBox Width="70" Style="{StaticResource DarkComboBoxStyle}" ItemsSource="{Binding Sky.Rates}" SelectedItem="{Binding Sky.SelectedRate}" AutomationProperties.Name="{x:Static res:Strings.SkyRateLabel}"
+                                    <ComboBox Width="70" Style="{StaticResource DarkComboBoxStyle}" ItemsSource="{Binding Sky.Time.Rates}" SelectedItem="{Binding Sky.Time.SelectedRate}" AutomationProperties.Name="{x:Static res:Strings.SkyRateLabel}"
                                               ItemStringFormat="{x:Static res:Strings.SkyRateFormat}"/>
-                                    <Button Margin="6,0,0,0" Style="{StaticResource SecondaryButtonStyle}" Command="{Binding Sky.NowCommand}"
+                                    <Button Margin="6,0,0,0" Style="{StaticResource SecondaryButtonStyle}" Command="{Binding Sky.Time.NowCommand}"
                                             Content="{x:Static res:Strings.SkyNow}"/>
                                 </StackPanel>
                                 <UniformGrid Columns="4" Margin="0,6,0,0">
-                                    <Button Margin="0,0,3,3" Style="{StaticResource SecondaryButtonStyle}" Command="{Binding Sky.StepCommand}" CommandParameter="-1440" Content="{x:Static res:Strings.SkyStepBackDay}"/>
-                                    <Button Margin="0,0,3,3" Style="{StaticResource SecondaryButtonStyle}" Command="{Binding Sky.StepCommand}" CommandParameter="-60" Content="{x:Static res:Strings.SkyStepBackHour}"/>
-                                    <Button Margin="0,0,3,3" Style="{StaticResource SecondaryButtonStyle}" Command="{Binding Sky.StepCommand}" CommandParameter="-10" Content="{x:Static res:Strings.SkyStepBackTenMinutes}"/>
-                                    <Button Margin="0,0,3,3" Style="{StaticResource SecondaryButtonStyle}" Command="{Binding Sky.StepCommand}" CommandParameter="-1" Content="{x:Static res:Strings.SkyStepBackMinute}"/>
-                                    <Button Margin="0,0,3,3" Style="{StaticResource SecondaryButtonStyle}" Command="{Binding Sky.StepCommand}" CommandParameter="1" Content="{x:Static res:Strings.SkyStepForwardMinute}"/>
-                                    <Button Margin="0,0,3,3" Style="{StaticResource SecondaryButtonStyle}" Command="{Binding Sky.StepCommand}" CommandParameter="10" Content="{x:Static res:Strings.SkyStepForwardTenMinutes}"/>
-                                    <Button Margin="0,0,3,3" Style="{StaticResource SecondaryButtonStyle}" Command="{Binding Sky.StepCommand}" CommandParameter="60" Content="{x:Static res:Strings.SkyStepForwardHour}"/>
-                                    <Button Margin="0,0,3,3" Style="{StaticResource SecondaryButtonStyle}" Command="{Binding Sky.StepCommand}" CommandParameter="1440" Content="{x:Static res:Strings.SkyStepForwardDay}"/>
+                                    <Button Margin="0,0,3,3" Style="{StaticResource SecondaryButtonStyle}" Command="{Binding Sky.Time.StepCommand}" CommandParameter="-1440" Content="{x:Static res:Strings.SkyStepBackDay}"/>
+                                    <Button Margin="0,0,3,3" Style="{StaticResource SecondaryButtonStyle}" Command="{Binding Sky.Time.StepCommand}" CommandParameter="-60" Content="{x:Static res:Strings.SkyStepBackHour}"/>
+                                    <Button Margin="0,0,3,3" Style="{StaticResource SecondaryButtonStyle}" Command="{Binding Sky.Time.StepCommand}" CommandParameter="-10" Content="{x:Static res:Strings.SkyStepBackTenMinutes}"/>
+                                    <Button Margin="0,0,3,3" Style="{StaticResource SecondaryButtonStyle}" Command="{Binding Sky.Time.StepCommand}" CommandParameter="-1" Content="{x:Static res:Strings.SkyStepBackMinute}"/>
+                                    <Button Margin="0,0,3,3" Style="{StaticResource SecondaryButtonStyle}" Command="{Binding Sky.Time.StepCommand}" CommandParameter="1" Content="{x:Static res:Strings.SkyStepForwardMinute}"/>
+                                    <Button Margin="0,0,3,3" Style="{StaticResource SecondaryButtonStyle}" Command="{Binding Sky.Time.StepCommand}" CommandParameter="10" Content="{x:Static res:Strings.SkyStepForwardTenMinutes}"/>
+                                    <Button Margin="0,0,3,3" Style="{StaticResource SecondaryButtonStyle}" Command="{Binding Sky.Time.StepCommand}" CommandParameter="60" Content="{x:Static res:Strings.SkyStepForwardHour}"/>
+                                    <Button Margin="0,0,3,3" Style="{StaticResource SecondaryButtonStyle}" Command="{Binding Sky.Time.StepCommand}" CommandParameter="1440" Content="{x:Static res:Strings.SkyStepForwardDay}"/>
                                 </UniformGrid>
 
                                 <!-- Find -->
                                 <TextBlock Margin="0,14,0,4" FontWeight="SemiBold" Text="{x:Static res:Strings.SkySearchHeader}"/>
                                 <DockPanel>
                                     <Button DockPanel.Dock="Right" Margin="6,0,0,0" Style="{StaticResource SecondaryButtonStyle}"
-                                            Command="{Binding Sky.SearchCommand}" Content="{x:Static res:Strings.SkySearchButton}"/>
-                                    <TextBox x:Name="SkySearchBox" Text="{Binding Sky.SearchText, UpdateSourceTrigger=PropertyChanged}" AutomationProperties.Name="{x:Static res:Strings.SkySearchHeader}"
+                                            Command="{Binding Sky.Search.SearchCommand}" Content="{x:Static res:Strings.SkySearchButton}"/>
+                                    <TextBox x:Name="SkySearchBox" Text="{Binding Sky.Search.SearchText, UpdateSourceTrigger=PropertyChanged}" AutomationProperties.Name="{x:Static res:Strings.SkySearchHeader}"
                                              ToolTip="{x:Static res:Strings.SkySearchTooltip}">
                                         <TextBox.InputBindings>
-                                            <KeyBinding Key="Enter" Command="{Binding Sky.SearchCommand}"/>
+                                            <KeyBinding Key="Enter" Command="{Binding Sky.Search.SearchCommand}"/>
                                         </TextBox.InputBindings>
                                     </TextBox>
                                 </DockPanel>
                                 <TextBlock Margin="0,4,0,0" Foreground="{DynamicResource WarningBrush}" TextWrapping="Wrap"
-                                           Text="{Binding Sky.SearchMessage}" Visibility="{Binding Sky.SearchMessage, Converter={StaticResource NullToCollapsedConverter}}"/>
+                                           Text="{Binding Sky.Search.SearchMessage}" Visibility="{Binding Sky.Search.SearchMessage, Converter={StaticResource NullToCollapsedConverter}}"/>
                             </StackPanel>
 
                             <!-- Selection -->
@@ -718,7 +723,7 @@
                                         Content="{x:Static res:Strings.SkyOpenDetails}" IsEnabled="{Binding Sky.HasCatalogSelection}"/>
                             </StackPanel>
                             <Button Margin="0,6,0,0" HorizontalAlignment="Left" Style="{StaticResource SecondaryButtonStyle}"
-                                    Command="{Binding Sky.OpenFinderChartCommand}" Content="{x:Static res:Strings.SkyOpenFinderChart}"
+                                    Command="{Binding Sky.Modes.OpenFinderChartCommand}" Content="{x:Static res:Strings.SkyOpenFinderChart}"
                                     ToolTip="{x:Static res:Strings.SkyOpenFinderChartTooltip}" IsEnabled="{Binding Sky.HasCatalogSelection}"
                                     Visibility="{Binding Sky.IsRendererAvailable, Converter={StaticResource BooleanToVisibilityConverter}}"/>
                             <TextBlock Margin="0,6,0,0" Foreground="{DynamicResource NightMutedTextBrush}" TextWrapping="Wrap"
@@ -728,7 +733,7 @@
                             <!-- Layers -->
                             <StackPanel Visibility="{Binding Sky.IsRendererAvailable, Converter={StaticResource BooleanToVisibilityConverter}}">
                                 <TextBlock Margin="0,14,0,4" FontWeight="SemiBold" Text="{x:Static res:Strings.SkyLayersHeader}"/>
-                                <ItemsControl ItemsSource="{Binding Sky.LayerToggles}">
+                                <ItemsControl ItemsSource="{Binding Sky.Layers.LayerToggles}">
                                     <ItemsControl.ItemTemplate>
                                         <DataTemplate>
                                             <CheckBox Margin="0,2" Content="{Binding Name}" IsChecked="{Binding IsEnabled}"/>
@@ -738,11 +743,11 @@
                                 <TextBlock Margin="0,8,0,2" Text="{x:Static res:Strings.SkyStarLimit}"/>
                                 <DockPanel>
                                     <TextBlock DockPanel.Dock="Right" Width="32" TextAlignment="Right"
-                                               Text="{Binding Sky.StarLimitMagnitude, StringFormat=0.0}"/>
+                                               Text="{Binding Sky.Layers.StarLimitMagnitude, StringFormat=0.0}"/>
                                     <Slider Minimum="3" Maximum="9.5" TickFrequency="0.5" IsSnapToTickEnabled="True"
-                                            Value="{Binding Sky.StarLimitMagnitude, Delay=150}" AutomationProperties.Name="{x:Static res:Strings.SkyStarLimit}"/>
+                                            Value="{Binding Sky.Layers.StarLimitMagnitude, Delay=150}" AutomationProperties.Name="{x:Static res:Strings.SkyStarLimit}"/>
                                 </DockPanel>
-                                <CheckBox Margin="0,8,0,0" Content="{x:Static res:Strings.SkyShowStats}" IsChecked="{Binding Sky.ShowStats}"/>
+                                <CheckBox Margin="0,8,0,0" Content="{x:Static res:Strings.SkyShowStats}" IsChecked="{Binding Sky.Layers.ShowStats}"/>
                                 <TextBlock Margin="0,4,0,0" Foreground="{DynamicResource NightMutedTextBrush}" Text="{Binding Sky.StatsText}"
                                            Visibility="{Binding Sky.StatsText, Converter={StaticResource NullToCollapsedConverter}}"/>
 
@@ -754,11 +759,11 @@
 
                                 <!-- Camera field of view -->
                                 <TextBlock Margin="0,14,0,4" FontWeight="SemiBold" Text="{x:Static res:Strings.SkyFovHeader}"/>
-                                <CheckBox Content="{x:Static res:Strings.SkyFovShow}" IsChecked="{Binding Sky.IsFovVisible}"/>
-                                <StackPanel Margin="0,6,0,0" IsEnabled="{Binding Sky.IsFovVisible}">
+                                <CheckBox Content="{x:Static res:Strings.SkyFovShow}" IsChecked="{Binding Sky.Camera.IsFovVisible}"/>
+                                <StackPanel Margin="0,6,0,0" IsEnabled="{Binding Sky.Camera.IsFovVisible}">
                                     <TextBlock Margin="0,0,0,2" Text="{x:Static res:Strings.SkySensorLabel}"/>
-                                    <ComboBox Style="{StaticResource DarkComboBoxStyle}" ItemsSource="{Binding Sky.SensorPresets}"
-                                              SelectedItem="{Binding Sky.SelectedSensorPreset}" AutomationProperties.Name="{x:Static res:Strings.SkySensorLabel}"/>
+                                    <ComboBox Style="{StaticResource DarkComboBoxStyle}" ItemsSource="{Binding Sky.Camera.SensorPresets}"
+                                              SelectedItem="{Binding Sky.Camera.SelectedSensorPreset}" AutomationProperties.Name="{x:Static res:Strings.SkySensorLabel}"/>
                                     <Grid Margin="0,6,0,0">
                                         <Grid.ColumnDefinitions>
                                             <ColumnDefinition Width="*"/>
@@ -772,22 +777,22 @@
                                             <RowDefinition Height="Auto"/>
                                         </Grid.RowDefinitions>
                                         <TextBlock Grid.Row="0" Grid.Column="0" Text="{x:Static res:Strings.SkySensorWidth}"/>
-                                        <TextBox Grid.Row="1" Grid.Column="0" Text="{Binding Sky.SensorWidthMm, Delay=400, UpdateSourceTrigger=PropertyChanged}" AutomationProperties.Name="{x:Static res:Strings.SkySensorWidth}"/>
+                                        <TextBox Grid.Row="1" Grid.Column="0" Text="{Binding Sky.Camera.SensorWidthMm, Delay=400, UpdateSourceTrigger=PropertyChanged}" AutomationProperties.Name="{x:Static res:Strings.SkySensorWidth}"/>
                                         <TextBlock Grid.Row="0" Grid.Column="2" Text="{x:Static res:Strings.SkySensorHeight}"/>
-                                        <TextBox Grid.Row="1" Grid.Column="2" Text="{Binding Sky.SensorHeightMm, Delay=400, UpdateSourceTrigger=PropertyChanged}" AutomationProperties.Name="{x:Static res:Strings.SkySensorHeight}"/>
+                                        <TextBox Grid.Row="1" Grid.Column="2" Text="{Binding Sky.Camera.SensorHeightMm, Delay=400, UpdateSourceTrigger=PropertyChanged}" AutomationProperties.Name="{x:Static res:Strings.SkySensorHeight}"/>
                                         <TextBlock Grid.Row="2" Grid.Column="0" Margin="0,6,0,0" Text="{x:Static res:Strings.SkyFocalLength}"/>
-                                        <TextBox Grid.Row="3" Grid.Column="0" Text="{Binding Sky.FocalLengthMm, Delay=400, UpdateSourceTrigger=PropertyChanged}" AutomationProperties.Name="{x:Static res:Strings.SkyFocalLength}"/>
+                                        <TextBox Grid.Row="3" Grid.Column="0" Text="{Binding Sky.Camera.FocalLengthMm, Delay=400, UpdateSourceTrigger=PropertyChanged}" AutomationProperties.Name="{x:Static res:Strings.SkyFocalLength}"/>
                                         <TextBlock Grid.Row="2" Grid.Column="2" Margin="0,6,0,0" Text="{x:Static res:Strings.SkyFovRotation}"
                                                    ToolTip="{x:Static res:Strings.SkyFovRotationTooltip}"/>
-                                        <TextBox Grid.Row="3" Grid.Column="2" Text="{Binding Sky.FovRotationDegrees, Delay=400, UpdateSourceTrigger=PropertyChanged}" AutomationProperties.Name="{x:Static res:Strings.SkyFovRotation}"
+                                        <TextBox Grid.Row="3" Grid.Column="2" Text="{Binding Sky.Camera.FovRotationDegrees, Delay=400, UpdateSourceTrigger=PropertyChanged}" AutomationProperties.Name="{x:Static res:Strings.SkyFovRotation}"
                                                  ToolTip="{x:Static res:Strings.SkyFovRotationTooltip}"/>
                                     </Grid>
-                                    <TextBlock Margin="0,6,0,0" FontWeight="SemiBold" Text="{Binding Sky.FovText}" TextWrapping="Wrap"/>
+                                    <TextBlock Margin="0,6,0,0" FontWeight="SemiBold" Text="{Binding Sky.Camera.FovText}" TextWrapping="Wrap"/>
                                     <TextBlock Foreground="{DynamicResource NightMutedTextBrush}" TextWrapping="Wrap"
-                                               Text="{Binding Sky.FovRigName, StringFormat={x:Static res:Strings.SkyFovFromRigFormat}}"
-                                               Visibility="{Binding Sky.FovRigName, Converter={StaticResource NullToCollapsedConverter}}"/>
-                                    <TextBlock Foreground="{DynamicResource NightMutedTextBrush}" Text="{Binding Sky.FovCenterText}"
-                                               Visibility="{Binding Sky.FovCenterText, Converter={StaticResource NullToCollapsedConverter}}"/>
+                                               Text="{Binding Sky.Camera.FovRigName, StringFormat={x:Static res:Strings.SkyFovFromRigFormat}}"
+                                               Visibility="{Binding Sky.Camera.FovRigName, Converter={StaticResource NullToCollapsedConverter}}"/>
+                                    <TextBlock Foreground="{DynamicResource NightMutedTextBrush}" Text="{Binding Sky.Camera.FovCenterText}"
+                                               Visibility="{Binding Sky.Camera.FovCenterText, Converter={StaticResource NullToCollapsedConverter}}"/>
                                     <TextBlock Margin="0,4,0,0" Foreground="{DynamicResource NightMutedTextBrush}" TextWrapping="Wrap"
                                                Text="{x:Static res:Strings.SkyFovHelp}"/>
                                 </StackPanel>
@@ -924,7 +929,7 @@
                                 <Button Style="{StaticResource SecondaryButtonStyle}" Content="{x:Static res:Strings.SkyOpenFinderChart}"
                                         HorizontalAlignment="Left" Margin="0,8,0,0"
                                         ToolTip="{x:Static res:Strings.SkyOpenFinderChartTooltip}"
-                                        Command="{Binding DataContext.Sky.OpenFinderChartCommand, RelativeSource={RelativeSource AncestorType=Window}}"/>
+                                        Command="{Binding DataContext.Sky.Modes.OpenFinderChartCommand, RelativeSource={RelativeSource AncestorType=Window}}"/>
                             </StackPanel>
                             <!-- Capture feasibility (spec §8.6): every factor with its value and impact -->
                             <StackPanel Grid.Row="3" Grid.ColumnSpan="3" Margin="0,20,0,0"

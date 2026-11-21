@@ -243,6 +243,10 @@ public sealed partial class LogbookViewModel : ObservableObject
         return csv.ToString();
     }
 
+    /// <summary>File name offered when the logbook is exported: "AstroPlannerPro-logbook-2026-11-21.csv".</summary>
+    public static string SuggestedExportFileName(DateTime today) =>
+        string.Create(CultureInfo.InvariantCulture, $"AstroPlannerPro-logbook-{today:yyyy-MM-dd}.csv");
+
     /// <summary>Exports the logbook to CSV (UTF-8 with BOM so that Excel keeps accents).</summary>
     public bool Export(string filePath)
     {

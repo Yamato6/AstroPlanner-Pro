@@ -7,6 +7,7 @@ using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Navigation;
 using System.Windows.Threading;
+using AstroPlanner.UI.Charts;
 using AstroPlanner.UI.Resources;
 using AstroPlanner.UI.Services;
 using AstroPlanner.UI.Sky;
@@ -35,7 +36,7 @@ public partial class MainWindow : Window
         TimelinePlot.UserInputProcessor.IsEnabled = false;
         SkyPlot.SizeChanged += (_, _) =>
         {
-            if (_viewModel is not null) UpdateSkyMap(_viewModel.Sky);
+            if (_viewModel is not null) UpdateSkyMap(_viewModel.Sky.Map);
         };
         DataContextChanged += OnDataContextChanged;
         Loaded += OnLoaded;
@@ -83,10 +84,10 @@ public partial class MainWindow : Window
         if (_viewModel is not null)
         {
             _viewModel.Detail.PropertyChanged -= OnDetailPropertyChanged;
-            _viewModel.Sky.PropertyChanged -= OnSkyPropertyChanged;
+            _viewModel.Sky.Map.PropertyChanged -= OnSkyMapPropertyChanged;
             _viewModel.Sky.FocusSearchRequested -= OnSkyFocusSearch;
             _viewModel.Sky.OpenDetailsRequested -= OnSkyOpenDetails;
-            _viewModel.Sky.ShowSkyRequested -= OnShowSkyRequested;
+            _viewModel.Sky.Modes.ShowSkyRequested -= OnShowSkyRequested;
             _viewModel.Locations.PropertyChanged -= OnLocationsPropertyChanged;
             _viewModel.Plan.TimelineChanged -= OnPlanTimelineChanged;
             _viewModel.Settings.Theme.Changed -= OnThemeChanged;
@@ -98,10 +99,10 @@ public partial class MainWindow : Window
         if (_viewModel is not null)
         {
             _viewModel.Detail.PropertyChanged += OnDetailPropertyChanged;
-            _viewModel.Sky.PropertyChanged += OnSkyPropertyChanged;
+            _viewModel.Sky.Map.PropertyChanged += OnSkyMapPropertyChanged;
             _viewModel.Sky.FocusSearchRequested += OnSkyFocusSearch;
             _viewModel.Sky.OpenDetailsRequested += OnSkyOpenDetails;
-            _viewModel.Sky.ShowSkyRequested += OnShowSkyRequested;
+            _viewModel.Sky.Modes.ShowSkyRequested += OnShowSkyRequested;
             _viewModel.Locations.PropertyChanged += OnLocationsPropertyChanged;
             _viewModel.Plan.TimelineChanged += OnPlanTimelineChanged;
             _viewModel.Settings.Theme.Changed += OnThemeChanged;
@@ -114,7 +115,7 @@ public partial class MainWindow : Window
     {
         if (_viewModel is null) return;
         UpdateChart(_viewModel.Detail);
-        UpdateSkyMap(_viewModel.Sky);
+        UpdateSkyMap(_viewModel.Sky.Map);
         UpdateHorizonPlot(_viewModel.Locations);
         UpdateTimeline(_viewModel.Plan.Timeline);
         UpdatePredictionPlot(_viewModel.Logbook);
@@ -133,7 +134,7 @@ public partial class MainWindow : Window
         await _viewModel.Settings.LoadCitiesCommand.ExecuteAsync(null);
         await _viewModel.LoadCommand.ExecuteAsync(null);
         UpdateChart(_viewModel.Detail);
-        UpdateSkyMap(_viewModel.Sky);
+        UpdateSkyMap(_viewModel.Sky.Map);
         PredictionPlot.UserInputProcessor.IsEnabled = false;
         UpdatePredictionPlot(_viewModel.Logbook);
         if (SkyQuery().Length > 0)
@@ -208,8 +209,9 @@ public partial class MainWindow : Window
     }
 
     /// <summary>
-    /// Keyboard shortcuts: Ctrl+F search, F5 now, Ctrl+, settings, Ctrl+P print the plan,
-    /// Ctrl+E export the plan, F1 about.
+    /// Keyboard shortcuts that open dialogs or move the focus: Ctrl+F search, Ctrl+, settings,
+    /// Ctrl+P print the plan, Ctrl+E export the plan, F1 about, and the sky keys. F5 (now) and
+    /// Ctrl+Shift+N (night vision) are key bindings to view-model commands in the XAML.
     /// </summary>
     private void OnPreviewKeyDown(object sender, KeyEventArgs e)
     {
@@ -225,12 +227,6 @@ public partial class MainWindow : Window
                     SearchBox.Focus();
                     SearchBox.SelectAll();
                 }, DispatcherPriority.Input);
-                break;
-            case Key.N when Keyboard.Modifiers == (ModifierKeys.Control | ModifierKeys.Shift):
-                if (_viewModel is not null) _viewModel.IsNightTheme = !_viewModel.IsNightTheme;
-                break;
-            case Key.F5 when none:
-                _viewModel?.SetNowCommand.Execute(null);
                 break;
             case Key.OemComma when ctrl:
                 OnSettingsClicked(sender, e);
@@ -248,19 +244,19 @@ public partial class MainWindow : Window
                 break;
             // Sky tab (when the focus is not in a text box; inside the renderer it sends them itself).
             case Key.Space when none && Tabs.SelectedItem == SkyTab && Keyboard.FocusedElement is not TextBox:
-                _viewModel?.Sky.TogglePlayCommand.Execute(null);
+                _viewModel?.Sky.Time.TogglePlayCommand.Execute(null);
                 break;
             case Key.OemQuestion or Key.Divide when none && Tabs.SelectedItem == SkyTab && Keyboard.FocusedElement is not TextBox:
                 OnSkyFocusSearch(this, EventArgs.Empty);
                 break;
             case Key.D1 or Key.NumPad1 when none && Tabs.SelectedItem == SkyTab && Keyboard.FocusedElement is not TextBox:
-                if (_viewModel is not null) _viewModel.Sky.IsDomeMode = true;
+                if (_viewModel is not null) _viewModel.Sky.Modes.IsDomeMode = true;
                 break;
             case Key.D2 or Key.NumPad2 when none && Tabs.SelectedItem == SkyTab && Keyboard.FocusedElement is not TextBox:
-                if (_viewModel is not null) _viewModel.Sky.IsAllSkyMode = true;
+                if (_viewModel is not null) _viewModel.Sky.Modes.IsAllSkyMode = true;
                 break;
             case Key.F when none && Tabs.SelectedItem == SkyTab && Keyboard.FocusedElement is not TextBox:
-                if (_viewModel is not null) _viewModel.Sky.IsFovVisible = !_viewModel.Sky.IsFovVisible;
+                if (_viewModel is not null) _viewModel.Sky.Camera.IsFovVisible = !_viewModel.Sky.Camera.IsFovVisible;
                 break;
             default:
                 return;
@@ -327,7 +323,7 @@ public partial class MainWindow : Window
         {
             Title = Strings.SkyExportDialogTitle,
             Filter = Strings.PngFileFilter,
-            FileName = _viewModel.Sky.SuggestedImageFileName()
+            FileName = _viewModel.Sky.Modes.SuggestedImageFileName()
         };
 
         if (dialog.ShowDialog(this) != true) return;
@@ -352,39 +348,12 @@ public partial class MainWindow : Window
         }
     }
 
-    /// <summary>Horizon profile preview: altitude against azimuth, the obstructed part filled.</summary>
-    private void UpdateHorizonPlot(LocationsViewModel viewModel)
+
+    private void OnSkyMapPropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
-        var plot = HorizonPlot.Plot;
-        plot.Clear();
-        plot.FigureBackground.Color = Theme("SurfaceBrush");
-        plot.DataBackground.Color = Theme("NightPanelBrush");
-        plot.Axes.Color(Theme("NightMutedTextBrush"));
-        plot.Grid.MajorLineColor = Theme("NightBorderBrush");
-
-        var points = viewModel.GetHorizonPreview();
-        if (points.Count > 0)
+        if (e.PropertyName is nameof(SkyMapViewModel.MapVersion) && _viewModel is not null)
         {
-            var xs = points.Select(p => p.AzimuthDegrees).ToArray();
-            var ys = points.Select(p => p.AltitudeDegrees).ToArray();
-            var fill = plot.Add.FillY(xs, ys, xs.Select(_ => -10.0).ToArray());
-            fill.FillColor = Theme("SkyHorizonBrush").WithAlpha(0.45);
-            fill.LineColor = Theme("WarningBrush");
-            fill.LineWidth = 1.5f;
-        }
-
-        plot.Axes.Bottom.Label.Text = Strings.HorizonPreviewAzimuth;
-        plot.Axes.Left.Label.Text = Strings.HorizonPreviewAltitude;
-        plot.Axes.SetLimits(0, 360, -10, Math.Max(30, points.Count > 0 ? points.Max(p => p.AltitudeDegrees) + 5 : 30));
-        plot.Axes.Bottom.TickGenerator = new ScottPlot.TickGenerators.NumericFixedInterval(45);
-        HorizonPlot.Refresh();
-    }
-
-    private void OnSkyPropertyChanged(object? sender, PropertyChangedEventArgs e)
-    {
-        if (e.PropertyName is nameof(SkyViewModel.MapVersion) && _viewModel is not null)
-        {
-            UpdateSkyMap(_viewModel.Sky);
+            UpdateSkyMap(_viewModel.Sky.Map);
         }
     }
 
@@ -395,23 +364,8 @@ public partial class MainWindow : Window
     private static void CommitFocusedTextBox() =>
         (Keyboard.FocusedElement as TextBox)?.GetBindingExpression(TextBox.TextProperty)?.UpdateSource();
 
-    private void OnExportPlanClicked(object sender, RoutedEventArgs e)
-    {
-        CommitFocusedTextBox();
-        if (_viewModel is null || _viewModel.Plan.Items.Count == 0) return;
-
-        var dialog = new Microsoft.Win32.SaveFileDialog
-        {
-            Title = Strings.PlanExportDialogTitle,
-            Filter = Strings.CsvFileFilter,
-            FileName = string.Create(CultureInfo.InvariantCulture, $"AstroPlannerPro-plan-{_viewModel.ObservationDate:yyyy-MM-dd}.csv")
-        };
-
-        if (dialog.ShowDialog(this) == true)
-        {
-            _viewModel.Plan.Export(dialog.FileName);
-        }
-    }
+    private void OnExportPlanClicked(object sender, RoutedEventArgs e) =>
+        ExportPlan(Strings.PlanExportDialogTitle, Strings.CsvFileFilter, "csv", (plan, path) => plan.Export(path));
 
     private void OnExportPlanPdfClicked(object sender, RoutedEventArgs e) =>
         ExportPlan(Strings.PlanExportPdfDialogTitle, Strings.PdfFileFilter, "pdf", (plan, path) => plan.ExportPdf(path));
@@ -428,7 +382,7 @@ public partial class MainWindow : Window
         {
             Title = title,
             Filter = filter,
-            FileName = string.Create(CultureInfo.InvariantCulture, $"AstroPlannerPro-plan-{_viewModel.ObservationDate:yyyy-MM-dd}.{extension}")
+            FileName = _viewModel.Plan.SuggestedFileName(extension)
         };
 
         if (dialog.ShowDialog(this) == true)
@@ -456,7 +410,7 @@ public partial class MainWindow : Window
         {
             Title = Strings.LogbookExportDialogTitle,
             Filter = Strings.CsvFileFilter,
-            FileName = string.Create(CultureInfo.InvariantCulture, $"AstroPlannerPro-logbook-{DateTime.Now:yyyy-MM-dd}.csv")
+            FileName = LogbookViewModel.SuggestedExportFileName(DateTime.Now)
         };
 
         if (dialog.ShowDialog(this) == true)
@@ -488,397 +442,21 @@ public partial class MainWindow : Window
         var scale = SkyPlot.DisplayScale;
         var coordinates = SkyPlot.Plot.GetCoordinates(
             new ScottPlot.Pixel((float)(position.X * scale), (float)(position.Y * scale)));
-        _viewModel.Sky.SelectNearestOnSkyMap(coordinates.X, coordinates.Y);
+        _viewModel.Sky.Map.SelectNearestOnSkyMap(coordinates.X, coordinates.Y);
     }
 
-    /// <summary>Theme color (Themes/Dark.xaml) for ScottPlot: the charts share the UI palette.</summary>
-    private ScottPlot.Color Theme(string key) =>
-        TryFindResource(key) is SolidColorBrush { Color: var c }
-            ? new ScottPlot.Color(c.R, c.G, c.B, c.A)
-            : ScottPlot.Colors.Magenta;   // misspelled key: visible at a glance
+    // ─── Charts (drawn by Charts/*; the colors come from the current theme) ───────────────
 
-    /// <summary>
-    /// Polar sky chart: altitude circles every 30°, cardinal points, objects above the horizon
-    /// (size by magnitude), My plan, selection and the Moon.
-    /// </summary>
-    private void UpdateSkyMap(SkyViewModel viewModel)
-    {
-        var plot = SkyPlot.Plot;
-        plot.Clear();
-        plot.FigureBackground.Color = Theme("SurfaceBrush");
-        plot.DataBackground.Color = Theme("SurfaceBrush");
-        plot.Axes.Frameless();
-        plot.HideGrid();
+    private ChartPalette Palette => new(this);
 
-        var gridColor = Theme("NightBorderBrush");
-        var horizon = plot.Add.Circle(0, 0, SkyProjection.HorizonRadius);
-        horizon.LineColor = Theme("SkyHorizonBrush");
-        horizon.LineWidth = 2;
-        horizon.FillColor = Theme("SkyFillBrush");
+    private void UpdateSkyMap(SkyMapViewModel map) => SkyMapChart.Draw(SkyPlot, map, Palette);
 
-        foreach (var altitude in new[] { 30.0, 60.0 })
-        {
-            var ring = plot.Add.Circle(0, 0, SkyProjection.HorizonRadius - altitude);
-            ring.LineColor = gridColor;
-            ring.LineWidth = 1;
-        }
+    private void UpdateChart(ObjectDetailViewModel detail) => AltitudeChart.Draw(AltitudePlot, detail, Palette);
 
-        // Minimum altitude: inside this circle an object counts as visible.
-        var threshold = plot.Add.Circle(0, 0, SkyProjection.HorizonRadius - viewModel.MinimumAltitude);
-        threshold.LineColor = Theme("WarningBrush").WithAlpha(0.6);
-        threshold.LineWidth = 1;
-        threshold.LinePattern = ScottPlot.LinePattern.Dashed;
+    private void UpdateTimeline(PlanTimeline? timeline) =>
+        PlanTimelineChart.Draw(TimelinePlot, timeline, _viewModel?.ObservationDateTime, Palette);
 
-        foreach (var azimuth in new[] { 0.0, 45.0, 90.0, 135.0 })
-        {
-            var (x1, y1) = SkyProjection.ToXY(0, azimuth);
-            var (x2, y2) = SkyProjection.ToXY(0, azimuth + 180);
-            var line = plot.Add.Line(x1, y1, x2, y2);
-            line.LineColor = gridColor;
-            line.LineWidth = 1;
-        }
+    private void UpdateHorizonPlot(LocationsViewModel locations) => HorizonChart.Draw(HorizonPlot, locations, Palette);
 
-        foreach (var (label, azimuth) in new[] { (Strings.SkyNorth, 0.0), (Strings.SkyEast, 90.0), (Strings.SkySouth, 180.0), (Strings.SkyWest, 270.0) })
-        {
-            var (x, y) = SkyProjection.ToXY(-8, azimuth);
-            var text = plot.Add.Text(label, x, y);
-            text.LabelFontColor = Theme("LabelTextBrush");
-            text.LabelFontSize = 16;
-            text.LabelBold = true;
-            text.LabelAlignment = ScottPlot.Alignment.MiddleCenter;
-        }
-
-        // The Moon goes first (underneath): its disc must not hide nearby objects.
-        if (viewModel.Moon is { IsAboveHorizon: true } moon)
-        {
-            var (x, y) = SkyProjection.ToXY(moon.Horizontal.AltitudeDegrees, moon.Horizontal.AzimuthDegrees);
-            plot.Add.Marker(x, y, ScottPlot.MarkerShape.FilledCircle, 22, Theme("MoonBrush").WithAlpha(0.85));
-            var label = plot.Add.Text(DisplayNames.Format(Strings.MoonLabelFormat, viewModel.MoonIlluminationText), x, y - 6);
-            label.LabelFontColor = Theme("MoonBrush");
-            label.LabelFontSize = 12;
-            label.LabelAlignment = ScottPlot.Alignment.UpperCenter;
-        }
-
-        foreach (var point in viewModel.GetSkyMapPoints().OrderBy(p => p.IsInPlan || p.IsSelected || p.IsPlanet))
-        {
-            var (x, y) = point.Position;
-            float size;
-            if (point.IsPlanet)
-            {
-                // Planets: golden diamond (orange when in My plan), with their name.
-                size = 13;
-                plot.Add.Marker(x, y, ScottPlot.MarkerShape.FilledDiamond, size,
-                    Theme(point.IsInPlan ? "WarningBrush" : "PlanetBrush"));
-            }
-            else
-            {
-                var color = point.IsInPlan ? "WarningBrush" : point.IsVisible ? "AccentBrush" : "PlaceholderTextBrush";
-                size = double.IsNaN(point.Magnitude) ? 4 : (float)Math.Clamp(13 - point.Magnitude, 4, 10);
-                plot.Add.Marker(x, y, ScottPlot.MarkerShape.FilledCircle, size, Theme(color));
-            }
-
-            if (point.IsSelected)
-            {
-                plot.Add.Marker(x, y, ScottPlot.MarkerShape.OpenCircle, size + 12, Theme("HighlightTextBrush"));
-            }
-
-            if (!point.HasLabel)
-            {
-                continue;
-            }
-
-            var label = plot.Add.Text(point.Id, x + 2.5, y);
-            var highlighted = point.IsInPlan || point.IsSelected || point.IsPlanet;
-            label.LabelFontColor = Theme(point.IsPlanet ? "PlanetBrush" : highlighted ? "StrongTextBrush" : "SkyLabelBrush");
-            label.LabelFontSize = highlighted ? 12 : 10;
-            label.LabelAlignment = ScottPlot.Alignment.MiddleLeft;
-        }
-
-        // Full, undistorted circle: the short side of the chart spans ±100 and the long side
-        // grows in proportion (SquareUnits used to crop the short one).
-        var width = Math.Max(SkyPlot.ActualWidth, 1);
-        var height = Math.Max(SkyPlot.ActualHeight, 1);
-        const double halfSpan = 100;
-        plot.Axes.SetLimits(
-            -halfSpan * Math.Max(1, width / height),
-            halfSpan * Math.Max(1, width / height),
-            -halfSpan * Math.Max(1, height / width),
-            halfSpan * Math.Max(1, height / width));
-        SkyPlot.Refresh();
-    }
-
-    private void UpdateChart(ObjectDetailViewModel viewModel)
-    {
-        var points = viewModel.GetNightAltitudeCurve();
-
-        // With invalid input the last curve is kept, like the table.
-        if (points.Count == 0 && viewModel.InputError is not null)
-        {
-            return;
-        }
-
-        AltitudePlot.Plot.Clear();
-        AltitudePlot.Plot.FigureBackground.Color = Theme("NightPanelBrush");
-        AltitudePlot.Plot.DataBackground.Color = Theme("SurfaceBrush");
-        AltitudePlot.Plot.Axes.Color(Theme("NightMutedTextBrush"));
-        AltitudePlot.Plot.Grid.MajorLineColor = Theme("NightBorderBrush");
-        AltitudePlot.Plot.Grid.MinorLineColor = Theme("ControlRaisedBrush");
-
-        if (points.Count > 0)
-        {
-            // Background first (twilight and clouds) so that the curves are drawn on top.
-            AddTwilightBands(viewModel.Night);
-            AddCloudBands(viewModel);
-
-            // X axis with real dates so that the day change shows 23:00, 00:00, 01:00, etc.
-            var x = points.Select(p => p.LocalTime.ToOADate()).ToArray();
-            var y = points.Select(p => p.AltitudeDegrees).ToArray();
-
-            var moonPoints = viewModel.GetMoonAltitudeCurve();
-            if (moonPoints.Count > 0)
-            {
-                var moonLine = AltitudePlot.Plot.Add.Scatter(
-                    moonPoints.Select(p => p.LocalTime.ToOADate()).ToArray(),
-                    moonPoints.Select(p => p.AltitudeDegrees).ToArray());
-                moonLine.LegendText = DisplayNames.Format(Strings.MoonLegendFormat, viewModel.MoonIlluminationText);
-                moonLine.Color = Theme("MoonBrush").WithAlpha(0.8);
-                moonLine.LineWidth = 1.5f;
-                moonLine.LinePattern = ScottPlot.LinePattern.Dashed;
-                moonLine.MarkerSize = 0;
-            }
-
-            var selectedTime = viewModel.ObservationDateTime.ToOADate();
-            if (selectedTime >= x[0] && selectedTime <= x[^1])
-            {
-                var nowLine = AltitudePlot.Plot.Add.VerticalLine(selectedTime);
-                nowLine.LineColor = Theme("NightMutedTextBrush");
-                nowLine.LineWidth = 1;
-                nowLine.LinePattern = ScottPlot.LinePattern.Dotted;
-                nowLine.LegendText = Strings.ChartChosenTime;
-            }
-
-            var altitudeLine = AltitudePlot.Plot.Add.Scatter(x, y);
-            altitudeLine.LegendText = Strings.ChartAltitude;
-            altitudeLine.Color = Theme("AccentBrush");
-            altitudeLine.LineWidth = 2;
-            var thresholdLine = AltitudePlot.Plot.Add.HorizontalLine(viewModel.MinimumAltitude);
-            thresholdLine.LineColor = Theme("WarningBrush");
-            thresholdLine.LineWidth = 2;
-            thresholdLine.LegendText = Strings.ChartMinimumAltitude;
-
-            AltitudePlot.Plot.Axes.Title.Label.Text =
-                viewModel.SelectedObject?.Title ?? string.Empty;
-            AltitudePlot.Plot.Axes.Bottom.Label.Text = Strings.ChartLocalTime;
-            AltitudePlot.Plot.Axes.Left.Label.Text = Strings.ChartAltitudeAxis;
-            AltitudePlot.Plot.ShowLegend();
-            // Dark legend: with the default white background the Moon line is invisible.
-            AltitudePlot.Plot.Legend.BackgroundColor = Theme("NightPanelBrush").WithAlpha(0.92);
-            AltitudePlot.Plot.Legend.FontColor = Theme("NightTextBrush");
-            AltitudePlot.Plot.Legend.OutlineColor = Theme("ControlBorderBrush");
-            var timeTicks = new ScottPlot.TickGenerators.DateTimeFixedInterval(
-                new ScottPlot.TickGenerators.TimeUnits.Hour(),
-                2,
-                null,
-                0,
-                dateTime => dateTime.Date.AddHours(18));
-            timeTicks.LabelFormatter = dateTime => dateTime.ToString("HH:mm", CultureInfo.CurrentCulture);
-            AltitudePlot.Plot.Axes.Bottom.TickGenerator = timeTicks;
-            AltitudePlot.Plot.Axes.SetLimitsY(-90, 90);
-            AltitudePlot.Plot.Axes.SetLimitsX(points[0].LocalTime.ToOADate(), points[^1].LocalTime.ToOADate());
-        }
-
-        AltitudePlot.Refresh();
-    }
-
-    /// <summary>
-    /// Hourly forecast cloud cover: one grey band per hour, more opaque the cloudier it is.
-    /// Nothing is drawn without a forecast.
-    /// </summary>
-    private void AddCloudBands(ObjectDetailViewModel viewModel)
-    {
-        var first = true;
-        foreach (var (start, end, cloud) in viewModel.GetNightCloudCover())
-        {
-            if (cloud < 5 || end <= start)
-            {
-                continue;
-            }
-
-            var span = AltitudePlot.Plot.Add.HorizontalSpan(start.ToOADate(), end.ToOADate());
-            span.FillStyle.Color = Theme("ChartCloudBrush").WithAlpha(cloud / 100.0 * 0.45);
-            span.LineStyle.Width = 0;
-            if (first)
-            {
-                span.LegendText = Strings.ChartClouds;
-                first = false;
-            }
-        }
-    }
-
-    /// <summary>
-    /// Shades twilight: from sunset to the end of astronomical twilight and from the start of
-    /// morning twilight to sunrise. If it never gets fully dark, the whole window is shaded.
-    /// </summary>
-    private void AddTwilightBands(Core.Models.NightInfo? night)
-    {
-        if (night is null || night.IsFallbackWindow)
-        {
-            return;
-        }
-
-        var bands = night.HasAstronomicalDarkness
-            ? new[]
-            {
-                (night.WindowStartLocal, night.AstronomicalDuskLocal!.Value),
-                (night.AstronomicalDawnLocal!.Value, night.WindowEndLocal)
-            }
-            : new[] { (night.WindowStartLocal, night.WindowEndLocal) };
-
-        var first = true;
-        foreach (var (from, to) in bands)
-        {
-            var span = AltitudePlot.Plot.Add.HorizontalSpan(from.ToOADate(), to.ToOADate());
-            span.FillStyle.Color = Theme("ChartTwilightBrush").WithAlpha(0.35);
-            span.LineStyle.Width = 0;
-            if (first)
-            {
-                span.LegendText = Strings.ChartTwilight;
-                first = false;
-            }
-        }
-    }
-
-    /// <summary>
-    /// Session timeline (spec §4.6): one row per plan item in priority order, the usable window as a
-    /// thin bar, the scheduled block coloured by verdict (thick outline = locked), meridian flips as
-    /// dashed ticks, over the twilight and cloud bands.
-    /// </summary>
-    private void UpdateTimeline(PlanTimeline? timeline)
-    {
-        var plot = TimelinePlot.Plot;
-        plot.Clear();
-        plot.FigureBackground.Color = Theme("NightPanelBrush");
-        plot.DataBackground.Color = Theme("SurfaceBrush");
-        plot.Axes.Color(Theme("NightMutedTextBrush"));
-        plot.Grid.MajorLineColor = Theme("NightBorderBrush");
-        plot.Grid.YAxisStyle.MajorLineStyle.Width = 0;
-        if (timeline is null || timeline.Rows.Count == 0)
-        {
-            TimelinePlot.Refresh();
-            return;
-        }
-
-        var count = timeline.Rows.Count;
-        foreach (var band in timeline.TwilightBands)
-        {
-            var span = plot.Add.HorizontalSpan(band.Start.ToOADate(), band.End.ToOADate());
-            span.FillStyle.Color = Theme("ChartTwilightBrush").WithAlpha(0.35);
-            span.LineStyle.Width = 0;
-        }
-
-        foreach (var (cloud, percent) in timeline.Clouds)
-        {
-            if (percent < 5) continue;
-            var span = plot.Add.HorizontalSpan(cloud.Start.ToOADate(), cloud.End.ToOADate());
-            span.FillStyle.Color = Theme("ChartCloudBrush").WithAlpha(percent / 100.0 * 0.45);
-            span.LineStyle.Width = 0;
-        }
-
-        var ticks = new ScottPlot.TickGenerators.NumericManual();
-        for (var index = 0; index < count; index++)
-        {
-            var row = timeline.Rows[index];
-            double y = count - index;
-            ticks.AddMajor(y, row.Label);
-            foreach (var usable in row.Usable)
-            {
-                var bar = plot.Add.Rectangle(usable.Start.ToOADate(), usable.End.ToOADate(), y - 0.06, y + 0.06);
-                bar.FillStyle.Color = Theme("NightMutedTextBrush").WithAlpha(0.45);
-                bar.LineStyle.Width = 0;
-            }
-
-            if (row.Block is { } block)
-            {
-                var rectangle = plot.Add.Rectangle(block.Start.ToOADate(), block.End.ToOADate(), y - 0.32, y + 0.32);
-                rectangle.FillStyle.Color = VerdictColor(row.Verdict).WithAlpha(0.85);
-                rectangle.LineStyle.Color = Theme(row.Locked ? "NightTextBrush" : "NightBorderBrush");
-                rectangle.LineStyle.Width = row.Locked ? 2.5f : 1;
-            }
-
-            if (row.MeridianFlipLocal is { } flip)
-            {
-                var line = plot.Add.Line(flip.ToOADate(), y - 0.42, flip.ToOADate(), y + 0.42);
-                line.LineColor = Theme("NightTextBrush");
-                line.LineWidth = 2;
-                line.LinePattern = ScottPlot.LinePattern.Dashed;
-                line.MarkerSize = 0;
-            }
-
-            // Sunlit satellites crossing the field: a short tick above the block.
-            foreach (var crossing in row.CrossingsLocal ?? [])
-            {
-                var tick = plot.Add.Line(crossing.ToOADate(), y + 0.18, crossing.ToOADate(), y + 0.46);
-                tick.LineColor = Theme("DangerBrush");
-                tick.LineWidth = 2;
-                tick.MarkerSize = 0;
-            }
-        }
-
-        DateTime? now = _viewModel?.ObservationDateTime;
-        if (now is { } chosen && chosen >= timeline.WindowStartLocal && chosen <= timeline.WindowEndLocal)
-        {
-            var nowLine = plot.Add.VerticalLine(chosen.ToOADate());
-            nowLine.LineColor = Theme("NightMutedTextBrush");
-            nowLine.LineWidth = 1;
-            nowLine.LinePattern = ScottPlot.LinePattern.Dotted;
-        }
-
-        plot.Axes.Left.TickGenerator = ticks;
-        var timeTicks = new ScottPlot.TickGenerators.DateTimeFixedInterval(
-            new ScottPlot.TickGenerators.TimeUnits.Hour(), 1, null, 0, dateTime => dateTime.Date);
-        timeTicks.LabelFormatter = dateTime => dateTime.ToString("HH:mm", CultureInfo.CurrentCulture);
-        plot.Axes.Bottom.TickGenerator = timeTicks;
-        plot.Axes.SetLimitsX(timeline.WindowStartLocal.ToOADate(), timeline.WindowEndLocal.ToOADate());
-        plot.Axes.SetLimitsY(0.4, count + 0.6);
-        TimelinePlot.Refresh();
-    }
-
-    private ScottPlot.Color VerdictColor(Core.Imaging.Feasibility.FeasibilityVerdict? verdict) => verdict switch
-    {
-        Core.Imaging.Feasibility.FeasibilityVerdict.Excellent => Theme("SuccessBrush"),
-        Core.Imaging.Feasibility.FeasibilityVerdict.Good => Theme("SuccessSoftBrush"),
-        Core.Imaging.Feasibility.FeasibilityVerdict.Marginal => Theme("WarningBrush"),
-        Core.Imaging.Feasibility.FeasibilityVerdict.Unlikely => Theme("DangerBrush"),
-        _ => Theme("PlaceholderTextBrush")
-    };
-
-    /// <summary>
-    /// Predictions vs results (spec §8.7): one point per photographed entry, predicted score
-    /// against the rating, colored by verdict; the dashed line is where a perfect model would put them.
-    /// </summary>
-    private void UpdatePredictionPlot(LogbookViewModel logbook)
-    {
-        var plot = PredictionPlot.Plot;
-        plot.Clear();
-        plot.FigureBackground.Color = Theme("NightPanelBrush");
-        plot.DataBackground.Color = Theme("SurfaceBrush");
-        plot.Axes.Color(Theme("NightMutedTextBrush"));
-        plot.Grid.MajorLineColor = Theme("NightBorderBrush");
-        plot.Axes.Bottom.Label.Text = Strings.PredictionsAxisScore;
-        plot.Axes.Left.Label.Text = Strings.PredictionsAxisRating;
-        plot.Axes.Bottom.Label.ForeColor = Theme("NightMutedTextBrush");
-        plot.Axes.Left.Label.ForeColor = Theme("NightMutedTextBrush");
-
-        var ideal = plot.Add.Line(0, 1, 100, 5);
-        ideal.LineColor = Theme("NightMutedTextBrush").WithAlpha(0.6);
-        ideal.LinePattern = ScottPlot.LinePattern.Dashed;
-        foreach (var point in logbook.Predictions.Points)
-        {
-            plot.Add.Marker(point.PredictedScore, point.Rating, ScottPlot.MarkerShape.FilledCircle, 9, VerdictColor(point.Verdict));
-        }
-
-        plot.Axes.SetLimitsX(0, 100);
-        plot.Axes.SetLimitsY(0.5, 5.5);
-        PredictionPlot.Refresh();
-    }
+    private void UpdatePredictionPlot(LogbookViewModel logbook) => PredictionChart.Draw(PredictionPlot, logbook, Palette);
 }

@@ -209,8 +209,8 @@ shows whether the services are online, offline (showing saved data) or off.
 ```bash
 dotnet build AstroPlanner.slnx -warnaserror
 dotnet run --project src/AstroPlanner.UI
-dotnet test AstroPlanner.slnx          # ~840 tests, no network
-cd src/sky-renderer && npm ci && npm test   # renderer: ~150 Vitest tests (the UI build runs npm itself)
+dotnet test AstroPlanner.slnx          # ~850 .NET tests, no network
+cd src/sky-renderer && npm ci && npm test   # renderer: ~150 Vitest tests, most generated from the bridge and projection fixtures (the UI build runs npm itself)
 dotnet run --project tools/AstroPlanner.DataBuilder -- all   # rebuild the catalogs (downloads the sources)
 ```
 
@@ -230,19 +230,36 @@ rules are enforced by architecture tests.
 
 ```
 src/
-  AstroPlanner.Core/     Domain: models, astronomy algorithms (Meeus, event finder, IAU constellations,
-                         air mass), night ephemerides, AstronomyService, interfaces
-  AstroPlanner.Data/     SQLite: embedded catalogs.sqlite, app.db (migrations, settings, sites,
-                         plan, logbook), v1 importer, cities                           → Core
-  AstroPlanner.Online/   HTTP clients (Open-Meteo)                                     → Core
+  AstroPlanner.Core/     Pure domain, BCL only
+    Algorithms/            Meeus (precession, Sun, Moon, planets), event finder, IAU constellations,
+                           refraction, air mass, orbits, sky frame
+    Imaging/               optics, exposure limits, framing preview;
+                           Feasibility/ (capture model, tuning, predictions vs results)
+    Planning/              night ephemerides, sky samples, session scheduler, Milky Way planner
+    Satellites/            own near-Earth SGP4, element sets, passes, Earth shadow, field crossings, tracks
+    Sky/                   star names, HEALPix, galactic centre, moving bodies, sky appearance
+    SkyQuality/            sky brightness and background, Krisciunas–Schaefer moonlight
+    Weather/               night conditions (seeing, transparency, dew, wind)
+    Models/ Interfaces/ Services/   records, persistence contracts, AstronomyService
+  AstroPlanner.Data/     SQLite: embedded catalogs.sqlite, app.db (migrations, settings, sites, plan,
+                         logbook, equipment), disk cache of online answers, light-pollution grids,
+                         v1 importer, cities                                           → Core
+  AstroPlanner.Online/   One client per service, all through Http/CachedFetch          → Core
+                         Weather: Open-Meteo, 7Timer! · Imaging: HiPS survey tiles (CDS, ESA ESASky)
+                         Info: Wikipedia/Commons, CDS Sesame · SmallBodies: MPC · Satellites: CelesTrak
+                         (the GitHub releases check lives in UI/Services/UpdateChecker)
   AstroPlanner.SkyBridge/ WPF ⇄ WebView2 protocol: DTOs, validating codec              → Core
   sky-renderer/          TypeScript + three.js sky (WebView2); draws only, astronomy comes from Core
   AstroPlanner.UI/       WPF app and composition root
-    ViewModels/            Shell, Tonight, Targets, Sky, ObjectDetail, SessionPlan, Logbook, Locations, Settings
-    Services/              IObserverContext (shared observing state), WeatherState, JSON persistence,
-                           CSV/print, logging, update checker, safe links, single instance
+    ViewModels/            Shell, Tonight, Targets, Sky, ObjectDetail, SessionPlan, Logbook, Locations,
+                           Settings, Equipment, Framing, ObjectInfo, MilkyWayPlanner
+    Services/              shared state (IObserverContext, WeatherState, EquipmentState, SmallBodyState,
+                           SatelliteState, OnlineInfoState, ThemeState), named HttpClients, exports
+                           (CSV, PDF, .ics, print), logging, update checker, safe links, single instance
+    Sky/                   WebView2 host of the renderer, its clock and assets
+    Charts/                ScottPlot charts (2D sky, altitude, plan timeline, horizon, predictions)
     Resources/Strings.resx All user-facing text (localisable)
-    Themes/Dark.xaml       Palette and styles (also used by the charts)
+    Themes/                Dark.xaml (palette and styles, also used by the charts), Night.xaml (red colors)
 tools/
   AstroPlanner.DataBuilder    Builds data/build/catalogs.sqlite and the sky data (docs/data-pipeline.md)
 data/                     SOURCES.md, curated/ overlays, build/ generated files (raw/ is git-ignored)
@@ -252,7 +269,7 @@ tests/
   AstroPlanner.DataBuilder.Tests  Catalog build from small excerpts of the sources
   AstroPlanner.Online.Tests   HTTP clients with stubbed responses
   AstroPlanner.SkyBridge.Tests  Protocol contract and projection cross-check (shared with Vitest)
-  AstroPlanner.UI.Tests       View models, services and architecture rules
+  AstroPlanner.UI.Tests       View models, services, windows (accessibility, contrast) and architecture rules
 installer/                Inno Setup script
 .github/workflows/        CI and releases
 ```
@@ -272,14 +289,17 @@ installer/                Inno Setup script
   Jupiter and Saturn rise, culmination and set, all **within one minute**.
 - **Night ephemerides of the catalog:** fixed objects are precessed once per night and sampled
   every 5 minutes with a shared sidereal time (transit solved analytically); planets go through
-  the full model. ~13k objects take well under a second, in the background.
+  the full model. The ~22,600 catalog rows take well under a second, in the background (the
+  performance test uses 25k objects and a 1 s budget).
 - **Constellations:** the IAU boundaries (Roman 1987, CDS VI/42) after precessing to B1875; they
   agree with OpenNGC for all 13,371 objects. Planets get their real constellation for the date.
 - **Air mass and extinction:** Kasten & Young (1989) and Δm = k·X with k = 0.25 mag (used by the
   feasibility model from M3).
-- **Precision:** precession J2000 → date (~0.36° in 2026) and standard refraction (~34′ at the
-  horizon). No nutation or aberration (< 30″); UT instead of TT (ΔT ≈ 70 s). Elevation is stored but
-  not used yet.
+- **Precision:** precession J2000 → date (~0.36° in 2026) and refraction (~34′ at the horizon at sea
+  level). No nutation or aberration (< 30″); UT instead of TT (ΔT ≈ 70 s). The site's elevation
+  scales the refraction by the standard-atmosphere pressure there (`Refraction.PressureScale`, in
+  every altitude the app computes and in the 3D sky), and places the observer on the WGS-84
+  ellipsoid for satellite passes.
 - **Moon:** low-precision Astronomical Almanac formulae (~0.3°) with parallax and refraction. It
   interferes when above the horizon, ≥ 25 % lit and less than 30° from the object.
 - **Planets:** JPL Keplerian elements (1800-2050) with light-time correction; ~1′ error for the inner
@@ -291,7 +311,8 @@ installer/                Inno Setup script
   comet formula (H + 5 log Δ + 2.5 K log r) and the IAU H-G system for asteroids.
 - **Milky Way core:** Sgr A* as a fixed target; a night counts as good with at least 30 minutes of
   the core above 10° in astronomical darkness with the Moon down.
-- **Satellites:** our own SGP4 (near-Earth orbits, Vallado et al. 2006, WGS-72), which reproduces
+- **Satellites:** our own SGP4 (near-Earth orbits, Vallado et al. 2006, WGS-72) rather than a
+  library, because `AstroPlanner.Core` depends on nothing but the .NET base class library. It reproduces
   the paper's verification set to under a metre; CelesTrak GP elements in OMM form. Against JPL
   Horizons' own ISS trajectory a few hours after the elements' epoch: altitude within 0.6°, rise
   and set at 10° within 30 s. A pass is visible while the satellite is sunlit (conical Earth shadow)
@@ -310,24 +331,35 @@ installer/                Inno Setup script
 - **Invalid input:** `ObservableValidator` with `[Range]`; an out-of-range value shows a warning and
   the last valid calculation is kept.
 - **Catalog:** `catalogs.sqlite` is built by a deterministic tool, embedded in the `.exe`, copied
-  once to the data folder and loaded into memory; search keys are precomputed, so filtering
-  ~13k objects takes milliseconds and never recalculates positions.
+  once to the data folder and loaded into memory; search keys are precomputed, so filtering the
+  ~22,600 rows takes milliseconds and never recalculates positions.
 - **Data:** SQLite `app.db` in `%LocalAppData%\AstroPlannerPro`, with versioned migrations applied
   in a transaction after a backup copy. A damaged file is set aside as `app.corrupt-<date>.db`
   instead of being overwritten.
 - **Errors:** unhandled exceptions are logged in `logs\` and reported without closing the app.
 - **Single instance:** opening it twice brings the existing window to the front, so two processes never
   write the plan at the same time.
-- **Optional internet:** one `HttpClient` (15 s). Forecast cached for 1 h per location, 5 min back-off
-  after a failure. Pre-releases are only offered to users of a pre-release or a 0.x version.
-- **Links:** only `https` addresses of github.com and open-meteo.com are opened.
+- **Optional internet:** one named `HttpClient` per service with the standard pipeline of
+  `Microsoft.Extensions.Http.Resilience`: 15 s in total, 6 s per attempt, two retries with backoff
+  and a circuit breaker. CelesTrak has its own client without retries (it blocks clients that
+  repeat failing requests) and the service pauses 2 h after an error. Every answer goes through
+  a disk cache (`%LocalAppData%\AstroPlannerPro\cache`, 200 MB, least recently used entries
+  removed first): a fresh entry avoids the request and a failure falls back to the last one. Ages:
+  Open-Meteo 1 h, 7Timer! 3 h, CelesTrak 12 h, MPC comets 24 h and asteroids 30 days, Wikipedia and
+  Sesame 30 days, survey tiles kept. After a failure the app waits 5 min before asking again for
+  forecasts, comets and asteroids, and 15 min for satellites; a failing survey mirror is skipped for
+  10 min. See [docs/external-services.md](docs/external-services.md). Pre-releases are only offered
+  to users of a pre-release or a 0.x version.
+- **Links:** only `https` addresses of these sites (and their subdomains) are opened: github.com,
+  open-meteo.com, 7timer.info, wikipedia.org, wikimedia.org, creativecommons.org, cds.unistra.fr,
+  esa.int, stsci.edu, minorplanetcenter.net and celestrak.org.
 - **CSV:** separator and numbers follow the system culture, UTF-8 with BOM, so that Excel opens it right.
 
 **Build**
 - **.NET 10 LTS**, C# 14, warnings as errors and `AnalysisLevel=latest-recommended` everywhere;
   package versions pinned in `Directory.Packages.props`.
-- **One self-contained, compressed `.exe`** (~76 MB instead of ~175 MB, ~0.2 s slower to start). The
-  catalogs are embedded.
+- **One self-contained, compressed `.exe`** (~82 MB instead of ~179 MB uncompressed; the v2.0.0
+  release's is 81.6 MB), ~0.2 s slower to start. The catalogs and the sky renderer are embedded.
 - **NU1701 suppressed:** caused by `SkiaSharp.Views.WPF` (a ScottPlot dependency), which only declares
   .NET Framework but works on modern .NET.
 
@@ -341,7 +373,12 @@ installer/                Inno Setup script
 | Data, DataBuilder | Microsoft.Data.Sqlite | 11.0.0 |
 | UI | CommunityToolkit.Mvvm | 8.4.2 |
 | UI | Microsoft.Extensions.DependencyInjection | 11.0.0 |
+| UI | Microsoft.Extensions.Http · Microsoft.Extensions.Http.Resilience (named clients, retries, circuit breaker) | 11.0.0 · 11.0.0 |
+| UI | Microsoft.Web.WebView2 (hosts the 3D sky) | 1.0.4314.35 |
+| UI | PDFsharp (PDF export) — pinned to 6.2.x: 6.5.0 and later are AGPL-3.0, the app is MIT | 6.2.4 |
+| UI | System.Security.Cryptography.Pkcs — PDFsharp 6.2.4 pulls 8.0.1, which has known vulnerabilities (GHSA-2fmv-rv2c-59x7, GHSA-846f-f764-76mx) | 11.0.0 |
 | UI | ScottPlot.WPF | 5.1.59 |
+| sky-renderer (npm) | three · zod | 0.187.0 · 4.6.7 |
 | Tests | xunit · xunit.runner.visualstudio | 2.9.3 · 4.0.1 |
 | Tests | FluentAssertions | 8.11.0 |
 | Tests | Microsoft.NET.Test.Sdk · coverlet.collector | 18.12.0 · 10.1.1 |

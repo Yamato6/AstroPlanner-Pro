@@ -47,10 +47,16 @@ flowchart TB
 - **View models**: `ShellViewModel` owns Tonight, Targets, Sky, Detail, Plan, Logbook, Locations,
   Settings and Equipment. Long work (night ephemerides, feasibility for the whole catalog,
   satellite passes) runs in the background, keyed by its inputs, and exposes a `Task` the tests
-  await.
-- **Views** are thin: code-behind only draws the ScottPlot charts and opens dialogs. Strings come
-  from `Resources/Strings.resx`; colors from `Themes/Dark.xaml` / `Themes/Night.xaml` through
-  `DynamicResource`.
+  await. A large view model is split into parts it owns: `SkyViewModel` coordinates `Sky.Time`
+  (clock), `Sky.Layers`, `Sky.Camera` (camera frame), `Sky.Search`, `Sky.Modes` (dome, all-sky,
+  finder chart) and `Sky.Map` (2D fallback), with `SkySession` (renderer channel, settings, clock)
+  and `SkyBodyFeed` (frame, tracks, appearance) inside. Parts get delegates from their owner,
+  never references to other view models.
+- **Views** are thin: code-behind only opens dialogs, moves the focus and switches tabs, and asks
+  `Charts/*` (`SkyMapChart`, `AltitudeChart`, `PlanTimelineChart`, `HorizonChart`,
+  `PredictionChart`, colors from `ChartPalette`) to redraw. Commands without a dialog are
+  `KeyBinding`s. Strings come from `Resources/Strings.resx`; colors from `Themes/Dark.xaml` /
+  `Themes/Night.xaml` through `DynamicResource`.
 
 ## Data flow of one evening
 

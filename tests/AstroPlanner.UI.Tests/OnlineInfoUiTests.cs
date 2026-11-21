@@ -286,16 +286,16 @@ public sealed class OnlineInfoUiTests
         var resolver = new FakeResolver(horsehead);
         var shell = await CreateAsync(resolver: resolver);
 
-        shell.Sky.SearchText = "M31";
-        await shell.Sky.SearchCommand.ExecuteAsync(null);
+        shell.Sky.Search.SearchText = "M31";
+        await shell.Sky.Search.SearchCommand.ExecuteAsync(null);
         resolver.Queries.Should().BeEmpty("catalog objects never go online");
 
-        shell.Sky.SearchText = " Barnard 33 ";
-        await shell.Sky.SearchCommand.ExecuteAsync(null);
+        shell.Sky.Search.SearchText = " Barnard 33 ";
+        await shell.Sky.Search.SearchCommand.ExecuteAsync(null);
 
         resolver.Queries.Should().Equal("Barnard 33");
-        shell.Sky.ResolvedTarget.Should().Be(horsehead);
-        shell.Sky.SearchMessage.Should().StartWith("NAME Horsehead Nebula (DNe), not in the catalog: resolved by Sesame (CDS) · Simbad at RA 5.6830 h");
+        shell.Sky.Search.ResolvedTarget.Should().Be(horsehead);
+        shell.Sky.Search.SearchMessage.Should().StartWith("NAME Horsehead Nebula (DNe), not in the catalog: resolved by Sesame (CDS) · Simbad at RA 5.6830 h");
         shell.OnlineStatusTooltip.Should().Contain("Name search (Sesame, CDS): updated");
     }
 
@@ -303,15 +303,15 @@ public sealed class OnlineInfoUiTests
     public async Task SkySearch_UnknownEverywhere_Disabled_AndOffline()
     {
         var unknown = await CreateAsync(resolver: new FakeResolver(null));
-        unknown.Sky.SearchText = "Xyzzy 1";
-        await unknown.Sky.SearchCommand.ExecuteAsync(null);
-        unknown.Sky.SearchMessage.Should().Be("Nothing found for \"Xyzzy 1\", in the catalog or online (Sesame).");
+        unknown.Sky.Search.SearchText = "Xyzzy 1";
+        await unknown.Sky.Search.SearchCommand.ExecuteAsync(null);
+        unknown.Sky.Search.SearchMessage.Should().Be("Nothing found for \"Xyzzy 1\", in the catalog or online (Sesame).");
 
         var offlineResolver = new FakeResolver(null) { FailWith = new OnlineServiceException("No connection to Sesame (CDS).") };
         var offline = await CreateAsync(resolver: offlineResolver);
-        offline.Sky.SearchText = "Xyzzy 1";
-        await offline.Sky.SearchCommand.ExecuteAsync(null);
-        offline.Sky.SearchMessage.Should().EndWith("the online search is unavailable: No connection to Sesame (CDS).");
+        offline.Sky.Search.SearchText = "Xyzzy 1";
+        await offline.Sky.Search.SearchCommand.ExecuteAsync(null);
+        offline.Sky.Search.SearchMessage.Should().EndWith("the online search is unavailable: No connection to Sesame (CDS).");
 
         var resolver = new FakeResolver(null);
         var disabled = await CreateAsync(resolver: resolver, settings: new ObserverSettings
@@ -319,9 +319,9 @@ public sealed class OnlineInfoUiTests
             IsManualLocation = true, LatitudeDegrees = 21.88, LongitudeDegrees = -102.29, TimeZoneId = "Central Standard Time (Mexico)",
             CityId = null, NameResolverEnabled = false
         });
-        disabled.Sky.SearchText = "Xyzzy 1";
-        await disabled.Sky.SearchCommand.ExecuteAsync(null);
-        disabled.Sky.SearchMessage.Should().Be("Nothing found for \"Xyzzy 1\".");
+        disabled.Sky.Search.SearchText = "Xyzzy 1";
+        await disabled.Sky.Search.SearchCommand.ExecuteAsync(null);
+        disabled.Sky.Search.SearchMessage.Should().Be("Nothing found for \"Xyzzy 1\".");
         resolver.Queries.Should().BeEmpty();
     }
 

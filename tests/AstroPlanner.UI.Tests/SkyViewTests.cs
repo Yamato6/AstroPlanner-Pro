@@ -87,9 +87,9 @@ public sealed class SkyViewModelTests
     public async Task EverySentMessage_IsValidForTheContract()
     {
         var (shell, channel) = await CreateAsync();
-        shell.Sky.LayerToggles[0].IsEnabled = false;
-        shell.Sky.PlayCommand.Execute(null);
-        shell.Sky.PauseCommand.Execute(null);
+        shell.Sky.Layers.LayerToggles[0].IsEnabled = false;
+        shell.Sky.Time.PlayCommand.Execute(null);
+        shell.Sky.Time.PauseCommand.Execute(null);
 
         // Re-encode through the codec types: an unknown or malformed message would not round-trip.
         channel.Sent.Should().NotBeEmpty();
@@ -168,10 +168,10 @@ public sealed class SkyViewModelTests
     {
         var (shell, channel) = await CreateAsync();
         var observation = shell.ObservationDateTime;
-        shell.Sky.SelectedRate = 3600;
+        shell.Sky.Time.SelectedRate = 3600;
 
-        shell.Sky.PlayCommand.Execute(null);
-        shell.Sky.IsPlaying.Should().BeTrue();
+        shell.Sky.Time.PlayCommand.Execute(null);
+        shell.Sky.Time.IsPlaying.Should().BeTrue();
         channel.Last("setTime").GetProperty("rate").GetDouble().Should().Be(3600);
 
         _time.UtcNow += TimeSpan.FromSeconds(2);   // two real seconds = two sky hours
@@ -179,9 +179,9 @@ public sealed class SkyViewModelTests
         _time.LastTimer!.Fire();                   // periodic re-sync
         channel.Last("setTime").GetProperty("utc").GetString().Should().Be("2026-01-16T06:00:00.000Z");
 
-        shell.Sky.PauseCommand.Execute(null);
+        shell.Sky.Time.PauseCommand.Execute(null);
 
-        shell.Sky.IsPlaying.Should().BeFalse();
+        shell.Sky.Time.IsPlaying.Should().BeFalse();
         shell.ObservationDateTime.Should().Be(observation.AddHours(2));
         channel.Last("setTime").GetProperty("rate").GetDouble().Should().Be(0);
         _time.LastTimer.IsDisposed.Should().BeTrue();
@@ -191,17 +191,17 @@ public sealed class SkyViewModelTests
     public async Task Resync_RefreshesTheFrameAndTheTracks_WhenTheSkyTimeMovesFar()
     {
         var (shell, channel) = await CreateAsync();
-        shell.Sky.SelectedRate = 3600;
-        shell.Sky.PlayCommand.Execute(null);
+        shell.Sky.Time.SelectedRate = 3600;
+        shell.Sky.Time.PlayCommand.Execute(null);
         var frames = channel.Count("frameTransform");
         var bodies = channel.Count("movingBodies");
 
         _time.UtcNow += TimeSpan.FromSeconds(0.1); // 6 sky minutes: same frame and tracks
-        shell.Sky.Resync();
+        shell.Sky.Time.Resync();
         channel.Count("frameTransform").Should().Be(frames);
 
         _time.UtcNow += TimeSpan.FromSeconds(12);  // 12 more sky hours: outside the tracks
-        shell.Sky.Resync();
+        shell.Sky.Time.Resync();
         channel.Count("frameTransform").Should().Be(frames + 1);
         channel.Count("movingBodies").Should().Be(bodies + 1);
     }
@@ -212,24 +212,24 @@ public sealed class SkyViewModelTests
         var (shell, channel) = await CreateAsync();
         var observation = shell.ObservationDateTime;
 
-        shell.Sky.StepCommand.Execute("60");
-        shell.Sky.StepCommand.Execute("-10");
-        shell.Sky.StepCommand.Execute("abc");
+        shell.Sky.Time.StepCommand.Execute("60");
+        shell.Sky.Time.StepCommand.Execute("-10");
+        shell.Sky.Time.StepCommand.Execute("abc");
 
         shell.ObservationDateTime.Should().Be(observation.AddMinutes(50));
         channel.Last("setTime").GetProperty("utc").GetString().Should().Be("2026-01-16T04:50:00.000Z");
         channel.Last("frameTransform").GetProperty("epochUtc").GetString().Should().Be("2026-01-16T04:50:00.000Z");
-        shell.Sky.SkyTimeText.Should().Contain("22:50");
+        shell.Sky.Time.SkyTimeText.Should().Contain("22:50");
     }
 
     [Fact]
     public async Task SkyAtTheCurrentTime_RunsAtRealTime_OtherwiseItIsPaused()
     {
         var (shell, channel) = await CreateAsync();
-        shell.Sky.NowCommand.Execute(null);
+        shell.Sky.Time.NowCommand.Execute(null);
         channel.Last("setTime").GetProperty("rate").GetDouble().Should().Be(1);
 
-        shell.Sky.StepCommand.Execute("1440");
+        shell.Sky.Time.StepCommand.Execute("1440");
         channel.Last("setTime").GetProperty("rate").GetDouble().Should().Be(0);
     }
 
@@ -237,11 +237,11 @@ public sealed class SkyViewModelTests
     public async Task ChoosingATimeInTheTopBar_StopsTheAnimation()
     {
         var (shell, _) = await CreateAsync();
-        shell.Sky.PlayCommand.Execute(null);
+        shell.Sky.Time.PlayCommand.Execute(null);
 
         shell.ObservationDateTime = shell.ObservationDateTime.AddHours(3);
 
-        shell.Sky.IsPlaying.Should().BeFalse();
+        shell.Sky.Time.IsPlaying.Should().BeFalse();
     }
 
     [Fact]
@@ -252,9 +252,9 @@ public sealed class SkyViewModelTests
         shell.Sky.FocusSearchRequested += (_, _) => focus++;
 
         channel.Receive("""{"v":1,"type":"shortcut","payload":{"action":"togglePause"}}""");
-        shell.Sky.IsPlaying.Should().BeTrue();
+        shell.Sky.Time.IsPlaying.Should().BeTrue();
         channel.Receive("""{"v":1,"type":"shortcut","payload":{"action":"togglePause"}}""");
-        shell.Sky.IsPlaying.Should().BeFalse();
+        shell.Sky.Time.IsPlaying.Should().BeFalse();
         channel.Receive("""{"v":1,"type":"shortcut","payload":{"action":"focusSearch"}}""");
         channel.Receive("""{"v":1,"type":"shortcut","payload":{"action":"viewAllSky"}}""");
 
@@ -266,8 +266,8 @@ public sealed class SkyViewModelTests
     {
         var (shell, channel) = await CreateAsync();
 
-        shell.Sky.LayerToggles.Single(t => t.Key == "equatorialGrid").IsEnabled = true;
-        shell.Sky.StarLimitMagnitude = 6.5;
+        shell.Sky.Layers.LayerToggles.Single(t => t.Key == "equatorialGrid").IsEnabled = true;
+        shell.Sky.Layers.StarLimitMagnitude = 6.5;
 
         channel.Last("setLayers").GetProperty("equatorialGrid").GetBoolean().Should().BeTrue();
         channel.Last("setLayers").GetProperty("starLimitMagnitude").GetDouble().Should().Be(6.5);
@@ -276,8 +276,8 @@ public sealed class SkyViewModelTests
 
         // A new view model starts from the saved settings.
         var again = TestShell.Create(time: _time, skyStore: _store);
-        again.Sky.LayerToggles.Single(t => t.Key == "equatorialGrid").IsEnabled.Should().BeTrue();
-        again.Sky.StarLimitMagnitude.Should().Be(6.5);
+        again.Sky.Layers.LayerToggles.Single(t => t.Key == "equatorialGrid").IsEnabled.Should().BeTrue();
+        again.Sky.Layers.StarLimitMagnitude.Should().Be(6.5);
     }
 
     [Fact]
@@ -316,23 +316,23 @@ public sealed class SkyViewModelTests
         var (shell, channel) = await CreateAsync();
         var centers = channel.Count("centerOn");
 
-        shell.Sky.SearchText = query;
-        shell.Sky.SearchCommand.Execute(null);
+        shell.Sky.Search.SearchText = query;
+        shell.Sky.Search.SearchCommand.Execute(null);
 
         shell.Targets.SelectedObject!.Id.Should().Be(expected);
         channel.Count("centerOn").Should().Be(centers + 1);
-        shell.Sky.SearchMessage.Should().BeNull();
+        shell.Sky.Search.SearchMessage.Should().BeNull();
     }
 
     [Fact]
     public async Task Search_ReportsUnknownObjects()
     {
         var (shell, _) = await CreateAsync();
-        shell.Sky.SearchText = "NGC 99999";
+        shell.Sky.Search.SearchText = "NGC 99999";
 
-        shell.Sky.SearchCommand.Execute(null);
+        shell.Sky.Search.SearchCommand.Execute(null);
 
-        shell.Sky.SearchMessage.Should().Contain("NGC 99999");
+        shell.Sky.Search.SearchMessage.Should().Contain("NGC 99999");
     }
 
     [Fact]
@@ -361,7 +361,7 @@ public sealed class SkyViewModelTests
         channel.Receive("""{"v":1,"type":"error","payload":{"message":"WebGL context lost"}}""");
 
         shell.Sky.StatsText.Should().Contain("144 fps").And.Contain("1920×1080");
-        shell.Sky.ShowStats = true;
+        shell.Sky.Layers.ShowStats = true;
         _store.Saved.ShowStats.Should().BeTrue();
     }
 
@@ -395,22 +395,22 @@ public sealed class SkyViewModelTests
         var (shell, channel) = await CreateAsync();
         shell.Targets.SelectById("M42");
         var skyShown = 0;
-        shell.Sky.ShowSkyRequested += (_, _) => skyShown++;
+        shell.Sky.Modes.ShowSkyRequested += (_, _) => skyShown++;
 
-        shell.Sky.IsAllSkyMode = true;
+        shell.Sky.Modes.IsAllSkyMode = true;
         channel.Last("setViewMode").GetProperty("mode").GetString().Should().Be("allSky");
         _store.Saved.ViewMode.Should().Be("allSky");
-        shell.Sky.IsDomeMode.Should().BeFalse();
+        shell.Sky.Modes.IsDomeMode.Should().BeFalse();
 
         channel.Receive("""{"v":1,"type":"shortcut","payload":{"action":"viewDome"}}""");
-        shell.Sky.ViewMode.Should().Be("dome");
+        shell.Sky.Modes.ViewMode.Should().Be("dome");
         channel.Receive("""{"v":1,"type":"shortcut","payload":{"action":"viewAllSky"}}""");
-        shell.Sky.ViewMode.Should().Be("allSky");
+        shell.Sky.Modes.ViewMode.Should().Be("allSky");
 
         // "Finder chart" (Detail, Targets, Sky): shows the Sky tab, centred on the selection.
-        shell.Sky.OpenFinderChartCommand.Execute(null);
+        shell.Sky.Modes.OpenFinderChartCommand.Execute(null);
         skyShown.Should().Be(1);
-        shell.Sky.IsFinderMode.Should().BeTrue();
+        shell.Sky.Modes.IsFinderMode.Should().BeTrue();
         ShouldPointAt(channel.Last("centerOn"), TestCatalog.M42.Coordinates);
         channel.Last("centerOn").GetProperty("fovDegrees").GetDouble().Should().Be(10);
 
@@ -430,7 +430,7 @@ public sealed class SkyViewModelTests
 
         channel.Receive("""{"v":1,"type":"shortcut","payload":{"action":"toggleFov"}}""");
 
-        shell.Sky.IsFovVisible.Should().BeTrue();
+        shell.Sky.Camera.IsFovVisible.Should().BeTrue();
         _store.Saved.FovVisible.Should().BeTrue();
         var fov = channel.Last("setFov");
         fov.GetProperty("visible").GetBoolean().Should().BeTrue();
@@ -438,28 +438,28 @@ public sealed class SkyViewModelTests
         fov.GetProperty("widthDegrees").GetDouble().Should().BeApproximately(1.9655, 1e-3);
         fov.GetProperty("heightDegrees").GetDouble().Should().BeApproximately(1.3133, 1e-3);
         fov.GetProperty("label").GetString().Should().Contain("650 mm");
-        shell.Sky.FovText.Should().Contain("1.97").And.Contain("1.31");
+        shell.Sky.Camera.FovText.Should().Contain("1.97").And.Contain("1.31");
 
         shell.Targets.SelectById("M42");
         ShouldPointAt(channel.Last("setFov").GetProperty("center"), TestCatalog.M42.Coordinates);
-        shell.Sky.FinderFovDegrees.Should().BeApproximately(3 * 1.9655, 1e-3);
+        shell.Sky.Modes.FinderFovDegrees.Should().BeApproximately(3 * 1.9655, 1e-3);
 
         // A drag in the renderer is remembered, not echoed back.
         var sent = channel.Count("setFov");
         channel.Receive("""{"v":1,"type":"fovChanged","payload":{"x":0,"y":0.6,"z":0.8,"rotationDegrees":15.5}}""");
         channel.Count("setFov").Should().Be(sent);
-        shell.Sky.FovRotationDegrees.Should().Be(15.5);
+        shell.Sky.Camera.FovRotationDegrees.Should().Be(15.5);
         _store.Saved.FovRotationDegrees.Should().Be(15.5);
-        shell.Sky.FovCenterText.Should().Contain("+53°");
+        shell.Sky.Camera.FovCenterText.Should().Contain("+53°");
 
         // Typed values: a preset fills the sensor; editing it by hand clears the preset.
-        shell.Sky.SelectedSensorPreset = shell.Sky.SensorPresets[0];
-        shell.Sky.SensorWidthMm.Should().Be(36);
-        shell.Sky.SensorWidthMm = 30;
-        shell.Sky.SelectedSensorPreset.Should().BeNull();
+        shell.Sky.Camera.SelectedSensorPreset = shell.Sky.Camera.SensorPresets[0];
+        shell.Sky.Camera.SensorWidthMm.Should().Be(36);
+        shell.Sky.Camera.SensorWidthMm = 30;
+        shell.Sky.Camera.SelectedSensorPreset.Should().BeNull();
 
-        shell.Sky.FocalLengthMm = 0;
-        shell.Sky.FovText.Should().Be(Strings.SkyFovInvalid);
+        shell.Sky.Camera.FocalLengthMm = 0;
+        shell.Sky.Camera.FovText.Should().Be(Strings.SkyFovInvalid);
         channel.Last("setFov").GetProperty("visible").GetBoolean().Should().BeFalse();
     }
 
@@ -479,7 +479,7 @@ public sealed class SkyViewModelTests
         darkest.Should().BeLessThanOrEqualTo(19.0 + 1e-6, "a city sky is never darker than its SQM");
         shell.Sky.SiteSqmText.Should().Contain("19.0").And.Contain("6").And.Contain(Strings.SkyQualityManual);
 
-        shell.Sky.LayerToggles.Single(t => t.Key == "skyBrightness").IsEnabled = false;
+        shell.Sky.Layers.LayerToggles.Single(t => t.Key == "skyBrightness").IsEnabled = false;
         channel.Last("setLayers").GetProperty("skyBrightness").GetBoolean().Should().BeFalse();
         _store.Saved.SkyBrightness.Should().BeFalse();
     }
@@ -488,11 +488,11 @@ public sealed class SkyViewModelTests
     public async Task ExportedImages_GetADescriptiveName()
     {
         var (shell, _) = await CreateAsync();
-        shell.Sky.SuggestedImageFileName().Should().Be("AstroPlannerPro-dome-2026-01-15-2200.png");
+        shell.Sky.Modes.SuggestedImageFileName().Should().Be("AstroPlannerPro-dome-2026-01-15-2200.png");
 
         shell.Targets.SelectById("M42");
-        shell.Sky.IsFinderMode = true;
-        shell.Sky.SuggestedImageFileName().Should().Be("AstroPlannerPro-finder-M42-2026-01-15-2200.png");
+        shell.Sky.Modes.IsFinderMode = true;
+        shell.Sky.Modes.SuggestedImageFileName().Should().Be("AstroPlannerPro-finder-M42-2026-01-15-2200.png");
     }
 }
 
@@ -623,4 +623,40 @@ public sealed class SkyLaunchOptionsTests
     [InlineData("--sky-stars=many")]
     public void AnythingMalformed_NeverReachesTheUrl(string argument) =>
         SkyLaunchOptions.Query([argument]).Should().BeEmpty();
+}
+
+/// <summary>
+/// WPF reports a broken binding only at run time, silently: every "Sky.…" path of the main
+/// window must resolve, property by property, from ShellViewModel (the sky view model is split
+/// into parts, Sky.Time, Sky.Layers, Sky.Camera, Sky.Search and Sky.Map).
+/// </summary>
+public sealed partial class SkyBindingTests
+{
+    [Fact]
+    public void EverySkyBindingOfTheMainWindow_Resolves()
+    {
+        var xaml = File.ReadAllText(Path.Combine(AccessibilityTests.RepositoryRoot(), "src", "AstroPlanner.UI", "MainWindow.xaml"));
+        var paths = SkyPath().Matches(xaml).Select(m => m.Groups[1].Value).Distinct().ToList();
+
+        paths.Should().HaveCountGreaterThan(30, "the sky tab binds most of its controls");
+        paths.Where(path => !Resolves(typeof(ShellViewModel), path)).Should().BeEmpty();
+    }
+
+    private static bool Resolves(Type type, string path)
+    {
+        foreach (var name in path.Split('.'))
+        {
+            if (type.GetProperty(name, System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance) is not { } property)
+            {
+                return false;
+            }
+
+            type = property.PropertyType;
+        }
+
+        return true;
+    }
+
+    [System.Text.RegularExpressions.GeneratedRegex(@"Binding\s+(?:DataContext\.)?(Sky\.[A-Za-z.]+)")]
+    private static partial System.Text.RegularExpressions.Regex SkyPath();
 }

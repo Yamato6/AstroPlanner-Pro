@@ -330,7 +330,7 @@ public sealed class UsabilityTests
         _planService.Entries = [new("M31")];
         var viewModel = await CreateLoadedMainAsync();
 
-        var points = viewModel.Sky.GetSkyMapPoints();
+        var points = viewModel.Sky.Map.GetSkyMapPoints();
 
         points.Should().OnlyContain(p => p.AltitudeDegrees > 0);
         points.Select(p => p.Id).Should().NotContain("M13", "M13 is below the horizon that night");
@@ -342,12 +342,12 @@ public sealed class UsabilityTests
     public async Task SkyMap_ClickSelectsTheNearestObjectOrNothing()
     {
         var viewModel = await CreateLoadedMainAsync();
-        var m31 = viewModel.Sky.GetSkyMapPoints().Single(p => p.Id == "M31");
+        var m31 = viewModel.Sky.Map.GetSkyMapPoints().Single(p => p.Id == "M31");
 
-        viewModel.Sky.SelectNearestOnSkyMap(m31.Position.X + 1, m31.Position.Y - 1).Should().BeTrue();
+        viewModel.Sky.Map.SelectNearestOnSkyMap(m31.Position.X + 1, m31.Position.Y - 1).Should().BeTrue();
         viewModel.Targets.SelectedObject!.Id.Should().Be("M31");
 
-        viewModel.Sky.SelectNearestOnSkyMap(500, 500).Should().BeFalse();
+        viewModel.Sky.Map.SelectNearestOnSkyMap(500, 500).Should().BeFalse();
         viewModel.Targets.SelectedObject!.Id.Should().Be("M31");
     }
 
