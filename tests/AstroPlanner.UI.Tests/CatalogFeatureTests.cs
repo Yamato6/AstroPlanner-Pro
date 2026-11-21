@@ -327,10 +327,10 @@ public sealed class CatalogFeatureTests
 
     [Fact]
     [Trait("Category", "Performance")]
-    public async Task FifteenThousandObjects_FilterInLessThan200Milliseconds()
+    public async Task TwentyFiveThousandObjects_FilterInLessThan200Milliseconds()
     {
         var random = new Random(7);
-        var catalog = Enumerable.Range(0, 15_000)
+        var catalog = Enumerable.Range(0, 25_000)
             .Select(i => new CelestialObject($"NGC {i}", i % 3 == 0 ? $"Object {i}" : "", "Orion",
                 (CelestialObjectType)(i % 7), random.NextDouble() * 16, new EquatorialCoordinates(random.NextDouble() * 24, random.NextDouble() * 180 - 90))
             {

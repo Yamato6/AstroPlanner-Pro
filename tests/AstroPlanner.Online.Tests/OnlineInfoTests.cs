@@ -129,6 +129,22 @@ public sealed class OnlineInfoTests
     }
 
     [Fact]
+    public void Titles_OfCatalogStars_TryTheStarArticle_ThenTheSpelledNames()
+    {
+        static CelestialObject Star(string id, string name, params string[] alternates) =>
+            new(id, name, "Gemini", CelestialObjectType.DoubleStar, 1.6, new EquatorialCoordinates(7.58, 31.9))
+            {
+                Star = new StarInfo(1, 36850, null, "A1V", 0.03, 15.6, null, null, null),
+                AlternateNames = alternates
+            };
+
+        WikipediaSummaryService.TitlesFor(Star("HIP 36850", "Castor", "α Gem", "Alpha Geminorum", "Alpha Geminorum"))
+            .Should().Equal("Castor (star)", "Alpha Geminorum", "Castor");
+        WikipediaSummaryService.TitlesFor(Star("HIP 104214", "61 Cyg", "61 Cygni")).Should().Equal("61 Cygni");
+        WikipediaSummaryService.TitlesFor(Star("HIP 1", "ε Lyr", "Epsilon1 Lyrae", "Epsilon Lyrae")).Should().Equal("Epsilon1 Lyrae", "Epsilon Lyrae");
+    }
+
+    [Fact]
     public async Task Summary_FollowsTheRedirect_WithTheCommonsLicense()
     {
         var handler = new StubHttpHandler(r => r.RequestUri!.Host switch

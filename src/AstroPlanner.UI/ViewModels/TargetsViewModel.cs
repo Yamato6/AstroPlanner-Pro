@@ -21,7 +21,7 @@ public sealed partial class TargetsViewModel : ObservableValidator, IDisposable
 {
     /// <summary>Values of <see cref="CatalogFilter"/>.</summary>
     public const string CatalogAll = "All", CatalogMessier = "M", CatalogCaldwell = "C", CatalogNgc = "NGC",
-        CatalogIc = "IC", CatalogSolarSystem = "SolarSystem";
+        CatalogIc = "IC", CatalogSolarSystem = "SolarSystem", CatalogStars = "Stars";
 
     private static readonly FilterOption AllConstellations = new("", Strings.FilterAllConstellations);
 
@@ -142,7 +142,8 @@ public sealed partial class TargetsViewModel : ObservableValidator, IDisposable
         new(CatalogCaldwell, Strings.CatalogCaldwell),
         new(CatalogNgc, Strings.CatalogNgc),
         new(CatalogIc, Strings.CatalogIc),
-        new(CatalogSolarSystem, Strings.CatalogSolarSystem)
+        new(CatalogSolarSystem, Strings.CatalogSolarSystem),
+        new(CatalogStars, Strings.CatalogStars)
     ];
 
     /// <summary>Constellations in the catalog; the first option ("" = all) clears the filter.</summary>
@@ -342,6 +343,9 @@ public sealed partial class TargetsViewModel : ObservableValidator, IDisposable
     /// Selects the object with this id (any catalog object, even one hidden by the filters,
     /// which is then kept in the table). Returns false when the id is unknown.
     /// </summary>
+    /// <summary>Id of the catalog row of the star with this HYG id (the sky's star id), or null when it is not a row.</summary>
+    public string? StarRowId(int hygId) => _allObjects.FirstOrDefault(item => item.Target.Star?.HygId == hygId)?.Id;
+
     public bool SelectById(string id)
     {
         var row = _allObjects.FirstOrDefault(item => string.Equals(item.Id, id, StringComparison.OrdinalIgnoreCase));
@@ -632,6 +636,7 @@ public sealed partial class TargetsViewModel : ObservableValidator, IDisposable
         CatalogNgc => item.Target.IsInCatalog("NGC"),
         CatalogIc => item.Target.IsInCatalog("IC"),
         CatalogSolarSystem => item.Target.IsMoving,
+        CatalogStars => item.Target.IsStar,
         _ => true
     };
 

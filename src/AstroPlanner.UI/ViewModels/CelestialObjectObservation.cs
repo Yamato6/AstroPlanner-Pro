@@ -56,6 +56,12 @@ public sealed class CelestialObjectObservation
     /// </summary>
     public string? SmallBodyText { get; init; }
 
+    /// <summary>Stars: spectral type, colour, distance and variability; null for other objects.</summary>
+    public string? StarText { get; init; }
+
+    /// <summary>Double stars: one line per pair (closest first); null for single stars and other objects.</summary>
+    public string? DoubleStarText { get; init; }
+
     /// <summary>Forecast cloud cover (%) at culmination; null without a forecast.</summary>
     public int? CloudCoverAtCulmination { get; init; }
 

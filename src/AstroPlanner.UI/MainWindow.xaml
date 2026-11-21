@@ -880,6 +880,13 @@
                                 <!-- Comets and asteroids: distances and where the orbit comes from -->
                                 <TextBlock Text="{Binding SmallBodyText}" TextWrapping="Wrap" Margin="0,0,12,0"
                                            Visibility="{Binding SmallBodyText, Converter={StaticResource NullToCollapsedConverter}}"/>
+                                <!-- Stars: spectral type, colour, distance, variability; doubles: their pairs -->
+                                <TextBlock Text="{Binding StarText}" TextWrapping="Wrap" Margin="0,0,12,0"
+                                           Visibility="{Binding StarText, Converter={StaticResource NullToCollapsedConverter}}"/>
+                                <TextBlock Margin="0,6,0,0" Foreground="{StaticResource NightMutedTextBrush}" Text="{x:Static res:Strings.DetailDoubleStarTitle}"
+                                           Visibility="{Binding DoubleStarText, Converter={StaticResource NullToCollapsedConverter}}"/>
+                                <TextBlock Text="{Binding DoubleStarText}" TextWrapping="Wrap" Margin="0,0,12,0"
+                                           Visibility="{Binding DoubleStarText, Converter={StaticResource NullToCollapsedConverter}}"/>
                             </StackPanel>
                             <StackPanel Grid.Row="2" Grid.Column="1">
                                 <TextBlock Foreground="{StaticResource NightMutedTextBrush}" Text="{x:Static res:Strings.DetailCurrentPosition}"/>
