@@ -18,6 +18,8 @@
     <None Include="..\fixtures\horizons\*.csv" Link="fixtures\horizons\%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
     <!-- HEALPix reference from astropy-healpix (tools/generate-healpix-fixture.py). -->
     <None Include="..\fixtures\healpix\*.csv" Link="fixtures\healpix\%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
+    <!-- SGP4 verification set (Vallado et al. 2006), near-Earth cases. -->
+    <None Include="..\fixtures\satellites\*.tle;..\fixtures\satellites\*.out" Link="fixtures\satellites\%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 
   <ItemGroup>

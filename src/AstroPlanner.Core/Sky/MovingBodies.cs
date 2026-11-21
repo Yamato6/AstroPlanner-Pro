@@ -10,7 +10,8 @@ public enum MovingBodyKind
     Moon,
     Planet,
     Comet,
-    Asteroid
+    Asteroid,
+    Satellite
 }
 
 /// <summary>
