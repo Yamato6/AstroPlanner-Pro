@@ -209,8 +209,8 @@ shows whether the services are online, offline (showing saved data) or off.
 ```bash
 dotnet build AstroPlanner.slnx -warnaserror
 dotnet run --project src/AstroPlanner.UI
-dotnet test AstroPlanner.slnx          # ~840 tests, no network
-cd src/sky-renderer && npm ci && npm test   # renderer: ~150 Vitest tests (the UI build runs npm itself)
+dotnet test AstroPlanner.slnx          # ~850 .NET tests, no network
+cd src/sky-renderer && npm ci && npm test   # renderer: ~150 Vitest tests, most generated from the bridge and projection fixtures (the UI build runs npm itself)
 dotnet run --project tools/AstroPlanner.DataBuilder -- all   # rebuild the catalogs (downloads the sources)
 ```
 
