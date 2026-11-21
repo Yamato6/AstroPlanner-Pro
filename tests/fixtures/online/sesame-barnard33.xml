@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Sesame xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+ xsi:noNamespaceSchemaLocation="https://vizier.cds.unistra.fr/xml/sesame_4x.xsd">
+<Target option="SNV">
+  <name>Barnard 33</name>
+  <!-- Q073229 #1 -->
+  <Resolver name="Sca=Simbad (CfA, via client/server)"><!--delay: 0ms [0] -->
+    <INFO>from cache</INFO>
+    <oid>828287</oid>
+    <otype>DNe</otype>
+    <jpos>05:40:58.99 -02:27:29.9</jpos>
+    <jradeg>85.24583333</jradeg>
+    <jdedeg>-2.45833333</jdedeg>
+    <oname>NAME Horsehead Nebula</oname>
+    <nrefs>559</nrefs>
+  </Resolver>
+</Target>
+</Sesame>
+<!--- ====Done (2026-Nov-21,01:51:46z)==== -->
