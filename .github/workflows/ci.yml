@@ -120,6 +120,30 @@ jobs:
           -p:Version=${{ steps.version.outputs.value }}
           -o publish
 
+      # Code signing (docs/signing.md): only once the SignPath Foundation project is set up, i.e.
+      # when the repository variable SIGNPATH_ORGANIZATION_ID exists. Otherwise the release is
+      # unsigned and these steps are skipped.
+      - name: Upload the unsigned .exe for signing
+        if: vars.SIGNPATH_ORGANIZATION_ID != ''
+        id: unsigned-exe
+        uses: actions/upload-artifact@v7
+        with:
+          name: unsigned-exe
+          path: publish/AstroPlannerPro.exe
+
+      - name: Sign the .exe (SignPath)
+        if: vars.SIGNPATH_ORGANIZATION_ID != ''
+        uses: signpath/github-action-submit-signing-request@v3
+        with:
+          api-token: ${{ secrets.SIGNPATH_API_TOKEN }}
+          organization-id: ${{ vars.SIGNPATH_ORGANIZATION_ID }}
+          project-slug: ${{ vars.SIGNPATH_PROJECT_SLUG }}
+          signing-policy-slug: ${{ vars.SIGNPATH_SIGNING_POLICY_SLUG }}
+          artifact-configuration-slug: exe
+          github-artifact-id: ${{ steps.unsigned-exe.outputs.artifact-id }}
+          wait-for-completion: true
+          output-artifact-directory: publish
+
       - name: Portable zip
         shell: pwsh
         run: |
@@ -128,18 +152,56 @@ jobs:
           Copy-Item publish\AstroPlannerPro.exe portable\
           Copy-Item LICENSE portable\LICENSE.txt
           Copy-Item README.md portable\
-          Compress-Archive -Path portable\* -DestinationPath "dist\AstroPlannerPro_${{ steps.version.outputs.value }}_win-x64_portable.zip"
+          Copy-Item THIRD_PARTY_NOTICES.md portable\
+          $zip = "dist\AstroPlannerPro_${{ steps.version.outputs.value }}_win-x64_portable.zip"
+          Compress-Archive -Path portable\* -DestinationPath $zip
+          # The zip must have the app and its licenses (spec §12).
+          Add-Type -AssemblyName System.IO.Compression.FileSystem
+          $archive = [IO.Compression.ZipFile]::OpenRead((Resolve-Path $zip))
+          try { $entries = $archive.Entries.FullName } finally { $archive.Dispose() }
+          foreach ($required in 'AstroPlannerPro.exe', 'LICENSE.txt', 'README.md', 'THIRD_PARTY_NOTICES.md') {
+            if ($entries -notcontains $required) { throw "The portable zip lacks $required." }
+          }
 
       - name: Installer (Inno Setup)
         shell: pwsh
         run: |
           choco install innosetup --no-progress -y
-          & "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe" `
+          # Inno Setup 6 or 7, wherever Chocolatey put it.
+          $iscc = Get-ChildItem "${env:ProgramFiles}\Inno Setup *\ISCC.exe", "${env:ProgramFiles(x86)}\Inno Setup *\ISCC.exe" -ErrorAction SilentlyContinue |
+            Select-Object -First 1
+          if (-not $iscc) { throw 'ISCC.exe not found.' }
+          & $iscc.FullName `
             "/DMyAppVersion=${{ steps.version.outputs.value }}" `
             "/DPublishDir=$PWD\publish" `
             "/DOutputDir=$PWD\dist" `
             installer\AstroPlanner.iss
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+      - name: Upload the unsigned installer for signing
+        if: vars.SIGNPATH_ORGANIZATION_ID != ''
+        id: unsigned-installer
+        uses: actions/upload-artifact@v7
+        with:
+          name: unsigned-installer
+          path: dist/AstroPlannerPro_${{ steps.version.outputs.value }}_Setup.exe
+
+      - name: Sign the installer (SignPath)
+        if: vars.SIGNPATH_ORGANIZATION_ID != ''
+        uses: signpath/github-action-submit-signing-request@v3
+        with:
+          api-token: ${{ secrets.SIGNPATH_API_TOKEN }}
+          organization-id: ${{ vars.SIGNPATH_ORGANIZATION_ID }}
+          project-slug: ${{ vars.SIGNPATH_PROJECT_SLUG }}
+          signing-policy-slug: ${{ vars.SIGNPATH_SIGNING_POLICY_SLUG }}
+          artifact-configuration-slug: installer
+          github-artifact-id: ${{ steps.unsigned-installer.outputs.artifact-id }}
+          wait-for-completion: true
+          output-artifact-directory: dist
+
+      - name: Release notes from CHANGELOG.md
+        shell: pwsh
+        run: tools/release-notes.ps1 -Version "${{ steps.version.outputs.value }}" -OutFile notes/release-notes.md
 
       - name: SHA-256 checksums
         shell: pwsh
@@ -155,4 +217,5 @@ jobs:
           files: dist/*
           draft: true
           prerelease: ${{ contains(github.ref_name, '-') }}
-          generate_release_notes: true
+          name: AstroPlanner Pro ${{ steps.version.outputs.value }}
+          body_path: notes/release-notes.md

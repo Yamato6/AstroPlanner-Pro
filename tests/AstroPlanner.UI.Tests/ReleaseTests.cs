@@ -203,4 +203,24 @@ public class ReleaseTests
         properties.Should().HaveCountGreaterThan(200);
         properties.Should().OnlyContain(p => !string.IsNullOrWhiteSpace((string?)p.GetValue(null)));
     }
+
+    // ─── Release notes ──────────────────────────────────────────────────
+
+    [Fact]
+    public void Changelog_HasTheSectionOfThisVersion_ForTheReleaseNotes()
+    {
+        // tools/release-notes.ps1 publishes this section; the release job fails without it.
+        var changelog = File.ReadAllLines(Path.Combine(AccessibilityTests.RepositoryRoot(), "CHANGELOG.md"));
+        var heading = $"## [{AppVersion.Current.Number.ToString(3)}]";
+
+        if (AppVersion.Current.PreRelease is "dev")
+        {
+            return;   // a development build has no section yet
+        }
+
+        var start = Array.FindIndex(changelog, line => line.StartsWith(heading, StringComparison.Ordinal));
+        start.Should().BeGreaterThan(0, $"CHANGELOG.md needs a '{heading}' section");
+        changelog.Skip(start + 1).TakeWhile(line => !line.StartsWith("## [", StringComparison.Ordinal))
+            .Should().Contain(line => line.StartsWith("### ", StringComparison.Ordinal));
+    }
 }

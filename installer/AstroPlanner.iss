@@ -2,6 +2,12 @@
 ;
 ; Built by CI on every v* tag:
 ;   iscc /DMyAppVersion=2.0.0 /DPublishDir=..\publish /DOutputDir=..\dist installer\AstroPlanner.iss
+; (Inno Setup 6 or 7.)
+;
+; The 3D sky needs the Microsoft Edge WebView2 Runtime (part of Windows 11 and of most Windows 10
+; installs). If it is missing, the installer explains it and offers to open Microsoft's download
+; page in the browser; it never downloads or runs anything itself (spec §12). Without it the app
+; uses its 2D sky charts.
 ;
 ; Installs for the current user, without administrator rights, in
 ; %LocalAppData%\Programs\AstroPlanner Pro. User data (settings, plan, logbook) lives in
@@ -76,6 +82,7 @@ Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{
 [Files]
 Source: "{#PublishDir}\{#MyAppExeName}"; DestDir: "{app}"; Flags: ignoreversion
 Source: "..\LICENSE"; DestDir: "{app}"; DestName: "LICENSE.txt"; Flags: ignoreversion
+Source: "..\THIRD_PARTY_NOTICES.md"; DestDir: "{app}"; Flags: ignoreversion
 
 [Icons]
 Name: "{group}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; Comment: "Astrophotography planner"
@@ -86,3 +93,39 @@ Name: "{autodesktop}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; Tasks: de
 Filename: "{app}\{#MyAppExeName}"; Description: "{cm:LaunchProgram,{#MyAppName}}"; Flags: nowait postinstall skipifsilent
 
 ; Nothing in [UninstallDelete]: the user data folder is kept on purpose.
+
+[CustomMessages]
+english.WebView2Missing=The 3D sky of AstroPlanner Pro uses the Microsoft Edge WebView2 Runtime, which is not installed on this computer.%n%nEverything else works without it, and the sky falls back to 2D charts.%n%nOpen Microsoft's WebView2 download page in your browser now? (Choose the "Evergreen Bootstrapper" or "Evergreen Standalone Installer".)
+
+[Code]
+const
+  WebView2ClientKey = 'Microsoft\EdgeUpdate\Clients\{F3017226-FE2A-4295-8BDF-00C3A9A7E4C5}';
+  WebView2DownloadUrl = 'https://developer.microsoft.com/microsoft-edge/webview2/';
+
+{ A WebView2 Runtime registration: its "pv" value is a version other than empty or 0.0.0.0. }
+function HasRuntimeVersion(RootKey: Integer; SubKey: String): Boolean;
+var
+  Version: String;
+begin
+  Result := RegQueryStringValue(RootKey, SubKey, 'pv', Version)
+    and (Version <> '') and (Version <> '0.0.0.0');
+end;
+
+{ The Evergreen runtime, per machine (32- or 64-bit registry view) or per user. }
+function IsWebView2Installed(): Boolean;
+begin
+  Result := HasRuntimeVersion(HKLM32, 'SOFTWARE\' + WebView2ClientKey)
+    or HasRuntimeVersion(HKLM64, 'SOFTWARE\' + WebView2ClientKey)
+    or HasRuntimeVersion(HKCU, 'Software\' + WebView2ClientKey);
+end;
+
+procedure CurStepChanged(CurStep: TSetupStep);
+var
+  ErrorCode: Integer;
+begin
+  if (CurStep = ssPostInstall) and not WizardSilent() and not IsWebView2Installed() then
+  begin
+    if MsgBox(CustomMessage('WebView2Missing'), mbConfirmation, MB_YESNO) = IDYES then
+      ShellExec('open', WebView2DownloadUrl, '', '', SW_SHOWNORMAL, ewNoWait, ErrorCode);
+  end;
+end;
