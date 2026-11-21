@@ -7,6 +7,10 @@ public static class AstronomyMath
     private const double DegreesToRadians = Math.PI / 180.0;
     private const double RadiansToDegrees = 180.0 / Math.PI;
 
+    /// <summary>UTC instant of a Julian date (inverse of <see cref="ToJulianDate"/>, millisecond resolution).</summary>
+    public static DateTime FromJulianDate(double julianDate) =>
+        new DateTime(2000, 1, 1, 12, 0, 0, DateTimeKind.Utc).AddMilliseconds(Math.Round((julianDate - 2451545.0) * 86_400_000));
+
     public static double ToJulianDate(DateTime dateTime)
     {
         var utc = dateTime.Kind == DateTimeKind.Local

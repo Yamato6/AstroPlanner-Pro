@@ -161,7 +161,7 @@ public sealed class NightEphemerisCalculatorTests
         }
 
         all.Should().HaveCount(15_000);
-        best.Should().BeLessThan(TimeSpan.FromSeconds(1));
+        best.Should().BeLessThan(PerformanceBudget.Of(TimeSpan.FromSeconds(1)));
     }
 }
 

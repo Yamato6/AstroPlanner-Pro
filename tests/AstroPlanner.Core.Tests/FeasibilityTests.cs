@@ -339,6 +339,6 @@ public sealed class FeasibilityTests(ITestOutputHelper output)
         reports.Should().HaveCount(targets.Count);
         reports[17].Should().BeEquivalentTo(Calculator.Evaluate(targets[17], request));
         output.WriteLine($"13 000 targets in {watch.ElapsedMilliseconds} ms");
-        watch.Elapsed.Should().BeLessThan(TimeSpan.FromSeconds(5));
+        watch.Elapsed.Should().BeLessThan(PerformanceBudget.Of(TimeSpan.FromSeconds(5)));
     }
 }

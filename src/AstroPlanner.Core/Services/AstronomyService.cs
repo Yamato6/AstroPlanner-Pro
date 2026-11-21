@@ -35,13 +35,19 @@ public sealed class AstronomyService : IAstronomyService
     }
 
     /// <summary>
-    /// Equatorial coordinates, equinox of date: planets are calculated for that instant; the
-    /// rest by precession from the J2000 catalog.
+    /// Equatorial coordinates, equinox of date: planets, comets and asteroids are calculated for
+    /// that instant; the rest by precession from the J2000 catalog.
     /// </summary>
     private static EquatorialCoordinates EquatorialOfDate(CelestialObject target, DateTime utcDateTime) =>
-        target.Planet is { } planet
-            ? PlanetCalculator.GetPosition(planet, utcDateTime).Equatorial
-            : Precession.FromJ2000(target.Coordinates, utcDateTime);
+        target.Planet is { } planet ? PlanetCalculator.GetPosition(planet, utcDateTime).Equatorial
+        : target.Orbit is { } orbit ? OrbitCalculator.GetPosition(orbit, utcDateTime).Equatorial
+        : Precession.FromJ2000(target.Coordinates, utcDateTime);
+
+    public SmallBodyPosition? GetSmallBodyPosition(CelestialObject target, DateTime utcDateTime)
+    {
+        ArgumentNullException.ThrowIfNull(target);
+        return target.Orbit is { } orbit ? OrbitCalculator.GetPosition(orbit, utcDateTime) : null;
+    }
 
     public PlanetPosition? GetPlanetPosition(CelestialObject target, DateTime utcDateTime)
     {
@@ -53,14 +59,15 @@ public sealed class AstronomyService : IAstronomyService
     {
         ArgumentNullException.ThrowIfNull(target);
 
-        return target.Planet is { } planet
-            ? ConstellationLookup.Find(PlanetCalculator.GetPosition(planet, utcDateTime).Equatorial,
-                AstronomyMath.ToJulianDate(utcDateTime))
+        return target.IsMoving
+            ? ConstellationLookup.Find(EquatorialOfDate(target, utcDateTime), AstronomyMath.ToJulianDate(utcDateTime))
             : ConstellationLookup.FromJ2000(target.Coordinates);
     }
 
     public double GetApparentMagnitude(CelestialObject target, DateTime utcDateTime) =>
-        GetPlanetPosition(target, utcDateTime)?.Magnitude ?? target.ApparentMagnitude;
+        GetPlanetPosition(target, utcDateTime)?.Magnitude
+        ?? GetSmallBodyPosition(target, utcDateTime)?.Magnitude
+        ?? target.ApparentMagnitude;
 
     public IEnumerable<(DateTime Time, double AltitudeDegrees)> GetAltitudeSeries(
         CelestialObject target,

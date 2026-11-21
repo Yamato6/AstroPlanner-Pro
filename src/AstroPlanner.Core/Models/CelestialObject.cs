@@ -32,7 +32,12 @@ public enum CelestialObjectType
     DarkNebula,
     Star,
     DoubleStar,
-    Nova
+    Nova,
+    Comet,
+    Asteroid,
+
+    /// <summary>The Milky Way's core (galactic centre region): a wide-field target.</summary>
+    MilkyWayCore
 }
 
 /// <summary>
@@ -67,12 +72,30 @@ public sealed class CelestialObject
         Planet = planet;
     }
 
+    private CelestialObject(string id, string commonName, SmallBodyOrbit orbit)
+        : this(id, commonName, SolarSystemConstellation,
+            orbit.Kind == SmallBodyKind.Comet ? CelestialObjectType.Comet : CelestialObjectType.Asteroid, double.NaN,
+            new EquatorialCoordinates(0, 0))
+    {
+        Orbit = orbit;
+    }
+
     /// <summary>
     /// Creates a planet. Its <see cref="Coordinates"/> and <see cref="ApparentMagnitude"/> are
     /// not used: they depend on the date and <c>IAstronomyService</c> calculates them.
     /// </summary>
     public static CelestialObject CreatePlanet(string id, string commonName, Planet planet) =>
         new(id, commonName, planet);
+
+    /// <summary>
+    /// Creates a comet or asteroid from its orbit. Like a planet, its position and magnitude
+    /// depend on the date and <c>IAstronomyService</c> calculates them.
+    /// </summary>
+    public static CelestialObject CreateSmallBody(string id, string commonName, SmallBodyOrbit orbit)
+    {
+        ArgumentNullException.ThrowIfNull(orbit);
+        return new CelestialObject(id, commonName, orbit);
+    }
 
     /// <summary>
     /// Primary identifier: "M42" for Messier objects, otherwise the catalog name, e.g.
@@ -97,6 +120,14 @@ public sealed class CelestialObject
     public Planet? Planet { get; }
 
     public bool IsPlanet => Planet is not null;
+
+    /// <summary>The comet's or asteroid's orbit, or null.</summary>
+    public SmallBodyOrbit? Orbit { get; }
+
+    public bool IsSmallBody => Orbit is not null;
+
+    /// <summary>A Solar System body whose position changes with the date (planet, comet, asteroid).</summary>
+    public bool IsMoving => Planet is not null || Orbit is not null;
 
     /// <summary>Other identifiers of the same object (cross-IDs), e.g. "NGC 1976", "C14", "PGC 2557".</summary>
     public IReadOnlyList<string> Designations { get; init; } = [];

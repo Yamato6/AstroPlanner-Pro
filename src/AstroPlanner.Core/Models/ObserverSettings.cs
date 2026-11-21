@@ -46,6 +46,9 @@ public sealed class ObserverSettings
     /// <summary>Resolve names missing from the catalog with CDS Sesame (sends the name typed).</summary>
     public bool NameResolverEnabled { get; set; } = true;
 
+    /// <summary>Comet and bright-asteroid elements from the Minor Planet Center (sends nothing about the user).</summary>
+    public bool SmallBodiesEnabled { get; set; } = true;
+
     /// <summary>Check GitHub for a new version at startup.</summary>
     public bool CheckForUpdates { get; set; } = true;
 

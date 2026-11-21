@@ -73,7 +73,7 @@ public sealed class NightEphemerisCalculator(IAstronomyService astronomy)
             index =>
             {
                 var target = targets[index];
-                results[index] = target.IsPlanet
+                results[index] = target.IsMoving
                     ? CalculateMoving(target, night, request)
                     : CalculateFixed(target, night, request);
             });
