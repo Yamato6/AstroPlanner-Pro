@@ -15,6 +15,8 @@
   <!-- JPL Horizons golden fixtures (tools/fetch-horizons-fixtures.ps1); never fetched by tests. -->
   <ItemGroup>
     <None Include="..\fixtures\horizons\*.csv" Link="fixtures\horizons\%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
+    <!-- HEALPix reference from astropy-healpix (tools/generate-healpix-fixture.py). -->
+    <None Include="..\fixtures\healpix\*.csv" Link="fixtures\healpix\%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 
   <ItemGroup>
