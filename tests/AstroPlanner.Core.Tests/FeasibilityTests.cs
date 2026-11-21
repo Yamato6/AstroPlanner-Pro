@@ -304,6 +304,49 @@ public sealed class FeasibilityTests(ITestOutputHelper output)
         report.Reasons.Should().Contain(r => r.Factor == FeasibilityFactor.Framing && r.Impact == ReasonImpact.Negative);
     }
 
+    /// <summary>Albireo with its pairs as in the WDS of 2026-10-29 (Aa,Ab is a speckle pair inside A).</summary>
+    private static CelestialObject Albireo() =>
+        new("HIP 95947", "Albireo", "Cygnus", CelestialObjectType.DoubleStar, 3.05, new EquatorialCoordinates(19.5120, 27.9597))
+        {
+            Star = new StarInfo(95648, 95947, 183912, "K3II+...", 1.074, 133.2, null, null, null)
+            {
+                Pairs =
+                [
+                    new DoubleStarPair("19307+2758", "BNU  10", "Aa,Ab", 2021, 55, 0.3, 3.37, 5.0),
+                    new DoubleStarPair("19307+2758", "STFA 43", "AB", 2025, 54, 34.3, 3.19, 4.68),
+                    new DoubleStarPair("19307+2758", "WAL 114", "AC", 2023, 339, 64.8, 3.19, 10.99)
+                ]
+            }
+        };
+
+    [Fact]
+    public void DoubleStars_AreSplitByTheTelescope_ButNotByTheWideLens()
+    {
+        var albireo = Albireo();
+        var summer = new DateTime(2026, 7, 14, 21, 0, 0);
+
+        var telescope = Evaluate(albireo, Request(summer, Newtonian650OnEq(), Bortle7Sqm));
+        var lens = Evaluate(albireo, Request(summer, Rokinon16, Bortle7Sqm));
+
+        albireo.Star!.MainPair!.Name.Should().Be("STFA 43 AB", "the speckle pair and the faint AC are not what Albireo is known for");
+        var split = telescope.Reasons.Single(r => r.Factor == FeasibilityFactor.Resolution);
+        split.Impact.Should().Be(ReasonImpact.Positive);
+        (split.Value, split.Value3).Should().Be((34.3, 4.68));
+        split.Value2.Should().BeApproximately(2.5, 1e-9, "the seeing (2.5″) limits a 1.2″/px telescope, not Dawes (0.9″)");
+        var merged = lens.Reasons.Single(r => r.Factor == FeasibilityFactor.Resolution);
+        merged.Impact.Should().Be(ReasonImpact.Negative);
+        merged.Value2.Should().BeApproximately(2 * Rokinon16.ImageScaleArcsecPerPixel, 1e-9, "two 48″ pixels");
+        lens.Reasons[0].Factor.Should().Be(FeasibilityFactor.Resolution, "what hurts comes first");
+        lens.Verdict.Should().Be(FeasibilityVerdict.Unlikely, "a star stays a point of light");
+    }
+
+    [Theory]
+    [InlineData(130, 1.18, 2.5, 2.5)]
+    [InlineData(130, 1.18, 0.5, 2.36)]
+    [InlineData(50, 0.2, 0.5, 2.32)]
+    public void ResolutionLimit_IsTheLargestOfDawesPixelsAndSeeing(double apertureMm, double scale, double seeing, double expected) =>
+        FeasibilityCalculator.ResolutionLimitArcsec(apertureMm, scale, seeing, new FeasibilityConstants()).Should().BeApproximately(expected, 1e-9);
+
     [Fact]
     public void Reasons_ListBlockingAndNegativeFactorsFirst()
     {
@@ -324,7 +367,7 @@ public sealed class FeasibilityTests(ITestOutputHelper output)
     public void WholeCatalog_IsEvaluatedQuickly_InTheOrderGiven()
     {
         var random = new Random(42);
-        var targets = Enumerable.Range(0, 13_000).Select(i => new CelestialObject(
+        var targets = Enumerable.Range(0, 23_000).Select(i => new CelestialObject(
             $"T{i}", "Test", "Test", CelestialObjectType.Galaxy, 8 + random.NextDouble() * 6,
             new EquatorialCoordinates(random.NextDouble() * 24, random.NextDouble() * 150 - 70))
         {
@@ -338,7 +381,7 @@ public sealed class FeasibilityTests(ITestOutputHelper output)
 
         reports.Should().HaveCount(targets.Count);
         reports[17].Should().BeEquivalentTo(Calculator.Evaluate(targets[17], request));
-        output.WriteLine($"13 000 targets in {watch.ElapsedMilliseconds} ms");
+        output.WriteLine($"23 000 targets in {watch.ElapsedMilliseconds} ms");
         watch.Elapsed.Should().BeLessThan(PerformanceBudget.Of(TimeSpan.FromSeconds(5)));
     }
 }

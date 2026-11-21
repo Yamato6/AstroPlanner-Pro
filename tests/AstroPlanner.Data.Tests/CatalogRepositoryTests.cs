@@ -43,6 +43,45 @@ public sealed class SqliteCatalogRepositoryTests(CatalogFixture fixture) : IClas
     }
 
     [Fact]
+    public void Stars_ToTheNakedEyeLimit_AreCatalogRows()
+    {
+        var stars = _objects.Where(o => o.IsStar).ToList();
+
+        stars.Should().HaveCountGreaterThan(8_500).And.OnlyContain(s => s.ApparentMagnitude <= SqliteCatalogRepository.StarCatalogLimitMagnitude);
+        stars.Count(s => s.Type == CelestialObjectType.DoubleStar).Should().BeGreaterThan(1_500);
+        _objects.Should().Contain(o => o.Id == "M40" && !o.IsStar, "OpenNGC's star entries stay as they were");
+
+        var sirius = Object("HIP 32349");
+        sirius.CommonName.Should().Be("Sirius");
+        sirius.Constellation.Should().Be("Canis Major");
+        sirius.Designations.Should().Contain(["HD 48915", "HR 2491", "Alp CMa", "9 CMa", "WDS 06451-1643"]);
+        sirius.AlternateNames.Should().Contain(["α CMa", "Alpha Canis Majoris", "9 Canis Majoris"]);
+        sirius.Star!.SpectralType.Should().StartWith("A0");
+        sirius.Star.DistanceLightYears.Should().BeApproximately(8.6, 0.1);
+        sirius.Star.MainPair!.Name.Should().Be("AGC 1 AB");
+    }
+
+    [Fact]
+    public void Albireo_IsADouble_ThatKnowsItsMainPair()
+    {
+        var albireo = Object("HIP 95947");
+
+        albireo.CommonName.Should().Be("Albireo");
+        albireo.Type.Should().Be(CelestialObjectType.DoubleStar);
+        albireo.AlternateNames.Should().Contain(["β¹ Cyg", "Beta1 Cygni", "6 Cygni"]);
+        albireo.Star!.Pairs.Should().BeInAscendingOrder(p => p.SeparationArcsec);
+        albireo.Star.MainPair.Should().BeEquivalentTo(new
+        {
+            Discoverer = "STFA 43", Components = "AB", SeparationArcsec = 34.3, PrimaryMagnitude = 3.19, CompanionMagnitude = 4.68,
+            PositionAngleDegrees = 54.0
+        }, o => o.ExcludingMissingMembers());
+        albireo.Star.Pairs.Should().Contain(p => p.IsClose, "Aa,Ab is a speckle pair inside A");
+
+        var unnamed = _objects.First(o => o.IsStar && o.CommonName.Length == 0);
+        unnamed.DisplayName.Should().Be(unnamed.Id);
+    }
+
+    [Fact]
     public void Catalog_HasAll110MessierAnd109CaldwellObjects()
     {
         _objects.Select(o => o.MessierNumber).OfType<int>().Distinct().Order()

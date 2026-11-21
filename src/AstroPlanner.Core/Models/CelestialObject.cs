@@ -129,6 +129,12 @@ public sealed class CelestialObject
     /// <summary>A Solar System body whose position changes with the date (planet, comet, asteroid).</summary>
     public bool IsMoving => Planet is not null || Orbit is not null;
 
+    /// <summary>What the star catalog (HYG, WDS) knows about a star; null for other objects and OpenNGC's star entries.</summary>
+    public StarInfo? Star { get; init; }
+
+    /// <summary>A star of the star catalog (single or double).</summary>
+    public bool IsStar => Star is not null;
+
     /// <summary>Other identifiers of the same object (cross-IDs), e.g. "NGC 1976", "C14", "PGC 2557".</summary>
     public IReadOnlyList<string> Designations { get; init; } = [];
 
