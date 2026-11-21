@@ -37,6 +37,15 @@ public sealed class ObserverSettings
     /// <summary>Fetch the seeing and transparency forecast from 7Timer! (sends the location rounded to ~1 km).</summary>
     public bool AstroForecastEnabled { get; set; } = true;
 
+    /// <summary>Framing preview from HiPS survey tiles (CDS, ESA ESASky; sends only sky coordinates).</summary>
+    public bool SurveyImagesEnabled { get; set; } = true;
+
+    /// <summary>Object descriptions from Wikipedia and their Commons image (sends the object's name).</summary>
+    public bool WikipediaEnabled { get; set; } = true;
+
+    /// <summary>Resolve names missing from the catalog with CDS Sesame (sends the name typed).</summary>
+    public bool NameResolverEnabled { get; set; } = true;
+
     /// <summary>Check GitHub for a new version at startup.</summary>
     public bool CheckForUpdates { get; set; } = true;
 

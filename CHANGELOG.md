@@ -6,6 +6,32 @@ versions follow [Semantic Versioning](https://semver.org/). Versions up to 1.0.0
 
 ## [Unreleased] — 2.0.0
 
+### M4 — Online enrichment (part 2: framing preview, Wikipedia, Sesame)
+
+#### Added
+- **Framing preview** in the object detail: the active rig's field and aspect, rotated by a
+  camera-angle slider, sampled from HiPS survey tiles (DSS2 colour; Pan-STARRS DR1 colour), with
+  the object's catalog outline. Core gains HEALPix NESTED (`Core/Sky/Healpix`, checked against
+  astropy-healpix) and the TAN projection and tile composition (`Core/Imaging/FramingPreview`). The
+  tile layout was checked against stars in real DSS tiles. Wide fields use the order-3 Allsky
+  image.
+- **Tiles with mirrors**: CDS alasky first, then ESA ESASky for DSS (alasky's hips2fits and
+  tiles have been unavailable since late October 2026); a failing mirror is skipped for 10
+  minutes; tiles are cached on disk; at most 4 downloads at once.
+- **About the object**: the Wikipedia lead (Messier/NGC/IC/Caldwell titles, planets, common
+  names; disambiguation and non-astronomical pages are skipped) with its Commons image, author and
+  license, and links. Cached for 30 days, "no article" included.
+- **Sesame search**: a sky search with no catalog match resolves the name with CDS Sesame (with
+  the CfA and IDIA mirrors) and centres the view on it.
+- **Settings → Internet**: toggles for survey images, Wikipedia and Sesame, each saying what it
+  sends; the top-bar status covers them too.
+
+#### Changed
+- `CachedFetch` takes several mirrors and can cache a "not found"; online errors share
+  `OnlineServiceException`.
+- The feasibility disclaimer no longer says the forecasts are missing.
+- `tests/fixtures/online/README.md`: a corrupted character fixed.
+
 ### M4 — Online enrichment (part 1: forecasts, cache and toggles)
 
 #### Added

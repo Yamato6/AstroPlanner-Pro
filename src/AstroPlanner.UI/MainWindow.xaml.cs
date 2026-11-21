@@ -47,9 +47,20 @@ public partial class MainWindow : Window
 
     private void OnTabsSelectionChanged(object sender, SelectionChangedEventArgs e)
     {
-        if (ReferenceEquals(e.OriginalSource, Tabs) && Tabs.SelectedItem == SkyTab)
+        if (!ReferenceEquals(e.OriginalSource, Tabs))
+        {
+            return;
+        }
+
+        if (Tabs.SelectedItem == SkyTab)
         {
             StartSky();
+        }
+
+        // The framing preview and the description are fetched only while the detail is on screen.
+        if (_viewModel is not null)
+        {
+            _viewModel.Detail.IsShown = Tabs.SelectedItem == DetailTab;
         }
     }
 

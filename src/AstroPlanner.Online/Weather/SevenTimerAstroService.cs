@@ -29,7 +29,8 @@ public sealed class SevenTimerAstroService(HttpClient http, TimeProvider? timePr
     public async Task<AstroForecast> GetForecastAsync(double latitude, double longitude, CancellationToken cancellationToken = default)
     {
         var fetched = await CachedFetch.GetAsync(http, cache, CacheName, BuildUrl(latitude, longitude), CacheDuration,
-            _time.GetUtcNow().UtcDateTime, "7Timer!", cancellationToken);
+            _time.GetUtcNow().UtcDateTime, "7Timer!",
+            (message, inner) => new WeatherForecastException(message, inner), cancellationToken);
         return Parse(fetched.Content, latitude, longitude, fetched.FetchedAtUtc);
     }
 

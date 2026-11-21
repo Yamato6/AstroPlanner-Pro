@@ -16,7 +16,7 @@
 
   <!-- Responses recorded from the real services (see tests/fixtures/online/README.md); never fetched by tests. -->
   <ItemGroup>
-    <None Include="..\fixtures\online\*.json" Link="fixtures\online\%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="..\fixtures\online\*.json;..\fixtures\online\*.xml;..\fixtures\online\*.jpg" Link="fixtures\online\%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 
   <ItemGroup>

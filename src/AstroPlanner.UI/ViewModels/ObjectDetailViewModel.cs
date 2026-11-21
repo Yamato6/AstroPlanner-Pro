@@ -30,7 +30,9 @@ public sealed partial class ObjectDetailViewModel : ObservableObject
         WeatherState weather,
         TargetsViewModel targets,
         SessionPlanViewModel plan,
-        LogbookViewModel logbook)
+        LogbookViewModel logbook,
+        FramingViewModel framing,
+        ObjectInfoViewModel about)
     {
         _astronomy = astronomy;
         _context = context;
@@ -38,6 +40,8 @@ public sealed partial class ObjectDetailViewModel : ObservableObject
         _targets = targets;
         _plan = plan;
         _logbook = logbook;
+        Framing = framing;
+        About = about;
 
         _targets.SelectionOrTableChanged += (_, _) =>
         {
@@ -47,6 +51,7 @@ public sealed partial class ObjectDetailViewModel : ObservableObject
             OnPropertyChanged(nameof(HasSelection));
             OnPropertyChanged(nameof(IsInPlan));
             ChartVersion++;
+            UpdateOnlineInfo();
         };
         _targets.FeasibilityUpdated += (_, _) => UpdateFeasibility();
         _plan.Changed += (_, _) => OnPropertyChanged(nameof(IsInPlan));
@@ -63,6 +68,32 @@ public sealed partial class ObjectDetailViewModel : ObservableObject
     }
 
     public CelestialObjectRowViewModel? SelectedObject => _targets.SelectedObject;
+
+    /// <summary>Framing preview with the active rig (survey tiles).</summary>
+    public FramingViewModel Framing { get; }
+
+    /// <summary>Wikipedia description and image.</summary>
+    public ObjectInfoViewModel About { get; }
+
+    /// <summary>The detail is on screen: only then are the preview and the description fetched.</summary>
+    public bool IsShown
+    {
+        get;
+        set
+        {
+            if (SetProperty(ref field, value))
+            {
+                UpdateOnlineInfo();
+            }
+        }
+    }
+
+    private void UpdateOnlineInfo()
+    {
+        var target = SelectedObject?.Target;
+        Framing.Show(target, IsShown);
+        About.Show(target, IsShown);
+    }
 
     public bool HasSelection => SelectedObject is not null;
 

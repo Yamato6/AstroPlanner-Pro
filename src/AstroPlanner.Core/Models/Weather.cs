@@ -160,4 +160,4 @@ public sealed class AstroForecast
 
 /// <summary>The forecast could not be obtained (offline, service error, invalid response).</summary>
 public sealed class WeatherForecastException(string message, Exception? innerException = null)
-    : Exception(message, innerException);
+    : OnlineServiceException(message, innerException);

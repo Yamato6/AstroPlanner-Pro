@@ -28,6 +28,8 @@
 
 ![Why this verdict? The feasibility breakdown of the Orion Nebula: sky at the target, signal-to-noise, usable hours after clouds, Moon, framing, sub length and sampling](docs/screenshots/feasibility.png)
 
+![Object detail: the framing preview of M42 with the T7 on the 650 mm telescope, from the DSS colour survey, with the nebula's catalog outline, next to its Wikipedia description and image with credits](docs/screenshots/framing.png)
+
 ![The equipment inventory: rigs made of a camera, a lens or telescope and a mount, with the field, image scale, sampling and longest sub derived live](docs/screenshots/equipment.png)
 
 ![My plan: six targets scheduled across the night with the T7 + 16 mm, each block on the timeline coloured by verdict over its usable window, with the subs, ISO and integration per target and the session checklist](docs/screenshots/session-plan.png)
@@ -69,6 +71,13 @@
   warnings for dew (air close to its dew point) and wind (gusts too strong for your mount). The
   forecast seeing and haze refine the verdicts. Forecasts are kept on disk, so offline you see the
   last one, marked with its time.
+- 🖼️ **Framing preview**: the object as your camera would frame it, at the rig's exact field and
+  aspect, with a camera-angle slider and the object's outline, drawn from DSS2 or Pan-STARRS survey
+  tiles (HiPS). Wide lenses use a single all-sky image; tiles are saved for offline use.
+- 📖 **About the object**: the Wikipedia introduction and image, with the image's author and
+  license, and links to both pages.
+- 🔎 **Find anything**: a sky search that finds nothing in the catalog asks CDS Sesame (SIMBAD,
+  NED, VizieR), so "Barnard 33" or "Sh2-240" still centres the view.
 - 🌠 **Live sky**: a GPU-rendered sky dome (three.js in WebView2) with 83k stars, constellations,
   the Milky Way, 13k deep-sky objects and the Sun, Moon (with its phase) and planets, all
   positioned by the same tested astronomy core as the tables. Play time at up to ×3600, step by
@@ -128,6 +137,12 @@ AstroPlanner Pro has no accounts and collects no data. It only connects to:
   ~1 km**;
 - **www.7timer.info**, for seeing and transparency, also sending your location **rounded to
   ~1 km**;
+- **alasky.cds.unistra.fr** and its mirror **skies.esac.esa.int** (ESA ESASky), for the survey
+  images of the framing preview, receiving only **sky coordinates** (tile numbers);
+- **en.wikipedia.org** and **commons.wikimedia.org**, for descriptions and image licenses,
+  receiving the **object's name**;
+- **cds.unistra.fr** (or its mirrors vizier.cfa.harvard.edu and vizier.idia.ac.za), only when a
+  sky search finds nothing in the catalog, receiving the **name you typed**;
 - **api.github.com**, to check for a new version (nothing about you is sent).
 
 Each one can be turned off in **Settings → Internet connection**, where the saved answers (kept in

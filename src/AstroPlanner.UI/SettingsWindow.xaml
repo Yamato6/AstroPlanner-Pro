@@ -113,6 +113,18 @@
                       Content="{x:Static res:Strings.SettingsAstroForecast}"/>
             <TextBlock Margin="23,2,0,8" Foreground="{StaticResource NightMutedTextBrush}" TextWrapping="Wrap" FontSize="12"
                        Text="{x:Static res:Strings.SettingsAstroForecastNote}"/>
+            <CheckBox Margin="0,4" IsChecked="{Binding SurveyImagesEnabled}"
+                      Content="{x:Static res:Strings.SettingsSurveyImages}"/>
+            <TextBlock Margin="23,2,0,8" Foreground="{StaticResource NightMutedTextBrush}" TextWrapping="Wrap" FontSize="12"
+                       Text="{x:Static res:Strings.SettingsSurveyImagesNote}"/>
+            <CheckBox Margin="0,4" IsChecked="{Binding WikipediaEnabled}"
+                      Content="{x:Static res:Strings.SettingsWikipedia}"/>
+            <TextBlock Margin="23,2,0,8" Foreground="{StaticResource NightMutedTextBrush}" TextWrapping="Wrap" FontSize="12"
+                       Text="{x:Static res:Strings.SettingsWikipediaNote}"/>
+            <CheckBox Margin="0,4" IsChecked="{Binding NameResolverEnabled}"
+                      Content="{x:Static res:Strings.SettingsNameResolver}"/>
+            <TextBlock Margin="23,2,0,8" Foreground="{StaticResource NightMutedTextBrush}" TextWrapping="Wrap" FontSize="12"
+                       Text="{x:Static res:Strings.SettingsNameResolverNote}"/>
             <CheckBox Margin="0,4" IsChecked="{Binding CheckForUpdates}"
                       Content="{x:Static res:Strings.SettingsCheckForUpdates}"/>
             <TextBlock Margin="23,2,0,8" Foreground="{StaticResource NightMutedTextBrush}" TextWrapping="Wrap" FontSize="12"

@@ -118,7 +118,8 @@ public sealed class NightConditionsUiTests
         var settings = new ObserverSettings
         {
             IsManualLocation = true, LatitudeDegrees = 21.88, LongitudeDegrees = -102.29, ElevationMeters = 1888,
-            TimeZoneId = "Central Standard Time (Mexico)", CityId = null, AstroForecastEnabled = false, WeatherForecastEnabled = false
+            TimeZoneId = "Central Standard Time (Mexico)", CityId = null, AstroForecastEnabled = false, WeatherForecastEnabled = false,
+            SurveyImagesEnabled = false, WikipediaEnabled = false, NameResolverEnabled = false
         };
 
         var shell = await CreateAsync(null, astro, settings);

@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Sesame xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+ xsi:noNamespaceSchemaLocation="https://vizier.cds.unistra.fr/xml/sesame_4x.xsd">
+<Target option="SNV">
+  <name>NoSuchObjectXyz123</name>
+  <!-- Q073230 #1 -->
+  <INFO> *** NNNothing found *** </INFO>
+</Target>
+</Sesame>
+<!--- ====Done (2026-Nov-21,01:51:47z)==== -->

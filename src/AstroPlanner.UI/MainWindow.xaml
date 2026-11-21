@@ -20,6 +20,8 @@
         <converters:BooleanToVisibilityConverter x:Key="InverseBooleanToVisibilityConverter" Invert="True"/>
         <converters:DisplayNameConverter x:Key="DisplayNameConverter"/>
         <converters:NullToCollapsedConverter x:Key="NullToCollapsedConverter"/>
+        <converters:RgbImageConverter x:Key="RgbImageConverter"/>
+        <converters:ImageBytesConverter x:Key="ImageBytesConverter"/>
         <converters:BooleanToTextConverter x:Key="ActiveMarkConverter" TrueText="●" FalseText=""/>
         <Style TargetType="TextBlock">
             <Setter Property="Foreground" Value="{StaticResource NightTextBrush}"/>
@@ -827,6 +829,7 @@
                                 <RowDefinition Height="Auto"/>
                                 <RowDefinition Height="Auto"/>
                                 <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
                                 <RowDefinition Height="*"/>
                             </Grid.RowDefinitions>
                             <Grid.ColumnDefinitions>
@@ -931,6 +934,82 @@
                                                Text="{x:Static res:Strings.DetailFeasibilityDisclaimer}"/>
                                 </StackPanel>
                             </StackPanel>
+                            <!-- Online information (spec §4.4): framing preview from survey tiles and the Wikipedia description -->
+                            <Grid Grid.Row="4" Grid.ColumnSpan="3" Margin="0,20,0,0">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="3*"/>
+                                    <ColumnDefinition Width="2*"/>
+                                </Grid.ColumnDefinitions>
+                                <StackPanel Margin="0,0,20,0"
+                                            DataContext="{Binding DataContext.Detail.Framing, RelativeSource={RelativeSource AncestorType=Window}}">
+                                    <TextBlock Foreground="{StaticResource NightMutedTextBrush}" Text="{x:Static res:Strings.DetailFramingTitle}"
+                                               ToolTip="{x:Static res:Strings.DetailFramingTooltip}"/>
+                                    <TextBlock Margin="0,4,0,0" Text="{Binding FieldText}"
+                                               Visibility="{Binding FieldText, Converter={StaticResource NullToCollapsedConverter}}"/>
+                                    <WrapPanel Margin="0,6,0,0">
+                                        <TextBlock VerticalAlignment="Center" Margin="0,0,6,0" Text="{x:Static res:Strings.FramingSurvey}"/>
+                                        <ComboBox Width="190" VerticalAlignment="Center" ItemsSource="{Binding Surveys}" SelectedItem="{Binding SelectedSurvey}"
+                                                  DisplayMemberPath="Name" AutomationProperties.Name="{x:Static res:Strings.FramingSurvey}"/>
+                                        <TextBlock VerticalAlignment="Center" Margin="16,0,6,0" Text="{x:Static res:Strings.FramingRotation}"/>
+                                        <Slider Width="160" VerticalAlignment="Center" Minimum="0" Maximum="355" SmallChange="5" LargeChange="15"
+                                                TickFrequency="5" IsSnapToTickEnabled="True" Value="{Binding RotationDegrees}"
+                                                ToolTip="{x:Static res:Strings.FramingRotationTooltip}"
+                                                AutomationProperties.Name="{x:Static res:Strings.FramingRotation}"/>
+                                        <TextBlock VerticalAlignment="Center" Margin="6,0,0,0"
+                                                   Text="{Binding RotationDegrees, StringFormat={x:Static res:Strings.FramingRotationFormat}}"/>
+                                    </WrapPanel>
+                                    <Viewbox Margin="0,8,0,0" MaxHeight="420" HorizontalAlignment="Left" Stretch="Uniform"
+                                             Visibility="{Binding Image, Converter={StaticResource NullToCollapsedConverter}}">
+                                        <Grid Width="{Binding Image.Width}" Height="{Binding Image.Height}" ClipToBounds="True">
+                                            <Image Source="{Binding Image, Converter={StaticResource RgbImageConverter}}"
+                                                   RenderOptions.BitmapScalingMode="HighQuality"
+                                                   AutomationProperties.Name="{x:Static res:Strings.DetailFramingTitle}"/>
+                                            <Canvas Visibility="{Binding HasOutline, Converter={StaticResource BooleanToVisibilityConverter}}">
+                                                <Ellipse Canvas.Left="{Binding OutlineLeft}" Canvas.Top="{Binding OutlineTop}"
+                                                         Width="{Binding OutlineWidth}" Height="{Binding OutlineHeight}"
+                                                         Stroke="{StaticResource WarningBrush}" StrokeThickness="1.5" RenderTransformOrigin="0.5,0.5">
+                                                    <Ellipse.RenderTransform>
+                                                        <RotateTransform Angle="{Binding OutlineAngle}"/>
+                                                    </Ellipse.RenderTransform>
+                                                </Ellipse>
+                                            </Canvas>
+                                        </Grid>
+                                    </Viewbox>
+                                    <TextBlock Margin="0,6,0,0" TextWrapping="Wrap" Foreground="{StaticResource NightMutedTextBrush}" Text="{Binding StatusText}"
+                                               Visibility="{Binding StatusText, Converter={StaticResource NullToCollapsedConverter}}"/>
+                                    <TextBlock Margin="0,4,0,0" FontSize="11" TextWrapping="Wrap" Foreground="{StaticResource PlaceholderTextBrush}"
+                                               Text="{Binding AttributionText}"
+                                               Visibility="{Binding AttributionText, Converter={StaticResource NullToCollapsedConverter}}"/>
+                                </StackPanel>
+                                <StackPanel Grid.Column="1"
+                                            DataContext="{Binding DataContext.Detail.About, RelativeSource={RelativeSource AncestorType=Window}}">
+                                    <TextBlock Foreground="{StaticResource NightMutedTextBrush}" Text="{x:Static res:Strings.DetailInfoTitle}"/>
+                                    <TextBlock Margin="0,6,0,0" TextWrapping="Wrap" Foreground="{StaticResource NightMutedTextBrush}" Text="{Binding StatusText}"
+                                               Visibility="{Binding StatusText, Converter={StaticResource NullToCollapsedConverter}}"/>
+                                    <StackPanel Visibility="{Binding HasSummary, Converter={StaticResource BooleanToVisibilityConverter}}">
+                                        <TextBlock Margin="0,6,0,0" FontSize="16" FontWeight="SemiBold" TextWrapping="Wrap" Text="{Binding Summary.Title}"/>
+                                        <TextBlock TextWrapping="Wrap" Foreground="{StaticResource NightMutedTextBrush}" Text="{Binding Summary.Description}"/>
+                                        <Image Margin="0,8,0,0" MaxHeight="220" HorizontalAlignment="Left" Stretch="Uniform"
+                                               Source="{Binding ImageContent, Converter={StaticResource ImageBytesConverter}}"
+                                               Visibility="{Binding ImageContent, Converter={StaticResource NullToCollapsedConverter}}"
+                                               AutomationProperties.Name="{Binding Summary.Image.FileName}"/>
+                                        <TextBlock Margin="0,2,0,0" FontSize="11" TextWrapping="Wrap" Foreground="{StaticResource PlaceholderTextBrush}"
+                                                   Text="{Binding ImageCreditText}"
+                                                   Visibility="{Binding ImageCreditText, Converter={StaticResource NullToCollapsedConverter}}"/>
+                                        <TextBlock Margin="0,8,0,0" TextWrapping="Wrap" Text="{Binding Summary.Extract}"/>
+                                        <TextBlock Margin="0,6,0,0" FontSize="11" Foreground="{StaticResource PlaceholderTextBrush}"
+                                                   Text="{x:Static res:Strings.InfoTextCredit}"/>
+                                        <WrapPanel Margin="0,8,0,0">
+                                            <Button Style="{StaticResource SecondaryButtonStyle}" Content="{x:Static res:Strings.InfoOpenArticle}"
+                                                    Command="{Binding OpenArticleCommand}"/>
+                                            <Button Style="{StaticResource SecondaryButtonStyle}" Content="{x:Static res:Strings.InfoOpenImage}"
+                                                    Command="{Binding OpenImagePageCommand}"/>
+                                            <Button Style="{StaticResource SecondaryButtonStyle}" Content="{x:Static res:Strings.InfoOpenLicense}"
+                                                    Command="{Binding OpenLicenseCommand}"/>
+                                        </WrapPanel>
+                                    </StackPanel>
+                                </StackPanel>
+                            </Grid>
                         </Grid>
                         </ScrollViewer>
                     </Border>

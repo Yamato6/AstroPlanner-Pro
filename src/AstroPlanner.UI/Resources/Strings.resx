@@ -606,7 +606,7 @@
   <data name="FilterFitsFovTooltip" xml:space="preserve"><value>Only targets that fit the active rig's frame and are not too small for it</value></data>
   <data name="DetailFeasibilityTitle" xml:space="preserve"><value>Why this verdict? (active rig, tonight)</value></data>
   <data name="DetailFeasibilityNone" xml:space="preserve"><value>No estimate yet: choose an active rig in Equipment (or wait for the calculation).</value></data>
-  <data name="DetailFeasibilityDisclaimer" xml:space="preserve"><value>An honest estimate, not a probability: a simple photometric model with documented assumptions (docs/feasibility-model.md). Seeing and transparency forecasts are not included yet.</value></data>
+  <data name="DetailFeasibilityDisclaimer" xml:space="preserve"><value>An honest estimate, not a probability: a simple photometric model with documented assumptions (docs/feasibility-model.md). When there is a 7Timer! forecast, its seeing and haze are included.</value></data>
   <data name="HeaderActiveRig" xml:space="preserve"><value>Active rig</value></data>
   <data name="HeaderActiveRigTooltip" xml:space="preserve"><value>Camera + optic + mount used for the feasibility verdicts and the camera frame in the sky view</value></data>
   <data name="SkyFovFromRigFormat" xml:space="preserve"><value>From the active rig: {0}</value></data>
@@ -748,4 +748,48 @@
   <data name="OnlineServiceCachedFormat" xml:space="preserve"><value>offline, showing the forecast of {0:HH:mm}</value></data>
   <data name="OnlineServiceErrorFormat" xml:space="preserve"><value>unavailable ({0})</value></data>
   <data name="OnlineServiceWaiting" xml:space="preserve"><value>waiting</value></data>
+  <data name="DetailFramingTitle" xml:space="preserve"><value>Framing preview</value></data>
+  <data name="DetailFramingTooltip" xml:space="preserve"><value>The active rig's field on a survey image, as the camera would frame the object. The ellipse is the object's catalog size.</value></data>
+  <data name="FramingSurvey" xml:space="preserve"><value>Survey</value></data>
+  <data name="FramingRotation" xml:space="preserve"><value>Camera angle</value></data>
+  <data name="FramingRotationTooltip" xml:space="preserve"><value>Angle of the image's top side from north through east (0° = north up)</value></data>
+  <data name="FramingRotationFormat" xml:space="preserve"><value>{0:0}°</value></data>
+  <data name="FramingFieldFormat" xml:space="preserve"><value>{0} · {1:0.00}° × {2:0.00}°</value></data>
+  <data name="FramingUnavailable" xml:space="preserve"><value>Framing preview not available.</value></data>
+  <data name="FramingDisabled" xml:space="preserve"><value>Survey images are turned off (Settings → Internet connection).</value></data>
+  <data name="FramingPlanet" xml:space="preserve"><value>No survey image for planets: they move against the stars.</value></data>
+  <data name="FramingNoRig" xml:space="preserve"><value>Choose a rig (Equipment) to preview its framing.</value></data>
+  <data name="FramingLoadingFormat" xml:space="preserve"><value>Loading {0} survey tiles…</value></data>
+  <data name="FramingMirrorFormat" xml:space="preserve"><value> · via {0}</value></data>
+  <data name="FramingPartial" xml:space="preserve"><value>Some survey tiles are unavailable: parts of the image are black.</value></data>
+  <data name="FramingFailedFormat" xml:space="preserve"><value>Survey images unavailable: {0}</value></data>
+  <data name="FramingNoTiles" xml:space="preserve"><value>no tiles</value></data>
+  <data name="FramingInvalidTile" xml:space="preserve"><value>invalid image</value></data>
+  <data name="DetailInfoTitle" xml:space="preserve"><value>About (Wikipedia)</value></data>
+  <data name="InfoTextCredit" xml:space="preserve"><value>Text: Wikipedia, CC BY-SA 4.0.</value></data>
+  <data name="InfoImageCreditFormat" xml:space="preserve"><value>Image: {0} · {1} (Wikimedia Commons)</value></data>
+  <data name="InfoUnknownAuthor" xml:space="preserve"><value>unknown author</value></data>
+  <data name="InfoUnavailable" xml:space="preserve"><value>Descriptions not available.</value></data>
+  <data name="InfoDisabled" xml:space="preserve"><value>Descriptions from Wikipedia are turned off (Settings → Internet connection).</value></data>
+  <data name="InfoLoading" xml:space="preserve"><value>Loading the description…</value></data>
+  <data name="InfoNoArticle" xml:space="preserve"><value>Wikipedia has no article about this object.</value></data>
+  <data name="InfoFailedFormat" xml:space="preserve"><value>Description unavailable: {0}</value></data>
+  <data name="InfoOpenArticle" xml:space="preserve"><value>Read on Wikipedia</value></data>
+  <data name="InfoOpenImage" xml:space="preserve"><value>Image page</value></data>
+  <data name="InfoOpenLicense" xml:space="preserve"><value>License</value></data>
+  <data name="SkySearchResolvingFormat" xml:space="preserve"><value>"{0}" is not in the catalog: searching online (Sesame)…</value></data>
+  <data name="SkySearchNotFoundOnlineFormat" xml:space="preserve"><value>Nothing found for "{0}", in the catalog or online (Sesame).</value></data>
+  <data name="SkySearchResolvedFormat" xml:space="preserve"><value>{0} ({1}), not in the catalog: resolved by {2} at RA {3:0.0000} h, Dec {4:+0.000;-0.000}°. The view is centred on it.</value></data>
+  <data name="SkySearchOnlineFailedFormat" xml:space="preserve"><value>"{0}" is not in the catalog, and the online search is unavailable: {1}</value></data>
+  <data name="SettingsSurveyImages" xml:space="preserve"><value>Framing preview from survey images (CDS, ESA ESASky)</value></data>
+  <data name="SettingsSurveyImagesNote" xml:space="preserve"><value>Downloads sky survey tiles for the object's position (only sky coordinates are sent). Saved in the cache for later and offline use.</value></data>
+  <data name="SettingsWikipedia" xml:space="preserve"><value>Object descriptions (Wikipedia)</value></data>
+  <data name="SettingsWikipediaNote" xml:space="preserve"><value>Sends the object's name to en.wikipedia.org and commons.wikimedia.org (image license).</value></data>
+  <data name="SettingsNameResolver" xml:space="preserve"><value>Find names missing from the catalog (Sesame, CDS)</value></data>
+  <data name="SettingsNameResolverNote" xml:space="preserve"><value>When a sky search finds nothing, sends the name typed to cds.unistra.fr (or its mirrors at CfA and IDIA).</value></data>
+  <data name="OnlineServiceImages" xml:space="preserve"><value>Survey images (CDS, ESA ESASky)</value></data>
+  <data name="OnlineServiceWikipedia" xml:space="preserve"><value>Descriptions (Wikipedia)</value></data>
+  <data name="OnlineServiceNameResolver" xml:space="preserve"><value>Name search (Sesame, CDS)</value></data>
+  <data name="AboutOnlineData" xml:space="preserve"><value>Online data:</value></data>
+  <data name="AboutOnlineDataText" xml:space="preserve"><value>seeing and transparency from 7Timer! (Ye 2011); survey images from the Digitized Sky Survey (STScI/NASA) and Pan-STARRS1, coloured and HEALPixed by CDS and mirrored by ESA ESASky; descriptions from Wikipedia (CC BY-SA 4.0) with Wikimedia Commons images under their own licenses; names resolved by Sesame (CDS: SIMBAD, NED, VizieR).</value></data>
 </root>

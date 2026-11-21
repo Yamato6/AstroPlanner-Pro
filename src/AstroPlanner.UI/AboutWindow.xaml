@@ -47,6 +47,10 @@
             <Run Text="{x:Static res:Strings.AboutCloudForecastLicense}"/>
         </TextBlock>
         <TextBlock Style="{StaticResource CreditStyle}">
+            <Run FontWeight="SemiBold" Text="{x:Static res:Strings.AboutOnlineData}"/>
+            <Run Text="{x:Static res:Strings.AboutOnlineDataText}"/>
+        </TextBlock>
+        <TextBlock Style="{StaticResource CreditStyle}">
             <Run FontWeight="SemiBold" Text="{x:Static res:Strings.AboutCatalogs}"/>
             <Run Text="{x:Static res:Strings.AboutCatalogsText}"/>
         </TextBlock>

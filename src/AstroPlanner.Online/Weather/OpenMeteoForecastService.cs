@@ -34,7 +34,8 @@ public sealed class OpenMeteoForecastService(HttpClient http, TimeProvider? time
         double latitude, double longitude, CancellationToken cancellationToken = default)
     {
         var fetched = await CachedFetch.GetAsync(http, cache, CacheName, BuildUrl(latitude, longitude), CacheDuration,
-            _time.GetUtcNow().UtcDateTime, "The weather service", cancellationToken);
+            _time.GetUtcNow().UtcDateTime, "The weather service",
+            (message, inner) => new WeatherForecastException(message, inner), cancellationToken);
         return Parse(fetched.Content, latitude, longitude, fetched.FetchedAtUtc);
     }
 

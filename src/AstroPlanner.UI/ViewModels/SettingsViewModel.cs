@@ -87,6 +87,18 @@ public sealed partial class SettingsViewModel : ObservableValidator
     [ObservableProperty]
     public partial bool AstroForecastEnabled { get; set; } = true;
 
+    /// <summary>Framing preview from survey tiles (CDS, ESA ESASky).</summary>
+    [ObservableProperty]
+    public partial bool SurveyImagesEnabled { get; set; } = true;
+
+    /// <summary>Object descriptions from Wikipedia.</summary>
+    [ObservableProperty]
+    public partial bool WikipediaEnabled { get; set; } = true;
+
+    /// <summary>Online name resolution (CDS Sesame) in the sky search.</summary>
+    [ObservableProperty]
+    public partial bool NameResolverEnabled { get; set; } = true;
+
     /// <summary>Check for a new version at startup.</summary>
     [ObservableProperty]
     public partial bool CheckForUpdates { get; set; } = true;
@@ -214,6 +226,9 @@ public sealed partial class SettingsViewModel : ObservableValidator
                 MaximumMagnitude = MaximumMagnitude,
                 WeatherForecastEnabled = WeatherForecastEnabled,
                 AstroForecastEnabled = AstroForecastEnabled,
+                SurveyImagesEnabled = SurveyImagesEnabled,
+                WikipediaEnabled = WikipediaEnabled,
+                NameResolverEnabled = NameResolverEnabled,
                 CheckForUpdates = CheckForUpdates,
                 Darkness = AllowNauticalTwilight ? DarknessDefinition.Nautical : DarknessDefinition.Astronomical,
                 ExtinctionCoefficient = ExtinctionCoefficient
@@ -290,6 +305,9 @@ public sealed partial class SettingsViewModel : ObservableValidator
         MaximumMagnitude = settings.MaximumMagnitude;
         WeatherForecastEnabled = settings.WeatherForecastEnabled;
         AstroForecastEnabled = settings.AstroForecastEnabled;
+        SurveyImagesEnabled = settings.SurveyImagesEnabled;
+        WikipediaEnabled = settings.WikipediaEnabled;
+        NameResolverEnabled = settings.NameResolverEnabled;
         CheckForUpdates = settings.CheckForUpdates;
         AllowNauticalTwilight = settings.Darkness == DarknessDefinition.Nautical;
         ExtinctionCoefficient = settings.ExtinctionCoefficient;

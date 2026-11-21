@@ -25,6 +25,11 @@
     <None Include="..\fixtures\v1\**\*.json" Link="fixtures\v1\%(RecursiveDir)%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 
+  <!-- A real DSS HiPS tile (tests/fixtures/online/README.md), for the framing preview end to end. -->
+  <ItemGroup>
+    <None Include="..\fixtures\online\hips-dsscolor-norder5-npix115.jpg" Link="fixtures\online\%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
   <ItemGroup>
     <Using Include="AstroPlanner.Testing" />
     <Using Include="AstroPlanner.Core.Models" />
