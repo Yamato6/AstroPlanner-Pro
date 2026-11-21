@@ -77,7 +77,7 @@ const frameTransformPayload = z.strictObject({
 
 const movingBodySchema = z.strictObject({
   id: text,
-  kind: z.enum(['sun', 'moon', 'planet']),
+  kind: z.enum(['sun', 'moon', 'planet', 'comet', 'asteroid']),
   name: text,
   magnitude: z.number(),
   diameterArcsec: z.number().min(0),
@@ -94,7 +94,7 @@ const movingBodySchema = z.strictObject({
   }),
 });
 
-const movingBodiesPayload = z.strictObject({ bodies: z.array(movingBodySchema).max(64) });
+const movingBodiesPayload = z.strictObject({ bodies: z.array(movingBodySchema).max(128) });
 const highlightsPayload = z.strictObject({ plan: z.array(text).max(5000) });
 export const selectionPayload = z.union([
   z.strictObject({ kind, id: text }),

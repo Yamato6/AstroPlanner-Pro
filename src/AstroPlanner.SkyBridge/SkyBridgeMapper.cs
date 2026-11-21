@@ -23,18 +23,21 @@ public static class SkyBridgeMapper
 
     /// <summary>
     /// Tracks of every body around <paramref name="utc"/> (± <paramref name="halfWindow"/>, every
-    /// <paramref name="step"/>) for the renderer to interpolate.
+    /// <paramref name="step"/>) for the renderer to interpolate: the Sun, the Moon, the planets and
+    /// the given comets and asteroids (only those with a known magnitude).
     /// </summary>
     public static MovingBodiesPayload MovingBodies(
         ObserverLocation observer,
         DateTime utc,
         TimeSpan halfWindow,
         TimeSpan step,
-        Func<string, string>? displayName = null)
+        Func<string, string>? displayName = null,
+        IReadOnlyList<CelestialObject>? smallBodies = null)
     {
         ArgumentNullException.ThrowIfNull(observer);
         var start = utc - halfWindow;
-        var tracks = MovingBodyCalculator.GetTracks(observer, utc, start, utc + halfWindow, step);
+        var tracks = MovingBodyCalculator.GetTracks(observer, utc, start, utc + halfWindow, step, smallBodies)
+            .Where(track => double.IsFinite(track.State.Magnitude));
 
         return new MovingBodiesPayload(
         [
@@ -44,6 +47,8 @@ public static class SkyBridgeMapper
                 {
                     MovingBodyKind.Sun => "sun",
                     MovingBodyKind.Moon => "moon",
+                    MovingBodyKind.Comet => "comet",
+                    MovingBodyKind.Asteroid => "asteroid",
                     _ => "planet"
                 },
                 displayName?.Invoke(track.State.Id) ?? track.State.Id,
