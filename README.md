@@ -257,6 +257,7 @@ src/
                            SatelliteState, OnlineInfoState, ThemeState), named HttpClients, exports
                            (CSV, PDF, .ics, print), logging, update checker, safe links, single instance
     Sky/                   WebView2 host of the renderer, its clock and assets
+    Charts/                ScottPlot charts (2D sky, altitude, plan timeline, horizon, predictions)
     Resources/Strings.resx All user-facing text (localisable)
     Themes/                Dark.xaml (palette and styles, also used by the charts), Night.xaml (red colors)
 tools/
