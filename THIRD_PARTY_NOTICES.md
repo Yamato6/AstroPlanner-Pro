@@ -69,6 +69,31 @@ Astronomical forecast by [7Timer!](https://www.7timer.info/) (Ye, Q.-Z. 2011, *P
 fetched at run time. Its data is free to use and redistribute for non-commercial purposes;
 AstroPlanner Pro is free.
 
+### Survey images — DSS2 colour and Pan-STARRS1 (HiPS by CDS), fetched at run time
+
+- **Digitized Sky Survey** (STScI/NASA): free for scientific, educational and non-profit use,
+  under CC BY-NC-SA 4.0 ([terms](https://archive.stsci.edu/dss/copyright.html)). Plates
+  © 1993-2003 California Institute of Technology (POSS-II), © 1976-1993 UK SERC/PPARC (ROE),
+  © 1993-2004 Anglo-Australian Observatory Board, © 1984-2004 AURA. Coloured and made into a HiPS
+  by CDS (Strasbourg); served by CDS alasky and its ESA ESASky mirror.
+- **Pan-STARRS1 DR1** (STScI/MAST), HiPS by CDS.
+
+The preview credits the survey and the mirror under every image. `docs/screenshots/framing.png`
+contains DSS imagery (CC BY-NC-SA 4.0) and Wikipedia text (CC BY-SA 4.0); it is not covered by the
+MIT license of the code.
+
+### Descriptions — Wikipedia and Wikimedia Commons, fetched at run time
+
+Text from the English Wikipedia, CC BY-SA 4.0, credited and linked under every description.
+Images from Wikimedia Commons under each file's own license, shown with its author and license
+name; images without a Commons license are not shown.
+
+### Name resolution — Sesame (CDS)
+
+[Sesame](https://cds.unistra.fr/cgi-bin/Sesame) name resolver (SIMBAD, NED, VizieR) of the CDS,
+Strasbourg, with its VizieR mirrors at CfA and IDIA. Used at run time; nothing is stored but the
+answer in the local cache.
+
 ## Sky data (shipped since M2)
 
 ### d3-celestial — BSD-3-Clause
