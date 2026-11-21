@@ -6,6 +6,31 @@ versions follow [Semantic Versioning](https://semver.org/). Versions up to 1.0.0
 
 ## [Unreleased] — 2.0.0
 
+### M6 — Polish and release (part 1: star catalog)
+
+#### Added
+- **Stars as catalog rows**: the 8,920 HYG stars to magnitude 6.5 join Targets (ids "HIP n",
+  else "HD n"), with the HIP/HD/HR, Bayer and Flamsteed designations and searchable names
+  ("α CMa", "Alpha Canis Majoris", "β Cyg", "Beta Cygni", "61 Cygni"). Catalog filter "Stars".
+  Detail shows the spectral type, B−V, distance in light-years and variability.
+- **Double stars** from the Washington Double Star Catalog (USNO, public domain): 2,975 pairs
+  matched to 2,445 HYG stars (1,836 of them to mag 6.5, typed Double star). Detail lists each
+  pair (separation, position angle, magnitudes, year), and feasibility adds a **Resolution**
+  reason: whether the rig splits the main pair (Dawes, two pixels or the seeing).
+- **Sky ⇄ Targets for stars**: picking a star in the sky selects its row, and a selected star is
+  highlighted in the sky.
+- Wikipedia titles for stars ("Castor (star)", "Alpha Geminorum", "61 Cygni").
+
+#### Changed
+- `catalogs.sqlite` schema 2: HYG spectral type, distance, variability and multiplicity columns,
+  and the new `double_stars` table (the DataBuilder downloads the WDS summary).
+- Star names (Greek Bayer letters, superscripts, constellation genitives) live in
+  `Core/Sky/StarNames`, shared by the sky data and the catalog.
+- Performance tests run on 25k objects (night ephemerides, filters) and 23k (feasibility).
+
+#### Fixed
+- A UI test could fail when the Milky Way core alert arrived before its assertion.
+
 ### M5 — Dynamic objects (part 2: satellites)
 
 #### Added

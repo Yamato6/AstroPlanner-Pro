@@ -25,6 +25,13 @@ re-identified, their constellations recalculated, survey identifiers dropped and
 Messier names added. That database is distributed under CC BY-SA 4.0 as well; it is generated
 from the public sources by the open-source tool in this repository.
 
+### Washington Double Star Catalog — public domain
+
+Double-star pairs (separation, position angle, magnitudes) from the **Washington Double Star
+Catalog** maintained by the U.S. Naval Observatory (Mason, B. D. et al. 2001, AJ 122, 3466),
+summary file of 2026-10-29. A U.S. government work in the public domain, credited here and in
+the app. `tests/fixtures/wds/sample.txt` is a short excerpt used by the tests.
+
 ### IAU constellation boundaries — Roman (1987), via astropy (BSD-3-Clause)
 
 Table of Roman, N. G. (1987), "Identification of a constellation from a position", PASP 99,

@@ -308,6 +308,21 @@ A comet's total magnitude is spread over an assumed coma of `CometComaArcmin` (5
 catalogues give no size; a tail is not modelled. The Milky Way core is an extended target of
 30° × 20° with no magnitude: its verdict says mostly whether the rig's field can frame it.
 
+## 13. Stars and double stars (M6)
+
+Stars are point sources: their light is spread over the seeing core, the framing is
+`PointLike` and the verdict is never better than Unlikely (a star alone is not an
+astrophotography target). For a double star the report adds a **Resolution** reason about its
+main pair (the brightest companion at least 1″ away, not inside an unresolved component):
+
+    limit = max(Dawes 116″ / D[mm], DoubleStarSplitPixels (2) × image scale, seeing FWHM)
+
+The pair is split comfortably when its separation is at least `DoubleStarComfortFactor` (1.5) ×
+the limit, split when above the limit, and not split below it. Example: Albireo (34.3″) is split
+by the T7 on the 650 mm telescope (limit 2.5″, the seeing) and not by the 16 mm lens (limit 96″,
+two pixels). The magnitude difference of the pair is not modelled. Separations and angles are the
+WDS's last measures; orbits are not propagated.
+
 ## Default constants (`FeasibilityConstants.Default`)
 
 | Constant | Value |

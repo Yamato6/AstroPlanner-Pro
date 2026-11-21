@@ -104,27 +104,36 @@ download in CI, so:
   OpenNGC splits into Se1/Se2).
 
 **HYG → stars** (`HygImporter`): every star to magnitude 9.0 except the Sun, with its
-identifiers, B–V and proper motion; the constellation is recalculated the same way.
+identifiers, B–V, proper motion and (schema 2) spectral type, distance, variability and
+multiple-system grouping; the constellation is recalculated the same way.
+
+**WDS → double stars** (`WdsImporter`, schema 2): the pairs of the Washington Double Star
+Catalog summary with a primary up to mag 7, a companion up to mag 11 and a last separation of
+0.3″–300″ (measured in 1900 or later), each matched to the nearest HYG star within 1′ whose
+magnitude agrees within 0.7 mag. The report counts selected, matched and unmatched pairs
+(2026-10-29: 3,239 selected, 2,975 matched to 2,445 stars, 264 unmatched).
 
 **Output** (`CatalogWriter`): `catalogs.sqlite`, schema in
 `src/AstroPlanner.Data/Catalog/CatalogSchema.cs` (tables `meta`, `objects`, `designations`,
-`names`, `stars`). The build is **deterministic**: rows are written in a fixed order, no
+`names`, `stars`, `double_stars`). The build is **deterministic**: rows are written in a fixed order, no
 timestamps are stored and the file is vacuumed, so the same sources give the same bytes (a test
 checks it). `meta` records the schema version and the version and checksum of every source.
 
 ## How the app uses it
 
-`catalogs.sqlite` (~10.8 MB, ~4.8 MB compressed inside the `.exe`) is an embedded resource of
-`AstroPlanner.Data`. SQLite needs a file, so `SqliteCatalogRepository` copies it once to
+`catalogs.sqlite` (~13.2 MB) is an embedded resource of `AstroPlanner.Data`. SQLite needs a
+file, so `SqliteCatalogRepository` copies it once to
 `%LocalAppData%\AstroPlannerPro\catalogs\catalogs-<hash>.sqlite` (older copies are deleted),
-opens it read-only and loads the ~13k objects into memory. Search and filters never touch the
-database. The stars are not loaded by the app itself: the sky renderer reads
-`data/build/sky/stars.bin`, packed into the exe with the renderer (docs/sky-renderer.md).
+opens it read-only and loads into memory the ~13.4k deep-sky objects and the ~8.9k stars to
+magnitude 6.5 (`StarCatalogLimitMagnitude`, ids "HIP n", else "HD n", else "HYG n") with their
+double-star pairs. Search and filters never touch the database. The sky renderer draws all the
+stars to magnitude 9 from `data/build/sky/stars.bin`, packed into the exe with the renderer
+(docs/sky-renderer.md); a star picked in the sky selects its catalog row by HYG id.
 
 ## Tests
 
 - `tests/AstroPlanner.DataBuilder.Tests` builds a catalog from small excerpts of the real files
-  (`tests/fixtures/openngc`, `tests/fixtures/hyg`): formatting of ids, type mapping, duplicates,
+  (`tests/fixtures/openngc`, `tests/fixtures/hyg`, `tests/fixtures/wds`): formatting of ids, type mapping, duplicates,
   ambiguous cross-IDs, the curated overlay, determinism and the basic checks of `verify`.
 - `tests/AstroPlanner.Data.Tests` reads the committed `catalogs.sqlite`: 110 Messier and 109
   Caldwell objects, cross-IDs, sizes, names, metadata.
