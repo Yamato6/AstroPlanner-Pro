@@ -11,6 +11,7 @@
     "build": "vite build"
   },
   "dependencies": {
+    "@astroplanner/bridge-client": "0.1.0",
     "@astroplanner/sky-engine": "0.1.0",
     "react": "19.3.1",
     "react-dom": "19.3.1"

@@ -97,7 +97,9 @@ picks behind it.
 
 JSON messages `{"v": 1, "type": "…", "payload": {…}}` over `PostWebMessageAsJson` /
 `window.chrome.webview.postMessage`. C# types: `src/AstroPlanner.SkyBridge/Payloads.cs`;
-TypeScript (zod) schemas: `src/web/packages/sky-engine/src/bridge/schema.ts`.
+TypeScript (zod) schemas: `src/web/packages/sky-engine/src/bridge/schema.ts`. The v3 UI's app
+channel (`v: 2`: requests, responses, events) shares the pipe; the engine ignores it
+([bridge.md](bridge.md)).
 
 | C# → renderer | |
 |---|---|
@@ -236,6 +238,8 @@ npm run build    # tsc + Vite → apps/planetarium/dist/
 
 ```
 packages/sky-engine   the renderer: mountSky(container) builds the canvases and connects the bridge
+packages/bridge-client  the app channel (bridge v2): typed requests and events, contracts
+                      generated from C# (docs/bridge.md)
 apps/planetarium      the pages WebView2 loads from https://app.astroplanner/
   index.html            the v2 Sky tab: the sky alone (src/classic.ts)
   planetarium.html      the v3 UI (src/planetarium, React 19), opened with --ui=web

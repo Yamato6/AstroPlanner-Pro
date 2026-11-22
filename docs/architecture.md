@@ -32,10 +32,11 @@ flowchart TB
 | `AstroPlanner.Core` | All astronomy (positions, events, refraction, constellations, moving bodies, SGP4), sky quality, the capture-feasibility model, the session scheduler, the logbook statistics. Pure functions over immutable records. | BCL only |
 | `AstroPlanner.Data` | SQLite: the embedded read-only `catalogs.sqlite`, the user's `app.db` (migrations in `Storage/Migrations`), the disk cache, the light-pollution grids, the v1 importer. | Core |
 | `AstroPlanner.Online` | One client per external service ([external-services.md](external-services.md)), all through `CachedFetch`. | Core |
-| `AstroPlanner.SkyBridge` | The WPF ⇄ renderer protocol: payload records, the JSON codec, the camera matrix. No WPF. | Core |
+| `AstroPlanner.SkyBridge` | The WPF ⇄ web protocols ([bridge.md](bridge.md)): the sky protocol (payload records, JSON codec, camera matrix) and the app channel of the v3 UI (contracts, codec, `RpcDispatcher`). No WPF. | Core |
 | `src/web` | npm workspace. `packages/sky-engine` draws what C# sends: it applies the `SkyFrame` matrix and interpolates body tracks sampled by Core; it computes no astronomy. `apps/planetarium` holds the pages: the v2 Sky tab and the v3 UI in development (`--ui=web`) ([sky-renderer.md](sky-renderer.md)). | — |
 | `AstroPlanner.UI` | Views, view models, shared state services, exports (CSV, PDF, `.ics`), themes. | all of the above |
 | `tools/AstroPlanner.DataBuilder` | Downloads and verifies the sources ([data-pipeline.md](data-pipeline.md)). Nothing in the app references it. | Core, Data |
+| `tools/AstroPlanner.BridgeGen` | Writes the TypeScript contracts of the app channel from the C# records ([bridge.md](bridge.md)). Only its test references it. | SkyBridge |
 
 ## Inside the UI
 

@@ -15,6 +15,11 @@ versions follow [Semantic Versioning](https://semver.org/). Versions up to 1.0.0
 - `--ui=web` opens a preview of the v3 planetarium UI: the live sky filling the window
   (React 19). It is in development; the classic window stays the default.
 - The sky page reports any Content Security Policy violation to the log.
+- Bridge v2 for the planetarium UI: an app channel of requests, responses and events next to the
+  unchanged sky protocol, with timeouts, cancellation, size limits and strict validation on both
+  sides (`docs/bridge.md`). Its contracts are C# records; `tools/AstroPlanner.BridgeGen` generates
+  the zod schemas and TypeScript types, and a test fails while they are stale. First endpoints:
+  `app.info` and `theme.changed` (the page follows the night-vision theme).
 
 ## [2.0.0] — 2026-11-21
 

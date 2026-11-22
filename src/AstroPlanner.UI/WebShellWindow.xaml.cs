@@ -14,6 +14,7 @@ namespace AstroPlanner.UI;
 public partial class WebShellWindow : Window
 {
     private readonly IAppLogger _logger;
+    private AppEndpoints? _endpoints;
 
     public WebShellWindow(IAppLogger logger)
     {
@@ -21,7 +22,9 @@ public partial class WebShellWindow : Window
         InitializeComponent();
         NativeWindows.UseDarkTitleBar(this);
         SkyHostView.Unavailable += OnSkyUnavailable;
+        SkyHostView.AppMessageReceived += OnAppMessage;
         Loaded += OnLoaded;
+        Closed += (_, _) => _endpoints?.Stop();
     }
 
     private async void OnLoaded(object sender, RoutedEventArgs e)
@@ -31,7 +34,17 @@ public partial class WebShellWindow : Window
         await viewModel.Settings.LoadCitiesCommand.ExecuteAsync(null);
         await viewModel.LoadCommand.ExecuteAsync(null);
         viewModel.Sky.Attach(SkyHostView);
+        // The app channel (bridge v2): requests and events of the planetarium UI.
+        _endpoints = new AppEndpoints(viewModel, SkyHostView.Post, _logger);
         await SkyHostView.StartAsync(_logger, SkyLaunchOptions.Query(Environment.GetCommandLineArgs()), SkyPage.Planetarium);
+    }
+
+    private async void OnAppMessage(object? sender, string json)
+    {
+        if (_endpoints is not null)
+        {
+            await _endpoints.Dispatcher.HandleAsync(json);
+        }
     }
 
     /// <summary>Without WebView2 (or without the embedded pages) there is nothing to show.</summary>

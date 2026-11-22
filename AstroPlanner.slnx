@@ -7,6 +7,7 @@
     <Project Path="src/AstroPlanner.UI/AstroPlanner.UI.csproj" />
   </Folder>
   <Folder Name="/tools/">
+    <Project Path="tools/AstroPlanner.BridgeGen/AstroPlanner.BridgeGen.csproj" />
     <Project Path="tools/AstroPlanner.DataBuilder/AstroPlanner.DataBuilder.csproj" />
   </Folder>
   <Folder Name="/tests/">

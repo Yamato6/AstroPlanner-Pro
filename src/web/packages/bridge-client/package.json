@@ -1,0 +1,18 @@
+{
+  "name": "@astroplanner/bridge-client",
+  "version": "0.1.0",
+  "private": true,
+  "description": "App channel of the WebView2 bridge (v2): typed requests and events, contracts generated from C#.",
+  "license": "MIT",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "zod": "4.6.7"
+  }
+}

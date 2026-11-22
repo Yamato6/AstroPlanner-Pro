@@ -8,6 +8,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\AstroPlanner.SkyBridge\AstroPlanner.SkyBridge.csproj" />
+    <ProjectReference Include="..\..\tools\AstroPlanner.BridgeGen\AstroPlanner.BridgeGen.csproj" />
   </ItemGroup>
 
   <ItemGroup>

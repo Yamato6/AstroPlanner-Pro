@@ -33,6 +33,11 @@ export interface Bridge {
   send<T extends RendererMessage['type']>(type: T, payload: Payload<T>): void;
 }
 
+/** True for messages of the app channel (bridge v2, `v: 2`), which the sky does not handle. */
+export function isAppChannelMessage(data: unknown): boolean {
+  return typeof data === 'object' && data !== null && (data as { v?: unknown }).v === 2;
+}
+
 /** Parses and validates a host message; returns null (and logs) when it is not acceptable. */
 export function parseHostMessage(data: unknown): HostMessage | null {
   const result = hostMessageSchema.safeParse(data);
@@ -46,6 +51,10 @@ export function parseHostMessage(data: unknown): HostMessage | null {
 export function createBridge(webview: WebView | undefined = window.chrome?.webview): Bridge {
   const handlers: HostMessageHandler[] = [];
   webview?.addEventListener('message', (event) => {
+    // The app channel (v2) shares the pipe; its own client handles those messages.
+    if (isAppChannelMessage(event.data)) {
+      return;
+    }
     const message = parseHostMessage(event.data);
     if (message) {
       for (const handler of handlers) {
