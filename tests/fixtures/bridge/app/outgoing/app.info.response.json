@@ -1,0 +1,12 @@
+{
+  "v": 2,
+  "kind": "res",
+  "id": 1,
+  "type": "app.info",
+  "payload": {
+    "version": "2.0.0",
+    "theme": "dark",
+    "skyProtocolVersion": 1,
+    "appProtocolVersion": 2
+  }
+}

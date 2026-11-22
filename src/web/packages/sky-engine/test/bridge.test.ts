@@ -20,6 +20,12 @@ describe('bridge', () => {
     listener?.({ data: '{"v":1}' });
 
     expect(received).toEqual(['setTheme']);
+    expect(console.warn).toHaveBeenCalledTimes(2);
+
+    // App channel messages (v2) are left to the app client, without a warning.
+    listener?.({ data: { v: 2, kind: 'evt', type: 'theme.changed', payload: { theme: 'night' } } });
+    expect(received).toEqual(['setTheme']);
+    expect(console.warn).toHaveBeenCalledTimes(2);
     expect(parseHostMessage({ v: 1, type: 'eval', payload: {} })).toBeNull();
   });
 

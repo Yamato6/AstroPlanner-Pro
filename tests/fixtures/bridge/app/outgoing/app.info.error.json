@@ -1,0 +1,10 @@
+{
+  "v": 2,
+  "kind": "res",
+  "id": 2,
+  "type": "app.info",
+  "error": {
+    "code": "timeout",
+    "message": "The host did not answer in time."
+  }
+}
