@@ -22,14 +22,15 @@ jobs:
 
       - uses: actions/setup-node@v7
         with:
-          node-version-file: src/sky-renderer/.nvmrc
+          node-version-file: src/web/.nvmrc
           cache: npm
-          cache-dependency-path: src/sky-renderer/package-lock.json
+          cache-dependency-path: src/web/package-lock.json
 
-      # Sky renderer (spec §12): lint, type-check + build, tests (contract and projection
-      # cross-check share tests/fixtures/bridge with the C# suite). The UI build embeds dist/.
-      - name: Sky renderer
-        working-directory: src/sky-renderer
+      # Web workspace (sky engine + pages, spec §12): lint, type-check + build, tests (contract
+      # and projection cross-check share tests/fixtures/bridge with the C# suite). The UI build
+      # embeds apps/planetarium/dist.
+      - name: Web workspace
+        working-directory: src/web
         run: |
           npm ci --no-audit --no-fund
           npm run lint
@@ -99,9 +100,9 @@ jobs:
 
       - uses: actions/setup-node@v7
         with:
-          node-version-file: src/sky-renderer/.nvmrc
+          node-version-file: src/web/.nvmrc
           cache: npm
-          cache-dependency-path: src/sky-renderer/package-lock.json
+          cache-dependency-path: src/web/package-lock.json
 
       - name: Version from the tag
         id: version

@@ -210,7 +210,7 @@ shows whether the services are online, offline (showing saved data) or off.
 dotnet build AstroPlanner.slnx -warnaserror
 dotnet run --project src/AstroPlanner.UI
 dotnet test AstroPlanner.slnx          # ~850 .NET tests, no network
-cd src/sky-renderer && npm ci && npm test   # renderer: ~150 Vitest tests, most generated from the bridge and projection fixtures (the UI build runs npm itself)
+cd src/web && npm ci && npm test   # sky engine: ~150 Vitest tests, most generated from the bridge and projection fixtures (the UI build runs npm itself)
 dotnet run --project tools/AstroPlanner.DataBuilder -- all   # rebuild the catalogs (downloads the sources)
 ```
 
@@ -249,7 +249,9 @@ src/
                          Info: Wikipedia/Commons, CDS Sesame · SmallBodies: MPC · Satellites: CelesTrak
                          (the GitHub releases check lives in UI/Services/UpdateChecker)
   AstroPlanner.SkyBridge/ WPF ⇄ WebView2 protocol: DTOs, validating codec              → Core
-  sky-renderer/          TypeScript + three.js sky (WebView2); draws only, astronomy comes from Core
+  web/                   npm workspace (WebView2 pages): packages/sky-engine (TypeScript + three.js;
+                         draws only, astronomy comes from Core), apps/planetarium (the v2 Sky tab page
+                         and the v3 React UI in development)
   AstroPlanner.UI/       WPF app and composition root
     ViewModels/            Shell, Tonight, Targets, Sky, ObjectDetail, SessionPlan, Logbook, Locations,
                            Settings, Equipment, Framing, ObjectInfo, MilkyWayPlanner
@@ -378,7 +380,7 @@ installer/                Inno Setup script
 | UI | PDFsharp (PDF export) — pinned to 6.2.x: 6.5.0 and later are AGPL-3.0, the app is MIT | 6.2.4 |
 | UI | System.Security.Cryptography.Pkcs — PDFsharp 6.2.4 pulls 8.0.1, which has known vulnerabilities (GHSA-2fmv-rv2c-59x7, GHSA-846f-f764-76mx) | 11.0.0 |
 | UI | ScottPlot.WPF | 5.1.59 |
-| sky-renderer (npm) | three · zod | 0.187.0 · 4.6.7 |
+| web (npm) | three · zod · react · react-dom | 0.187.0 · 4.6.7 · 19.3.1 · 19.3.1 |
 | Tests | xunit · xunit.runner.visualstudio | 2.9.3 · 4.0.1 |
 | Tests | FluentAssertions | 8.11.0 |
 | Tests | Microsoft.NET.Test.Sdk · coverlet.collector | 18.12.0 · 10.1.1 |

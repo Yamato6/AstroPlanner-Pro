@@ -14,7 +14,7 @@ namespace AstroPlanner.DataBuilder;
 /// d3-celestial GeoJSON: binary buffers of J2000 unit vectors plus small JSON label files. Every
 /// binary file starts with a 16-byte header: magic "APSB", format version, record count and record
 /// size (uint32, little-endian). The layouts are documented in docs/sky-renderer.md and decoded by
-/// src/sky-renderer/src/data/buffers.ts.
+/// src/web/packages/sky-engine/src/data/buffers.ts.
 /// </summary>
 internal static class SkyDataBuilder
 {

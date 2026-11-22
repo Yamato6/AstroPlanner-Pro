@@ -3,7 +3,7 @@
 import { parseHostMessage } from '../bridge/bridge';
 import type { HostMessage } from '../bridge/schema';
 
-const samples = import.meta.glob<unknown>('../../../../tests/fixtures/bridge/outgoing/*.json', {
+const samples = import.meta.glob<unknown>('../../../../../../tests/fixtures/bridge/outgoing/*.json', {
   eager: true,
   import: 'default',
 });

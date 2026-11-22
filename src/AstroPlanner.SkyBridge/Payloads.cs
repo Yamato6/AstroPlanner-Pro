@@ -1,7 +1,7 @@
 namespace AstroPlanner.SkyBridge;
 
 // Payloads of the sky protocol (spec §5.4). Property names are serialized in camelCase and must
-// match src/sky-renderer/src/bridge/schema.ts; the contract tests (tests/fixtures/bridge) keep
+// match src/web/packages/sky-engine/src/bridge/schema.ts; the contract tests (tests/fixtures/bridge) keep
 // both sides in step. Angles are in degrees, times are ISO 8601 UTC strings.
 
 /// <summary>Message type names.</summary>

@@ -1,0 +1,20 @@
+{
+  "name": "@astroplanner/sky-engine",
+  "version": "0.1.0",
+  "private": true,
+  "description": "AstroPlanner Pro sky engine (three.js in WebView2). Speaks only the bridge protocol; all astronomy is computed in C#.",
+  "license": "MIT",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./style.css": "./src/style.css"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "three": "0.187.0",
+    "zod": "4.6.7"
+  }
+}

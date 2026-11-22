@@ -1,0 +1,18 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <!-- Strict CSP (spec §5.4): own scripts only, data only from the local data host, no eval. -->
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'self' https://data.astroplanner; base-uri 'none'; form-action 'none'"
+    />
+    <title>AstroPlanner Pro</title>
+  </head>
+  <body>
+    <!-- The v3 planetarium UI (--ui=web): React over the full-window sky. -->
+    <div id="root"></div>
+    <script type="module" src="/src/planetarium/main.tsx"></script>
+  </body>
+</html>

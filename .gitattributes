@@ -17,3 +17,6 @@
 *.sqlite  binary
 *.bin     binary
 *.gz      binary
+
+# The web workspace is formatted by Prettier (LF): keep LF on every checkout, Windows included.
+src/web/** text=auto eol=lf

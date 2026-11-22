@@ -1,7 +1,7 @@
 import { readdirSync, readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 
-export const repoRoot = fileURLToPath(new URL('../../../', import.meta.url));
+export const repoRoot = fileURLToPath(new URL('../../../../../', import.meta.url));
 export const bridgeFixtures = `${repoRoot}tests/fixtures/bridge/`;
 
 export function readJson(path: string): unknown {

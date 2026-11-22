@@ -1,0 +1,18 @@
+{
+  "name": "@astroplanner/planetarium",
+  "version": "0.1.0",
+  "private": true,
+  "description": "The pages WebView2 shows: index.html (the v2 Sky tab) and planetarium.html (the v3 React UI, behind --ui=web).",
+  "license": "MIT",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "typecheck": "tsc --noEmit",
+    "build": "vite build"
+  },
+  "dependencies": {
+    "@astroplanner/sky-engine": "0.1.0",
+    "react": "19.3.1",
+    "react-dom": "19.3.1"
+  }
+}

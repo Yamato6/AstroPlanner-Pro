@@ -15,7 +15,7 @@ Requires Windows, the .NET 10 SDK and Node.js 22.12+.
 ```bash
 dotnet build AstroPlanner.slnx -c Release -warnaserror   # must stay at 0 warnings
 dotnet test AstroPlanner.slnx -c Release                 # all tests, no network
-cd src/sky-renderer && npm ci && npm run lint && npm test
+cd src/web && npm ci && npm run lint && npm test
 dotnet run --project src/AstroPlanner.UI                 # run the app
 ```
 
