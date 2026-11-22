@@ -127,6 +127,78 @@ describe('requests', () => {
     expect(bridge.connected).toBe(false);
     await expect(bridge.request('app.info', {})).rejects.toMatchObject({ code: 'no-host' });
   });
+
+  it('settle and clean up when the request cannot be posted', async () => {
+    const bridge = createAppBridge({
+      postMessage: () => {
+        throw new Error('WebView2 is gone');
+      },
+      addEventListener: () => undefined,
+    });
+
+    await expect(bridge.request('app.info', {})).rejects.toMatchObject({ code: 'no-host' });
+    expect(vi.getTimerCount()).toBe(0);
+  });
+
+  it('still reject on timeout when the cancel cannot be posted', async () => {
+    let calls = 0;
+    const bridge = createAppBridge({
+      postMessage: () => {
+        calls += 1;
+        if (calls > 1) {
+          throw new Error('WebView2 is gone');
+        }
+      },
+      addEventListener: () => undefined,
+    });
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+    const answer = bridge.request('app.info', {}, { timeoutMs: 100 });
+    const outcome = expect(answer).rejects.toMatchObject({ code: 'timeout' });
+
+    vi.advanceTimersByTime(100);
+
+    await outcome;
+    expect(calls).toBe(2);
+    warn.mockRestore();
+  });
+
+  it('send nothing for an already aborted signal', async () => {
+    const bridge = createAppBridge(webview);
+
+    await expect(bridge.request('app.info', {}, { signal: AbortSignal.abort() })).rejects.toMatchObject({
+      code: 'cancelled',
+    });
+    expect(webview.sent).toEqual([]);
+    expect(vi.getTimerCount()).toBe(0);
+  });
+
+  it('ignore an answer of another method, and clear the timer once answered', async () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+    const bridge = createAppBridge(webview);
+    const answer = bridge.request('app.info', {});
+
+    webview.deliver({ v: 2, kind: 'res', id: 1, type: 'plan.schedule', payload: info });
+    expect(warn).toHaveBeenCalledTimes(1);
+    webview.deliver({ v: 2, kind: 'res', id: 1, type: 'app.info', payload: info });
+
+    await expect(answer).resolves.toEqual(info);
+    expect(vi.getTimerCount()).toBe(0);
+    warn.mockRestore();
+  });
+
+  it('accept the busy error of the host', async () => {
+    const bridge = createAppBridge(webview);
+    const answer = bridge.request('app.info', {});
+    webview.deliver({
+      v: 2,
+      kind: 'res',
+      id: 1,
+      type: 'app.info',
+      error: { code: 'busy', message: 'Retry later.' },
+    });
+
+    await expect(answer).rejects.toMatchObject({ code: 'busy' });
+  });
 });
 
 describe('events', () => {
@@ -141,6 +213,23 @@ describe('events', () => {
     webview.deliver({ v: 2, kind: 'evt', type: 'theme.changed', payload: { theme: 'dark' } });
 
     expect(themes).toEqual(['night']);
+  });
+
+  it('reach every subscriber even if one of them throws', () => {
+    const webview = new FakeWebView();
+    const bridge = createAppBridge(webview);
+    const error = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+    const second = vi.fn();
+    bridge.on('theme.changed', () => {
+      throw new Error('broken subscriber');
+    });
+    bridge.on('theme.changed', second);
+
+    webview.deliver({ v: 2, kind: 'evt', type: 'theme.changed', payload: { theme: 'night' } });
+
+    expect(second).toHaveBeenCalledWith({ theme: 'night' });
+    expect(error).toHaveBeenCalledTimes(1);
+    error.mockRestore();
   });
 
   it('are dropped when they break the contract, and sky messages are ignored', () => {
