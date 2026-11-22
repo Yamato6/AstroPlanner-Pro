@@ -57,6 +57,7 @@ export interface AppBridge {
 }
 
 const DEFAULT_TIMEOUT_MS = 15_000;
+const MAX_ID = 2_147_483_647;
 
 interface Pending {
   readonly method: MethodName;
@@ -76,7 +77,11 @@ export function createAppBridge(webview: WebViewPort | undefined = hostWebView()
 
   function onResponse(message: HostResponse): void {
     const call = pending.get(message.id);
-    if (!call || call.method !== message.type) {
+    if (!call) {
+      return; // late answer to a request that timed out or was cancelled
+    }
+    if (call.method !== message.type) {
+      console.warn('app bridge: answer to', message.type, 'for a', call.method, 'request; ignored');
       return;
     }
     pending.delete(message.id);
@@ -94,7 +99,7 @@ export function createAppBridge(webview: WebViewPort | undefined = hostWebView()
   }
 
   function onEvent(message: HostEvent): void {
-    if (!(message.type in appEvents)) {
+    if (!Object.hasOwn(appEvents, message.type)) {
       console.warn('app bridge: unknown event', message.type);
       return;
     }
@@ -104,8 +109,13 @@ export function createAppBridge(webview: WebViewPort | undefined = hostWebView()
       console.warn('app bridge: rejected event', name, result.error.issues[0]?.message);
       return;
     }
-    for (const handler of handlers.get(name) ?? []) {
-      handler(result.data);
+    // One failing subscriber must not starve the others.
+    for (const handler of [...(handlers.get(name) ?? [])]) {
+      try {
+        handler(result.data);
+      } catch (error) {
+        console.error('app bridge: a', name, 'handler failed', error);
+      }
     }
   }
 
@@ -130,7 +140,7 @@ export function createAppBridge(webview: WebViewPort | undefined = hostWebView()
     if (!checked.success) {
       return Promise.reject(new RpcError('bad-request', `The parameters of '${method}' break its contract.`));
     }
-    const id = nextId++;
+    const id = takeId();
     const message = { v: APP_PROTOCOL_VERSION, kind: 'req', id, type: method, payload: checked.data };
     if (JSON.stringify(message).length > APP_LIMITS.maxRequestLength) {
       return Promise.reject(new RpcError('too-large', `The request '${method}' is too large.`));
@@ -140,8 +150,12 @@ export function createAppBridge(webview: WebViewPort | undefined = hostWebView()
       const giveUp = (code: 'timeout' | 'cancelled', text: string): void => {
         if (pending.delete(id)) {
           cleanup();
-          webview.postMessage({ v: APP_PROTOCOL_VERSION, kind: 'cancel', id });
-          reject(new RpcError(code, text));
+          reject(new RpcError(code, text)); // settle first: posting the cancel may throw
+          try {
+            webview.postMessage({ v: APP_PROTOCOL_VERSION, kind: 'cancel', id });
+          } catch (error) {
+            console.warn('app bridge: could not send the cancel of', method, error);
+          }
         }
       };
       const timer = setTimeout(() => {
@@ -161,8 +175,24 @@ export function createAppBridge(webview: WebViewPort | undefined = hostWebView()
       }
       options.signal?.addEventListener('abort', onAbort);
       pending.set(id, { method, resolve: resolve as (value: unknown) => void, reject, cleanup });
-      webview.postMessage(message);
+      try {
+        webview.postMessage(message);
+      } catch (error) {
+        pending.delete(id);
+        cleanup();
+        reject(new RpcError('no-host', `Could not send '${method}': ${String(error)}`));
+      }
     });
+  }
+
+  /** The next request id: 1…2³¹−1, then back to 1, skipping ids still in use. */
+  function takeId(): number {
+    while (pending.has(nextId)) {
+      nextId = nextId >= MAX_ID ? 1 : nextId + 1;
+    }
+    const id = nextId;
+    nextId = nextId >= MAX_ID ? 1 : nextId + 1;
+    return id;
   }
 
   function on<E extends EventName>(event: E, handler: (payload: EventOf<E>) => void): () => void {
