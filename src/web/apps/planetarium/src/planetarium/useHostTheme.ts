@@ -15,10 +15,14 @@ export function useHostTheme(): void {
       document.documentElement.dataset.theme = theme;
     };
     const controller = new AbortController();
+    // An event is newer than any app.info snapshot: once one arrives, the snapshot is ignored.
+    let eventSeen = false;
     host
       .request('app.info', {}, { signal: controller.signal })
       .then((info) => {
-        apply(info.theme);
+        if (!eventSeen) {
+          apply(info.theme);
+        }
       })
       .catch((error: unknown) => {
         if (!controller.signal.aborted) {
@@ -26,6 +30,7 @@ export function useHostTheme(): void {
         }
       });
     const unsubscribe = host.on('theme.changed', (event) => {
+      eventSeen = true;
       apply(event.theme);
     });
     return () => {

@@ -39,11 +39,21 @@ public partial class WebShellWindow : Window
         await SkyHostView.StartAsync(_logger, SkyLaunchOptions.Query(Environment.GetCommandLineArgs()), SkyPage.Planetarium);
     }
 
+    /// <summary>A message of the app channel; whatever happens, the page cannot take the window down.</summary>
     private async void OnAppMessage(object? sender, string json)
     {
-        if (_endpoints is not null)
+        try
         {
-            await _endpoints.Dispatcher.HandleAsync(json);
+            if (_endpoints is not null)
+            {
+                await _endpoints.Dispatcher.HandleAsync(json);
+            }
+        }
+#pragma warning disable CA1031 // async void event handler: an escaping exception would end the process.
+        catch (Exception ex)
+#pragma warning restore CA1031
+        {
+            _logger.LogError("An app message could not be handled.", ex);
         }
     }
 

@@ -20,8 +20,14 @@ public sealed class AppEndpoints
         _theme = shell.Settings.Theme;
         Dispatcher = new RpcDispatcher(send, (message, exception) =>
         {
-            if (exception is null) logger.LogInfo(message);
-            else logger.LogError(message, exception);
+            if (exception is null)
+            {
+                logger.LogInfo(message);
+            }
+            else
+            {
+                logger.LogError(message, exception);
+            }
         });
 
         Dispatcher.Register(AppMethods.AppInfo, (_, _) => Task.FromResult(new AppInfoResponse(
@@ -34,6 +40,10 @@ public sealed class AppEndpoints
     private void OnThemeChanged(object? sender, EventArgs e) =>
         Dispatcher.Publish(AppEvents.ThemeChanged, new ThemeChangedEvent(_theme.SkyTheme));
 
-    /// <summary>Stops pushing events (the window closed).</summary>
-    public void Stop() => _theme.Changed -= OnThemeChanged;
+    /// <summary>The window closed: stop pushing events and cancel the requests still running.</summary>
+    public void Stop()
+    {
+        _theme.Changed -= OnThemeChanged;
+        Dispatcher.CancelAll();
+    }
 }

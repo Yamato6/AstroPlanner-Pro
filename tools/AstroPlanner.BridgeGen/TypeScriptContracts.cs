@@ -184,7 +184,12 @@ public static class TypeScriptContracts
 
     private static string SchemaName(Type type) => char.ToLowerInvariant(type.Name[0]) + type.Name[1..] + "Schema";
 
-    private static string Quote(object? value) => "'" + Convert.ToString(value, CultureInfo.InvariantCulture)!.Replace("'", "\\'", StringComparison.Ordinal) + "'";
+    /// <summary>A single-quoted TypeScript string literal (backslashes, quotes and line breaks escaped).</summary>
+    private static string Quote(object? value) => "'" + Convert.ToString(value, CultureInfo.InvariantCulture)!
+        .Replace("\\", "\\\\", StringComparison.Ordinal)
+        .Replace("'", "\\'", StringComparison.Ordinal)
+        .Replace("\r", "\\r", StringComparison.Ordinal)
+        .Replace("\n", "\\n", StringComparison.Ordinal) + "'";
 
     private static string Invariant(FormattableString value) => value.ToString(CultureInfo.InvariantCulture);
 }
