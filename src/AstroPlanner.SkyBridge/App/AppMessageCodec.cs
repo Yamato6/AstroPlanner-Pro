@@ -24,7 +24,10 @@ public static partial class AppMessageCodec
 {
     public const int ProtocolVersion = 2;
 
-    /// <summary>Largest accepted request (characters). Big inputs go through files, not messages.</summary>
+    /// <summary>
+    /// Largest accepted request, in UTF-16 characters (up to ~3× as many UTF-8 bytes; harmless at
+    /// this size). Big inputs go through files, not messages. The other limits count the same way.
+    /// </summary>
     public const int MaximumRequestLength = 64 * 1024;
 
     /// <summary>Largest response the host sends; bigger answers must be paged.</summary>
@@ -35,11 +38,13 @@ public static partial class AppMessageCodec
 
     /// <summary>
     /// True when <paramref name="json"/> is an object whose top-level <c>v</c> is 2, i.e. it belongs
-    /// to this channel rather than to the sky protocol. Cheap: it stops at the first top-level "v".
+    /// to this channel rather than to the sky protocol. Cheap: anything longer than
+    /// <see cref="MaximumRequestLength"/> is not looked at (the sky codec then rejects it by its own,
+    /// smaller limit), and the scan stops at the first top-level "v".
     /// </summary>
     public static bool IsAppMessage(string? json)
     {
-        if (string.IsNullOrEmpty(json))
+        if (string.IsNullOrEmpty(json) || json.Length > MaximumRequestLength)
         {
             return false;
         }
@@ -64,7 +69,7 @@ public static partial class AppMessageCodec
                 reader.Skip();
             }
         }
-        catch (JsonException)
+        catch (Exception ex) when (ex is JsonException or InvalidOperationException or ArgumentException)
         {
         }
 
@@ -98,7 +103,15 @@ public static partial class AppMessageCodec
                 return null;
             }
 
-            var members = root.EnumerateObject().Select(p => p.Name).ToHashSet(StringComparer.Ordinal);
+            var names = root.EnumerateObject().Select(p => p.Name).ToList();
+            var members = names.ToHashSet(StringComparer.Ordinal);
+            if (members.Count != names.Count)
+            {
+                // {"v":2,…,"v":1}: parsers disagree on which one wins, so neither does.
+                error = "duplicate member";
+                return null;
+            }
+
             switch (kind.GetString())
             {
                 case "cancel" when members.SetEquals(["v", "kind", "id"]):
@@ -113,8 +126,9 @@ public static partial class AppMessageCodec
                     return null;
             }
         }
-        catch (JsonException)
+        catch (Exception ex) when (ex is JsonException or InvalidOperationException or ArgumentException or FormatException)
         {
+            // InvalidOperationException: e.g. a lone surrogate ("\ud800") in a string read with GetString.
             error = "malformed JSON";
             return null;
         }

@@ -7,6 +7,7 @@ namespace AstroPlanner.SkyBridge.App;
 // records into zod schemas and TypeScript types (src/web/packages/bridge-client/src/generated), and
 // a test fails while that file is stale. Constraints are DataAnnotations attributes on the
 // properties: StringLength, Range, Length (lists) and AllowedValues; both sides enforce them.
+// Validation recurses into nested contract records and lists of them (ContractValidator).
 // Property names are camelCase on the wire.
 
 /// <summary>Theme names shared with the sky protocol (<c>setTheme</c>).</summary>
@@ -33,7 +34,7 @@ public sealed record ThemeChangedEvent(
 /// <summary>Why a request failed (the <c>error</c> member of a response).</summary>
 public sealed record RpcErrorPayload(
     [property: AllowedValues(RpcErrorCodes.BadRequest, RpcErrorCodes.UnknownMethod, RpcErrorCodes.Timeout,
-        RpcErrorCodes.Cancelled, RpcErrorCodes.TooLarge, RpcErrorCodes.Internal)] string Code,
+        RpcErrorCodes.Cancelled, RpcErrorCodes.TooLarge, RpcErrorCodes.Busy, RpcErrorCodes.Internal)] string Code,
     [property: StringLength(1024, MinimumLength = 1)] string Message);
 
 /// <summary>Error codes of a failed request.</summary>
@@ -53,6 +54,9 @@ public static class RpcErrorCodes
 
     /// <summary>The answer would exceed <see cref="AppMessageCodec.MaximumResponseLength"/>: page it.</summary>
     public const string TooLarge = "too-large";
+
+    /// <summary>Too many requests are running (<see cref="RpcDispatcher.MaximumConcurrentRequests"/>): retry later.</summary>
+    public const string Busy = "busy";
 
     /// <summary>The handler failed; details are in the host log only.</summary>
     public const string Internal = "internal";
