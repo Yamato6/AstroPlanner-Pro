@@ -1,0 +1,40 @@
+using System.Text.Json;
+using AstroPlanner.SkyBridge.App;
+using AstroPlanner.UI.Services;
+
+namespace AstroPlanner.UI.Tests;
+
+/// <summary>The planetarium UI's endpoints answer from the same state as the classic window.</summary>
+public sealed class AppEndpointsTests
+{
+    [Fact]
+    public async Task AppInfo_ReturnsTheVersionAndTheCurrentTheme()
+    {
+        var shell = TestShell.Create();
+        var sent = new List<string>();
+        var endpoints = new AppEndpoints(shell, sent.Add, new NullLogger());
+
+        await endpoints.Dispatcher.HandleAsync("""{"v":2,"kind":"req","id":1,"type":"app.info","payload":{}}""");
+
+        var payload = JsonDocument.Parse(sent.Single()).RootElement.GetProperty("payload");
+        payload.GetProperty("version").GetString().Should().Be(AppVersion.Current.ToString());
+        payload.GetProperty("theme").GetString().Should().Be("dark");
+        payload.GetProperty("appProtocolVersion").GetInt32().Should().Be(AppMessageCodec.ProtocolVersion);
+    }
+
+    [Fact]
+    public void ThemeChanges_ArePushedAsEvents_UntilStopped()
+    {
+        var shell = TestShell.Create();
+        var sent = new List<string>();
+        var endpoints = new AppEndpoints(shell, sent.Add, new NullLogger());
+
+        shell.IsNightTheme = true;
+        endpoints.Stop();
+        shell.IsNightTheme = false;
+
+        var message = JsonDocument.Parse(sent.Single()).RootElement;
+        message.GetProperty("type").GetString().Should().Be("theme.changed");
+        message.GetProperty("payload").GetProperty("theme").GetString().Should().Be("night");
+    }
+}

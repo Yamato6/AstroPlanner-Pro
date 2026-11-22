@@ -264,13 +264,14 @@ src/
     Themes/                Dark.xaml (palette and styles, also used by the charts), Night.xaml (red colors)
 tools/
   AstroPlanner.DataBuilder    Builds data/build/catalogs.sqlite and the sky data (docs/data-pipeline.md)
+  AstroPlanner.BridgeGen      Writes the web UI's bridge contracts from the C# records (docs/bridge.md)
 data/                     SOURCES.md, curated/ overlays, build/ generated files (raw/ is git-ignored)
 tests/
   AstroPlanner.Core.Tests     Meeus worked examples, JPL Horizons fixtures, Roman (1987) test positions
   AstroPlanner.Data.Tests     Catalog database, app.db, migrations, v1 import
   AstroPlanner.DataBuilder.Tests  Catalog build from small excerpts of the sources
   AstroPlanner.Online.Tests   HTTP clients with stubbed responses
-  AstroPlanner.SkyBridge.Tests  Protocol contract and projection cross-check (shared with Vitest)
+  AstroPlanner.SkyBridge.Tests  Sky protocol and app channel contracts, projection cross-check (shared with Vitest)
   AstroPlanner.UI.Tests       View models, services, windows (accessibility, contrast) and architecture rules
 installer/                Inno Setup script
 .github/workflows/        CI and releases

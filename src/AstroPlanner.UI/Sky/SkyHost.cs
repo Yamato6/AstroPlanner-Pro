@@ -32,6 +32,12 @@ public sealed class SkyHost : Border, ISkyChannel, IDisposable
 
     public event EventHandler<IncomingSkyMessage>? MessageReceived;
 
+    /// <summary>
+    /// A message of the app channel (bridge v2, <c>v: 2</c>) from the page, as raw JSON: the
+    /// <see cref="AstroPlanner.SkyBridge.App.RpcDispatcher"/> validates it. Only the app origin reaches it.
+    /// </summary>
+    public event EventHandler<string>? AppMessageReceived;
+
     /// <summary>Raised (on the UI thread) when the renderer cannot run: no WebView2 runtime or no embedded renderer.</summary>
     public event EventHandler<string>? Unavailable;
 
@@ -183,7 +189,14 @@ public sealed class SkyHost : Border, ISkyChannel, IDisposable
             return;
         }
 
-        var message = SkyMessageCodec.Decode(e.WebMessageAsJson, out var error);
+        var json = e.WebMessageAsJson;
+        if (AstroPlanner.SkyBridge.App.AppMessageCodec.IsAppMessage(json))
+        {
+            AppMessageReceived?.Invoke(this, json);
+            return;
+        }
+
+        var message = SkyMessageCodec.Decode(json, out var error);
         if (message is null)
         {
             _logger?.LogInfo("Ignored a sky renderer message: " + error);
