@@ -21,6 +21,14 @@ versions follow [Semantic Versioning](https://semver.org/). Versions up to 1.0.0
   the zod schemas and TypeScript types, and a test fails while they are stale. First endpoints:
   `app.info` and `theme.changed` (the page follows the night-vision theme).
 
+## [2.0.1] — 2026-11-22
+
+### Fixed
+- The exe now contains the 3D sky. In 2.0.0 the release build never built the renderer
+  (MSBuild checked for its output before building it, and only a clean checkout lacks it), so
+  the Sky tab fell back to the 2D chart. Release builds now fail if the renderer is missing
+  (`-p:RequireSkyRenderer=true`).
+
 ## [2.0.0] — 2026-11-21
 
 AstroPlanner Pro: the v1 visual-observing planner rebuilt as an **astrophotography planner**. It
@@ -558,7 +566,8 @@ Also includes the changes of 0.4, which was never released on its own.
 
 - First Windows executable: table of visible Messier objects and altitude chart.
 
-[Unreleased]: https://github.com/Yamato6/AstroPlanner-Pro/compare/v2.0.0...HEAD
+[Unreleased]: https://github.com/Yamato6/AstroPlanner-Pro/compare/v2.0.1...HEAD
+[2.0.1]: https://github.com/Yamato6/AstroPlanner-Pro/compare/v2.0.0...v2.0.1
 [2.0.0]: https://github.com/Yamato6/AstroPlanner-Pro/compare/v1.0.0...v2.0.0
 [1.0.0]: https://github.com/Yamato6/AstroPlanner/compare/v0.8.0...v1.0.0
 [0.8.0]: https://github.com/Yamato6/AstroPlanner/compare/v0.7.0...v0.8.0

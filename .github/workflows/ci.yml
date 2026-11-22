@@ -118,7 +118,7 @@ jobs:
           dotnet publish src/AstroPlanner.UI -c Release -r win-x64 --self-contained true
           -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true
           -p:EnableCompressionInSingleFile=true -p:DebugType=None
-          -p:Version=${{ steps.version.outputs.value }}
+          -p:Version=${{ steps.version.outputs.value }} -p:RequireSkyRenderer=true
           -o publish
 
       # Code signing (docs/signing.md): only once the SignPath Foundation project is set up, i.e.
