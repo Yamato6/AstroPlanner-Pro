@@ -46,6 +46,16 @@ public static partial class SkyLaunchOptions
         return parameters.Count == 0 ? "" : "?" + string.Join('&', parameters);
     }
 
+    /// <summary>
+    /// True with <c>--ui=web</c>: the window is the v3 planetarium UI (in development until v3.0.0)
+    /// instead of the v2 tabs. Any other value, or no switch, keeps the v2 UI.
+    /// </summary>
+    public static bool UseWebUi(IReadOnlyList<string> args)
+    {
+        ArgumentNullException.ThrowIfNull(args);
+        return string.Equals(Value(args, "--ui="), "web", StringComparison.OrdinalIgnoreCase);
+    }
+
     private static string? Value(IReadOnlyList<string> args, string prefix) =>
         args.FirstOrDefault(a => a.StartsWith(prefix, StringComparison.OrdinalIgnoreCase))?[prefix.Length..];
 

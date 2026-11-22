@@ -19,6 +19,7 @@ using AstroPlanner.Online.SmallBodies;
 using AstroPlanner.Online.Weather;
 using AstroPlanner.UI.Resources;
 using AstroPlanner.UI.Services;
+using AstroPlanner.UI.Sky;
 using AstroPlanner.UI.ViewModels;
 
 namespace AstroPlanner.UI;
@@ -160,6 +161,7 @@ public partial class App : Application
 
         // Views
         services.AddSingleton<MainWindow>();
+        services.AddSingleton<WebShellWindow>();
     }
 
     protected override void OnStartup(StartupEventArgs e)
@@ -202,12 +204,24 @@ public partial class App : Application
         ThemeManager.Apply(this, theme.Current);
         theme.Changed += (_, _) => ThemeManager.Apply(this, theme.Current);
 
-        var mainWindow = _serviceProvider.GetRequiredService<MainWindow>();
+        // --ui=web: the v3 planetarium UI (in development until v3.0.0) instead of the v2 tabs.
+        Window mainWindow;
+        if (SkyLaunchOptions.UseWebUi(Environment.GetCommandLineArgs()))
+        {
+            _logger.LogInfo("Starting the planetarium UI (--ui=web).");
+            mainWindow = _serviceProvider.GetRequiredService<WebShellWindow>();
+        }
+        else
+        {
+            var classicWindow = _serviceProvider.GetRequiredService<MainWindow>();
+            classicWindow.RememberPlacement(new WindowPlacementStore());
+            mainWindow = classicWindow;
+        }
+
         mainWindow.DataContext = _serviceProvider.GetRequiredService<ShellViewModel>();
         // Startup time (spec §14 budget): process start → first frame of the window (Tonight).
         mainWindow.ContentRendered += (_, _) => _logger.LogInfo(string.Create(CultureInfo.InvariantCulture,
             $"Window shown {(DateTime.Now - Process.GetCurrentProcess().StartTime).TotalMilliseconds:0} ms after the process started."));
-        mainWindow.RememberPlacement(new WindowPlacementStore());
         mainWindow.Show();
 
         _singleInstance?.ListenForActivation(() =>

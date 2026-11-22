@@ -623,6 +623,23 @@ public sealed class SkyLaunchOptionsTests
     [InlineData("--sky-stars=many")]
     public void AnythingMalformed_NeverReachesTheUrl(string argument) =>
         SkyLaunchOptions.Query([argument]).Should().BeEmpty();
+
+    [Theory]
+    [InlineData(new[] { "AstroPlannerPro.exe" }, false)]
+    [InlineData(new[] { "AstroPlannerPro.exe", "--ui=web" }, true)]
+    [InlineData(new[] { "AstroPlannerPro.exe", "--UI=Web", "--sky-benchmark" }, true)]
+    [InlineData(new[] { "AstroPlannerPro.exe", "--ui=wpf" }, false)]
+    [InlineData(new[] { "AstroPlannerPro.exe", "--ui=web2" }, false)]
+    public void UiWeb_OpensThePlanetariumUi_AnythingElseTheClassicOne(string[] args, bool web) =>
+        SkyLaunchOptions.UseWebUi(args).Should().Be(web);
+
+    [Fact]
+    public void Pages_AreTheTwoBuiltFromTheWebWorkspace_OnTheAppHost()
+    {
+        SkyHost.PageUri(SkyPage.Classic, "").Should().Be(new Uri("https://app.astroplanner/index.html"));
+        SkyHost.PageUri(SkyPage.Planetarium, "?bench=1").Should().Be(new Uri("https://app.astroplanner/planetarium.html?bench=1"));
+        SkyHost.IsAllowedNavigation(SkyHost.PageUri(SkyPage.Planetarium, "").ToString()).Should().BeTrue();
+    }
 }
 
 /// <summary>
