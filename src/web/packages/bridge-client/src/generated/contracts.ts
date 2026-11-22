@@ -11,7 +11,7 @@ export const APP_LIMITS = {
   maxEventLength: 262144,
 } as const;
 
-export const RPC_ERROR_CODES = ['bad-request', 'unknown-method', 'timeout', 'cancelled', 'too-large', 'internal'] as const;
+export const RPC_ERROR_CODES = ['bad-request', 'unknown-method', 'timeout', 'cancelled', 'too-large', 'busy', 'internal'] as const;
 
 export const appInfoRequestSchema = z.strictObject({});
 export type AppInfoRequest = z.infer<typeof appInfoRequestSchema>;
@@ -30,7 +30,7 @@ export const themeChangedEventSchema = z.strictObject({
 export type ThemeChangedEvent = z.infer<typeof themeChangedEventSchema>;
 
 export const rpcErrorPayloadSchema = z.strictObject({
-  code: z.enum(['bad-request', 'unknown-method', 'timeout', 'cancelled', 'too-large', 'internal']),
+  code: z.enum(['bad-request', 'unknown-method', 'timeout', 'cancelled', 'too-large', 'busy', 'internal']),
   message: z.string().min(1).max(1024),
 });
 export type RpcErrorPayload = z.infer<typeof rpcErrorPayloadSchema>;

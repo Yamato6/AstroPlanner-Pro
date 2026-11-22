@@ -1,3 +1,4 @@
+using System.ComponentModel.DataAnnotations;
 using System.Text;
 using AstroPlanner.BridgeGen;
 using AstroPlanner.SkyBridge.App;
@@ -118,6 +119,39 @@ public sealed class AppChannelTests
     [InlineData("app.info.", false)]
     [InlineData("app.1info", false)]
     public void MethodNames_AreAreaDotVerb(string name, bool valid) => AppMessageCodec.IsMethodName(name).Should().Be(valid);
+
+    [Fact]
+    public void IsAppMessage_DoesNotScanMessagesOverTheLimit()
+    {
+        var padding = new string(' ', AppMessageCodec.MaximumRequestLength);
+        AppMessageCodec.IsAppMessage("""{"v":2,"kind":"cancel","id":1}""" + padding).Should().BeFalse();
+    }
+
+    [Theory]
+    [InlineData("""{"v":2,"kind":"req","id":1,"type":"app.info","payload":{},"v":1}""")]
+    [InlineData("""{"v":2,"kind":"req","id":1,"id":2,"type":"app.info","payload":{}}""")]
+    [InlineData("""{"v":2,"kind":"cancel","id":1,"kind":"cancel"}""")]
+    public void Decode_RejectsDuplicateMembers(string json) =>
+        AppMessageCodec.Decode(json, out _).Should().BeNull();
+
+    [Fact]
+    public void Decode_RejectsALoneSurrogate_WithoutThrowing()
+    {
+        var act = () => AppMessageCodec.Decode("""{"v":2,"kind":"req","id":1,"type":"app.\ud800","payload":{}}""", out _);
+        act.Should().NotThrow().Which.Should().BeNull();
+    }
+
+    private sealed record Inner([property: Range(0, 10)] int Value);
+
+    private sealed record Outer(Inner Single, IReadOnlyList<Inner> Many);
+
+    [Fact]
+    public void Validation_RecursesIntoNestedRecordsAndLists()
+    {
+        ContractValidator.IsValid(new Outer(new Inner(5), [new Inner(1), new Inner(10)])).Should().BeTrue();
+        ContractValidator.IsValid(new Outer(new Inner(11), [])).Should().BeFalse();
+        ContractValidator.IsValid(new Outer(new Inner(5), [new Inner(1), new Inner(-1)])).Should().BeFalse();
+    }
 
     [Fact]
     public void Event_LargerThanTheLimit_IsAProgrammingError()
