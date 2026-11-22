@@ -9,7 +9,7 @@ flowchart TB
     subgraph app["AstroPlannerPro.exe"]
         UI["<b>AstroPlanner.UI</b><br/>WPF views, view models (MVVM),<br/>DI composition root, exports"]
         Bridge["<b>AstroPlanner.SkyBridge</b><br/>message DTOs and codec"]
-        Renderer["<b>sky-renderer</b><br/>TypeScript, three.js, zod<br/>(WebView2, local files only)"]
+        Renderer["<b>src/web</b><br/>sky-engine (TypeScript, three.js, zod)<br/>and pages (WebView2, local files only)"]
         Data["<b>AstroPlanner.Data</b><br/>catalogs.sqlite (embedded),<br/>app.db, v1 import, cache"]
         Online["<b>AstroPlanner.Online</b><br/>HTTP clients with cache"]
         Core["<b>AstroPlanner.Core</b><br/>astronomy, feasibility, planning,<br/>SGP4 — BCL only"]
@@ -33,7 +33,7 @@ flowchart TB
 | `AstroPlanner.Data` | SQLite: the embedded read-only `catalogs.sqlite`, the user's `app.db` (migrations in `Storage/Migrations`), the disk cache, the light-pollution grids, the v1 importer. | Core |
 | `AstroPlanner.Online` | One client per external service ([external-services.md](external-services.md)), all through `CachedFetch`. | Core |
 | `AstroPlanner.SkyBridge` | The WPF ⇄ renderer protocol: payload records, the JSON codec, the camera matrix. No WPF. | Core |
-| `sky-renderer` | Draws what C# sends: it applies the `SkyFrame` matrix and interpolates body tracks sampled by Core; it computes no astronomy ([sky-renderer.md](sky-renderer.md)). | — |
+| `src/web` | npm workspace. `packages/sky-engine` draws what C# sends: it applies the `SkyFrame` matrix and interpolates body tracks sampled by Core; it computes no astronomy. `apps/planetarium` holds the pages: the v2 Sky tab and the v3 UI in development (`--ui=web`) ([sky-renderer.md](sky-renderer.md)). | — |
 | `AstroPlanner.UI` | Views, view models, shared state services, exports (CSV, PDF, `.ics`), themes. | all of the above |
 | `tools/AstroPlanner.DataBuilder` | Downloads and verifies the sources ([data-pipeline.md](data-pipeline.md)). Nothing in the app references it. | Core, Data |
 

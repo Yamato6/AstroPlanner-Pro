@@ -194,9 +194,10 @@ the About window.
 | Microsoft.Web.WebView2 (SDK) | BSD-3-Clause (Microsoft); the WebView2 Runtime is part of Windows / installed separately |
 | three.js (sky renderer) | MIT — Copyright © 2010-2026 three.js authors |
 | zod (sky renderer) | MIT — Copyright © 2025 Colin McDonnell |
+| React, React DOM, scheduler (v3 planetarium UI) | MIT — Copyright © Meta Platforms, Inc. and affiliates |
 
-Build- and test-only packages of the renderer (not shipped): TypeScript (Apache-2.0), Vite,
-Vitest, ESLint, typescript-eslint, Prettier (MIT).
+Build- and test-only packages of the web workspace (not shipped): TypeScript (Apache-2.0), Vite,
+Vitest, ESLint, typescript-eslint, eslint-plugin-react-hooks, Prettier (MIT).
 
 Test-only packages (not shipped): xUnit (Apache-2.0), FluentAssertions 8 (Xceed Community
 License, free for non-commercial use), coverlet (MIT), Microsoft.NET.Test.Sdk (MIT).

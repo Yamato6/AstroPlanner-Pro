@@ -12,7 +12,7 @@ namespace AstroPlanner.SkyBridge.Tests;
 
 /// <summary>
 /// Contract between C# and the renderer (spec §5.4, §11). The golden files in tests/fixtures/bridge
-/// are read by both this suite and the Vitest suite of src/sky-renderer:
+/// are read by both this suite and the Vitest suite of src/web/packages/sky-engine:
 /// <list type="bullet">
 /// <item><c>outgoing/*.json</c>: one sample of every C# → renderer message (generated here, validated by zod);</item>
 /// <item><c>incoming/*.json</c>: renderer → C# samples that both sides must accept;</item>

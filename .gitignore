@@ -21,8 +21,9 @@ coverage-report/
 
 # Node / sky renderer
 node_modules/
-# Sky renderer build output (packed into the exe by the UI build)
-src/sky-renderer/dist/
+# Web workspace build output (packed into the exe by the UI build)
+src/web/**/dist/
+src/web/**/.vitest/
 
 # OS and editor temp files
 .DS_Store

@@ -73,13 +73,15 @@
     </ItemGroup>
   </Target>
 
-  <!-- Sky renderer (src/sky-renderer, TypeScript + three.js) and its data (data/build/sky) are
-       packed into one zip embedded in the exe; SkyAssets extracts it at run time and WebView2
-       serves it from https://app.astroplanner/ and https://data.astroplanner/ (docs/sky-renderer.md).
-       Needs Node.js; pass -p:SkipSkyRendererBuild=true to build without it (the Sky tab then
-       falls back to the 2D chart unless a previous build left src/sky-renderer/dist). -->
+  <!-- The web pages (src/web: the three.js sky engine, the v2 Sky tab page and the v3 React UI)
+       and the sky data (data/build/sky) are packed into one zip embedded in the exe; SkyAssets
+       extracts it at run time and WebView2 serves it from https://app.astroplanner/ and
+       https://data.astroplanner/ (docs/sky-renderer.md). Needs Node.js; pass
+       -p:SkipSkyRendererBuild=true to build without it (the Sky tab then falls back to the 2D
+       chart unless a previous build left src/web/apps/planetarium/dist). -->
   <PropertyGroup>
-    <SkyRendererDirectory>$([System.IO.Path]::GetFullPath('$(MSBuildProjectDirectory)\..\sky-renderer'))\</SkyRendererDirectory>
+    <WebDirectory>$([System.IO.Path]::GetFullPath('$(MSBuildProjectDirectory)\..\web'))\</WebDirectory>
+    <WebDistDirectory>$(WebDirectory)apps\planetarium\dist\</WebDistDirectory>
     <SkyDataDirectory>$([System.IO.Path]::GetFullPath('$(MSBuildProjectDirectory)\..\..\data\build\sky'))\</SkyDataDirectory>
     <!-- BaseIntermediateOutputPath (obj\) is already defined here; IntermediateOutputPath is not yet. -->
     <SkyAssetsStaging>$(MSBuildProjectDirectory)\$(BaseIntermediateOutputPath)sky-assets\</SkyAssetsStaging>
@@ -87,25 +89,25 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <SkyRendererSource Include="$(SkyRendererDirectory)src\**\*;$(SkyRendererDirectory)index.html;$(SkyRendererDirectory)package-lock.json;$(SkyRendererDirectory)vite.config.ts;$(SkyRendererDirectory)tsconfig.json" />
+    <SkyRendererSource Include="$(WebDirectory)packages\*\src\**\*;$(WebDirectory)packages\*\package.json;$(WebDirectory)packages\*\tsconfig.json;$(WebDirectory)apps\*\src\**\*;$(WebDirectory)apps\*\*.html;$(WebDirectory)apps\*\package.json;$(WebDirectory)apps\*\tsconfig.json;$(WebDirectory)apps\*\vite.config.ts;$(WebDirectory)package.json;$(WebDirectory)package-lock.json;$(WebDirectory)tsconfig.base.json" />
     <SkyDataFile Include="$(SkyDataDirectory)*.bin;$(SkyDataDirectory)star-names.json;$(SkyDataDirectory)dsos.json;$(SkyDataDirectory)constellation-labels.json" />
   </ItemGroup>
 
   <Target Name="BuildSkyRenderer"
           Condition="'$(SkipSkyRendererBuild)' != 'true'"
           Inputs="@(SkyRendererSource)"
-          Outputs="$(SkyRendererDirectory)dist\index.html">
-    <Exec Command="npm ci --no-audit --no-fund" WorkingDirectory="$(SkyRendererDirectory)" Condition="!Exists('$(SkyRendererDirectory)node_modules')" />
-    <Exec Command="npm run build" WorkingDirectory="$(SkyRendererDirectory)" />
+          Outputs="$(WebDistDirectory)index.html;$(WebDistDirectory)planetarium.html">
+    <Exec Command="npm ci --no-audit --no-fund" WorkingDirectory="$(WebDirectory)" Condition="!Exists('$(WebDirectory)node_modules')" />
+    <Exec Command="npm run build" WorkingDirectory="$(WebDirectory)" />
   </Target>
 
   <Target Name="PackSkyAssets"
           DependsOnTargets="BuildSkyRenderer"
-          Condition="Exists('$(SkyRendererDirectory)dist\index.html')"
-          Inputs="@(SkyDataFile);$(SkyRendererDirectory)dist\index.html"
+          Condition="Exists('$(WebDistDirectory)index.html')"
+          Inputs="@(SkyDataFile);$(WebDistDirectory)index.html;$(WebDistDirectory)planetarium.html"
           Outputs="$(SkyAssetsZip)">
     <ItemGroup>
-      <SkyAppFile Include="$(SkyRendererDirectory)dist\**\*" />
+      <SkyAppFile Include="$(WebDistDirectory)**\*" />
     </ItemGroup>
     <RemoveDir Directories="$(SkyAssetsStaging)" />
     <Copy SourceFiles="@(SkyAppFile)" DestinationFiles="@(SkyAppFile->'$(SkyAssetsStaging)app\%(RecursiveDir)%(Filename)%(Extension)')" />

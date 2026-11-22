@@ -628,7 +628,7 @@
                         <ColumnDefinition Width="*"/>
                         <ColumnDefinition Width="290"/>
                     </Grid.ColumnDefinitions>
-                    <!-- 3D sky (WebView2 + three.js renderer, src/sky-renderer) -->
+                    <!-- 3D sky (WebView2 + three.js sky engine, src/web) -->
                     <Border Grid.Column="0" BorderBrush="{DynamicResource NightBorderBrush}" BorderThickness="1" CornerRadius="6"
                             Background="{DynamicResource SkyCanvasBrush}" ClipToBounds="True"
                             Visibility="{Binding Sky.IsRendererAvailable, Converter={StaticResource BooleanToVisibilityConverter}}">

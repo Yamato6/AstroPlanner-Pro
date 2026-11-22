@@ -14,7 +14,7 @@ updates:
         versions: [">= 6.3.0"]
 
   - package-ecosystem: npm
-    directory: "/src/sky-renderer"
+    directory: "/src/web"
     schedule:
       interval: weekly
     groups:

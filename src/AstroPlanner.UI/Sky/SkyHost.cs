@@ -38,10 +38,10 @@ public sealed class SkyHost : Border, ISkyChannel, IDisposable
     public bool IsReady => _webView.CoreWebView2 is not null;
 
     /// <summary>
-    /// Starts WebView2 and loads the renderer. <paramref name="query"/> is appended to the page
-    /// URL (benchmark switches); it never contains user data.
+    /// Starts WebView2 and loads <paramref name="page"/>. <paramref name="query"/> is appended to
+    /// the page URL (benchmark switches); it never contains user data.
     /// </summary>
-    public async Task StartAsync(IAppLogger logger, string query = "")
+    public async Task StartAsync(IAppLogger logger, string query = "", SkyPage page = SkyPage.Classic)
     {
         if (_started)
         {
@@ -114,8 +114,18 @@ public sealed class SkyHost : Border, ISkyChannel, IDisposable
             $"WebView2 process failed: {e.ProcessFailedKind} ({e.Reason})."));
 
         logger.LogInfo($"Sky renderer: WebView2 {runtimeVersion}.");
-        core.Navigate(new Uri(AppOrigin, "index.html" + query).ToString());
+        core.Navigate(PageUri(page, query).ToString());
     }
+
+    /// <summary>
+    /// The page to load: index.html (the v2 Sky tab: the sky alone) or planetarium.html (the v3
+    /// React UI over the full-window sky, opened with <c>--ui=web</c>). Both come from src/web.
+    /// </summary>
+    internal static Uri PageUri(SkyPage page, string query) => new(AppOrigin, page switch
+    {
+        SkyPage.Planetarium => "planetarium.html",
+        _ => "index.html",
+    } + query);
 
     private static void Configure(CoreWebView2Settings settings)
     {

@@ -1,6 +1,6 @@
 # Sky renderer
 
-The **Sky** tab is a TypeScript + [three.js](https://threejs.org/) app (`src/sky-renderer`)
+The **Sky** tab is a TypeScript + [three.js](https://threejs.org/) engine (`src/web/packages/sky-engine`)
 hosted in WebView2 (spec §4.2, §5.3, §5.4). It draws; it does not compute astronomy. Every
 position comes from `AstroPlanner.Core`, so the sky, the tables and the charts always agree.
 
@@ -9,7 +9,8 @@ AstroPlanner.Core        SkyFrame (J2000 → horizontal matrix), MovingBodyCalcu
                          SkyAppearanceCalculator + SkyQuality/SkyBrightness, Imaging/OpticsMath (camera field)
 AstroPlanner.SkyBridge   protocol DTOs, SkyMessageCodec (encode / decode + validate), SkyBridgeMapper
 AstroPlanner.UI          SkyViewModel (state, clock, selection), SkyHost (WebView2 + security), SkyAssets
-src/sky-renderer         three.js scene, shaders, overlay, picking; speaks only the protocol
+src/web                  npm workspace: packages/sky-engine (three.js scene, shaders, overlay,
+                         picking; speaks only the protocol) and apps/planetarium (the pages)
 data/build/sky           static data built by the DataBuilder (`build-sky`)
 ```
 
@@ -96,7 +97,7 @@ picks behind it.
 
 JSON messages `{"v": 1, "type": "…", "payload": {…}}` over `PostWebMessageAsJson` /
 `window.chrome.webview.postMessage`. C# types: `src/AstroPlanner.SkyBridge/Payloads.cs`;
-TypeScript (zod) schemas: `src/sky-renderer/src/bridge/schema.ts`.
+TypeScript (zod) schemas: `src/web/packages/sky-engine/src/bridge/schema.ts`.
 
 | C# → renderer | |
 |---|---|
@@ -176,8 +177,8 @@ motion is ignored (J2000 epoch: < 1′ for all but a few stars).
 
 ## Packaging
 
-The UI build runs `npm ci` (first time) and `npm run build` when the renderer sources change,
-then zips `src/sky-renderer/dist` + the sky data into `obj/sky-assets.zip`, embedded in the exe
+The UI build runs `npm ci` (first time) and `npm run build` in `src/web` when the web sources
+change, then zips `src/web/apps/planetarium/dist` + the sky data into `obj/sky-assets.zip`, embedded in the exe
 (~2.8 MB; the single-file exe grew from ~75 to ~79 MB). At run time `SkyAssets` extracts it
 once to `%LocalAppData%\AstroPlannerPro\sky\<hash>\{app,data}` and removes older copies, like the
 catalog database. Building without Node: `-p:SkipSkyRendererBuild=true` (the Sky tab then shows
@@ -220,10 +221,41 @@ row.
 ## Development
 
 ```bash
-cd src/sky-renderer
+cd src/web
 npm ci
 npm run dev      # browser at http://localhost:5173: replays the golden C# messages (no WPF needed)
 npm test         # Vitest: projection cross-check, contract, buffers, math, picking, clock
 npm run lint     # ESLint (strict, type-checked) + Prettier
-npm run build    # tsc + Vite → dist/
+npm run build    # tsc + Vite → apps/planetarium/dist/
 ```
+
+## Web workspace (v3, in development)
+
+`src/web` is an npm workspace (one lockfile, shared tooling in the root `package.json`,
+`eslint.config.js` and `tsconfig.base.json`):
+
+```
+packages/sky-engine   the renderer: mountSky(container) builds the canvases and connects the bridge
+apps/planetarium      the pages WebView2 loads from https://app.astroplanner/
+  index.html            the v2 Sky tab: the sky alone (src/classic.ts)
+  planetarium.html      the v3 UI (src/planetarium, React 19), opened with --ui=web
+```
+
+Both pages share one `sky-engine` chunk. `AstroPlannerPro.exe --ui=web` opens `WebShellWindow`:
+one WebView2 filling the window, driven by the same `ShellViewModel` as the v2 window. The v2
+window stays the default until v3.0.0. TSX is compiled by Vite itself, without the React plugin,
+because its fast-refresh preamble is an inline script that the CSP forbids.
+
+**CSP and UI libraries.** Both pages keep `style-src 'self'`: no `<style>` elements and no
+`style=""` attributes in the markup. Styles set from script (`element.style`, React's `style`
+prop) are allowed, so most libraries work. Checked with each library rendered under the pages'
+CSP in Edge (2026-11-21):
+
+| Library | Result |
+|---|---|
+| React Aria Components 1.22 | One injected `<style>`: `usePress` adds a `touch-action` rule. Fix: the page declares an element with id `react-aria-pressable-style` (React Aria then skips the injection) and our CSS carries the same rule. `usePreventScroll` injects only on iOS. With the fix: no violations. |
+| cmdk 1.1 | `Command` works. `Command.Dialog` (Radix Dialog → react-remove-scroll) injects a `<style>`: put `Command` inside a React Aria `Modal` instead. |
+| uPlot 1.6 | Works (its CSS is a file; everything else goes through `element.style`). |
+
+The engine reports every CSP violation to the host log (`securitypolicyviolation` → `error`
+message), so a library that injects styles shows up in `logs/` at once.

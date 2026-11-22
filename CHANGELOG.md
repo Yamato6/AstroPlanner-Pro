@@ -6,6 +6,16 @@ versions follow [Semantic Versioning](https://semver.org/). Versions up to 1.0.0
 
 ## [Unreleased]
 
+### Changed
+- The sky renderer moved to an npm workspace, `src/web`: `packages/sky-engine` (the three.js
+  renderer, unchanged, with its tests) and `apps/planetarium` (the pages). The Sky tab looks and
+  behaves as before.
+
+### Added
+- `--ui=web` opens a preview of the v3 planetarium UI: the live sky filling the window
+  (React 19). It is in development; the classic window stays the default.
+- The sky page reports any Content Security Policy violation to the log.
+
 ## [2.0.0] — 2026-11-21
 
 AstroPlanner Pro: the v1 visual-observing planner rebuilt as an **astrophotography planner**. It

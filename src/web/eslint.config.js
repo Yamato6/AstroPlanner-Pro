@@ -1,10 +1,11 @@
 // @ts-check
 import js from '@eslint/js';
 import prettier from 'eslint-config-prettier';
+import reactHooks from 'eslint-plugin-react-hooks';
 import tseslint from 'typescript-eslint';
 
 export default tseslint.config(
-  { ignores: ['dist', 'node_modules'] },
+  { ignores: ['**/dist', '**/node_modules'] },
   js.configs.recommended,
   ...tseslint.configs.strictTypeChecked,
   {
@@ -18,6 +19,11 @@ export default tseslint.config(
       'no-new-func': 'error',
       '@typescript-eslint/restrict-template-expressions': ['error', { allowNumber: true }],
     },
+  },
+  {
+    files: ['apps/**/*.tsx'],
+    plugins: { 'react-hooks': reactHooks },
+    rules: reactHooks.configs.recommended.rules,
   },
   { files: ['eslint.config.js'], ...tseslint.configs.disableTypeChecked },
   prettier,
