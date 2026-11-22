@@ -20,7 +20,7 @@ public sealed class RpcDispatcherTests
     private JsonElement Single()
     {
         _sent.Should().ContainSingle();
-        return JsonDocument.Parse(_sent[0]).RootElement;
+        return JsonElement.Parse(_sent[0]);
     }
 
     private static string ErrorCode(JsonElement response) => response.GetProperty("error").GetProperty("code").GetString()!;

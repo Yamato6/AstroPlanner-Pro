@@ -16,7 +16,7 @@ public sealed class AppEndpointsTests
 
         await endpoints.Dispatcher.HandleAsync("""{"v":2,"kind":"req","id":1,"type":"app.info","payload":{}}""");
 
-        var payload = JsonDocument.Parse(sent.Single()).RootElement.GetProperty("payload");
+        var payload = JsonElement.Parse(sent.Single()).GetProperty("payload");
         payload.GetProperty("version").GetString().Should().Be(AppVersion.Current.ToString());
         payload.GetProperty("theme").GetString().Should().Be("dark");
         payload.GetProperty("appProtocolVersion").GetInt32().Should().Be(AppMessageCodec.ProtocolVersion);
@@ -33,7 +33,7 @@ public sealed class AppEndpointsTests
         endpoints.Stop();
         shell.IsNightTheme = false;
 
-        var message = JsonDocument.Parse(sent.Single()).RootElement;
+        var message = JsonElement.Parse(sent.Single());
         message.GetProperty("type").GetString().Should().Be("theme.changed");
         message.GetProperty("payload").GetProperty("theme").GetString().Should().Be("night");
     }
