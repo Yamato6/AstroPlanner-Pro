@@ -4,6 +4,14 @@ All notable changes to AstroPlanner Pro. Format based on [Keep a Changelog](http
 versions follow [Semantic Versioning](https://semver.org/). Versions up to 1.0.0 are the original
 [AstroPlanner](https://github.com/Yamato6/AstroPlanner) (in Spanish), translated here.
 
+## [2.0.1] — 2026-11-22
+
+### Fixed
+- The exe now contains the 3D sky. In 2.0.0 the release build never built the renderer
+  (MSBuild checked for its output before building it, and only a clean checkout lacks it), so
+  the Sky tab fell back to the 2D chart. Release builds now fail if the renderer is missing
+  (`-p:RequireSkyRenderer=true`).
+
 ## [2.0.0] — 2026-11-21
 
 AstroPlanner Pro: the v1 visual-observing planner rebuilt as an **astrophotography planner**. It

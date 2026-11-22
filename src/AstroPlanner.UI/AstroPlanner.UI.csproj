@@ -15,7 +15,7 @@
     <ApplicationManifest>app.manifest</ApplicationManifest>
 
     <!-- CI replaces the version with the tag's (e.g. 2.0.0-rc.1). -->
-    <Version>2.0.0</Version>
+    <Version>2.0.1</Version>
     <AssemblyTitle>AstroPlanner Pro</AssemblyTitle>
     <Description>Astrophotography planner: what to shoot tonight, when, with which gear and how likely it is to work.</Description>
   </PropertyGroup>
@@ -99,8 +99,10 @@
     <Exec Command="npm run build" WorkingDirectory="$(SkyRendererDirectory)" />
   </Target>
 
+  <!-- MSBuild evaluates a target's Condition before running its DependsOnTargets, so the
+       renderer must be built by EmbedSkyAssets' dependency list, before PackSkyAssets checks for
+       dist: on a clean checkout (CI) dist does not exist until BuildSkyRenderer has run. -->
   <Target Name="PackSkyAssets"
-          DependsOnTargets="BuildSkyRenderer"
           Condition="Exists('$(SkyRendererDirectory)dist\index.html')"
           Inputs="@(SkyDataFile);$(SkyRendererDirectory)dist\index.html"
           Outputs="$(SkyAssetsZip)">
@@ -113,7 +115,10 @@
     <ZipDirectory SourceDirectory="$(SkyAssetsStaging)" DestinationFile="$(SkyAssetsZip)" Overwrite="true" />
   </Target>
 
-  <Target Name="EmbedSkyAssets" DependsOnTargets="PackSkyAssets" BeforeTargets="BeforeBuild">
+  <Target Name="EmbedSkyAssets" DependsOnTargets="BuildSkyRenderer;PackSkyAssets" BeforeTargets="BeforeBuild">
+    <!-- Release builds pass -p:RequireSkyRenderer=true: an exe without the renderer must not ship. -->
+    <Error Condition="'$(RequireSkyRenderer)' == 'true' And !Exists('$(SkyAssetsZip)')"
+           Text="The sky renderer was not built (src/sky-renderer/dist is missing), so it cannot be embedded." />
     <ItemGroup Condition="Exists('$(SkyAssetsZip)')">
       <EmbeddedResource Include="$(SkyAssetsZip)" LogicalName="AstroPlanner.UI.Sky.sky-assets.zip" />
     </ItemGroup>
