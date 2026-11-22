@@ -201,6 +201,9 @@ the frame cap off, and logs the average fps and the 95th-percentile frame time. 
 draws the catalogue twice (~167k stars, the stress test); `--sky-resolution` renders at that size
 whatever the window (the canvas is scaled to fit).
 
+The v3 baseline (method, interleaved runs, startup and memory) is in
+[performance.md](performance.md). The table below was measured during M5/M6.
+
 Development desktop: Ryzen 7 5700 (no integrated GPU) + Radeon RX 6600, WebView2 157, sky
 brightness and labels on:
 
