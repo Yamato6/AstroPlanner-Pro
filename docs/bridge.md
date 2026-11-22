@@ -23,18 +23,29 @@ host → web   {"v":2,"kind":"res","id":7,"type":"app.info","payload":{…}}
 
 - **Names** are `area.verb` (`app.info`, later `targets.query`, `plan.schedule`…): a lower-case
   area, then camelCase segments.
-- **Ids** are integers ≥ 1 chosen by the web side; each request is answered exactly once.
+- **Ids** are integers 1…2³¹−1 chosen by the web side (wrapping, skipping ids in use); each
+  request is answered exactly once. A request that reuses the id of one still running is dropped
+  (logged, not answered), so it cannot settle the other.
 - **Errors** (`RpcErrorCodes`): `bad-request` (the parameters break the contract),
   `unknown-method`, `timeout` (30 s on the host, 15 s by default on the web side), `cancelled`,
-  `too-large` (page the answer) and `internal` (details only in the host log).
+  `too-large` (page the answer), `busy` (more than 32 requests running) and `internal` (details
+  only in the host log).
 - **Cancellation**: the web side sends `cancel` when it times out or its `AbortSignal` fires; the
-  host cancels the handler's token and answers `cancelled`.
-- **Limits**: requests ≤ 64 KiB (the host rejects larger ones unread), responses ≤ 4 MiB, events
-  ≤ 256 KiB. Bulk data (tiles, images) will go through virtual-host URLs, not messages.
+  host cancels the handler's token and answers `cancelled`. Closing the window cancels everything.
+- **Handlers** must be asynchronous: the timeout answers once a handler yields, so heavy work goes
+  to `Task.Run`. A handler that outlives its answer keeps its id reserved until it ends, and a late
+  failure is logged.
+- **Limits** count UTF-16 characters (up to ~3× as many UTF-8 bytes, harmless at these sizes):
+  requests ≤ 64 Ki (longer messages are not even scanned), responses ≤ 4 Mi, events ≤ 256 Ki.
+  Bulk data (tiles, images) will go through virtual-host URLs, not messages.
+- **Robustness**: nothing the page sends can throw into the host. Decoding failures, a page that is
+  already gone when the answer is sent, and events that break their contract are logged, not
+  thrown. Envelopes with duplicate members (`{"v":2,…,"v":1}`) are rejected.
 - **Security**: only the app origin's messages reach the dispatcher (`SkyHost.IsTrustedSource`).
   Envelopes are strict: an extra member, a wrong type or a bad id rejects the message. Payloads
   are deserialized strictly (unknown members rejected) and then checked against the record's
-  DataAnnotations on the host. The web side validates every answer and event before use.
+  DataAnnotations on the host, recursively through nested records and lists (`ContractValidator`).
+  The web side validates every answer and event before use.
 
 ### Contracts: C# first, TypeScript generated
 
