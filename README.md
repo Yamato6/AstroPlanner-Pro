@@ -247,20 +247,25 @@ src/
   AstroPlanner.Online/   One client per service, all through Http/CachedFetch          → Core
                          Weather: Open-Meteo, 7Timer! · Imaging: HiPS survey tiles (CDS, ESA ESASky)
                          Info: Wikipedia/Commons, CDS Sesame · SmallBodies: MPC · Satellites: CelesTrak
-                         (the GitHub releases check lives in UI/Services/UpdateChecker)
+                         (the GitHub releases check lives in Application/Services/UpdateChecker)
   AstroPlanner.SkyBridge/ WPF ⇄ WebView2 protocol: DTOs, validating codec              → Core
   web/                   npm workspace (WebView2 pages): packages/sky-engine (TypeScript + three.js;
                          draws only, astronomy comes from Core), apps/planetarium (the v2 Sky tab page
                          and the v3 React UI in development)
-  AstroPlanner.UI/       WPF app and composition root
+  AstroPlanner.Application/  View models and shared state, no WPF (used by both UIs)        → Core, SkyBridge
     ViewModels/            Shell, Tonight, Targets, Sky, ObjectDetail, SessionPlan, Logbook, Locations,
                            Settings, Equipment, Framing, ObjectInfo, MilkyWayPlanner
     Services/              shared state (IObserverContext, WeatherState, EquipmentState, SmallBodyState,
-                           SatelliteState, OnlineInfoState, ThemeState), named HttpClients, exports
-                           (CSV, PDF, .ics, print), logging, update checker, safe links, single instance
-    Sky/                   WebView2 host of the renderer, its clock and assets
-    Charts/                ScottPlot charts (2D sky, altitude, plan timeline, horizon, predictions)
+                           SatelliteState, OnlineInfoState, ThemeState), exports (CSV, PDF, .ics),
+                           update checker, safe links
+    Sky/                   the renderer channel and its clock
+    Bridge/                app-channel endpoint modules of the web UI (app.info, observer.get…)
     Resources/Strings.resx All user-facing text (localisable)
+  AstroPlanner.UI/       WPF app and composition root
+    Services/              named HttpClients, printing, image decoding, logging, window placement,
+                           themes, v1 import, single instance, the web UI's endpoints
+    Sky/                   WebView2 host of the renderer and its assets
+    Charts/                ScottPlot charts (2D sky, altitude, plan timeline, horizon, predictions)
     Themes/                Dark.xaml (palette and styles, also used by the charts), Night.xaml (red colors)
 tools/
   AstroPlanner.DataBuilder    Builds data/build/catalogs.sqlite and the sky data (docs/data-pipeline.md)
@@ -272,7 +277,9 @@ tests/
   AstroPlanner.DataBuilder.Tests  Catalog build from small excerpts of the sources
   AstroPlanner.Online.Tests   HTTP clients with stubbed responses
   AstroPlanner.SkyBridge.Tests  Sky protocol and app channel contracts, projection cross-check (shared with Vitest)
-  AstroPlanner.UI.Tests       View models, services, windows (accessibility, contrast) and architecture rules
+  AstroPlanner.Application.Tests  View models, shared state, exports, app-channel endpoints
+  AstroPlanner.UI.Tests       Windows (accessibility, contrast, bindings), WebView2 host, printing, release
+                              checks and architecture rules
 installer/                Inno Setup script
 .github/workflows/        CI and releases
 ```

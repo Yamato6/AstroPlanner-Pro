@@ -1,6 +1,6 @@
 using System.IO;
 using System.Text.RegularExpressions;
-using AstroPlanner.UI.ViewModels;
+using AstroPlanner.Application.ViewModels;
 
 namespace AstroPlanner.UI.Tests;
 

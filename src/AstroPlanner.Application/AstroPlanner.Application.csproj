@@ -1,0 +1,58 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- Application layer (v3 spec §5.2): the view models and state services shared by the WPF UI
+       and the web UI. No WPF: it references Core and SkyBridge only (ArchitectureTests). -->
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <RootNamespace>AstroPlanner.Application</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\AstroPlanner.Core\AstroPlanner.Core.csproj" />
+    <ProjectReference Include="..\AstroPlanner.SkyBridge\AstroPlanner.SkyBridge.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="CommunityToolkit.Mvvm" />
+    <PackageReference Include="PDFsharp" />
+    <!-- Lifts PDFsharp's vulnerable transitive dependency (see Directory.Packages.props). -->
+    <PackageReference Include="System.Security.Cryptography.Pkcs" />
+  </ItemGroup>
+
+  <!-- Domain types used everywhere in the view models. -->
+  <ItemGroup>
+    <Using Include="AstroPlanner.Core.Models" />
+    <Using Include="AstroPlanner.Core.Interfaces" />
+  </ItemGroup>
+
+  <!-- UI strings live in Resources/Strings.resx (embedded as AstroPlanner.Application.Resources.Strings).
+       A public strongly typed class, AstroPlanner.Application.Resources.Strings, is generated
+       before every compilation; C# uses it directly and the WPF XAML through
+       {x:Static res:Strings.Key}. The Visual Studio custom tool is not needed. -->
+  <Target Name="GenerateStringsClass" BeforeTargets="CoreCompile">
+    <PropertyGroup>
+      <StringsDesignerFile>$([System.IO.Path]::GetFullPath('$(MSBuildProjectDirectory)\$(IntermediateOutputPath)Strings.Designer.cs'))</StringsDesignerFile>
+    </PropertyGroup>
+    <GenerateResource Sources="Resources\Strings.resx"
+                      OutputResources="$(IntermediateOutputPath)StringsClass.resources"
+                      StronglyTypedLanguage="CSharp"
+                      StronglyTypedNamespace="AstroPlanner.Application.Resources"
+                      StronglyTypedClassName="Strings"
+                      StronglyTypedManifestPrefix="AstroPlanner.Application.Resources"
+                      StronglyTypedFileName="$(StringsDesignerFile)"
+                      PublicClass="true"
+                      ExecuteAsTool="false" />
+    <ItemGroup>
+      <!-- Whatever its spelling (relative or absolute), keep a single copy of the generated file. -->
+      <Compile Remove="@(Compile)" Condition="'%(Filename)%(Extension)' == 'Strings.Designer.cs'" />
+      <Compile Include="$(StringsDesignerFile)" />
+    </ItemGroup>
+  </Target>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="AstroPlannerPro" />
+    <InternalsVisibleTo Include="AstroPlanner.UI.Tests" />
+    <InternalsVisibleTo Include="AstroPlanner.Application.Tests" />
+  </ItemGroup>
+
+</Project>

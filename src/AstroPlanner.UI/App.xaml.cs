@@ -17,10 +17,10 @@ using AstroPlanner.Online.Info;
 using AstroPlanner.Online.Satellites;
 using AstroPlanner.Online.SmallBodies;
 using AstroPlanner.Online.Weather;
-using AstroPlanner.UI.Resources;
+using AstroPlanner.Application.Resources;
 using AstroPlanner.UI.Services;
 using AstroPlanner.UI.Sky;
-using AstroPlanner.UI.ViewModels;
+using AstroPlanner.Application.ViewModels;
 
 namespace AstroPlanner.UI;
 
@@ -28,7 +28,7 @@ namespace AstroPlanner.UI;
 /// WPF entry point and composition root: Core knows nothing about the UI, and the UI
 /// assembles the implementations.
 /// </summary>
-public partial class App : Application
+public partial class App : System.Windows.Application
 {
     private ServiceProvider? _serviceProvider;
     private IAppLogger? _logger;
@@ -69,7 +69,7 @@ public partial class App : Application
             services.AddHttpClient(name, http =>
                 {
                     http.Timeout = Timeout.InfiniteTimeSpan;   // the resilience pipeline enforces it
-                    http.DefaultRequestHeaders.UserAgent.ParseAdd($"AstroPlannerPro/{AppVersion.Current}");
+                    http.DefaultRequestHeaders.UserAgent.ParseAdd($"AstroPlannerPro/{AppBuild.Version}");
                     http.DefaultRequestHeaders.UserAgent.ParseAdd("(+https://github.com/Yamato6/AstroPlanner-Pro)");
                 })
                 .AddStandardResilienceHandler(options =>
@@ -86,7 +86,7 @@ public partial class App : Application
         services.AddHttpClient(OnlineClients.CelesTrak, http =>
             {
                 http.Timeout = Timeout.InfiniteTimeSpan;
-                http.DefaultRequestHeaders.UserAgent.ParseAdd($"AstroPlannerPro/{AppVersion.Current}");
+                http.DefaultRequestHeaders.UserAgent.ParseAdd($"AstroPlannerPro/{AppBuild.Version}");
                 http.DefaultRequestHeaders.UserAgent.ParseAdd("(+https://github.com/Yamato6/AstroPlanner-Pro)");
             })
             .AddStandardResilienceHandler(options =>
@@ -180,7 +180,7 @@ public partial class App : Application
         }
 
         _logger = _serviceProvider.GetRequiredService<IAppLogger>();
-        _logger.LogInfo($"AstroPlanner Pro {AppVersion.Current} started.");
+        _logger.LogInfo($"AstroPlanner Pro {AppBuild.Version} started.");
         DispatcherUnhandledException += OnDispatcherUnhandledException;
         AppDomain.CurrentDomain.UnhandledException += OnDomainUnhandledException;
         TaskScheduler.UnobservedTaskException += OnUnobservedTaskException;

@@ -7,7 +7,8 @@ hosted in WebView2. The rules below are enforced by
 ```mermaid
 flowchart TB
     subgraph app["AstroPlannerPro.exe"]
-        UI["<b>AstroPlanner.UI</b><br/>WPF views, view models (MVVM),<br/>DI composition root, exports"]
+        UI["<b>AstroPlanner.UI</b><br/>WPF views and windows,<br/>DI composition root, WebView2 host"]
+        App["<b>AstroPlanner.Application</b><br/>view models (MVVM), shared state,<br/>exports, app-channel endpoints"]
         Bridge["<b>AstroPlanner.SkyBridge</b><br/>message DTOs and codec"]
         Renderer["<b>src/web</b><br/>sky-engine (TypeScript, three.js, zod)<br/>and pages (WebView2, local files only)"]
         Data["<b>AstroPlanner.Data</b><br/>catalogs.sqlite (embedded),<br/>app.db, v1 import, cache"]
@@ -16,7 +17,8 @@ flowchart TB
     end
     Builder["<b>tools/AstroPlanner.DataBuilder</b><br/>raw sources → data/build"]
 
-    UI --> Core & Data & Online & Bridge
+    UI --> App & Core & Data & Online & Bridge
+    App --> Core & Bridge
     UI -. "JSON messages" .-> Renderer
     Bridge --> Core
     Data --> Core
@@ -34,13 +36,14 @@ flowchart TB
 | `AstroPlanner.Online` | One client per external service ([external-services.md](external-services.md)), all through `CachedFetch`. | Core |
 | `AstroPlanner.SkyBridge` | The WPF ⇄ web protocols ([bridge.md](bridge.md)): the sky protocol (payload records, JSON codec, camera matrix) and the app channel of the v3 UI (contracts, codec, `RpcDispatcher`). No WPF. | Core |
 | `src/web` | npm workspace. `packages/sky-engine` draws what C# sends: it applies the `SkyFrame` matrix and interpolates body tracks sampled by Core; it computes no astronomy. `apps/planetarium` holds the pages: the v2 Sky tab and the v3 UI in development (`--ui=web`) ([sky-renderer.md](sky-renderer.md)). | — |
-| `AstroPlanner.UI` | Views, view models, shared state services, exports (CSV, PDF, `.ics`), themes. | all of the above |
+| `AstroPlanner.Application` | The view models and shared state services (MVVM, no WPF), exports (CSV, PDF, `.ics`), the UI strings (`Resources/Strings.resx`) and the app-channel endpoint modules of the web UI (`Bridge/`). Shared by the WPF window and the web UI. | Core, SkyBridge |
+| `AstroPlanner.UI` | WPF views, windows, charts and themes; the WebView2 host; the composition root; what needs WPF or the exe (image decoding, printing, window placement, the exe's version, the v1 import, named `HttpClient`s, logging to disk). | all of the above |
 | `tools/AstroPlanner.DataBuilder` | Downloads and verifies the sources ([data-pipeline.md](data-pipeline.md)). Nothing in the app references it. | Core, Data |
 | `tools/AstroPlanner.BridgeGen` | Writes the TypeScript contracts of the app channel from the C# records ([bridge.md](bridge.md)). Only its test references it. | SkyBridge |
 
-## Inside the UI
+## Inside the UI and Application
 
-- **Composition root**: `App.xaml.cs` registers every service and view model as a singleton.
+- **Composition root** (UI): `App.xaml.cs` registers every service and view model as a singleton.
 - **Shared state** goes through injected services, never through one view model reaching into
   another: `IObserverContext` (site, time, minimum altitude, horizon, night, Moon, sky quality,
   darkness, calibration; raises `Recalculated`), `WeatherState`, `EquipmentState`,
@@ -58,6 +61,10 @@ flowchart TB
   `PredictionChart`, colors from `ChartPalette`) to redraw. Commands without a dialog are
   `KeyBinding`s. Strings come from `Resources/Strings.resx`; colors from `Themes/Dark.xaml` /
   `Themes/Night.xaml` through `DynamicResource`.
+- **One thread**: view models and state services are not thread-safe. Like WPF objects they are
+  used on the UI thread; background work comes back to it (`await` on the UI context, or
+  `IUiDispatcher` in `Application/Bridge`). The view-model tests run xUnit with
+  `maxParallelThreads: 1` so that their continuations are serialized the same way.
 
 ## Data flow of one evening
 

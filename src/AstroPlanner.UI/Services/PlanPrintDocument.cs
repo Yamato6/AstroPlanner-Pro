@@ -2,8 +2,8 @@ using System.Globalization;
 using System.Windows;
 using System.Windows.Documents;
 using System.Windows.Media;
-using AstroPlanner.UI.Resources;
-using AstroPlanner.UI.ViewModels;
+using AstroPlanner.Application.Resources;
+using AstroPlanner.Application.ViewModels;
 
 namespace AstroPlanner.UI.Services;
 

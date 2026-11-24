@@ -1,7 +1,7 @@
 using System.IO;
 using AstroPlanner.Data.Import;
 using AstroPlanner.Data.Storage;
-using AstroPlanner.UI.Resources;
+using AstroPlanner.Application.Resources;
 
 namespace AstroPlanner.UI.Services;
 

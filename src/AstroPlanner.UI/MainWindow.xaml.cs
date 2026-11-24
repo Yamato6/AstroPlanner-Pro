@@ -8,10 +8,10 @@ using System.Windows.Media;
 using System.Windows.Navigation;
 using System.Windows.Threading;
 using AstroPlanner.UI.Charts;
-using AstroPlanner.UI.Resources;
+using AstroPlanner.Application.Resources;
 using AstroPlanner.UI.Services;
 using AstroPlanner.UI.Sky;
-using AstroPlanner.UI.ViewModels;
+using AstroPlanner.Application.ViewModels;
 
 namespace AstroPlanner.UI;
 
@@ -142,7 +142,7 @@ public partial class MainWindow : Window
             Tabs.SelectedItem = SkyTab;
         }
 
-        await _viewModel.CheckForUpdatesAsync(AppVersion.Current);
+        await _viewModel.CheckForUpdatesAsync(AppBuild.Version);
     }
 
     /// <summary>

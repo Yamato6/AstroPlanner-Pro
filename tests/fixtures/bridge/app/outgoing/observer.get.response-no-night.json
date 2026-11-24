@@ -1,0 +1,21 @@
+{
+  "v": 2,
+  "kind": "res",
+  "id": 5,
+  "type": "observer.get",
+  "payload": {
+    "revision": 3,
+    "locationName": "Aguascalientes",
+    "latitudeDegrees": 21.88,
+    "longitudeDegrees": -102.29,
+    "elevationMeters": 1888,
+    "timeZoneId": "America/Mexico_City",
+    "observationTimeLocal": "2026-01-15T22:00:00",
+    "minimumAltitudeDegrees": 20,
+    "zenithSqm": 20.4,
+    "zenithSqmSource": "atlas",
+    "night": null,
+    "moon": null,
+    "inputError": "Latitude must be between -90 and 90."
+  }
+}

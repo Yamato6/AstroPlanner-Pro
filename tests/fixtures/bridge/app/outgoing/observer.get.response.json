@@ -1,0 +1,32 @@
+{
+  "v": 2,
+  "kind": "res",
+  "id": 4,
+  "type": "observer.get",
+  "payload": {
+    "revision": 3,
+    "locationName": "Aguascalientes",
+    "latitudeDegrees": 21.88,
+    "longitudeDegrees": -102.29,
+    "elevationMeters": 1888,
+    "timeZoneId": "America/Mexico_City",
+    "observationTimeLocal": "2026-01-15T22:00:00",
+    "minimumAltitudeDegrees": 20,
+    "zenithSqm": 20.4,
+    "zenithSqmSource": "atlas",
+    "night": {
+      "windowStartLocal": "2026-01-15T18:21:00",
+      "windowEndLocal": "2026-01-16T07:16:00",
+      "sunsetLocal": "2026-01-15T18:21:00",
+      "sunriseLocal": "2026-01-16T07:16:00",
+      "astronomicalDuskLocal": "2026-01-15T19:39:00",
+      "astronomicalDawnLocal": "2026-01-16T05:58:00"
+    },
+    "moon": {
+      "illuminatedPercent": 12.5,
+      "altitudeDegrees": -31.2,
+      "isWaxing": false
+    },
+    "inputError": null
+  }
+}

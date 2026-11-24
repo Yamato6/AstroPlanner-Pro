@@ -26,11 +26,23 @@ public sealed class AppChannelTests
 
     private static readonly AppInfoResponse SampleInfo = new("2.0.0", AppThemes.Dark, SkyMessageCodec.ProtocolVersion, AppMessageCodec.ProtocolVersion);
 
+    // Aguascalientes, 2026-01-15 at 22:00 local: the night, a waning Moon below the horizon.
+    private static readonly ObserverSnapshot SampleObserver = new(
+        3, "Aguascalientes", 21.88, -102.29, 1888, "America/Mexico_City", "2026-01-15T22:00:00", 20, 20.4, SkyQualitySources.Atlas,
+        new ObserverNight("2026-01-15T18:21:00", "2026-01-16T07:16:00", "2026-01-15T18:21:00", "2026-01-16T07:16:00",
+            "2026-01-15T19:39:00", "2026-01-16T05:58:00"),
+        new ObserverMoon(12.5, -31.2, false),
+        null);
+
     internal static IReadOnlyDictionary<string, string> OutgoingSamples() => new Dictionary<string, string>(StringComparer.Ordinal)
     {
         ["app.info.response"] = AppMessageCodec.Response(1, AppMethods.AppInfo.Name, SampleInfo, AppMethods.AppInfo.Response),
         ["app.info.error"] = AppMessageCodec.Error(2, AppMethods.AppInfo.Name, RpcErrorCodes.Timeout, "The host did not answer in time."),
         ["theme.changed.event"] = AppMessageCodec.Event(AppEvents.ThemeChanged, new ThemeChangedEvent(AppThemes.Night)),
+        ["observer.get.response"] = AppMessageCodec.Response(4, AppMethods.ObserverGet.Name, SampleObserver, AppMethods.ObserverGet.Response),
+        ["observer.get.response-no-night"] = AppMessageCodec.Response(5, AppMethods.ObserverGet.Name,
+            SampleObserver with { Night = null, Moon = null, InputError = "Latitude must be between -90 and 90." }, AppMethods.ObserverGet.Response),
+        ["observer.changed.event"] = AppMessageCodec.Event(AppEvents.ObserverChanged, new ObserverChangedEvent(4)),
     };
 
     [Fact]

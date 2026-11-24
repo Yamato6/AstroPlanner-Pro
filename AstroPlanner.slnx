@@ -1,5 +1,6 @@
 <Solution>
   <Folder Name="/src/">
+    <Project Path="src/AstroPlanner.Application/AstroPlanner.Application.csproj" />
     <Project Path="src/AstroPlanner.Core/AstroPlanner.Core.csproj" />
     <Project Path="src/AstroPlanner.Data/AstroPlanner.Data.csproj" />
     <Project Path="src/AstroPlanner.Online/AstroPlanner.Online.csproj" />
@@ -11,6 +12,7 @@
     <Project Path="tools/AstroPlanner.DataBuilder/AstroPlanner.DataBuilder.csproj" />
   </Folder>
   <Folder Name="/tests/">
+    <Project Path="tests/AstroPlanner.Application.Tests/AstroPlanner.Application.Tests.csproj" />
     <Project Path="tests/AstroPlanner.Core.Tests/AstroPlanner.Core.Tests.csproj" />
     <Project Path="tests/AstroPlanner.Data.Tests/AstroPlanner.Data.Tests.csproj" />
     <Project Path="tests/AstroPlanner.DataBuilder.Tests/AstroPlanner.DataBuilder.Tests.csproj" />

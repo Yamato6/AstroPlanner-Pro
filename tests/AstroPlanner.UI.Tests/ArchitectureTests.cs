@@ -3,16 +3,18 @@ using AstroPlanner.Core.Services;
 using AstroPlanner.Data.Catalog;
 using AstroPlanner.Online.Weather;
 using AstroPlanner.SkyBridge;
-using AstroPlanner.UI.ViewModels;
+using AstroPlanner.Application.ViewModels;
 
 namespace AstroPlanner.UI.Tests;
 
 /// <summary>
 /// Dependency rules of the solution (spec §5.2), checked on the compiled assemblies:
-/// Core depends on the BCL only; Data, Online and SkyBridge depend on Core only; only the UI (the
-/// composition root) may reference everything; the DataBuilder tool may use Core and Data, and
-/// nothing may depend on it. Only Data (and the tool) talk to SQLite. SkyBridge (the WebView2
-/// protocol) has no WPF, WebView2 or network dependency.
+/// Core depends on the BCL only; Data, Online and SkyBridge depend on Core only; Application (the
+/// view models and state services) depends on Core and SkyBridge only and has no WPF, WebView2,
+/// SQLite or HTTP-client packages; only the UI (the composition root) may reference everything,
+/// and only the UI references Application; the DataBuilder tool may use Core and Data, and nothing
+/// may depend on it. Only Data (and the tool) talk to SQLite. SkyBridge (the WebView2 protocol)
+/// has no WPF, WebView2 or network dependency.
 /// </summary>
 public sealed class ArchitectureTests
 {
@@ -20,7 +22,8 @@ public sealed class ArchitectureTests
     private static readonly Assembly Data = typeof(SqliteCatalogRepository).Assembly;
     private static readonly Assembly Online = typeof(OpenMeteoForecastService).Assembly;
     private static readonly Assembly SkyBridge = typeof(SkyMessageCodec).Assembly;
-    private static readonly Assembly Ui = typeof(ShellViewModel).Assembly;
+    private static readonly Assembly Application = typeof(ShellViewModel).Assembly;
+    private static readonly Assembly Ui = typeof(App).Assembly;
     private static readonly Assembly DataBuilder = Assembly.Load("AstroPlanner.DataBuilder");
 
     /// <summary>BCL assemblies that would mean IO-heavy, network or UI code inside the domain.</summary>
@@ -67,14 +70,31 @@ public sealed class ArchitectureTests
     }
 
     [Fact]
-    public void OnlyTheUiReferencesTheUi()
+    public void Application_DependsOnCoreAndSkyBridgeOnly_WithoutWpfOrHosting()
     {
-        var uiName = Ui.GetName().Name!;
+        ProjectReferences(Application).Should().BeEquivalentTo([Core.GetName().Name!, SkyBridge.GetName().Name!]);
+        References(Application).Should().NotContain(
+            ["PresentationCore", "PresentationFramework", "WindowsBase", "System.Xaml", "System.Windows.Forms", "System.Data", "Microsoft.Data.Sqlite"],
+            "the view models are shared by the WPF and the web UI: no WPF, no database");
+        References(Application).Should().NotContain(name => name.StartsWith("Microsoft.Web.WebView2", StringComparison.Ordinal)
+                                                            || name.StartsWith("Microsoft.Extensions.Http", StringComparison.Ordinal)
+                                                            || name.StartsWith("ScottPlot", StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public void OnlyTheUiReferencesTheUiAndApplication()
+    {
+        foreach (var assembly in new[] { Core, Data, Online, SkyBridge, Application, DataBuilder })
+        {
+            References(assembly).Should().NotContain(Ui.GetName().Name!);
+        }
 
         foreach (var assembly in new[] { Core, Data, Online, SkyBridge, DataBuilder })
         {
-            References(assembly).Should().NotContain(uiName);
+            References(assembly).Should().NotContain(Application.GetName().Name!);
         }
+
+        References(Ui).Should().Contain(Application.GetName().Name!);
     }
 
     [Fact]
@@ -83,7 +103,7 @@ public sealed class ArchitectureTests
         ProjectReferences(DataBuilder).Should().Contain(Core.GetName().Name!)
             .And.BeSubsetOf([Core.GetName().Name!, Data.GetName().Name!]);
 
-        foreach (var assembly in new[] { Core, Data, Online, SkyBridge, Ui })
+        foreach (var assembly in new[] { Core, Data, Online, SkyBridge, Application, Ui })
         {
             References(assembly).Should().NotContain(DataBuilder.GetName().Name!);
         }
@@ -94,7 +114,7 @@ public sealed class ArchitectureTests
     {
         References(Data).Should().Contain("Microsoft.Data.Sqlite");
 
-        foreach (var assembly in new[] { Core, Online, SkyBridge, Ui })
+        foreach (var assembly in new[] { Core, Online, SkyBridge, Application, Ui })
         {
             References(assembly).Should().NotContain("Microsoft.Data.Sqlite");
         }
@@ -108,7 +128,7 @@ public sealed class ArchitectureTests
 
         foreach (var assembly in new[] { Core, Data, Online, DataBuilder })
         {
-            References(assembly).Should().NotContain(SkyBridge.GetName().Name!, "only the UI hosts the renderer");
+            References(assembly).Should().NotContain(SkyBridge.GetName().Name!, "only the UI and Application talk to the renderer");
         }
     }
 

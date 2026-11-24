@@ -23,7 +23,7 @@ dotnet run --project src/AstroPlanner.UI                 # run the app
 ## Rules
 
 - **Everything in English**: UI, identifiers, comments, docs, commit messages. UI text goes in
-  `src/AstroPlanner.UI/Resources/Strings.resx`, never as literals.
+  `src/AstroPlanner.Application/Resources/Strings.resx`, never as literals.
 - **Layers**: all astronomy lives in `AstroPlanner.Core` (BCL only); see the dependency rules in
   `ArchitectureTests`. The renderer draws; it never computes positions.
 - **Tests**: every new algorithm is checked against an authoritative reference (a Meeus worked

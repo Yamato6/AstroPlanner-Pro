@@ -70,11 +70,36 @@ dotnet run --project tools/AstroPlanner.BridgeGen -- check   # exit 1 if the fil
 
 1. Add the request and response records to `AppContracts.cs` (with their constraints) and to
    `AppJsonContext`, and the `RpcMethod` to `AppMethods`.
-2. Register the handler in `UI/Services/AppEndpoints.cs`.
+2. Register the handler in the area's endpoint module (`Application/Bridge`, below); a new area
+   gets a new module, added to `UI/Services/AppEndpoints.cs`.
 3. Run BridgeGen. The method is then typed on the web side:
    `host.request('area.verb', params)`.
 4. Add an outgoing sample to `AppChannelTests.OutgoingSamples` and regenerate the golden files
    (`UPDATE_BRIDGE_FIXTURES=1 dotnet test tests/AstroPlanner.SkyBridge.Tests`).
+
+### Endpoint modules: snapshot, revision, change event
+
+Each area of the web UI (one window) has an `IEndpointModule` in `Application/Bridge`, over the
+same view models and state services as the classic window. Every module follows one pattern:
+
+- `area.get` returns an immutable snapshot (a contract record) with a `revision`;
+- commands are methods that call the view models;
+- one `area.changed {revision}` event tells the page that the state moved on. A `ChangeFeed`
+  coalesces a burst of changes (a slider, a recalculation that touches ten properties) into one
+  event after 50 ms, published on the UI thread; the page fetches `area.get` again when the
+  revision it holds is older (TanStack Query invalidation in R1).
+
+Events never carry rows: big lists are paged requests (`targets.query`, R4), because a response
+is limited to 4 Mi characters and an event to 256 Ki.
+
+View models belong to the UI thread. Handlers run there (the dispatcher keeps the UI context);
+a timer or a background completion comes back through `IUiDispatcher`. `AppEndpoints` (UI)
+creates the dispatcher and the modules; `Stop()` disposes them and cancels running requests.
+
+| Module | Methods | Events |
+|---|---|---|
+| `AppInfoEndpoints` | `app.info` (versions, theme) | `theme.changed` |
+| `ObserverEndpoints` | `observer.get` (site, time, night, Moon, sky quality) | `observer.changed` |
 
 ### Golden files (`tests/fixtures/bridge/app`)
 
@@ -91,6 +116,7 @@ Both suites read these files: `AppChannelTests` in C# and `packages/bridge-clien
 | Side | Files |
 |---|---|
 | C# (`AstroPlanner.SkyBridge/App`) | `AppContracts` (records), `AppProtocol` (JSON context, `AppMethods`, `AppEvents`), `AppMessageCodec` (envelopes, limits), `RpcDispatcher` (routing, validation, timeout, cancellation) |
-| C# (UI) | `SkyHost` (routing by `v`), `Services/AppEndpoints` (the handlers), `WebShellWindow` |
+| C# (Application) | `Bridge/IEndpointModule`, `ChangeFeed`, `IUiDispatcher`, `AppInfoEndpoints`, `ObserverEndpoints` |
+| C# (UI) | `SkyHost` (routing by `v`), `Services/AppEndpoints` (dispatcher + modules), `WebShellWindow` |
 | Web (`packages/bridge-client`) | `client.ts` (`createAppBridge`: `request`, `on`), `envelope.ts`, `generated/contracts.ts` |
 | Web (`apps/planetarium`) | `host.ts` (the page's client), `useHostTheme` (`app.info` + `theme.changed` → `<html data-theme>`) |

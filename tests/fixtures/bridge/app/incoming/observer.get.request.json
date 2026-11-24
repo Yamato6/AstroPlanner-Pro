@@ -1,0 +1,7 @@
+{
+  "v": 2,
+  "kind": "req",
+  "id": 3,
+  "type": "observer.get",
+  "payload": {}
+}

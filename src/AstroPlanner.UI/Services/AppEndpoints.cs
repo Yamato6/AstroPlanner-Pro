@@ -1,23 +1,24 @@
-using AstroPlanner.SkyBridge;
+using AstroPlanner.Application.Bridge;
+using AstroPlanner.Application.ViewModels;
 using AstroPlanner.SkyBridge.App;
-using AstroPlanner.UI.ViewModels;
 
 namespace AstroPlanner.UI.Services;
 
 /// <summary>
-/// What the planetarium UI can ask the host (bridge v2, docs/bridge.md): the methods it may call
-/// and the events it receives, wired to the same view models as the classic window. R0b exposes
-/// <c>app.info</c> and <c>theme.changed</c>; the windows of R1–R4 add their own methods here.
+/// What the planetarium UI can ask the host (bridge v2, docs/bridge.md): one dispatcher and the
+/// endpoint modules of every area, wired to the same view models as the classic window. The
+/// modules live in AstroPlanner.Application; the windows of R1–R4 add theirs here.
 /// </summary>
 public sealed class AppEndpoints
 {
-    private readonly ThemeState _theme;
+    private readonly IEndpointModule[] _modules;
 
-    public AppEndpoints(ShellViewModel shell, Action<string> send, IAppLogger logger)
+    /// <param name="ui">The view models' thread; defaults to the calling (UI) thread.</param>
+    /// <param name="time">Clock of the change-event coalescing; defaults to the system clock.</param>
+    public AppEndpoints(ShellViewModel shell, Action<string> send, IAppLogger logger, IUiDispatcher? ui = null, TimeProvider? time = null)
     {
         ArgumentNullException.ThrowIfNull(shell);
         ArgumentNullException.ThrowIfNull(logger);
-        _theme = shell.Settings.Theme;
         Dispatcher = new RpcDispatcher(send, (message, exception) =>
         {
             if (exception is null)
@@ -30,20 +31,29 @@ public sealed class AppEndpoints
             }
         });
 
-        Dispatcher.Register(AppMethods.AppInfo, (_, _) => Task.FromResult(new AppInfoResponse(
-            AppVersion.Current.ToString(), _theme.SkyTheme, SkyMessageCodec.ProtocolVersion, AppMessageCodec.ProtocolVersion)));
-        _theme.Changed += OnThemeChanged;
+        ui ??= SynchronizationContextUiDispatcher.ForCurrentThread();
+        time ??= TimeProvider.System;
+        _modules =
+        [
+            new AppInfoEndpoints(shell.Settings.Theme, AppBuild.Version),
+            new ObserverEndpoints(shell.Observer, ui, time),
+        ];
+        foreach (var module in _modules)
+        {
+            module.Register(Dispatcher);
+        }
     }
 
     public RpcDispatcher Dispatcher { get; }
 
-    private void OnThemeChanged(object? sender, EventArgs e) =>
-        Dispatcher.Publish(AppEvents.ThemeChanged, new ThemeChangedEvent(_theme.SkyTheme));
-
     /// <summary>The window closed: stop pushing events and cancel the requests still running.</summary>
     public void Stop()
     {
-        _theme.Changed -= OnThemeChanged;
+        foreach (var module in _modules)
+        {
+            module.Dispose();
+        }
+
         Dispatcher.CancelAll();
     }
 }

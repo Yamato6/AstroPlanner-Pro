@@ -1,7 +1,7 @@
 using System.Windows;
-using AstroPlanner.UI.Resources;
+using AstroPlanner.Application.Resources;
 using AstroPlanner.UI.Services;
-using AstroPlanner.UI.ViewModels;
+using AstroPlanner.Application.ViewModels;
 
 namespace AstroPlanner.UI;
 

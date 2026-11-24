@@ -7,7 +7,7 @@ using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
 using System.Windows.Data;
 using System.Windows.Threading;
-using AstroPlanner.UI.ViewModels;
+using AstroPlanner.Application.ViewModels;
 
 namespace AstroPlanner.UI.Tests;
 
@@ -209,7 +209,7 @@ public sealed partial class AccessibilityTests
 }
 
 /// <summary>
-/// One STA thread with a WPF <see cref="Application"/> and the app's theme, shared by the tests
+/// One STA thread with a WPF <see cref="System.Windows.Application"/> and the app's theme, shared by the tests
 /// that create windows (WPF objects belong to the thread that made them).
 /// </summary>
 internal static class WpfThread
@@ -224,7 +224,7 @@ internal static class WpfThread
         using var ready = new ManualResetEventSlim();
         var thread = new Thread(() =>
         {
-            var application = Application.Current ?? new Application { ShutdownMode = ShutdownMode.OnExplicitShutdown };
+            var application = System.Windows.Application.Current ?? new System.Windows.Application { ShutdownMode = ShutdownMode.OnExplicitShutdown };
             application.Resources.MergedDictionaries.Add(new ResourceDictionary
             {
                 Source = new Uri("pack://application:,,,/AstroPlannerPro;component/Themes/Dark.xaml")
