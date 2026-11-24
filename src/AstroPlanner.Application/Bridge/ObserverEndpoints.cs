@@ -48,7 +48,7 @@ public sealed class ObserverEndpoints : IEndpointModule
             Math.Clamp(context.Latitude, -90, 90),
             Math.Clamp(context.Longitude, -180, 180),
             Math.Clamp(context.Elevation, -1000, 10000),
-            context.TimeZone.Id,
+            IanaId(context.TimeZone),
             Local(context.ObservationDateTime),
             Math.Clamp(context.MinimumAltitude, -90, 90),
             Math.Clamp(context.EffectiveZenithSqm, 0, 30),
@@ -71,6 +71,15 @@ public sealed class ObserverEndpoints : IEndpointModule
     private void OnPropertyChanged(object? sender, PropertyChangedEventArgs e) => _changes.Invalidate();
 
     private void OnRecalculated(object? sender, EventArgs e) => _changes.Invalidate();
+
+    /// <summary>The zone's IANA id ("America/Mexico_City"), which the page's Intl understands; Windows ids are converted.</summary>
+    public static string IanaId(TimeZoneInfo zone)
+    {
+        ArgumentNullException.ThrowIfNull(zone);
+        return zone.HasIanaId ? zone.Id
+            : TimeZoneInfo.TryConvertWindowsIdToIanaId(zone.Id, out var iana) ? iana
+            : zone.Id;
+    }
 
     private static string Local(DateTime time) => time.ToString(LocalTimeFormat, CultureInfo.InvariantCulture);
 

@@ -1,0 +1,32 @@
+{
+  "app": {
+    "name": "AstroPlanner Pro",
+    "preview": "Preview"
+  },
+  "topBar": {
+    "label": "Top bar",
+    "site": "Observing site",
+    "night": "Astronomical night {{dusk}}–{{dawn}}",
+    "noDarkness": "No astronomical darkness tonight",
+    "skyTime": "Sky time",
+    "playing": "Playing ×{{rate}}",
+    "paused": "Paused",
+    "loading": "Connecting to the app…",
+    "offline": "Not connected to the app"
+  },
+  "shortcuts": {
+    "togglePlay": "Play or pause time",
+    "now": "Now",
+    "slower": "Slower time",
+    "faster": "Faster time",
+    "dome": "Dome view",
+    "allSky": "All-sky view",
+    "finder": "Finder chart",
+    "constellationLines": "Constellation lines",
+    "constellationBoundaries": "Constellation boundaries",
+    "constellationNames": "Constellation names",
+    "altAzGrid": "Alt/az grid",
+    "equatorialGrid": "Equatorial grid",
+    "immersive": "Hide the interface"
+  }
+}

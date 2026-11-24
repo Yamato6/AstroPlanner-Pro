@@ -211,6 +211,9 @@ public sealed class SkyHost : Border, ISkyChannel, IDisposable
         _webView.CoreWebView2?.PostWebMessageAsJson(json);
     }
 
+    /// <summary>Moves the keyboard focus into the page (the web UI's shortcuts need it).</summary>
+    public void FocusPage() => _webView.Focus();
+
     /// <summary>Saves what the renderer shows as a PNG file.</summary>
     public async Task CapturePngAsync(string path)
     {

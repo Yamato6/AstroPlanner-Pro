@@ -45,7 +45,7 @@ public sealed class ObserverEndpointsTests
         payload.GetProperty("locationName").GetString().Should().Be(observer.LocationName);
         payload.GetProperty("latitudeDegrees").GetDouble().Should().Be(observer.Latitude);
         payload.GetProperty("longitudeDegrees").GetDouble().Should().Be(observer.Longitude);
-        payload.GetProperty("timeZoneId").GetString().Should().Be(observer.TimeZone.Id);
+        payload.GetProperty("timeZoneId").GetString().Should().Be(ObserverEndpoints.IanaId(observer.TimeZone)).And.Contain("/", "an IANA id");
         payload.GetProperty("observationTimeLocal").GetString().Should().Be(observer.ObservationDateTime.ToString("yyyy-MM-dd'T'HH:mm:ss", System.Globalization.CultureInfo.InvariantCulture));
         payload.GetProperty("minimumAltitudeDegrees").GetDouble().Should().Be(observer.MinimumAltitude);
         payload.GetProperty("zenithSqm").GetDouble().Should().Be(observer.EffectiveZenithSqm);

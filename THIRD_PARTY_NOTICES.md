@@ -195,9 +195,18 @@ the About window.
 | three.js (sky renderer) | MIT — Copyright © 2010-2026 three.js authors |
 | zod (sky renderer) | MIT — Copyright © 2025 Colin McDonnell |
 | React, React DOM, scheduler (v3 planetarium UI) | MIT — Copyright © Meta Platforms, Inc. and affiliates |
+| React Aria Components, React Aria, React Stately, @internationalized/* (v3 UI) | Apache-2.0 — Copyright © Adobe |
+| @swc/helpers (React Aria dependency) | Apache-2.0 — Copyright © SWC contributors |
+| TanStack Query (v3 UI) | MIT — Copyright © Tanner Linsley |
+| Zustand (v3 UI) | MIT — Copyright © Paul Henschel |
+| i18next, react-i18next, html-parse-stringify (v3 UI) | MIT — Copyright © i18next contributors |
+| Lucide icons, lucide-react (v3 UI) | ISC — Copyright © Lucide Contributors (parts © Cole Bemis, MIT) |
+| Inter typeface (v3 UI, bundled from @fontsource-variable/inter) | SIL Open Font License 1.1 — Copyright © The Inter Project Authors |
+| use-sync-external-store, clsx, aria-hidden, client-only, tslib (small dependencies of the above) | MIT / 0BSD |
 
 Build- and test-only packages of the web workspace (not shipped): TypeScript (Apache-2.0), Vite,
-Vitest, ESLint, typescript-eslint, eslint-plugin-react-hooks, Prettier (MIT).
+Vitest, ESLint, typescript-eslint, eslint-plugin-react-hooks, Prettier, Testing Library, jsdom
+(MIT), Playwright (Apache-2.0), axe-core / @axe-core/playwright (MPL-2.0).
 
 Test-only packages (not shipped): xUnit (Apache-2.0), FluentAssertions 8 (Xceed Community
 License, free for non-commercial use), coverlet (MIT), Microsoft.NET.Test.Sdk (MIT).

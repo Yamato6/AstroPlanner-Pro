@@ -17,12 +17,20 @@ import { SkyClock } from './time/clock';
 
 let mounted = false;
 
+export interface MountOptions {
+  /**
+   * Install the sky's own keyboard shortcuts (Space, 1, 2, F, /), sent to the host as
+   * `shortcut` messages. Default true (the v2 Sky tab); the v3 shell has its own registry.
+   */
+  readonly keyboard?: boolean;
+}
+
 /**
  * Builds the sky (WebGL canvas, 2D overlay, tooltip, night-vision filter) inside
  * `container` and connects it to the host. One sky per page: later calls do
  * nothing (React's development mode mounts components twice).
  */
-export function mountSky(container: HTMLElement): void {
+export function mountSky(container: HTMLElement, options: MountOptions = {}): void {
   if (mounted) {
     return;
   }
@@ -424,6 +432,9 @@ export function mountSky(container: HTMLElement): void {
   };
 
   window.addEventListener('keydown', (event) => {
+    if (options.keyboard === false) {
+      return;
+    }
     const action = shortcuts[event.key];
     if (action && !event.ctrlKey && !event.altKey && !event.metaKey) {
       event.preventDefault();

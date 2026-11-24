@@ -28,6 +28,12 @@ export default defineConfig(({ command }) => ({
     assetsInlineLimit: 0,
     chunkSizeWarningLimit: 1024,
     rolldownOptions: {
+      // TanStack Query marks its modules "use client" (React Server Components); meaningless here.
+      onLog(level, log, handler) {
+        if (log.code !== 'MODULE_LEVEL_DIRECTIVE') {
+          handler(level, log);
+        }
+      },
       // index.html: the v2 Sky tab. planetarium.html: the v3 UI (--ui=web).
       input: {
         index: fileURLToPath(new URL('index.html', import.meta.url)),

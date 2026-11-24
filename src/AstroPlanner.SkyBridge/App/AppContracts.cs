@@ -40,7 +40,8 @@ public sealed record ObserverGetRequest;
 
 /// <summary>
 /// The site, time and sky that everything in the app is computed for (<c>observer.get</c>). Local
-/// times are the site's wall clock in ISO 8601 without an offset (<c>2026-01-15T22:00:00</c>).
+/// times are the site's wall clock in ISO 8601 without an offset (<c>2026-01-15T22:00:00</c>);
+/// <see cref="TimeZoneId"/> is an IANA id (<c>America/Mexico_City</c>).
 /// <see cref="Revision"/> grows with every change that <c>observer.changed</c> announces.
 /// </summary>
 public sealed record ObserverSnapshot(
@@ -75,6 +76,84 @@ public sealed record ObserverMoon(
 
 /// <summary><c>observer.changed</c>: the site, time or sky changed; fetch <c>observer.get</c> when <see cref="Revision"/> is newer.</summary>
 public sealed record ObserverChangedEvent(
+    [property: Range(0, int.MaxValue)] int Revision);
+
+/// <summary>A method that takes no parameters.</summary>
+public sealed record NoParameters;
+
+/// <summary>Keys of the sky's layer switches (the renderer's <c>setLayers</c> members).</summary>
+public static class SkyLayerKeys
+{
+    public const string Stars = "stars";
+    public const string ConstellationLines = "constellationLines";
+    public const string ConstellationNames = "constellationNames";
+    public const string ConstellationBoundaries = "constellationBoundaries";
+    public const string MilkyWay = "milkyWay";
+    public const string DeepSky = "deepSky";
+    public const string Bodies = "bodies";
+    public const string Satellites = "satellites";
+    public const string Labels = "labels";
+    public const string AltAzGrid = "altAzGrid";
+    public const string EquatorialGrid = "equatorialGrid";
+    public const string Ecliptic = "ecliptic";
+    public const string Meridian = "meridian";
+    public const string Ground = "ground";
+    public const string SkyBrightness = "skyBrightness";
+}
+
+/// <summary>
+/// The sky's time, layers, view mode and selection (<c>sky.get</c>, and the answer of every
+/// <c>sky.*</c> command). The clock runs on the page: the time now is
+/// <c>ClockUtcMilliseconds + Rate × (elapsed real time)</c>, so playing needs no messages.
+/// </summary>
+public sealed record SkySnapshot(
+    [property: Range(0, int.MaxValue)] int Revision,
+    [property: Range(-62135596800000.0, 253402300799000.0)] long ClockUtcMilliseconds,
+    [property: Range(0, 3600)] int Rate,
+    bool IsPlaying,
+    [property: Length(1, 10)] IReadOnlyList<int> Rates,
+    [property: AllowedValues(SkyViewModes.Dome, SkyViewModes.AllSky, SkyViewModes.Finder)] string ViewMode,
+    [property: Length(0, 32)] IReadOnlyList<SkyLayerState> Layers,
+    [property: Range(-2.0, 20.0)] double StarLimitMagnitude,
+    SkySelection? Selection);
+
+/// <summary>One layer switch: its key, its display name and whether it is on.</summary>
+public sealed record SkyLayerState(
+    [property: AllowedValues(SkyLayerKeys.Stars, SkyLayerKeys.ConstellationLines, SkyLayerKeys.ConstellationNames,
+        SkyLayerKeys.ConstellationBoundaries, SkyLayerKeys.MilkyWay, SkyLayerKeys.DeepSky, SkyLayerKeys.Bodies,
+        SkyLayerKeys.Satellites, SkyLayerKeys.Labels, SkyLayerKeys.AltAzGrid, SkyLayerKeys.EquatorialGrid,
+        SkyLayerKeys.Ecliptic, SkyLayerKeys.Meridian, SkyLayerKeys.Ground, SkyLayerKeys.SkyBrightness)] string Key,
+    [property: StringLength(80, MinimumLength = 1)] string Name,
+    bool Enabled);
+
+/// <summary>What is selected: a catalog object (with its id) or something only the sky knows (Sun, Moon, a star).</summary>
+public sealed record SkySelection(
+    [property: StringLength(64, MinimumLength = 1)] string? Id,
+    [property: StringLength(200, MinimumLength = 1)] string Name,
+    [property: StringLength(80, MinimumLength = 1)] string? TypeName);
+
+/// <summary><c>sky.step</c>: moves the time by this many minutes (and pauses).</summary>
+public sealed record SkyStepRequest(
+    [property: Range(-525600, 525600)] int Minutes);
+
+/// <summary><c>sky.setRate</c>: the speed of time while playing (the nearest supported rate is used).</summary>
+public sealed record SkySetRateRequest(
+    [property: Range(1, 3600)] int Rate);
+
+/// <summary><c>sky.setLayer</c>: turns one layer on or off.</summary>
+public sealed record SkySetLayerRequest(
+    [property: AllowedValues(SkyLayerKeys.Stars, SkyLayerKeys.ConstellationLines, SkyLayerKeys.ConstellationNames,
+        SkyLayerKeys.ConstellationBoundaries, SkyLayerKeys.MilkyWay, SkyLayerKeys.DeepSky, SkyLayerKeys.Bodies,
+        SkyLayerKeys.Satellites, SkyLayerKeys.Labels, SkyLayerKeys.AltAzGrid, SkyLayerKeys.EquatorialGrid,
+        SkyLayerKeys.Ecliptic, SkyLayerKeys.Meridian, SkyLayerKeys.Ground, SkyLayerKeys.SkyBrightness)] string Key,
+    bool Enabled);
+
+/// <summary><c>sky.setViewMode</c>: dome, all-sky or finder chart.</summary>
+public sealed record SkySetViewModeRequest(
+    [property: AllowedValues(SkyViewModes.Dome, SkyViewModes.AllSky, SkyViewModes.Finder)] string Mode);
+
+/// <summary><c>sky.changed</c>: time, layers, view mode or selection changed.</summary>
+public sealed record SkyChangedEvent(
     [property: Range(0, int.MaxValue)] int Revision);
 
 /// <summary><c>theme.changed</c>: the user switched between the dark and the night-vision theme.</summary>

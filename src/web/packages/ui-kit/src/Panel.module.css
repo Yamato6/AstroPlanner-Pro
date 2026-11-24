@@ -1,0 +1,7 @@
+.panel {
+  border: 1px solid var(--border-hairline);
+  border-radius: var(--radius-md);
+  background: var(--surface-glass);
+  backdrop-filter: blur(var(--glass-blur));
+  box-shadow: var(--shadow-panel);
+}

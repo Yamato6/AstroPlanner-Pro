@@ -8,12 +8,20 @@
   "scripts": {
     "dev": "vite",
     "typecheck": "tsc --noEmit",
-    "build": "vite build"
+    "build": "vite build",
+    "e2e": "playwright test",
+    "test": "vitest run"
   },
   "dependencies": {
     "@astroplanner/bridge-client": "0.1.0",
     "@astroplanner/sky-engine": "0.1.0",
+    "@astroplanner/ui-kit": "0.1.0",
+    "@tanstack/react-query": "5.108.4",
+    "i18next": "27.2.7",
     "react": "19.3.1",
-    "react-dom": "19.3.1"
+    "react-aria-components": "1.22.1",
+    "react-dom": "19.3.1",
+    "react-i18next": "18.0.3",
+    "zustand": "5.1.0"
   }
 }

@@ -34,6 +34,12 @@ public sealed class AppChannelTests
         new ObserverMoon(12.5, -31.2, false),
         null);
 
+    // 2026-01-16 04:00 UTC, paused, M42 selected.
+    private static readonly SkySnapshot SampleSky = new(
+        7, 1768536000000, 0, false, [1, 60, 600, 3600], SkyViewModes.Dome,
+        [new SkyLayerState(SkyLayerKeys.Stars, "Stars", true), new SkyLayerState(SkyLayerKeys.ConstellationLines, "Constellation lines", false)],
+        6.5, new SkySelection("M42", "M42 — Orion Nebula", "Nebula"));
+
     internal static IReadOnlyDictionary<string, string> OutgoingSamples() => new Dictionary<string, string>(StringComparer.Ordinal)
     {
         ["app.info.response"] = AppMessageCodec.Response(1, AppMethods.AppInfo.Name, SampleInfo, AppMethods.AppInfo.Response),
@@ -43,6 +49,10 @@ public sealed class AppChannelTests
         ["observer.get.response-no-night"] = AppMessageCodec.Response(5, AppMethods.ObserverGet.Name,
             SampleObserver with { Night = null, Moon = null, InputError = "Latitude must be between -90 and 90." }, AppMethods.ObserverGet.Response),
         ["observer.changed.event"] = AppMessageCodec.Event(AppEvents.ObserverChanged, new ObserverChangedEvent(4)),
+        ["sky.get.response"] = AppMessageCodec.Response(6, AppMethods.SkyGet.Name, SampleSky, AppMethods.SkyGet.Response),
+        ["sky.play.response-sky-only-selection"] = AppMessageCodec.Response(7, AppMethods.SkyPlay.Name,
+            SampleSky with { IsPlaying = true, Rate = 600, Selection = new SkySelection(null, "Moon", null) }, AppMethods.SkyPlay.Response),
+        ["sky.changed.event"] = AppMessageCodec.Event(AppEvents.SkyChanged, new SkyChangedEvent(8)),
     };
 
     [Fact]

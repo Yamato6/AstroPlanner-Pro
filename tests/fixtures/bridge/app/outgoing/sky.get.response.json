@@ -1,0 +1,37 @@
+{
+  "v": 2,
+  "kind": "res",
+  "id": 6,
+  "type": "sky.get",
+  "payload": {
+    "revision": 7,
+    "clockUtcMilliseconds": 1768536000000,
+    "rate": 0,
+    "isPlaying": false,
+    "rates": [
+      1,
+      60,
+      600,
+      3600
+    ],
+    "viewMode": "dome",
+    "layers": [
+      {
+        "key": "stars",
+        "name": "Stars",
+        "enabled": true
+      },
+      {
+        "key": "constellationLines",
+        "name": "Constellation lines",
+        "enabled": false
+      }
+    ],
+    "starLimitMagnitude": 6.5,
+    "selection": {
+      "id": "M42",
+      "name": "M42 \u2014 Orion Nebula",
+      "typeName": "Nebula"
+    }
+  }
+}

@@ -37,6 +37,7 @@ public sealed class AppEndpoints
         [
             new AppInfoEndpoints(shell.Settings.Theme, AppBuild.Version),
             new ObserverEndpoints(shell.Observer, ui, time),
+            new SkyEndpoints(shell, ui, time),
         ];
         foreach (var module in _modules)
         {
