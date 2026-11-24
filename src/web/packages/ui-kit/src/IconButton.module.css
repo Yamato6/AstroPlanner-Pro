@@ -1,0 +1,63 @@
+.button {
+  display: inline-grid;
+  place-items: center;
+  width: var(--control-size);
+  height: var(--control-size);
+  padding: 0;
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--text-primary);
+  cursor: pointer;
+  transition:
+    background-color var(--motion-fast) var(--ease-out),
+    color var(--motion-fast) var(--ease-out);
+}
+
+.button[data-hovered] {
+  background: var(--surface-hover);
+  color: var(--text-strong);
+}
+
+.button[data-pressed] {
+  background: var(--surface-pressed);
+}
+
+/* A toggle that is on: the accent marks state, not decoration. */
+.button[data-selected] {
+  background: var(--accent-soft);
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.button[data-disabled] {
+  color: var(--text-disabled);
+  cursor: default;
+  background: transparent;
+}
+
+.tooltip {
+  max-width: 260px;
+  padding: var(--space-1) var(--space-2);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  background: var(--surface-tooltip);
+  color: var(--text-strong);
+  font-size: var(--font-size-sm);
+  box-shadow: var(--shadow-panel);
+}
+
+.kbd {
+  margin-left: var(--space-2);
+  padding: 0 var(--space-1);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  color: var(--text-muted);
+  font-family: inherit;
+  font-size: var(--font-size-xs);
+}
+
+.reason {
+  display: block;
+  color: var(--text-muted);
+}

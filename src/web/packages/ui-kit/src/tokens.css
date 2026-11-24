@@ -1,0 +1,141 @@
+/*
+ * Design tokens of the planetarium UI ("observatory instrument": calm, dense, glass over the sky).
+ * Colours continue v2's palettes (Themes/Dark.xaml, Themes/Night.xaml), whose text/background
+ * pairs pass WCAG AA there. The accent marks selection and focus only; verdict colours are the
+ * only other saturated hues. <html data-theme="night"> switches every token to the red palette.
+ */
+:root {
+  color-scheme: dark;
+
+  /* Surfaces: glass panels float over the sky; solid ones replace them with "reduce transparency". */
+  --surface-glass: rgb(13 23 38 / 72%);
+  --surface-solid: #0f1b2d;
+  --surface-raised: #14233a;
+  --surface-hover: #1b2d4a;
+  --surface-pressed: #274c77;
+  --surface-tooltip: #182943;
+  --glass-blur: 14px;
+
+  --border-hairline: rgb(143 168 200 / 22%);
+  --border-strong: #36557d;
+
+  --text-primary: #d7e3f4;
+  --text-strong: #eaf2ff;
+  --text-muted: #8fa8c8;
+  --text-disabled: #5d7392;
+
+  --accent: #55c7e8;
+  --accent-soft: rgb(85 199 232 / 16%);
+  --focus-ring: #5fa8ff;
+  --status-online: #4cc38a;
+  --status-offline: #8fa8c8;
+
+  /* Verdicts of the feasibility model (R1c card, R4 tables). */
+  --verdict-excellent: #4cc38a;
+  --verdict-good: #9bd35a;
+  --verdict-marginal: #e0b44c;
+  --verdict-poor: #e07a5f;
+  --verdict-impossible: #8c93a3;
+
+  /* Type: Inter, tabular numerals for data. */
+  --font-ui: 'Inter Variable', 'Segoe UI', system-ui, sans-serif;
+  --font-size-xs: 11px;
+  --font-size-sm: 12px;
+  --font-size-md: 13px;
+  --font-size-lg: 15px;
+  --line-height: 1.35;
+
+  /* Space and shape. */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --control-size: 32px;
+  --rail-width: 48px;
+  --bar-height: 44px;
+
+  --shadow-panel: 0 8px 24px rgb(0 0 0 / 35%);
+
+  /* Motion (spec §3.5): short ease-out; none with prefers-reduced-motion. */
+  --motion-fast: 150ms;
+  --motion-medium: 220ms;
+  --ease-out: cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+:root[data-theme='night'] {
+  --surface-glass: rgb(20 4 4 / 80%);
+  --surface-solid: #0c0202;
+  --surface-raised: #160404;
+  --surface-hover: #2c0909;
+  --surface-pressed: #3e0d0d;
+  --surface-tooltip: #1a0505;
+
+  --border-hairline: rgb(138 42 36 / 45%);
+  --border-strong: #5a1616;
+
+  --text-primary: #f0705e;
+  --text-strong: #ff8470;
+  --text-muted: #cc5c4c;
+  --text-disabled: #8a3a30;
+
+  --accent: #ff6a56;
+  --accent-soft: rgb(255 106 86 / 16%);
+  --focus-ring: #d8483a;
+  --status-online: #ffa48c;
+  --status-offline: #cc5c4c;
+
+  --verdict-excellent: #ffa48c;
+  --verdict-good: #f09078;
+  --verdict-marginal: #e46a58;
+  --verdict-poor: #ff4a38;
+  --verdict-impossible: #8a3a30;
+
+  --shadow-panel: 0 8px 24px rgb(0 0 0 / 60%);
+}
+
+/* "Reduce transparency" (R1b setting, and the automatic fallback of spec §7.4). */
+:root[data-transparency='reduced'] {
+  --surface-glass: var(--surface-solid);
+  --glass-blur: 0px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --motion-fast: 0ms;
+    --motion-medium: 0ms;
+  }
+}
+
+html,
+body {
+  margin: 0;
+  height: 100%;
+  overflow: hidden;
+  background: #050b16;
+  color: var(--text-primary);
+  font-family: var(--font-ui);
+  font-size: var(--font-size-md);
+  line-height: var(--line-height);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* React Aria's usePress injects this rule (in a <style>, which the CSP blocks) unless an element
+   with id "react-aria-pressable-style" exists: planetarium.html has one, and the rule lives here. */
+@layer {
+  [data-react-aria-pressable] {
+    touch-action: pan-x pan-y pinch-zoom;
+  }
+}
+
+/* Only keyboard focus is outlined. */
+:focus {
+  outline: none;
+}
+
+:focus-visible,
+[data-focus-visible] {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
+}
