@@ -24,6 +24,8 @@ public partial class WebShellWindow : Window
         SkyHostView.Unavailable += OnSkyUnavailable;
         SkyHostView.AppMessageReceived += OnAppMessage;
         Loaded += OnLoaded;
+        // The page is the whole window: the keyboard belongs to it whenever the window is active.
+        Activated += (_, _) => SkyHostView.FocusPage();
         Closed += (_, _) => _endpoints?.Stop();
     }
 
@@ -37,6 +39,7 @@ public partial class WebShellWindow : Window
         // The app channel (bridge v2): requests and events of the planetarium UI.
         _endpoints = new AppEndpoints(viewModel, SkyHostView.Post, _logger);
         await SkyHostView.StartAsync(_logger, SkyLaunchOptions.Query(Environment.GetCommandLineArgs()), SkyPage.Planetarium);
+        SkyHostView.FocusPage();
     }
 
     /// <summary>A message of the app channel; whatever happens, the page cannot take the window down.</summary>
