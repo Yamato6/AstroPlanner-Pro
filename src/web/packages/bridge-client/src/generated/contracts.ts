@@ -24,10 +24,52 @@ export const appInfoResponseSchema = z.strictObject({
 });
 export type AppInfoResponse = z.infer<typeof appInfoResponseSchema>;
 
+export const observerGetRequestSchema = z.strictObject({});
+export type ObserverGetRequest = z.infer<typeof observerGetRequestSchema>;
+
+export const observerNightSchema = z.strictObject({
+  windowStartLocal: z.string().min(19).max(19),
+  windowEndLocal: z.string().min(19).max(19),
+  sunsetLocal: z.string().min(19).max(19).nullable(),
+  sunriseLocal: z.string().min(19).max(19).nullable(),
+  astronomicalDuskLocal: z.string().min(19).max(19).nullable(),
+  astronomicalDawnLocal: z.string().min(19).max(19).nullable(),
+});
+export type ObserverNight = z.infer<typeof observerNightSchema>;
+
+export const observerMoonSchema = z.strictObject({
+  illuminatedPercent: z.number().min(0).max(100),
+  altitudeDegrees: z.number().min(-90).max(90),
+  isWaxing: z.boolean(),
+});
+export type ObserverMoon = z.infer<typeof observerMoonSchema>;
+
+export const observerSnapshotSchema = z.strictObject({
+  revision: z.int().min(0).max(2147483647),
+  locationName: z.string().min(0).max(200),
+  latitudeDegrees: z.number().min(-90).max(90),
+  longitudeDegrees: z.number().min(-180).max(180),
+  elevationMeters: z.number().min(-1000).max(10000),
+  timeZoneId: z.string().min(1).max(100),
+  observationTimeLocal: z.string().min(19).max(19),
+  minimumAltitudeDegrees: z.number().min(-90).max(90),
+  zenithSqm: z.number().min(0).max(30),
+  zenithSqmSource: z.enum(['manual', 'atlas', 'default']),
+  night: observerNightSchema.nullable(),
+  moon: observerMoonSchema.nullable(),
+  inputError: z.string().min(0).max(500).nullable(),
+});
+export type ObserverSnapshot = z.infer<typeof observerSnapshotSchema>;
+
 export const themeChangedEventSchema = z.strictObject({
   theme: z.enum(['dark', 'night']),
 });
 export type ThemeChangedEvent = z.infer<typeof themeChangedEventSchema>;
+
+export const observerChangedEventSchema = z.strictObject({
+  revision: z.int().min(0).max(2147483647),
+});
+export type ObserverChangedEvent = z.infer<typeof observerChangedEventSchema>;
 
 export const rpcErrorPayloadSchema = z.strictObject({
   code: z.enum(['bad-request', 'unknown-method', 'timeout', 'cancelled', 'too-large', 'busy', 'internal']),
@@ -38,9 +80,11 @@ export type RpcErrorPayload = z.infer<typeof rpcErrorPayloadSchema>;
 /** Methods the web UI can call: request and response contracts. */
 export const rpcMethods = {
   'app.info': { request: appInfoRequestSchema, response: appInfoResponseSchema },
+  'observer.get': { request: observerGetRequestSchema, response: observerSnapshotSchema },
 } as const;
 
 /** Events the host pushes: payload contracts. */
 export const appEvents = {
   'theme.changed': themeChangedEventSchema,
+  'observer.changed': observerChangedEventSchema,
 } as const;

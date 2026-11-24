@@ -1,0 +1,8 @@
+{
+  "v": 2,
+  "kind": "evt",
+  "type": "observer.changed",
+  "payload": {
+    "revision": 4
+  }
+}

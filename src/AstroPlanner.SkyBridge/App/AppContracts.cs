@@ -27,6 +27,56 @@ public sealed record AppInfoResponse(
     [property: Range(1, 1000)] int SkyProtocolVersion,
     [property: Range(1, 1000)] int AppProtocolVersion);
 
+/// <summary>How the zenith sky brightness was obtained (<c>SkyQualitySource</c> in Core).</summary>
+public static class SkyQualitySources
+{
+    public const string Manual = "manual";
+    public const string Atlas = "atlas";
+    public const string Default = "default";
+}
+
+/// <summary><c>observer.get</c> takes no parameters.</summary>
+public sealed record ObserverGetRequest;
+
+/// <summary>
+/// The site, time and sky that everything in the app is computed for (<c>observer.get</c>). Local
+/// times are the site's wall clock in ISO 8601 without an offset (<c>2026-01-15T22:00:00</c>).
+/// <see cref="Revision"/> grows with every change that <c>observer.changed</c> announces.
+/// </summary>
+public sealed record ObserverSnapshot(
+    [property: Range(0, int.MaxValue)] int Revision,
+    [property: StringLength(200)] string LocationName,
+    [property: Range(-90.0, 90.0)] double LatitudeDegrees,
+    [property: Range(-180.0, 180.0)] double LongitudeDegrees,
+    [property: Range(-1000.0, 10000.0)] double ElevationMeters,
+    [property: StringLength(100, MinimumLength = 1)] string TimeZoneId,
+    [property: StringLength(19, MinimumLength = 19)] string ObservationTimeLocal,
+    [property: Range(-90.0, 90.0)] double MinimumAltitudeDegrees,
+    [property: Range(0.0, 30.0)] double ZenithSqm,
+    [property: AllowedValues(SkyQualitySources.Manual, SkyQualitySources.Atlas, SkyQualitySources.Default)] string ZenithSqmSource,
+    ObserverNight? Night,
+    ObserverMoon? Moon,
+    [property: StringLength(500)] string? InputError);
+
+/// <summary>The observing night: its window and, when the Sun sets and gets low enough, the twilights.</summary>
+public sealed record ObserverNight(
+    [property: StringLength(19, MinimumLength = 19)] string WindowStartLocal,
+    [property: StringLength(19, MinimumLength = 19)] string WindowEndLocal,
+    [property: StringLength(19, MinimumLength = 19)] string? SunsetLocal,
+    [property: StringLength(19, MinimumLength = 19)] string? SunriseLocal,
+    [property: StringLength(19, MinimumLength = 19)] string? AstronomicalDuskLocal,
+    [property: StringLength(19, MinimumLength = 19)] string? AstronomicalDawnLocal);
+
+/// <summary>The Moon at the observation time.</summary>
+public sealed record ObserverMoon(
+    [property: Range(0.0, 100.0)] double IlluminatedPercent,
+    [property: Range(-90.0, 90.0)] double AltitudeDegrees,
+    bool IsWaxing);
+
+/// <summary><c>observer.changed</c>: the site, time or sky changed; fetch <c>observer.get</c> when <see cref="Revision"/> is newer.</summary>
+public sealed record ObserverChangedEvent(
+    [property: Range(0, int.MaxValue)] int Revision);
+
 /// <summary><c>theme.changed</c>: the user switched between the dark and the night-vision theme.</summary>
 public sealed record ThemeChangedEvent(
     [property: AllowedValues(AppThemes.Dark, AppThemes.Night)] string Theme);

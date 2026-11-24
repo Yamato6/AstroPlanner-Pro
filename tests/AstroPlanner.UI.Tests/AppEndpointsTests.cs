@@ -37,4 +37,23 @@ public sealed class AppEndpointsTests
         message.GetProperty("type").GetString().Should().Be("theme.changed");
         message.GetProperty("payload").GetProperty("theme").GetString().Should().Be("night");
     }
+
+    [Fact]
+    public async Task EveryMethodOfTheChannel_IsAnswered()
+    {
+        var shell = TestShell.Create();
+        var sent = new List<string>();
+        var endpoints = new AppEndpoints(shell, sent.Add, new NullLogger());
+
+        foreach (var method in AppMethods.All)
+        {
+            sent.Clear();
+            await endpoints.Dispatcher.HandleAsync($$$"""{"v":2,"kind":"req","id":1,"type":"{{{method.Name}}}","payload":{}}""");
+
+            var response = JsonElement.Parse(sent.Single());
+            response.TryGetProperty("error", out var error).Should().BeFalse($"{method.Name} must be registered and answer ({error})");
+        }
+
+        endpoints.Stop();
+    }
 }
