@@ -2,7 +2,7 @@ using System.Globalization;
 using AstroPlanner.Core.Imaging.Feasibility;
 using AstroPlanner.Application.Resources;
 using AstroPlanner.UI.Services;
-using AstroPlanner.UI.ViewModels;
+using AstroPlanner.Application.ViewModels;
 
 namespace AstroPlanner.UI.Tests;
 

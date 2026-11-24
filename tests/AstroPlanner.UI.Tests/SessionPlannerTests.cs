@@ -1,7 +1,7 @@
 using System.Globalization;
 using System.Text;
 using AstroPlanner.Application.Resources;
-using AstroPlanner.UI.ViewModels;
+using AstroPlanner.Application.ViewModels;
 using PdfSharp.Pdf.IO;
 
 namespace AstroPlanner.UI.Tests;
@@ -201,7 +201,7 @@ public sealed class SessionPlannerTests
     [Fact]
     public void IcsEscaping_FollowsRfc5545()
     {
-        Services.PlanCalendarExport.Escape(@"a\b;c,d" + "\r\ne").Should().Be(@"a\\b\;c\,d\ne");
+        PlanCalendarExport.Escape(@"a\b;c,d" + "\r\ne").Should().Be(@"a\\b\;c\,d\ne");
     }
 
     [Fact]

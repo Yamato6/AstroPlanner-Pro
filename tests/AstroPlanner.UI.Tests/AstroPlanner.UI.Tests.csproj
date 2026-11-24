@@ -8,6 +8,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\..\src\AstroPlanner.Application\AstroPlanner.Application.csproj" />
     <ProjectReference Include="..\..\src\AstroPlanner.Core\AstroPlanner.Core.csproj" />
     <ProjectReference Include="..\..\src\AstroPlanner.Data\AstroPlanner.Data.csproj" />
     <ProjectReference Include="..\..\src\AstroPlanner.Online\AstroPlanner.Online.csproj" />
@@ -34,6 +35,8 @@
     <Using Include="AstroPlanner.Testing" />
     <Using Include="AstroPlanner.Core.Models" />
     <Using Include="AstroPlanner.Core.Interfaces" />
+    <Using Include="AstroPlanner.Application.Services" />
+    <Using Include="AstroPlanner.Application.Sky" />
   </ItemGroup>
 
 </Project>

@@ -1,6 +1,6 @@
 using AstroPlanner.SkyBridge;
 using AstroPlanner.SkyBridge.App;
-using AstroPlanner.UI.ViewModels;
+using AstroPlanner.Application.ViewModels;
 
 namespace AstroPlanner.UI.Services;
 

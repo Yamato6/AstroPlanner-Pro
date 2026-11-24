@@ -3,7 +3,7 @@ using AstroPlanner.Core.Services;
 using AstroPlanner.Data.Catalog;
 using AstroPlanner.Online.Weather;
 using AstroPlanner.SkyBridge;
-using AstroPlanner.UI.ViewModels;
+using AstroPlanner.Application.ViewModels;
 
 namespace AstroPlanner.UI.Tests;
 

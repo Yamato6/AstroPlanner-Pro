@@ -3,7 +3,7 @@ using AstroPlanner.Core.Models;
 using AstroPlanner.Core.Services;
 using AstroPlanner.Application.Resources;
 using AstroPlanner.UI.Services;
-using AstroPlanner.UI.ViewModels;
+using AstroPlanner.Application.ViewModels;
 
 namespace AstroPlanner.UI.Tests;
 

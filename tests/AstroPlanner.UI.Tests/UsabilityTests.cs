@@ -3,7 +3,7 @@ using System.Windows.Documents;
 using AstroPlanner.Core.Models;
 using AstroPlanner.Core.Services;
 using AstroPlanner.UI.Services;
-using AstroPlanner.UI.ViewModels;
+using AstroPlanner.Application.ViewModels;
 
 namespace AstroPlanner.UI.Tests;
 

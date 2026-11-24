@@ -29,21 +29,20 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="CommunityToolkit.Mvvm" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection" />
     <PackageReference Include="Microsoft.Extensions.Http" />
     <PackageReference Include="Microsoft.Extensions.Http.Resilience" />
     <PackageReference Include="Microsoft.Web.WebView2" />
-    <PackageReference Include="PDFsharp" />
     <PackageReference Include="ScottPlot.WPF" />
-    <!-- Lifts PDFsharp's vulnerable transitive dependency (see Directory.Packages.props). -->
-    <PackageReference Include="System.Security.Cryptography.Pkcs" />
   </ItemGroup>
 
-  <!-- Domain types used everywhere in the UI (also by the WPF-generated code). -->
+  <!-- Domain types used everywhere in the UI (also by the WPF-generated code), and the
+       Application namespaces that share their names with the UI's (Services, Sky). -->
   <ItemGroup>
     <Using Include="AstroPlanner.Core.Models" />
     <Using Include="AstroPlanner.Core.Interfaces" />
+    <Using Include="AstroPlanner.Application.Services" />
+    <Using Include="AstroPlanner.Application.Sky" />
   </ItemGroup>
 
   <ItemGroup>

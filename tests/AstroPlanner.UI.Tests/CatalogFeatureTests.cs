@@ -1,7 +1,7 @@
 using System.Diagnostics;
 using AstroPlanner.Data.Storage;
 using AstroPlanner.UI.Services;
-using AstroPlanner.UI.ViewModels;
+using AstroPlanner.Application.ViewModels;
 using Microsoft.Data.Sqlite;
 
 namespace AstroPlanner.UI.Tests;

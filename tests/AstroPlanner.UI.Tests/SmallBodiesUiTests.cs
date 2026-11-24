@@ -4,7 +4,7 @@ using AstroPlanner.Core.Sky;
 using AstroPlanner.SkyBridge;
 using AstroPlanner.Application.Resources;
 using AstroPlanner.UI.Services;
-using AstroPlanner.UI.ViewModels;
+using AstroPlanner.Application.ViewModels;
 
 namespace AstroPlanner.UI.Tests;
 
