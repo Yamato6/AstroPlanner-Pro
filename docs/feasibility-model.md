@@ -153,7 +153,7 @@ All terms are added in linear units (`SkyBrightness.Combine`).
 ## 7. Explainability
 
 Each reason is a `FeasibilityReason`: a factor, an impact (blocking, negative, neutral, positive)
-and its numbers. The UI turns it into text (`UI/Services/FeasibilityText`, `Strings.resx`). The
+and its numbers. The UI turns it into text (`Application/Services/FeasibilityText`, `Strings.resx`). The
 factors are:
 
 - usable time;

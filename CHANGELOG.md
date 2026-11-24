@@ -10,6 +10,12 @@ versions follow [Semantic Versioning](https://semver.org/). Versions up to 1.0.0
 - The sky renderer moved to an npm workspace, `src/web`: `packages/sky-engine` (the three.js
   renderer, unchanged, with its tests) and `apps/planetarium` (the pages). The Sky tab looks and
   behaves as before.
+- The view models, shared state services, exports and UI strings moved to a new project,
+  `AstroPlanner.Application` (no WPF: Core and SkyBridge only), with their tests in
+  `AstroPlanner.Application.Tests` (CI requires ≥ 80 % line coverage). The WPF window uses them
+  as before; the web UI will use the same ones.
+- The view-model tests run their async continuations on one thread, as the app does; this fixes
+  an intermittent failure where two background completions updated Tonight's alerts at once.
 
 ### Added
 - `--ui=web` opens a preview of the v3 planetarium UI: the live sky filling the window
@@ -20,6 +26,9 @@ versions follow [Semantic Versioning](https://semver.org/). Versions up to 1.0.0
   sides (`docs/bridge.md`). Its contracts are C# records; `tools/AstroPlanner.BridgeGen` generates
   the zod schemas and TypeScript types, and a test fails while they are stale. First endpoints:
   `app.info` and `theme.changed` (the page follows the night-vision theme).
+- Endpoint modules for the web UI (`Application/Bridge`): each area answers `area.get` with a
+  snapshot and a revision and announces changes with one coalesced `area.changed` event. First
+  area: `observer.get` / `observer.changed` (site, time, night, Moon, sky quality).
 
 ## [2.0.1] — 2026-11-22
 
