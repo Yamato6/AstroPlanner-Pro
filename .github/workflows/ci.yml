@@ -65,15 +65,19 @@ jobs:
             "-reporttypes:MarkdownSummaryGithub;Cobertura;Badges" "-assemblyfilters:+AstroPlanner*"
           Get-Content coverage-report/SummaryGithub.md >> $env:GITHUB_STEP_SUMMARY
 
-      # Spec §11: at least 85 % line coverage for Core.
-      - name: Core coverage gate (>= 85 %)
+      # Line coverage gates: Core >= 85 % (spec §11), Application >= 80 % (v3 R0c).
+      - name: Coverage gates (Core >= 85 %, Application >= 80 %)
         shell: pwsh
         run: |
           [xml]$report = Get-Content coverage-report/Cobertura.xml
-          $core = $report.coverage.packages.package | Where-Object { $_.name -eq 'AstroPlanner.Core' }
-          $rate = [math]::Round([double]$core.'line-rate' * 100, 1)
-          "Core line coverage: $rate %" | Tee-Object -Append -FilePath $env:GITHUB_STEP_SUMMARY
-          if ($rate -lt 85) { Write-Error "Core line coverage $rate % is below 85 %"; exit 1 }
+          $failed = $false
+          foreach ($gate in @(@{ Name = 'AstroPlanner.Core'; Minimum = 85 }, @{ Name = 'AstroPlanner.Application'; Minimum = 80 })) {
+            $package = $report.coverage.packages.package | Where-Object { $_.name -eq $gate.Name }
+            $rate = [math]::Round([double]$package.'line-rate' * 100, 1)
+            "$($gate.Name) line coverage: $rate %" | Tee-Object -Append -FilePath $env:GITHUB_STEP_SUMMARY
+            if ($rate -lt $gate.Minimum) { Write-Error "$($gate.Name) line coverage $rate % is below $($gate.Minimum) %"; $failed = $true }
+          }
+          if ($failed) { exit 1 }
 
       - name: Upload test results and coverage
         if: always()
