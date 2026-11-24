@@ -37,6 +37,22 @@ jobs:
           npm run build
           npm test
 
+      # The planetarium page (production build) in the runner's Microsoft Edge, the WebView2
+      # engine, against a mock host that answers from the C# golden files: shell flows, axe
+      # (WCAG 2.2 AA) and no CSP violations. Nothing to download: Playwright uses the installed Edge.
+      - name: Planetarium E2E (Playwright, mock host)
+        working-directory: src/web
+        run: npm run e2e -w @astroplanner/planetarium
+
+      - name: Upload the Playwright report
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: playwright-report
+          path: |
+            src/web/playwright-report/
+            src/web/test-results/
+
       - name: Build (warnings are errors)
         run: dotnet build AstroPlanner.slnx -c Release -warnaserror
 
