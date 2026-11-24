@@ -15,6 +15,13 @@ namespace AstroPlanner.SkyBridge.App;
 [JsonSerializable(typeof(ObserverGetRequest))]
 [JsonSerializable(typeof(ObserverSnapshot))]
 [JsonSerializable(typeof(ObserverChangedEvent))]
+[JsonSerializable(typeof(NoParameters))]
+[JsonSerializable(typeof(SkySnapshot))]
+[JsonSerializable(typeof(SkyStepRequest))]
+[JsonSerializable(typeof(SkySetRateRequest))]
+[JsonSerializable(typeof(SkySetLayerRequest))]
+[JsonSerializable(typeof(SkySetViewModeRequest))]
+[JsonSerializable(typeof(SkyChangedEvent))]
 [JsonSerializable(typeof(ThemeChangedEvent))]
 [JsonSerializable(typeof(RpcErrorPayload))]
 public sealed partial class AppJsonContext : JsonSerializerContext;
@@ -56,7 +63,28 @@ public static class AppMethods
     public static RpcMethod<ObserverGetRequest, ObserverSnapshot> ObserverGet { get; } =
         new("observer.get", AppJsonContext.Default.ObserverGetRequest, AppJsonContext.Default.ObserverSnapshot);
 
-    public static IReadOnlyList<IRpcMethod> All { get; } = [AppInfo, ObserverGet];
+    public static RpcMethod<NoParameters, SkySnapshot> SkyGet { get; } = Sky("sky.get");
+    public static RpcMethod<NoParameters, SkySnapshot> SkyPlay { get; } = Sky("sky.play");
+    public static RpcMethod<NoParameters, SkySnapshot> SkyPause { get; } = Sky("sky.pause");
+    public static RpcMethod<NoParameters, SkySnapshot> SkyNow { get; } = Sky("sky.now");
+
+    public static RpcMethod<SkyStepRequest, SkySnapshot> SkyStep { get; } =
+        new("sky.step", AppJsonContext.Default.SkyStepRequest, AppJsonContext.Default.SkySnapshot);
+
+    public static RpcMethod<SkySetRateRequest, SkySnapshot> SkySetRate { get; } =
+        new("sky.setRate", AppJsonContext.Default.SkySetRateRequest, AppJsonContext.Default.SkySnapshot);
+
+    public static RpcMethod<SkySetLayerRequest, SkySnapshot> SkySetLayer { get; } =
+        new("sky.setLayer", AppJsonContext.Default.SkySetLayerRequest, AppJsonContext.Default.SkySnapshot);
+
+    public static RpcMethod<SkySetViewModeRequest, SkySnapshot> SkySetViewMode { get; } =
+        new("sky.setViewMode", AppJsonContext.Default.SkySetViewModeRequest, AppJsonContext.Default.SkySnapshot);
+
+    public static IReadOnlyList<IRpcMethod> All { get; } =
+        [AppInfo, ObserverGet, SkyGet, SkyPlay, SkyPause, SkyNow, SkyStep, SkySetRate, SkySetLayer, SkySetViewMode];
+
+    private static RpcMethod<NoParameters, SkySnapshot> Sky(string name) =>
+        new(name, AppJsonContext.Default.NoParameters, AppJsonContext.Default.SkySnapshot);
 }
 
 /// <summary>Every event of the app channel.</summary>
@@ -68,5 +96,8 @@ public static class AppEvents
     public static AppEvent<ObserverChangedEvent> ObserverChanged { get; } =
         new("observer.changed", AppJsonContext.Default.ObserverChangedEvent);
 
-    public static IReadOnlyList<IAppEvent> All { get; } = [ThemeChanged, ObserverChanged];
+    public static AppEvent<SkyChangedEvent> SkyChanged { get; } =
+        new("sky.changed", AppJsonContext.Default.SkyChangedEvent);
+
+    public static IReadOnlyList<IAppEvent> All { get; } = [ThemeChanged, ObserverChanged, SkyChanged];
 }

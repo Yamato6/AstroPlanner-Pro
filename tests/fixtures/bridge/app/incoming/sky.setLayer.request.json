@@ -1,0 +1,10 @@
+{
+  "v": 2,
+  "kind": "req",
+  "id": 8,
+  "type": "sky.setLayer",
+  "payload": {
+    "key": "constellationLines",
+    "enabled": false
+  }
+}

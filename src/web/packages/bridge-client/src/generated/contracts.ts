@@ -61,6 +61,57 @@ export const observerSnapshotSchema = z.strictObject({
 });
 export type ObserverSnapshot = z.infer<typeof observerSnapshotSchema>;
 
+export const noParametersSchema = z.strictObject({});
+export type NoParameters = z.infer<typeof noParametersSchema>;
+
+export const skyLayerStateSchema = z.strictObject({
+  key: z.enum(['stars', 'constellationLines', 'constellationNames', 'constellationBoundaries', 'milkyWay', 'deepSky', 'bodies', 'satellites', 'labels', 'altAzGrid', 'equatorialGrid', 'ecliptic', 'meridian', 'ground', 'skyBrightness']),
+  name: z.string().min(1).max(80),
+  enabled: z.boolean(),
+});
+export type SkyLayerState = z.infer<typeof skyLayerStateSchema>;
+
+export const skySelectionSchema = z.strictObject({
+  id: z.string().min(1).max(64).nullable(),
+  name: z.string().min(1).max(200),
+  typeName: z.string().min(1).max(80).nullable(),
+});
+export type SkySelection = z.infer<typeof skySelectionSchema>;
+
+export const skySnapshotSchema = z.strictObject({
+  revision: z.int().min(0).max(2147483647),
+  clockUtcMilliseconds: z.int().min(-62135596800000).max(253402300799000),
+  rate: z.int().min(0).max(3600),
+  isPlaying: z.boolean(),
+  rates: z.array(z.int()).min(1).max(10),
+  viewMode: z.enum(['dome', 'allSky', 'finder']),
+  layers: z.array(skyLayerStateSchema).min(0).max(32),
+  starLimitMagnitude: z.number().min(-2).max(20),
+  selection: skySelectionSchema.nullable(),
+});
+export type SkySnapshot = z.infer<typeof skySnapshotSchema>;
+
+export const skyStepRequestSchema = z.strictObject({
+  minutes: z.int().min(-525600).max(525600),
+});
+export type SkyStepRequest = z.infer<typeof skyStepRequestSchema>;
+
+export const skySetRateRequestSchema = z.strictObject({
+  rate: z.int().min(1).max(3600),
+});
+export type SkySetRateRequest = z.infer<typeof skySetRateRequestSchema>;
+
+export const skySetLayerRequestSchema = z.strictObject({
+  key: z.enum(['stars', 'constellationLines', 'constellationNames', 'constellationBoundaries', 'milkyWay', 'deepSky', 'bodies', 'satellites', 'labels', 'altAzGrid', 'equatorialGrid', 'ecliptic', 'meridian', 'ground', 'skyBrightness']),
+  enabled: z.boolean(),
+});
+export type SkySetLayerRequest = z.infer<typeof skySetLayerRequestSchema>;
+
+export const skySetViewModeRequestSchema = z.strictObject({
+  mode: z.enum(['dome', 'allSky', 'finder']),
+});
+export type SkySetViewModeRequest = z.infer<typeof skySetViewModeRequestSchema>;
+
 export const themeChangedEventSchema = z.strictObject({
   theme: z.enum(['dark', 'night']),
 });
@@ -70,6 +121,11 @@ export const observerChangedEventSchema = z.strictObject({
   revision: z.int().min(0).max(2147483647),
 });
 export type ObserverChangedEvent = z.infer<typeof observerChangedEventSchema>;
+
+export const skyChangedEventSchema = z.strictObject({
+  revision: z.int().min(0).max(2147483647),
+});
+export type SkyChangedEvent = z.infer<typeof skyChangedEventSchema>;
 
 export const rpcErrorPayloadSchema = z.strictObject({
   code: z.enum(['bad-request', 'unknown-method', 'timeout', 'cancelled', 'too-large', 'busy', 'internal']),
@@ -81,10 +137,19 @@ export type RpcErrorPayload = z.infer<typeof rpcErrorPayloadSchema>;
 export const rpcMethods = {
   'app.info': { request: appInfoRequestSchema, response: appInfoResponseSchema },
   'observer.get': { request: observerGetRequestSchema, response: observerSnapshotSchema },
+  'sky.get': { request: noParametersSchema, response: skySnapshotSchema },
+  'sky.play': { request: noParametersSchema, response: skySnapshotSchema },
+  'sky.pause': { request: noParametersSchema, response: skySnapshotSchema },
+  'sky.now': { request: noParametersSchema, response: skySnapshotSchema },
+  'sky.step': { request: skyStepRequestSchema, response: skySnapshotSchema },
+  'sky.setRate': { request: skySetRateRequestSchema, response: skySnapshotSchema },
+  'sky.setLayer': { request: skySetLayerRequestSchema, response: skySnapshotSchema },
+  'sky.setViewMode': { request: skySetViewModeRequestSchema, response: skySnapshotSchema },
 } as const;
 
 /** Events the host pushes: payload contracts. */
 export const appEvents = {
   'theme.changed': themeChangedEventSchema,
   'observer.changed': observerChangedEventSchema,
+  'sky.changed': skyChangedEventSchema,
 } as const;

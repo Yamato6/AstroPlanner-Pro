@@ -39,7 +39,7 @@ public sealed class AppEndpointsTests
     }
 
     [Fact]
-    public async Task EveryMethodOfTheChannel_IsAnswered()
+    public async Task EveryMethodOfTheChannel_IsRegistered()
     {
         var shell = TestShell.Create();
         var sent = new List<string>();
@@ -48,10 +48,13 @@ public sealed class AppEndpointsTests
         foreach (var method in AppMethods.All)
         {
             sent.Clear();
+            // Empty parameters: methods that take some answer bad-request, which still proves a handler is there.
             await endpoints.Dispatcher.HandleAsync($$$"""{"v":2,"kind":"req","id":1,"type":"{{{method.Name}}}","payload":{}}""");
 
             var response = JsonElement.Parse(sent.Single());
-            response.TryGetProperty("error", out var error).Should().BeFalse($"{method.Name} must be registered and answer ({error})");
+            var code = response.TryGetProperty("error", out var error) ? error.GetProperty("code").GetString() : null;
+            code.Should().NotBe(RpcErrorCodes.UnknownMethod, $"{method.Name} must be registered");
+            code.Should().NotBe(RpcErrorCodes.Internal, $"{method.Name} must not fail");
         }
 
         endpoints.Stop();
