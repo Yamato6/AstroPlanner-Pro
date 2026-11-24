@@ -31,7 +31,7 @@ public sealed class AppEndpoints
         });
 
         Dispatcher.Register(AppMethods.AppInfo, (_, _) => Task.FromResult(new AppInfoResponse(
-            AppVersion.Current.ToString(), _theme.SkyTheme, SkyMessageCodec.ProtocolVersion, AppMessageCodec.ProtocolVersion)));
+            AppBuild.Version.ToString(), _theme.SkyTheme, SkyMessageCodec.ProtocolVersion, AppMessageCodec.ProtocolVersion)));
         _theme.Changed += OnThemeChanged;
     }
 

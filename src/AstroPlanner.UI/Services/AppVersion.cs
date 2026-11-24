@@ -11,10 +11,13 @@ public sealed record AppVersion(Version Number, string? PreRelease = null) : ICo
 {
     public bool IsPreRelease => PreRelease is not null;
 
-    /// <summary>Version of this executable (set by CI from the tag).</summary>
-    public static AppVersion Current { get; } =
-        TryParse(typeof(AppVersion).Assembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion)
-        ?? new AppVersion(Normalize(typeof(AppVersion).Assembly.GetName().Version ?? new Version(0, 0)));
+    /// <summary>The version of <paramref name="assembly"/> (its informational version, set by CI from the tag).</summary>
+    public static AppVersion Of(Assembly assembly)
+    {
+        ArgumentNullException.ThrowIfNull(assembly);
+        return TryParse(assembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion)
+            ?? new AppVersion(Normalize(assembly.GetName().Version ?? new Version(0, 0)));
+    }
 
     /// <summary>"v1.0.0-rc.1+abc123" → 1.0.0-rc.1; null if it is not a version (e.g. "PreRelease").</summary>
     public static AppVersion? TryParse(string? text)

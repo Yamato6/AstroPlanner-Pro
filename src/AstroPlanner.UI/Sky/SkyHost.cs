@@ -17,8 +17,8 @@ namespace AstroPlanner.UI.Sky;
 /// </summary>
 public sealed class SkyHost : Border, ISkyChannel, IDisposable
 {
-    public const string AppHost = "app.astroplanner";
-    public const string DataHost = "data.astroplanner";
+    public const string AppHost = SkyHosts.AppHost;
+    public const string DataHost = SkyHosts.DataHost;
     public static readonly Uri AppOrigin = new($"https://{AppHost}/");
 
     private readonly WebView2 _webView = new() { DefaultBackgroundColor = System.Drawing.Color.FromArgb(5, 11, 22) };

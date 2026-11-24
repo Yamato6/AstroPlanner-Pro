@@ -11,7 +11,7 @@ public partial class AboutWindow : Window
     {
         InitializeComponent();
         NativeWindows.UseDarkTitleBar(this);
-        VersionRun.Text = AppVersion.Current.ToString();
+        VersionRun.Text = AppBuild.Version.ToString();
         DataFolderText.Text = AppPaths.DataDirectory;
         DataFolderText.ToolTip = AppPaths.DataDirectory;
     }

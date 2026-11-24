@@ -142,7 +142,7 @@ public partial class MainWindow : Window
             Tabs.SelectedItem = SkyTab;
         }
 
-        await _viewModel.CheckForUpdatesAsync(AppVersion.Current);
+        await _viewModel.CheckForUpdatesAsync(AppBuild.Version);
     }
 
     /// <summary>

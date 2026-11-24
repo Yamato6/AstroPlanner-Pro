@@ -42,8 +42,8 @@ public class ReleaseTests
     [Fact]
     public void AppVersion_Current_ComesFromTheBuild()
     {
-        AppVersion.Current.Number.Should().BeGreaterThanOrEqualTo(new Version(1, 0, 0));
-        AppVersion.Current.ToString().Should().NotContain("+", "build metadata is not shown");
+        AppBuild.Version.Number.Should().BeGreaterThanOrEqualTo(new Version(1, 0, 0));
+        AppBuild.Version.ToString().Should().NotContain("+", "build metadata is not shown");
     }
 
     private static UpdateInfo? Newest(string current, params (string Tag, bool PreRelease)[] releases) =>
@@ -211,9 +211,9 @@ public class ReleaseTests
     {
         // tools/release-notes.ps1 publishes this section; the release job fails without it.
         var changelog = File.ReadAllLines(Path.Combine(AccessibilityTests.RepositoryRoot(), "CHANGELOG.md"));
-        var heading = $"## [{AppVersion.Current.Number.ToString(3)}]";
+        var heading = $"## [{AppBuild.Version.Number.ToString(3)}]";
 
-        if (AppVersion.Current.PreRelease is "dev")
+        if (AppBuild.Version.PreRelease is "dev")
         {
             return;   // a development build has no section yet
         }

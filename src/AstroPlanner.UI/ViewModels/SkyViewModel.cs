@@ -276,7 +276,7 @@ public sealed partial class SkyViewModel : ObservableObject, IDisposable
     private void SendAll()
     {
         _session.Send(SkyMessageCodec.Init(new InitPayload(
-            $"https://{SkyHost.DataHost}/", RefractionModel.Standard, Layers.Layers(), Modes.ViewMode, _theme?.SkyTheme ?? "dark", Layers.ShowStats)));
+            $"https://{SkyHosts.DataHost}/", RefractionModel.Standard, Layers.Layers(), Modes.ViewMode, _theme?.SkyTheme ?? "dark", Layers.ShowStats)));
         SendSiteAndTime();
         _session.Send(SkyMessageCodec.CenterOn(CenterOnView()));
         SendHighlights();

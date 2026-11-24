@@ -17,7 +17,7 @@ public sealed class AppEndpointsTests
         await endpoints.Dispatcher.HandleAsync("""{"v":2,"kind":"req","id":1,"type":"app.info","payload":{}}""");
 
         var payload = JsonElement.Parse(sent.Single()).GetProperty("payload");
-        payload.GetProperty("version").GetString().Should().Be(AppVersion.Current.ToString());
+        payload.GetProperty("version").GetString().Should().Be(AppBuild.Version.ToString());
         payload.GetProperty("theme").GetString().Should().Be("dark");
         payload.GetProperty("appProtocolVersion").GetInt32().Should().Be(AppMessageCodec.ProtocolVersion);
     }
