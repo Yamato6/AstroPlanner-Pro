@@ -4,7 +4,7 @@ using AstroPlanner.Core.Models;
 using AstroPlanner.Core.Satellites;
 using AstroPlanner.Core.SkyQuality;
 using AstroPlanner.SkyBridge;
-using AstroPlanner.UI.Resources;
+using AstroPlanner.Application.Resources;
 using AstroPlanner.UI.Services;
 
 namespace AstroPlanner.UI.ViewModels;

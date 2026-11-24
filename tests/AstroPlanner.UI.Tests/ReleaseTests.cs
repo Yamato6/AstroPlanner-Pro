@@ -195,7 +195,7 @@ public class ReleaseTests
     [Fact]
     public void Strings_EveryResourceIsAvailableAndNotEmpty()
     {
-        var properties = typeof(AstroPlanner.UI.Resources.Strings)
+        var properties = typeof(AstroPlanner.Application.Resources.Strings)
             .GetProperties(System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static)
             .Where(p => p.PropertyType == typeof(string))
             .ToList();

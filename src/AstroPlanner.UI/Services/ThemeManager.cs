@@ -32,7 +32,7 @@ internal static class ThemeManager
     }
 
     /// <summary>Applies <paramref name="theme"/> to the application and to the title bar of every open window.</summary>
-    public static void Apply(Application application, AppTheme theme)
+    public static void Apply(System.Windows.Application application, AppTheme theme)
     {
         ArgumentNullException.ThrowIfNull(application);
         Apply(application.Resources, theme);

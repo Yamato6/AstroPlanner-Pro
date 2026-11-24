@@ -6,7 +6,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using AstroPlanner.Core.Interfaces;
 using AstroPlanner.Core.Models;
-using AstroPlanner.UI.Resources;
+using AstroPlanner.Application.Resources;
 using AstroPlanner.UI.Services;
 using static AstroPlanner.UI.Services.DisplayNames;
 

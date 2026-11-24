@@ -1,5 +1,6 @@
 <Solution>
   <Folder Name="/src/">
+    <Project Path="src/AstroPlanner.Application/AstroPlanner.Application.csproj" />
     <Project Path="src/AstroPlanner.Core/AstroPlanner.Core.csproj" />
     <Project Path="src/AstroPlanner.Data/AstroPlanner.Data.csproj" />
     <Project Path="src/AstroPlanner.Online/AstroPlanner.Online.csproj" />

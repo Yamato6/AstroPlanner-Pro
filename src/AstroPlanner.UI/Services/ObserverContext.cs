@@ -6,7 +6,7 @@ using AstroPlanner.Core.Imaging.Feasibility;
 using AstroPlanner.Core.SkyQuality;
 using AstroPlanner.Core.Interfaces;
 using AstroPlanner.Core.Models;
-using AstroPlanner.UI.Resources;
+using AstroPlanner.Application.Resources;
 
 namespace AstroPlanner.UI.Services;
 

@@ -1,6 +1,6 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using AstroPlanner.SkyBridge;
-using AstroPlanner.UI.Resources;
+using AstroPlanner.Application.Resources;
 
 namespace AstroPlanner.UI.ViewModels;
 

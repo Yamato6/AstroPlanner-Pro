@@ -1,6 +1,6 @@
 using System.Globalization;
 using System.Text;
-using AstroPlanner.UI.Resources;
+using AstroPlanner.Application.Resources;
 using AstroPlanner.UI.ViewModels;
 using PdfSharp.Pdf.IO;
 

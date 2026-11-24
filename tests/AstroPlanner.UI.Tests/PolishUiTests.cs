@@ -1,6 +1,6 @@
 using System.Globalization;
 using AstroPlanner.Core.Imaging.Feasibility;
-using AstroPlanner.UI.Resources;
+using AstroPlanner.Application.Resources;
 using AstroPlanner.UI.Services;
 using AstroPlanner.UI.ViewModels;
 

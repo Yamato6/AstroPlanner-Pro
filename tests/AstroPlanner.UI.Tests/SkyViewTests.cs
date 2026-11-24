@@ -4,7 +4,7 @@ using System.Text.Json;
 using AstroPlanner.Core.Algorithms;
 using AstroPlanner.Core.Models;
 using AstroPlanner.SkyBridge;
-using AstroPlanner.UI.Resources;
+using AstroPlanner.Application.Resources;
 using AstroPlanner.UI.Sky;
 using AstroPlanner.UI.ViewModels;
 

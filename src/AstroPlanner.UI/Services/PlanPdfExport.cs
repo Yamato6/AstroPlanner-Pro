@@ -1,7 +1,7 @@
 using System.Globalization;
 using System.IO;
 using AstroPlanner.Core.Imaging.Feasibility;
-using AstroPlanner.UI.Resources;
+using AstroPlanner.Application.Resources;
 using AstroPlanner.UI.ViewModels;
 using PdfSharp;
 using PdfSharp.Drawing;

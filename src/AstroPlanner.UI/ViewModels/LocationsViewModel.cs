@@ -5,7 +5,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using AstroPlanner.Core.Algorithms;
 using AstroPlanner.Core.SkyQuality;
-using AstroPlanner.UI.Resources;
+using AstroPlanner.Application.Resources;
 using AstroPlanner.UI.Services;
 
 namespace AstroPlanner.UI.ViewModels;

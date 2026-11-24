@@ -1,6 +1,6 @@
 using System.Globalization;
 using AstroPlanner.Core.Models;
-using AstroPlanner.UI.Resources;
+using AstroPlanner.Application.Resources;
 
 namespace AstroPlanner.UI.Services;
 

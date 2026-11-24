@@ -7,7 +7,7 @@ using System.Text.RegularExpressions;
 using AstroPlanner.Core.Imaging.Feasibility;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using AstroPlanner.UI.Resources;
+using AstroPlanner.Application.Resources;
 using AstroPlanner.UI.Services;
 using static AstroPlanner.UI.Services.DisplayNames;
 

@@ -5,7 +5,7 @@ using AstroPlanner.Core.Imaging.Feasibility;
 using AstroPlanner.Core.Interfaces;
 using AstroPlanner.Core.Models;
 using AstroPlanner.Core.Planning;
-using AstroPlanner.UI.Resources;
+using AstroPlanner.Application.Resources;
 using AstroPlanner.UI.Services;
 using static AstroPlanner.UI.Services.DisplayNames;
 

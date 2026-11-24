@@ -1,5 +1,5 @@
 using AstroPlanner.SkyBridge;
-using AstroPlanner.UI.Resources;
+using AstroPlanner.Application.Resources;
 using AstroPlanner.UI.ViewModels;
 
 namespace AstroPlanner.UI.Tests;

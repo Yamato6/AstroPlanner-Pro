@@ -1,6 +1,6 @@
 using AstroPlanner.Core.Imaging;
 using AstroPlanner.Core.Interfaces;
-using AstroPlanner.UI.Resources;
+using AstroPlanner.Application.Resources;
 using AstroPlanner.UI.Services;
 using AstroPlanner.UI.ViewModels;
 

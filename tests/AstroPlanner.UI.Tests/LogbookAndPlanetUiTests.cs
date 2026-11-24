@@ -1,7 +1,7 @@
 using System.Globalization;
 using AstroPlanner.Core.Models;
 using AstroPlanner.Core.Services;
-using AstroPlanner.UI.Resources;
+using AstroPlanner.Application.Resources;
 using AstroPlanner.UI.Services;
 using AstroPlanner.UI.ViewModels;
 

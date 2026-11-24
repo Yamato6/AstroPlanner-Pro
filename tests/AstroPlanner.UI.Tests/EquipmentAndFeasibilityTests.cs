@@ -1,6 +1,6 @@
 using AstroPlanner.Core.Imaging.Feasibility;
 using AstroPlanner.Core.SkyQuality;
-using AstroPlanner.UI.Resources;
+using AstroPlanner.Application.Resources;
 using AstroPlanner.UI.ViewModels;
 
 namespace AstroPlanner.UI.Tests;

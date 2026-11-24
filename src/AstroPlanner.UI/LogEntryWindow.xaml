@@ -1,7 +1,7 @@
 <Window x:Class="AstroPlanner.UI.LogEntryWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        xmlns:res="clr-namespace:AstroPlanner.UI.Resources"
+        xmlns:res="clr-namespace:AstroPlanner.Application.Resources;assembly=AstroPlanner.Application"
         Title="{x:Static res:Strings.LogEntryWindowTitle}"
         Width="620"
         SizeToContent="Height"

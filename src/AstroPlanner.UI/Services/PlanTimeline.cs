@@ -1,3 +1,4 @@
+using AstroPlanner.Application.Resources;
 using AstroPlanner.Core.Algorithms;
 using AstroPlanner.Core.Imaging.Feasibility;
 using AstroPlanner.Core.Planning;
@@ -25,8 +26,8 @@ public sealed record PlanTimelineRow(
 public sealed record PlanCrossing(string Name, DateTime EnterLocal, DateTime ExitLocal, double? Magnitude)
 {
     public string Text => Magnitude is { } magnitude
-        ? DisplayNames.Format(Resources.Strings.PlanCrossingFormat, Name, EnterLocal, ExitLocal, magnitude)
-        : DisplayNames.Format(Resources.Strings.PlanCrossingNoMagnitudeFormat, Name, EnterLocal, ExitLocal);
+        ? DisplayNames.Format(Strings.PlanCrossingFormat, Name, EnterLocal, ExitLocal, magnitude)
+        : DisplayNames.Format(Strings.PlanCrossingNoMagnitudeFormat, Name, EnterLocal, ExitLocal);
 }
 
 /// <summary>

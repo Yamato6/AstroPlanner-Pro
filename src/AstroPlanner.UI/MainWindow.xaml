@@ -5,7 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:ScottPlot="clr-namespace:ScottPlot.WPF;assembly=ScottPlot.WPF"
         xmlns:converters="clr-namespace:AstroPlanner.UI.Converters"
-        xmlns:res="clr-namespace:AstroPlanner.UI.Resources"
+        xmlns:res="clr-namespace:AstroPlanner.Application.Resources;assembly=AstroPlanner.Application"
         xmlns:sky="clr-namespace:AstroPlanner.UI.Sky"
         mc:Ignorable="d"
         Title="{x:Static res:Strings.MainWindowTitle}"

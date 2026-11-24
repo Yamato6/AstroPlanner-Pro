@@ -1,7 +1,7 @@
 using AstroPlanner.Core.Algorithms;
 using AstroPlanner.Core.Interfaces;
 using AstroPlanner.Core.Satellites;
-using AstroPlanner.UI.Resources;
+using AstroPlanner.Application.Resources;
 using AstroPlanner.UI.Services;
 using AstroPlanner.UI.ViewModels;
 

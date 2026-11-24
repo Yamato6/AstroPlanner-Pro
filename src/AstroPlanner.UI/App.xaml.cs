@@ -17,7 +17,7 @@ using AstroPlanner.Online.Info;
 using AstroPlanner.Online.Satellites;
 using AstroPlanner.Online.SmallBodies;
 using AstroPlanner.Online.Weather;
-using AstroPlanner.UI.Resources;
+using AstroPlanner.Application.Resources;
 using AstroPlanner.UI.Services;
 using AstroPlanner.UI.Sky;
 using AstroPlanner.UI.ViewModels;
@@ -28,7 +28,7 @@ namespace AstroPlanner.UI;
 /// WPF entry point and composition root: Core knows nothing about the UI, and the UI
 /// assembles the implementations.
 /// </summary>
-public partial class App : Application
+public partial class App : System.Windows.Application
 {
     private ServiceProvider? _serviceProvider;
     private IAppLogger? _logger;

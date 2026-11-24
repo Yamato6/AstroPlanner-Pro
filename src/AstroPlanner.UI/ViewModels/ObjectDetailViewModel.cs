@@ -4,7 +4,7 @@ using AstroPlanner.Core.Algorithms;
 using AstroPlanner.Core.Planning;
 using AstroPlanner.Core.Interfaces;
 using AstroPlanner.Core.Models;
-using AstroPlanner.UI.Resources;
+using AstroPlanner.Application.Resources;
 using AstroPlanner.UI.Services;
 
 namespace AstroPlanner.UI.ViewModels;

@@ -1,6 +1,6 @@
 using System.Windows;
 using System.Windows.Media;
-using AstroPlanner.UI.Resources;
+using AstroPlanner.Application.Resources;
 using AstroPlanner.UI.Services;
 using AstroPlanner.UI.ViewModels;
 

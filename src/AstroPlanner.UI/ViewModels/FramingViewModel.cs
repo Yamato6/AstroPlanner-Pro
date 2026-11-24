@@ -2,7 +2,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using AstroPlanner.Core.Imaging;
 using AstroPlanner.Core.Interfaces;
 using AstroPlanner.Core.Models;
-using AstroPlanner.UI.Resources;
+using AstroPlanner.Application.Resources;
 using AstroPlanner.UI.Services;
 
 namespace AstroPlanner.UI.ViewModels;
