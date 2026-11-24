@@ -11,7 +11,7 @@
     <PackageVersion Include="Microsoft.Extensions.DependencyInjection" Version="11.0.0" />
     <PackageVersion Include="Microsoft.Extensions.Http" Version="11.0.0" />
     <PackageVersion Include="Microsoft.Extensions.Http.Resilience" Version="11.0.0" />
-    <PackageVersion Include="Microsoft.Web.WebView2" Version="1.0.4314.35" />
+    <PackageVersion Include="Microsoft.Web.WebView2" Version="1.0.4370.26" />
     <!-- 6.2.4 is the last MIT release: 6.5.0 and later are AGPL-3.0-only (spec §12), see dependabot.yml. -->
     <PackageVersion Include="PDFsharp" Version="6.2.4" />
     <PackageVersion Include="ScottPlot.WPF" Version="5.1.59" />
