@@ -99,7 +99,8 @@ creates the dispatcher and the modules; `Stop()` disposes them and cancels runni
 | Module | Methods | Events |
 |---|---|---|
 | `AppInfoEndpoints` | `app.info` (versions, theme) | `theme.changed` |
-| `ObserverEndpoints` | `observer.get` (site, time, night, Moon, sky quality) | `observer.changed` |
+| `ObserverEndpoints` | `observer.get` (site, time, night, Moon, sky quality; IANA time zone) | `observer.changed` |
+| `SkyEndpoints` | `sky.get`, `sky.play`, `sky.pause`, `sky.now`, `sky.step`, `sky.setRate`, `sky.setLayer`, `sky.setViewMode` (each command answers with the new snapshot) | `sky.changed` |
 
 ### Golden files (`tests/fixtures/bridge/app`)
 

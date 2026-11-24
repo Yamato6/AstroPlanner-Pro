@@ -17,6 +17,7 @@ dotnet build AstroPlanner.slnx -c Release -warnaserror   # must stay at 0 warnin
 dotnet test AstroPlanner.slnx -c Release                 # all tests, no network
 cd src/web && npm ci && npm run lint && npm test
 dotnet run --project tools/AstroPlanner.BridgeGen     # after changing a bridge contract (docs/bridge.md)
+cd src/web && npm run e2e -w @astroplanner/planetarium  # planetarium UI E2E with a mock host (docs/ui.md)
 dotnet run --project src/AstroPlanner.UI                 # run the app
 ```
 

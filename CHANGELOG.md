@@ -29,6 +29,15 @@ versions follow [Semantic Versioning](https://semver.org/). Versions up to 1.0.0
 - Endpoint modules for the web UI (`Application/Bridge`): each area answers `area.get` with a
   snapshot and a revision and announces changes with one coalesced `area.changed` event. First
   area: `observer.get` / `observer.changed` (site, time, night, Moon, sky quality).
+- Planetarium UI (`--ui=web`), first shell pieces (`docs/ui.md`): a top bar over the sky with the
+  site, tonight's astronomical night and the sky time (live while time plays), and the keyboard:
+  `Space` play/pause, `F5` now, `J`/`L` slower/faster, `1`/`2`/`3` view modes, `C`/`B`/`N`
+  constellations, `G`/`E` grids, `H` hides the interface. The page follows night vision.
+- `sky.*` endpoints: time, layers, view mode and the selection for the web UI (`SkyEndpoints`).
+- `packages/ui-kit`: design tokens (v2's dark and night palettes), Inter, accessible components
+  on React Aria, Lucide icons.
+- Playwright E2E tests of the planetarium page in Edge against a mock host that answers from the
+  C# golden files, with axe (WCAG 2.2 AA) and CSP checks; they run in CI.
 
 ## [2.0.1] — 2026-11-22
 
