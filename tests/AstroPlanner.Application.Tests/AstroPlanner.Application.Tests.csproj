@@ -1,0 +1,35 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <!-- The view models and state services of AstroPlanner.Application: plain net10.0, no WPF. -->
+    <TargetFramework>net10.0</TargetFramework>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\AstroPlanner.Application\AstroPlanner.Application.csproj" />
+    <ProjectReference Include="..\..\src\AstroPlanner.Core\AstroPlanner.Core.csproj" />
+    <!-- Tests only: real repositories and online clients behind fakes and recorded responses. -->
+    <ProjectReference Include="..\..\src\AstroPlanner.Data\AstroPlanner.Data.csproj" />
+    <ProjectReference Include="..\..\src\AstroPlanner.Online\AstroPlanner.Online.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Include="..\Shared\*.cs" Link="Shared\%(Filename)%(Extension)" />
+  </ItemGroup>
+
+  <!-- The view models belong to one thread (the UI's in the app). maxParallelThreads = 1 makes
+       xUnit run every async continuation on a single thread too; with more, two background
+       completions can touch the same view model at once, which never happens in the app. -->
+  <ItemGroup>
+    <Content Include="xunit.runner.json" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Using Include="AstroPlanner.Testing" />
+    <Using Include="AstroPlanner.Core.Models" />
+    <Using Include="AstroPlanner.Core.Interfaces" />
+    <Using Include="AstroPlanner.Application.Services" />
+    <Using Include="AstroPlanner.Application.Sky" />
+  </ItemGroup>
+
+</Project>

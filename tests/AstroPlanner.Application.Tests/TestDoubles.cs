@@ -1,10 +1,10 @@
 using AstroPlanner.Core.Interfaces;
 using AstroPlanner.Core.Models;
 using AstroPlanner.Core.Services;
-using AstroPlanner.UI.Services;
+using AstroPlanner.Application.Services;
 using AstroPlanner.Application.ViewModels;
 
-namespace AstroPlanner.UI.Tests;
+namespace AstroPlanner.Application.Tests;
 
 internal sealed class FakeCelestialRepository(IReadOnlyList<CelestialObject> objects) : ICelestialRepository
 {
@@ -161,7 +161,7 @@ internal static class TestShell
         var satelliteState = new SatelliteState(context, online, logger, time, satellites);
         var planViewModel = new SessionPlanViewModel(plan ?? new FakePlanService(), astronomy, context, weatherState, targets, logger,
             equipmentState, time, satelliteState);
-        var framing = new FramingViewModel(tiles, decoder ?? new WpfImageDecoder(), equipmentState, online, logger, time);
+        var framing = new FramingViewModel(tiles, decoder ?? new GreyImageDecoder(), equipmentState, online, logger, time);
         var about = new ObjectInfoViewModel(info, online, logger, time);
         var detail = new ObjectDetailViewModel(astronomy, context, weatherState, targets, planViewModel, logbook, framing, about, equipmentState);
         var sky = new SkyViewModel(context, targets, planViewModel, skyStore ?? new FakeSkyViewStore(), logger, time, equipmentState,
@@ -194,4 +194,15 @@ internal sealed class FakeEquipmentRepository(EquipmentInventory inventory) : IE
 internal sealed class FakeAtlas(double? artificialBrightness) : ILightPollutionAtlas
 {
     public double? ArtificialBrightness(double latitudeDegrees, double longitudeDegrees) => artificialBrightness;
+}
+
+/// <summary>"Decodes" any content into a small grey image: the default decoder of <see cref="TestShell"/>.</summary>
+internal sealed class GreyImageDecoder : IImageDecoder
+{
+    public AstroPlanner.Core.Imaging.RgbImage Decode(byte[] content)
+    {
+        var image = new AstroPlanner.Core.Imaging.RgbImage(512, 512);
+        Array.Fill(image.Pixels, (byte)120);
+        return image;
+    }
 }

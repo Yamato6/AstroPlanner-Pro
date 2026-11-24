@@ -1,8 +1,8 @@
 using AstroPlanner.Core.Models;
-using AstroPlanner.UI.Services;
+using AstroPlanner.Application.Services;
 using AstroPlanner.Application.ViewModels;
 
-namespace AstroPlanner.UI.Tests;
+namespace AstroPlanner.Application.Tests;
 
 /// <summary>
 /// View model tests without UI, with in-memory doubles for catalog, settings, plan and log.

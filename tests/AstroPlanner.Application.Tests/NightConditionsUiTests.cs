@@ -2,10 +2,10 @@ using AstroPlanner.Core.Imaging.Feasibility;
 using AstroPlanner.Core.Interfaces;
 using AstroPlanner.Data.Cache;
 using AstroPlanner.Application.Resources;
-using AstroPlanner.UI.Services;
+using AstroPlanner.Application.Services;
 using AstroPlanner.Application.ViewModels;
 
-namespace AstroPlanner.UI.Tests;
+namespace AstroPlanner.Application.Tests;
 
 /// <summary>M4a: seeing, transparency, dew and wind in Tonight, the verdicts, the online status and the cache.</summary>
 public sealed class NightConditionsUiTests

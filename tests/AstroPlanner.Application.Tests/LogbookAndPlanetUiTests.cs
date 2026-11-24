@@ -2,10 +2,10 @@ using System.Globalization;
 using AstroPlanner.Core.Models;
 using AstroPlanner.Core.Services;
 using AstroPlanner.Application.Resources;
-using AstroPlanner.UI.Services;
+using AstroPlanner.Application.Services;
 using AstroPlanner.Application.ViewModels;
 
-namespace AstroPlanner.UI.Tests;
+namespace AstroPlanner.Application.Tests;
 
 /// <summary>
 /// Observation logbook (persistence, Messier progress, CSV, table marks) and planets in the planner.

@@ -4,7 +4,7 @@ using AstroPlanner.Application.Resources;
 using AstroPlanner.Application.ViewModels;
 using PdfSharp.Pdf.IO;
 
-namespace AstroPlanner.UI.Tests;
+namespace AstroPlanner.Application.Tests;
 
 /// <summary>M3b: session planner (schedule, priorities, locks, checklist) and its exports.</summary>
 public sealed class SessionPlannerTests

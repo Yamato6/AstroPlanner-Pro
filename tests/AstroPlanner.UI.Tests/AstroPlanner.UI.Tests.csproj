@@ -19,6 +19,8 @@
 
   <ItemGroup>
     <Compile Include="..\Shared\*.cs" Link="Shared\%(Filename)%(Extension)" />
+    <!-- TestShell and the fakes live with the view-model tests; the host tests use them too. -->
+    <Compile Include="..\AstroPlanner.Application.Tests\TestDoubles.cs" Link="Shared\TestDoubles.cs" />
   </ItemGroup>
 
   <!-- Files written by AstroPlanner v1, for the import service tests. -->
@@ -37,6 +39,7 @@
     <Using Include="AstroPlanner.Core.Interfaces" />
     <Using Include="AstroPlanner.Application.Services" />
     <Using Include="AstroPlanner.Application.Sky" />
+    <Using Include="AstroPlanner.Application.Tests" />
   </ItemGroup>
 
 </Project>

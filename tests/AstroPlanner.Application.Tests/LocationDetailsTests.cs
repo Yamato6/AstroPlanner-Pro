@@ -2,7 +2,7 @@ using AstroPlanner.Core.Models;
 using AstroPlanner.Application.Resources;
 using AstroPlanner.Application.ViewModels;
 
-namespace AstroPlanner.UI.Tests;
+namespace AstroPlanner.Application.Tests;
 
 /// <summary>Horizon profile and SQM of a saved site (spec §4.2 horizon editor [P1], §4.8).</summary>
 public sealed class LocationDetailsTests

@@ -1,10 +1,10 @@
 using System.Globalization;
 using AstroPlanner.Core.Imaging.Feasibility;
 using AstroPlanner.Application.Resources;
-using AstroPlanner.UI.Services;
+using AstroPlanner.Application.Services;
 using AstroPlanner.Application.ViewModels;
 
-namespace AstroPlanner.UI.Tests;
+namespace AstroPlanner.Application.Tests;
 
 /// <summary>M6b: night-vision theme, photographed logbook entries, predictions vs results and the advanced calibration.</summary>
 public sealed class PolishUiTests

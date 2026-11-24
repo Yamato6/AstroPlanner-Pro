@@ -2,10 +2,10 @@ using AstroPlanner.Core.Algorithms;
 using AstroPlanner.Core.Interfaces;
 using AstroPlanner.Core.Satellites;
 using AstroPlanner.Application.Resources;
-using AstroPlanner.UI.Services;
+using AstroPlanner.Application.Services;
 using AstroPlanner.Application.ViewModels;
 
-namespace AstroPlanner.UI.Tests;
+namespace AstroPlanner.Application.Tests;
 
 /// <summary>M5b: satellites in Tonight, the sky and the session plan, from recorded CelesTrak elements.</summary>
 public sealed class SatellitesUiTests

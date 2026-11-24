@@ -3,7 +3,7 @@ using AstroPlanner.Core.SkyQuality;
 using AstroPlanner.Application.Resources;
 using AstroPlanner.Application.ViewModels;
 
-namespace AstroPlanner.UI.Tests;
+namespace AstroPlanner.Application.Tests;
 
 /// <summary>M3a: equipment, active rig, sky quality from the atlas and the feasibility verdicts in the UI.</summary>
 public sealed class EquipmentAndFeasibilityTests

@@ -3,10 +3,10 @@ using AstroPlanner.Core.Interfaces;
 using AstroPlanner.Core.Sky;
 using AstroPlanner.SkyBridge;
 using AstroPlanner.Application.Resources;
-using AstroPlanner.UI.Services;
+using AstroPlanner.Application.Services;
 using AstroPlanner.Application.ViewModels;
 
-namespace AstroPlanner.UI.Tests;
+namespace AstroPlanner.Application.Tests;
 
 /// <summary>M5a: comets and asteroids in Targets, Tonight and the sky; the Milky Way core.</summary>
 public sealed class SmallBodiesUiTests

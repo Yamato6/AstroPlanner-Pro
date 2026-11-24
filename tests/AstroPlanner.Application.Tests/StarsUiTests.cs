@@ -2,7 +2,7 @@ using AstroPlanner.SkyBridge;
 using AstroPlanner.Application.Resources;
 using AstroPlanner.Application.ViewModels;
 
-namespace AstroPlanner.UI.Tests;
+namespace AstroPlanner.Application.Tests;
 
 /// <summary>M6a: stars and double stars as catalog rows, in Targets, Detail and the sky selection.</summary>
 public sealed class StarsUiTests

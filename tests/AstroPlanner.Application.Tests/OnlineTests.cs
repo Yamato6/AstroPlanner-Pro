@@ -3,10 +3,10 @@ using System.Text;
 using AstroPlanner.Core.Interfaces;
 using AstroPlanner.Core.Models;
 using AstroPlanner.Core.Services;
-using AstroPlanner.UI.Services;
+using AstroPlanner.Application.Services;
 using AstroPlanner.Application.ViewModels;
 
-namespace AstroPlanner.UI.Tests;
+namespace AstroPlanner.Application.Tests;
 
 /// <summary>
 /// Cloud forecast (Open-Meteo) in the view models and new-version notice (GitHub), without
