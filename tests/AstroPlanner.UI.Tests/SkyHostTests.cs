@@ -65,7 +65,8 @@ public sealed class SkyAssetsTests : IDisposable
     [Fact]
     public void TheBuild_EmbedsTheRenderer()
     {
-        // Only when the UI was built with Node.js (always in CI); otherwise the app falls back.
+        // Only when the UI was built with the web pages (local builds with Node.js; the CI test job
+        // skips them, the release job requires them); otherwise the app falls back.
         using var zip = SkyAssets.OpenEmbedded();
         if (zip is null)
         {
