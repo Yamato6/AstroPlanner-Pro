@@ -69,9 +69,6 @@ public sealed class ObserverSettings
 
     public ObserverLocation ToObserverLocation() =>
         new(LatitudeDegrees, LongitudeDegrees, ElevationMeters);
-
-    /// <summary>The saved time zone; the local one if the id no longer exists (e.g. after an OS change).</summary>
-    public TimeZoneInfo GetTimeZone() => TimeZoneConversion.FindOrLocal(TimeZoneId);
 }
 
 /// <summary>Colors of the app. New values are appended so that stored names stay valid.</summary>

@@ -12,8 +12,6 @@ internal sealed class CsvBuilder(CultureInfo culture)
     private readonly StringBuilder _builder = new();
     private readonly string _separator = culture.TextInfo.ListSeparator;
 
-    public CultureInfo Culture { get; } = culture;
-
     public CsvBuilder AddRow(IEnumerable<string> fields)
     {
         _builder.AppendLine(string.Join(_separator, fields.Select(Escape)));

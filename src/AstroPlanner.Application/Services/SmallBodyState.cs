@@ -66,9 +66,6 @@ public sealed class SmallBodyState
     /// <summary>The comets and asteroids for the current night.</summary>
     public IReadOnlyList<CelestialObject> Objects { get; private set; } = [];
 
-    /// <summary>When the comet elements were downloaded (old when they come from the cache offline).</summary>
-    public DateTime? CometsFetchedUtc => _comets?.FetchedAtUtc;
-
     private DateTime Now => _time.GetUtcNow().UtcDateTime;
 
     /// <summary>

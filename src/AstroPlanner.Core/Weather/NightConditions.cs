@@ -67,8 +67,6 @@ public sealed record NightConditions
     /// <summary>The gust limit that was applied, km/h.</summary>
     public double GustLimitKmh { get; init; }
 
-    public bool HasAstroForecast => SeeingArcsec is not null;
-
     /// <summary>Conditions over [<paramref name="startUtc"/>, <paramref name="endUtc"/>).</summary>
     /// <param name="mount">Mount of the active rig (wind limit); null = a camera on a tripod.</param>
     public static NightConditions Create(

@@ -103,7 +103,7 @@ public sealed class OrbitCalculatorTests(ITestOutputHelper output)
                 gap.Should().BeLessThan(1e-4, $"e = {e}, {days} days from perihelion");
             }
 
-            OrbitCalculator.SunDistance(new OrbitalElements(0.8, 1, t, 30, 60, 100, t), t + days).Should().BeGreaterThanOrEqualTo(0.8 - 1e-12);
+            Math.Sqrt((parabola.X * parabola.X) + (parabola.Y * parabola.Y) + (parabola.Z * parabola.Z)).Should().BeGreaterThanOrEqualTo(0.8 - 1e-12);
         }
     }
 

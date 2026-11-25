@@ -43,23 +43,6 @@ public sealed class AirmassTests
         Airmass.KastenYoung(-10).Should().Be(double.PositiveInfinity);
         Airmass.KastenYoung(double.NaN).Should().Be(double.PositiveInfinity);
     }
-
-    [Fact]
-    public void Extinction_IsCoefficientTimesAirmass()
-    {
-        Airmass.ExtinctionMagnitudes(2.0).Should().BeApproximately(0.5, 1e-12);
-        Airmass.ExtinctionMagnitudes(1.5, 0.15).Should().BeApproximately(0.225, 1e-12);
-    }
-
-    [Theory]
-    [InlineData(0.5, 0.25)]
-    [InlineData(1.0, -0.1)]
-    public void Extinction_InvalidArguments_Throw(double airmass, double coefficient)
-    {
-        var act = () => Airmass.ExtinctionMagnitudes(airmass, coefficient);
-
-        act.Should().Throw<ArgumentOutOfRangeException>();
-    }
 }
 
 public sealed class HorizonMaskTests
@@ -134,14 +117,13 @@ public sealed class HorizonMaskTests
 public sealed class LocationTests
 {
     [Fact]
-    public void Location_KeepsBothTimeZoneIdsAndConvertsToAnObserver()
+    public void Location_KeepsBothTimeZoneIds_AndTrimsItsName()
     {
         var location = new Location("home", " Home ", 21.88, -102.29, 1888,
             "America/Mexico_City", "Central Standard Time (Mexico)");
 
         location.Name.Should().Be("Home");
         location.HorizonMask.Should().Be(HorizonMask.Flat);
-        location.ToObserver().Should().Be(new ObserverLocation(21.88, -102.29, 1888));
     }
 
     [Fact]

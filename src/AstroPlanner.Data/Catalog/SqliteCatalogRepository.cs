@@ -23,24 +23,18 @@ public sealed class SqliteCatalogRepository : ICelestialRepository
 
     private const string ResourceName = "Catalogs/catalogs.sqlite";
 
-    private readonly string? _databasePath;
-    private readonly string? _cacheDirectory;
+    private readonly string _cacheDirectory;
     private readonly Lazy<Task<IReadOnlyList<CelestialObject>>> _objects;
 
-    private SqliteCatalogRepository(string? databasePath, string? cacheDirectory)
+    private SqliteCatalogRepository(string cacheDirectory)
     {
-        _databasePath = databasePath;
         _cacheDirectory = cacheDirectory;
         _objects = new(LoadOnceAsync);
     }
 
     /// <summary>Uses the embedded catalog, extracted into <paramref name="cacheDirectory"/>.</summary>
     public static SqliteCatalogRepository FromEmbedded(string cacheDirectory) =>
-        new(null, cacheDirectory ?? throw new ArgumentNullException(nameof(cacheDirectory)));
-
-    /// <summary>Uses an existing database file (tests, tools).</summary>
-    public static SqliteCatalogRepository FromFile(string databasePath) =>
-        new(databasePath ?? throw new ArgumentNullException(nameof(databasePath)), null);
+        new(cacheDirectory ?? throw new ArgumentNullException(nameof(cacheDirectory)));
 
     /// <summary>
     /// The catalog, loaded on the first call (later calls share the same list). Cancelling
@@ -51,7 +45,7 @@ public sealed class SqliteCatalogRepository : ICelestialRepository
 
     private async Task<IReadOnlyList<CelestialObject>> LoadOnceAsync()
     {
-        var path = _databasePath ?? await ExtractAsync(_cacheDirectory!, CancellationToken.None).ConfigureAwait(false);
+        var path = await ExtractAsync(_cacheDirectory, CancellationToken.None).ConfigureAwait(false);
         return await Task.Run(() => Load(path, CancellationToken.None)).ConfigureAwait(false);
     }
 
