@@ -10,10 +10,15 @@ import {
   type EventName,
   type EventOf,
   type MethodName,
+  aboutResponseSchema,
+  layoutSnapshotSchema,
   observerSnapshotSchema,
   skySnapshotSchema,
+  uiSnapshotSchema,
+  type LayoutSnapshot,
   type ObserverSnapshot,
   type SkySnapshot,
+  type UiSnapshot,
 } from '@astroplanner/bridge-client';
 import type { Page } from '@playwright/test';
 
@@ -67,7 +72,10 @@ export class MockHost {
   readonly rejected: string[] = [];
   observer: ObserverSnapshot = observerSnapshotSchema.parse(goldenPayload('observer.get.response'));
   sky: SkySnapshot = skySnapshotSchema.parse(goldenPayload('sky.get.response'));
-  theme: 'dark' | 'night' = 'dark';
+  ui: UiSnapshot = uiSnapshotSchema.parse(goldenPayload('ui.get.response'));
+  /** The saved window layout: empty, like a first start (the golden file has a sample). */
+  layout: LayoutSnapshot = { windows: [] };
+  readonly openedLinks: string[] = [];
   /** While set, answers wait (the page's loading state); `release()` sends them. */
   private held: (() => Promise<void>)[] | null = null;
 
@@ -142,7 +150,27 @@ export class MockHost {
   private answer(method: MethodName, payload: unknown): unknown {
     switch (method) {
       case 'app.info':
-        return { version: '3.0.0-dev', theme: this.theme, skyProtocolVersion: 1, appProtocolVersion: 2 };
+        return { version: '3.0.0-dev', theme: this.ui.theme, skyProtocolVersion: 1, appProtocolVersion: 2 };
+      case 'app.about':
+        return aboutResponseSchema.parse(goldenPayload('app.about.response'));
+      case 'app.openLink':
+        this.openedLinks.push((payload as { url: string }).url);
+        return { opened: true };
+      case 'app.openDataFolder':
+        return {};
+      case 'ui.get':
+        return this.ui;
+      case 'ui.setTheme':
+        return this.updateUi({ theme: (payload as { theme: UiSnapshot['theme'] }).theme });
+      case 'ui.setReduceTransparency':
+        return this.updateUi({ reduceTransparency: (payload as { enabled: boolean }).enabled });
+      case 'ui.setFullScreen':
+        return this.updateUi({ isFullScreen: (payload as { enabled: boolean }).enabled });
+      case 'layout.load':
+        return this.layout;
+      case 'layout.save':
+        this.layout = layoutSnapshotSchema.parse(payload);
+        return {};
       case 'observer.get':
         return this.observer;
       case 'sky.get':
@@ -166,6 +194,16 @@ export class MockHost {
       case 'sky.setViewMode':
         return this.update({ viewMode: (payload as { mode: SkySnapshot['viewMode'] }).mode });
     }
+  }
+
+  /** A layout as the golden file has it (Help docked right, Settings minimised). */
+  static goldenLayout(): LayoutSnapshot {
+    return layoutSnapshotSchema.parse(goldenPayload('layout.load.response'));
+  }
+
+  private updateUi(change: Partial<UiSnapshot>): UiSnapshot {
+    this.ui = { ...this.ui, ...change, revision: this.ui.revision + 1 };
+    return this.ui;
   }
 
   private update(change: Partial<SkySnapshot>): SkySnapshot {
