@@ -74,9 +74,7 @@ public sealed class NightConditionsUiTests
             astro: astro,
             equipment: new FakeEquipmentRepository(EquipmentInventory.Demo),
             atlas: new FakeAtlas(1.84));
-        await shell.LoadCommand.ExecuteAsync(null);
-        await shell.Targets.NightEphemeridesTask;
-        await shell.Targets.FeasibilityTask;
+        await shell.LoadAndSettleAsync();
         return shell;
     }
 

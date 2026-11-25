@@ -11,23 +11,6 @@ public sealed class SevenTimerAndCacheTests
 {
     private static readonly DateTimeOffset Now = new(2026, 11, 20, 21, 0, 0, TimeSpan.Zero);
 
-    private static string Fixture(string name) => File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "fixtures", "online", name));
-
-    /// <summary>A cache kept in memory.</summary>
-    private sealed class MemoryCache : IOnlineCache
-    {
-        public Dictionary<(string, string), CachedResponse> Entries { get; } = [];
-
-        public CachedResponse? Read(string service, string key) => Entries.GetValueOrDefault((service, key));
-
-        public void Write(string service, string key, byte[] content, DateTime storedAtUtc) =>
-            Entries[(service, key)] = new CachedResponse(content, storedAtUtc);
-
-        public long SizeBytes => Entries.Values.Sum(e => (long)e.Content.Length);
-
-        public void Clear() => Entries.Clear();
-    }
-
     [Fact]
     public void SevenTimerUrl_RoundsCoordinates()
     {
@@ -38,7 +21,7 @@ public sealed class SevenTimerAndCacheTests
     [Fact]
     public async Task SevenTimer_ParsesTheRecordedForecast()
     {
-        var handler = new StubHttpHandler(_ => StubHttpHandler.Json(Fixture("7timer-astro.json")));
+        var handler = new StubHttpHandler(_ => StubHttpHandler.Json(OnlineFixtures.Text("7timer-astro.json")));
         var service = new SevenTimerAstroService(new HttpClient(handler), new ManualTimeProvider(Now));
 
         var forecast = await service.GetForecastAsync(21.88, -102.29);
@@ -73,7 +56,7 @@ public sealed class SevenTimerAndCacheTests
     [Fact]
     public async Task OpenMeteo_ReadsTemperatureDewPointAndWind()
     {
-        var handler = new StubHttpHandler(_ => StubHttpHandler.Json(Fixture("open-meteo-forecast.json")));
+        var handler = new StubHttpHandler(_ => StubHttpHandler.Json(OnlineFixtures.Text("open-meteo-forecast.json")));
         var service = new OpenMeteoForecastService(new HttpClient(handler), new ManualTimeProvider(Now));
 
         var forecast = await service.GetForecastAsync(21.88, -102.29);
@@ -93,7 +76,7 @@ public sealed class SevenTimerAndCacheTests
     {
         var cache = new MemoryCache();
         var url = SevenTimerAstroService.BuildUrl(21.88, -102.29);
-        cache.Write(SevenTimerAstroService.CacheName, url, Encoding.UTF8.GetBytes(Fixture("7timer-astro.json")), Now.UtcDateTime.AddHours(-1));
+        cache.Write(SevenTimerAstroService.CacheName, url, Encoding.UTF8.GetBytes(OnlineFixtures.Text("7timer-astro.json")), Now.UtcDateTime.AddHours(-1));
         var handler = new StubHttpHandler(_ => throw new InvalidOperationException("no request expected"));
         var service = new SevenTimerAstroService(new HttpClient(handler), new ManualTimeProvider(Now), cache);
 
@@ -109,7 +92,7 @@ public sealed class SevenTimerAndCacheTests
         var cache = new MemoryCache();
         var url = OpenMeteoForecastService.BuildUrl(21.88, -102.29);
         cache.Write(OpenMeteoForecastService.CacheName, url, "{}"u8.ToArray(), Now.UtcDateTime.AddHours(-2));
-        var handler = new StubHttpHandler(_ => StubHttpHandler.Json(Fixture("open-meteo-forecast.json")));
+        var handler = new StubHttpHandler(_ => StubHttpHandler.Json(OnlineFixtures.Text("open-meteo-forecast.json")));
         var service = new OpenMeteoForecastService(new HttpClient(handler), new ManualTimeProvider(Now), cache);
 
         var forecast = await service.GetForecastAsync(21.88, -102.29);
@@ -128,7 +111,7 @@ public sealed class SevenTimerAndCacheTests
         var cache = new MemoryCache();
         var url = SevenTimerAstroService.BuildUrl(21.88, -102.29);
         var stored = Now.UtcDateTime.AddDays(-2);
-        cache.Write(SevenTimerAstroService.CacheName, url, Encoding.UTF8.GetBytes(Fixture("7timer-astro.json")), stored);
+        cache.Write(SevenTimerAstroService.CacheName, url, Encoding.UTF8.GetBytes(OnlineFixtures.Text("7timer-astro.json")), stored);
         var handler = new StubHttpHandler(_ => failure switch
         {
             "server-error" => StubHttpHandler.Json("{}", HttpStatusCode.ServiceUnavailable),

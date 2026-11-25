@@ -13,21 +13,10 @@ public sealed class OnlineInfoTests
     private static readonly DateTimeOffset Now = new(2026, 11, 20, 21, 0, 0, TimeSpan.Zero);
     private static readonly HipsSurvey Dss = HipsTileService.Definitions[0].Survey;
 
-    private static byte[] Fixture(string name) => File.ReadAllBytes(Path.Combine(AppContext.BaseDirectory, "fixtures", "online", name));
-
     private static HttpResponseMessage Bytes(byte[] content, HttpStatusCode status = HttpStatusCode.OK) =>
         new(status) { Content = new ByteArrayContent(content) };
 
     private static HttpResponseMessage Status(HttpStatusCode status) => new(status) { Content = new ByteArrayContent([]) };
-
-    private sealed class MemoryCache : IOnlineCache
-    {
-        public Dictionary<(string, string), CachedResponse> Entries { get; } = [];
-        public CachedResponse? Read(string service, string key) => Entries.GetValueOrDefault((service, key));
-        public void Write(string service, string key, byte[] content, DateTime storedAtUtc) => Entries[(service, key)] = new(content, storedAtUtc);
-        public long SizeBytes => Entries.Values.Sum(e => (long)e.Content.Length);
-        public void Clear() => Entries.Clear();
-    }
 
     private static CelestialObject Messier42 => new("M42", "Orion Nebula", "Orion", CelestialObjectType.HiiRegion, 4.0, new EquatorialCoordinates(5.588, -5.39))
     {
@@ -47,7 +36,7 @@ public sealed class OnlineInfoTests
     [Fact]
     public async Task Tile_FallsBackToTheEsaMirror_AndIsCachedForGood()
     {
-        var jpeg = Fixture("hips-dsscolor-norder5-npix115.jpg");
+        var jpeg = OnlineFixtures.Bytes("hips-dsscolor-norder5-npix115.jpg");
         var handler = new StubHttpHandler(r => r.RequestUri!.Host == "alasky.cds.unistra.fr" ? Status(HttpStatusCode.ServiceUnavailable) : Bytes(jpeg));
         var cache = new MemoryCache();
         var clock = new ManualTimeProvider(Now);
@@ -149,8 +138,8 @@ public sealed class OnlineInfoTests
     {
         var handler = new StubHttpHandler(r => r.RequestUri!.Host switch
         {
-            "en.wikipedia.org" => Bytes(Fixture("wikipedia-summary-messier42.json")),
-            "commons.wikimedia.org" => Bytes(Fixture("commons-extmetadata-m42.json")),
+            "en.wikipedia.org" => Bytes(OnlineFixtures.Bytes("wikipedia-summary-messier42.json")),
+            "commons.wikimedia.org" => Bytes(OnlineFixtures.Bytes("commons-extmetadata-m42.json")),
             _ => Status(HttpStatusCode.NotFound)
         });
         var cache = new MemoryCache();
@@ -178,7 +167,7 @@ public sealed class OnlineInfoTests
     public async Task MissingAndDisambiguationPages_AreSkipped_AndRemembered()
     {
         var handler = new StubHttpHandler(r => r.RequestUri!.AbsolutePath.EndsWith("Castor", StringComparison.Ordinal)
-            ? Bytes(Fixture("wikipedia-summary-disambiguation.json"))
+            ? Bytes(OnlineFixtures.Bytes("wikipedia-summary-disambiguation.json"))
             : Status(HttpStatusCode.NotFound));
         var cache = new MemoryCache();
         var service = new WikipediaSummaryService(new HttpClient(handler), cache, new ManualTimeProvider(Now));
@@ -218,7 +207,7 @@ public sealed class OnlineInfoTests
     public async Task Summary_WithoutALicense_KeepsTheTextButDropsTheImage()
     {
         var handler = new StubHttpHandler(r => r.RequestUri!.Host == "en.wikipedia.org"
-            ? Bytes(Fixture("wikipedia-summary-messier42.json"))
+            ? Bytes(OnlineFixtures.Bytes("wikipedia-summary-messier42.json"))
             : Status(HttpStatusCode.InternalServerError));
         var service = new WikipediaSummaryService(new HttpClient(handler), null, new ManualTimeProvider(Now));
 
@@ -235,7 +224,7 @@ public sealed class OnlineInfoTests
     {
         var handler = new StubHttpHandler(r => r.RequestUri!.Host == "cds.unistra.fr"
             ? throw new HttpRequestException("down")
-            : Bytes(Fixture("sesame-barnard33.xml")));
+            : Bytes(OnlineFixtures.Bytes("sesame-barnard33.xml")));
         var cache = new MemoryCache();
         var resolver = new SesameResolver(new HttpClient(handler), cache, new ManualTimeProvider(Now));
 
@@ -257,7 +246,7 @@ public sealed class OnlineInfoTests
     [Fact]
     public async Task Sesame_NothingFound_IsNull_AndInvalidNamesAreNotSent()
     {
-        var handler = new StubHttpHandler(_ => Bytes(Fixture("sesame-nothing.xml")));
+        var handler = new StubHttpHandler(_ => Bytes(OnlineFixtures.Bytes("sesame-nothing.xml")));
         var resolver = new SesameResolver(new HttpClient(handler), null, new ManualTimeProvider(Now));
 
         (await resolver.ResolveAsync("NoSuchObjectXyz123")).Should().BeNull();
@@ -275,7 +264,7 @@ public sealed class OnlineInfoTests
     {
         var cache = new MemoryCache();
         var clock = new ManualTimeProvider(Now);
-        var online = new SesameResolver(new HttpClient(new StubHttpHandler(_ => Bytes(Fixture("sesame-barnard33.xml")))), cache, clock);
+        var online = new SesameResolver(new HttpClient(new StubHttpHandler(_ => Bytes(OnlineFixtures.Bytes("sesame-barnard33.xml")))), cache, clock);
         await online.ResolveAsync("Barnard 33");
 
         clock.UtcNow += TimeSpan.FromDays(60);

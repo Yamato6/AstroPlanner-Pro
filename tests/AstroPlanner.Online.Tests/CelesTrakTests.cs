@@ -11,28 +11,17 @@ public sealed class CelesTrakTests
 {
     private static readonly DateTimeOffset Now = new(2026, 11, 21, 3, 0, 0, TimeSpan.Zero);
 
-    private static string Fixture(string name) => File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "fixtures", "online", name));
-
-    private sealed class MemoryCache : IOnlineCache
-    {
-        public Dictionary<(string, string), CachedResponse> Entries { get; } = [];
-        public CachedResponse? Read(string service, string key) => Entries.GetValueOrDefault((service, key));
-        public void Write(string service, string key, byte[] content, DateTime storedAtUtc) => Entries[(service, key)] = new(content, storedAtUtc);
-        public long SizeBytes => Entries.Values.Sum(e => (long)e.Content.Length);
-        public void Clear() => Entries.Clear();
-    }
-
     private static HttpResponseMessage Recorded(HttpRequestMessage request) =>
         new(HttpStatusCode.OK)
         {
-            Content = new StringContent(Fixture(request.RequestUri!.Query.Contains("GROUP=visual", StringComparison.Ordinal)
+            Content = new StringContent(OnlineFixtures.Text(request.RequestUri!.Query.Contains("GROUP=visual", StringComparison.Ordinal)
                 ? "celestrak-visual.json" : "celestrak-stations.json"))
         };
 
     [Fact]
     public void Omm_IsRead()
     {
-        var stations = CelesTrakService.ParseOmm(Fixture("celestrak-stations.json"));
+        var stations = CelesTrakService.ParseOmm(OnlineFixtures.Text("celestrak-stations.json"));
 
         stations.Should().HaveCount(17);
         var iss = stations.Single(s => s.CatalogNumber == 25544);

@@ -1,5 +1,4 @@
 using System.Buffers.Binary;
-using System.Security.Cryptography;
 using System.Text.Json;
 using Microsoft.Data.Sqlite;
 
@@ -121,7 +120,7 @@ public sealed class SkyDataBuilderTests : IDisposable
 
         foreach (var file in SkyDataBuilder.OutputFiles)
         {
-            Hash(Path.Combine(a, file)).Should().Be(Hash(Path.Combine(b, file)), file);
+            Fixtures.Sha256(Path.Combine(a, file)).Should().Be(Fixtures.Sha256(Path.Combine(b, file)), file);
         }
     }
 
@@ -148,6 +147,4 @@ public sealed class SkyDataBuilderTests : IDisposable
     [InlineData(null, null, null, "Cyg", null)]
     public void StarLabel_PrefersProperNames_ThenBayer_ThenFlamsteed(string? proper, string? bayer, int? flamsteed, string constellation, string? expected) =>
         SkyDataBuilder.StarLabel(proper, bayer, flamsteed, constellation).Should().Be(expected);
-
-    private static string Hash(string path) => Convert.ToHexStringLower(SHA256.HashData(File.ReadAllBytes(path)));
 }

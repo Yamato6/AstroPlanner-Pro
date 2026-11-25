@@ -26,9 +26,7 @@ public sealed class PlanetariumEndpointsTests
     {
         var shell = TestShell.Create(time: new ManualTimeProvider(WinterNightUtc),
             equipment: new FakeEquipmentRepository(EquipmentInventory.Demo), resolver: resolver);
-        await shell.LoadCommand.ExecuteAsync(null);
-        await shell.Targets.NightEphemeridesTask;
-        await shell.Targets.FeasibilityTask;
+        await shell.LoadAndSettleAsync();
         var ui = new SynchronizationContextUiDispatcher(null);
         var rpc = new RpcDispatcher(_sent.Add, (_, _) => { });
         var selection = new SelectionEndpoints(shell, ui, _selectionClock);

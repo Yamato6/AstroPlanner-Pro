@@ -11,9 +11,6 @@ namespace AstroPlanner.Core.Tests;
 /// </summary>
 public sealed class SkyFrameTests
 {
-    private static DateTime FromJulianDate(double jd) =>
-        new DateTime(2000, 1, 1, 12, 0, 0, DateTimeKind.Utc).AddDays(jd - 2451545.0);
-
     [Fact]
     public void Matrix3_RotationsAreOrthogonal_AndComposeLikeAngles()
     {
@@ -127,7 +124,7 @@ public sealed class SkyFrameTests
     public void MoonPhaseAngle_MatchesMeeusExample48a()
     {
         // Meeus 48.a: i = 69.0756° (our low-precision Moon is good to a few tenths of a degree).
-        var utc = FromJulianDate(2448724.5);
+        var utc = AstronomyMath.FromJulianDate(2448724.5);
 
         var phase = SolarSystemCalculator.GetMoonPhaseAngleDegrees(
             SolarSystemCalculator.GetMoonPosition(utc), SolarSystemCalculator.GetSunPosition(utc));

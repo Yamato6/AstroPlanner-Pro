@@ -36,9 +36,7 @@ public sealed class SessionPlannerTests
             time: new ManualTimeProvider(WinterNightUtc),
             equipment: new FakeEquipmentRepository(inventory ?? EquipmentInventory.Demo),
             atlas: new FakeAtlas(1.84));
-        await shell.LoadCommand.ExecuteAsync(null);
-        await shell.Targets.NightEphemeridesTask;
-        await shell.Targets.FeasibilityTask;
+        await shell.LoadAndSettleAsync();
         return shell;
     }
 
