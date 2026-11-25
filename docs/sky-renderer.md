@@ -54,9 +54,33 @@ One scene, three projections chosen by a uniform in the vertex shader (`skyClip`
 
 | Mode | Projection | Interaction |
 |---|---|---|
-| `dome` (key `1`) | perspective camera at the observer, ground and cardinal points | drag to look around, scroll = field of view 1°–120° |
+| `dome` (key `1`) | zenithal around the view direction, r(θ) = k·tan(θ/k): perspective (k = 1) up to a 60° field, rising smoothly to stereographic (k = 2) at 120° and beyond; ground and cardinal points | drag to look around (a fast drag coasts), scroll = field of view 0.25°–180° |
 | `allSky` (key `2`) | zenithal equidistant: r = (90° − alt)/90° · R, north up, **east left** (v1) | click to select |
 | `finder` | gnomonic around a J2000 direction, celestial north up, east left (homogeneous w = cos distance, so the GPU clips the far side) | drag to pan, scroll = 0.5°–60° |
+
+**Dome projection (R2a).** A pinhole (perspective) camera cannot open to 180°, so the dome
+uses r(θ) = k·tan(θ/k) around the view direction (`domeProject`/`domeInverse` in
+`render/projection.ts`, `domeClip` in the shaders). Up to a 60° field k = 1 and it is exactly the
+former three.js perspective camera (tested to 0.01 px); from 60° to 120° k rises with a
+smoothstep to 2 (stereographic, conformal, finite to 180°). Directions further than
+min(k·90°, 180°) − 1.1° from the center are culled (`vCull`: the vertex goes past the far plane
+and the fragments of its segment or triangle are discarded); the screen never reaches them.
+Segment tables are split into ≤ 2° pieces along their great circles so lines curve with the
+projection. The center scale is the same for every k (r'(0) = 1), so point sizes and picking
+radii use `domePixelsPerDegree`. Above a 110° field only the brightest star names are drawn and
+Messier, comet and asteroid labels are left out (selected and planned objects keep theirs); bright
+stars grow up to ×1.5 as the field narrows below 60°.
+
+**Camera motion (R2a, `render/camera.ts`).** `centerOn` flies instead of jumping: the direction
+follows the great circle and the field changes on a log scale, with ease-in-out, 300 ms to 1.5 s
+by distance; on a long turn the field opens a little in the middle. The target is recomputed every
+frame (the sky turns while flying); `viewChanged` is sent when the flight arrives. *Tracking*
+(`T`) keeps the selection centred in the dome while time runs (stars and deep-sky objects use
+their fixed J2000 vector, moving bodies their track); a manual pan stops it, and so do another
+selection, another mode or a lost position (`skyEvents` `tracking`). A fast drag leaves inertia
+(decay ≈ 250 ms, off with Settings › Sky › *Inertia when dragging*, `ui.setSkyInertia`). `Home`
+flies back to south, 30° up, 70° field, which is also the first-run view. In the v2 Sky tab the
+engine handles `T` and `Home` itself; the v3 page drives them through `skyControl`.
 
 The finder is equatorial (no horizon, no refraction, no alt-az lines); it labels named stars and
 magnitudes (recomputed only when the chart moves), and draws a compass, a scale bar and the center
