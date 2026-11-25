@@ -12,10 +12,15 @@ import {
   type MethodName,
   aboutResponseSchema,
   layoutSnapshotSchema,
+  nightTimelineSchema,
+  searchResultsSchema,
+  selectionSnapshotSchema,
   observerSnapshotSchema,
   skySnapshotSchema,
   uiSnapshotSchema,
   type LayoutSnapshot,
+  type NightTimeline,
+  type SelectionSnapshot,
   type ObserverSnapshot,
   type SkySnapshot,
   type UiSnapshot,
@@ -76,6 +81,11 @@ export class MockHost {
   /** The saved window layout: empty, like a first start (the golden file has a sample). */
   layout: LayoutSnapshot = { windows: [] };
   readonly openedLinks: string[] = [];
+  night: NightTimeline = nightTimelineSchema.parse(goldenPayload('night.get.response'));
+  /** M42 selected, as in the golden file. */
+  selection: SelectionSnapshot = selectionSnapshotSchema.parse(goldenPayload('selection.get.response'));
+  /** A name search.resolve finds online. */
+  resolvable = 'Sh2-155';
   /** While set, answers wait (the page's loading state); `release()` sends them. */
   private held: (() => Promise<void>)[] | null = null;
 
@@ -166,6 +176,56 @@ export class MockHost {
         return this.updateUi({ reduceTransparency: (payload as { enabled: boolean }).enabled });
       case 'ui.setFullScreen':
         return this.updateUi({ isFullScreen: (payload as { enabled: boolean }).enabled });
+      case 'sky.setTime':
+        return this.update({
+          clockUtcMilliseconds: (payload as { utcMilliseconds: number }).utcMilliseconds,
+          isPlaying: false,
+          rate: 0,
+        });
+      case 'night.get':
+        return this.night;
+      case 'selection.get':
+        return this.selection;
+      case 'selection.center':
+      case 'selection.frame':
+        return this.selection;
+      case 'selection.addToPlan':
+        return this.updateSelection(true);
+      case 'selection.removeFromPlan':
+        return this.updateSelection(false);
+      case 'selection.clear':
+        this.selection = { revision: this.selection.revision + 1, target: null };
+        return this.selection;
+      case 'search.query': {
+        const { text } = payload as { text: string };
+        const golden = searchResultsSchema.parse(goldenPayload('search.query.response'));
+        return {
+          results: golden.results.filter(
+            (r) =>
+              r.title.toLowerCase().includes(text.toLowerCase()) ||
+              r.id.toLowerCase().startsWith(text.toLowerCase()),
+          ),
+        };
+      }
+      case 'search.go': {
+        const { id } = payload as { id: string };
+        const golden = selectionSnapshotSchema.parse(goldenPayload('selection.get.response'));
+        this.selection = {
+          revision: this.selection.revision + 1,
+          target: golden.target
+            ? { ...golden.target, id, title: id === 'M42' ? golden.target.title : `${id} — object` }
+            : null,
+        };
+        return this.selection;
+      }
+      case 'search.resolve': {
+        const { text } = payload as { text: string };
+        return text === this.resolvable
+          ? goldenPayload('search.resolve.response')
+          : { found: false, message: `${text} was not found.` };
+      }
+      case 'ui.setAutoHide':
+        return this.updateUi({ autoHideToolbars: (payload as { enabled: boolean }).enabled });
       case 'layout.load':
         return this.layout;
       case 'layout.save':
@@ -199,6 +259,14 @@ export class MockHost {
   /** A layout as the golden file has it (Help docked right, Settings minimised). */
   static goldenLayout(): LayoutSnapshot {
     return layoutSnapshotSchema.parse(goldenPayload('layout.load.response'));
+  }
+
+  private updateSelection(isInPlan: boolean): SelectionSnapshot {
+    this.selection = {
+      revision: this.selection.revision + 1,
+      target: this.selection.target ? { ...this.selection.target, isInPlan } : null,
+    };
+    return this.selection;
   }
 
   private updateUi(change: Partial<UiSnapshot>): UiSnapshot {
