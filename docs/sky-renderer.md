@@ -96,21 +96,46 @@ point under the pointer stays under it), Shift + scroll rotates it (1°, Ctrl 5�
 reports the result with `fovChanged`, which C# keeps without echoing it back. Until equipment
 profiles arrive (M3) the sensor and focal length are typed in the Sky panel.
 
-**Sky brightness.** `SkyAppearanceCalculator` samples, like the body tracks (±12 h, every 10 min),
-the zenith brightness in mag/arcsec² = site + twilight + Moon added in linear units, and the
-naked-eye limiting magnitude NELM = 7.93 − 5·log10(10^(4.316 − SQM/5) + 1). This is a **display
-heuristic**, not the photometric model of the feasibility engine (Krisciunas & Schaefer, M3):
+**Sky brightness (R2b, spec §8.2).** The sky is the feasibility engine's sky. Core
+(`SkyAppearanceCalculator`) samples `SkyBackground.At` at the zenith, like the body tracks (±12 h,
+every 10 min): the total, the naked-eye limit NELM = 7.93 − 5·log10(10^(4.316 − SQM/5) + 1), and
+its parts — twilight (`SkyBrightness.Twilight`: 4.0 with the Sun ≥ 10°, 7.0 at 0°, 12.0 at −6°,
+17.5 at −12°, nothing below −18°) and Krisciunas & Schaefer moonlight — with the site's SQM
+(manual, else the atlas, else 22.0), the site's extinction k and the site-glow brightening per
+air mass (the feasibility constants, the user's calibration included). `setSkyAppearance`
+carries them (an absent part is 99). The renderer only spreads them over the sky with the same
+laws (`render/photometry.ts`, mirrored in GLSL; `test/photometry.test.ts` rebuilds
+`SkyBackground.At` from the zenith levels within 0.05 mag, `tests/fixtures/bridge/photometry.json`):
 
-- site: the SQM typed for the active location, else a natural sky of 22.0;
-- twilight: 4.0 (Sun ≥ 10°), 7.0 (0°), 12.0 (−6°), 17.5 (−12°), 23.0 (−18°), linear in between,
-  nothing below −18°;
-- Moon: 18.0 for a full Moon at the zenith, fainter by the Moon's magnitude change with phase angle
-  (Allen) and by sin(altitude), nothing when it is down.
+- site glow × (1 + a·(X − 1)), X the Kasten & Young air mass capped at 5.6 (≈ 10°);
+- moonlight × the K&S direction terms f(ρ)·(1 − 10^(−0.4·k·X(Z))) relative to the zenith, plus a
+  small glare halo around the Moon;
+- twilight × its *shape*: single scattering of sunlight (Rayleigh + Mie + ozone, `render/atmosphere.ts`,
+  after Nishita et al. 1993 and the MIT glsl-atmosphere/three.js `Sky`) evaluated on the GPU into a
+  table (view altitude × azimuth from the Sun) whenever the Sun moves 0.05°, normalised to the
+  zenith; frozen below a Sun at −6° (the Earth's shadow leaves the zenith unlit) and with 15 % of
+  the zenith light added everywhere as a stand-in for multiple scattering.
 
-The renderer interpolates the samples and maps them to presentation only: the background (zenith
-color, ~1.2 mag brighter toward the horizon), the faintest star (NELM + 2, plus the zoom bonus),
-the deep-sky limit (minus the magnitudes lost against a dark sky) and the Milky Way opacity (full
-at SQM ≥ 21, gone at ≤ 19). The *Sky brightness* layer turns it off.
+A full-screen pass (the inverse of the dome or all-sky projection per pixel) turns the total into
+the display curve (the luminance of the former colour stops, so a dark sky still looks as before)
+coloured by what lights it: navy for the natural sky, the light-pollution tint (sodium, LED or
+neutral; Settings › Sky) for the artificial part, blue-grey for moonlight, the scattering colour for
+twilight and daylight (a display white balance turns the high sky blue; the horizon keeps its
+colours). Stars and deep-sky objects are dimmed by k·X (X ≤ 40) and reddened, and each is limited
+by the sky around it: stars to that NELM + 2 (plus the zoom bonus), deep-sky objects by the
+magnitudes lost against a dark sky. The HUD shows the limit at the middle of the view less its
+extinction; picking, labels and the finder use the zenith limit (the darkest sky). The ground
+follows the light at the horizon. The Milky Way outline keeps its rule (full at SQM ≥ 21, gone at
+≤ 19). The *Sky brightness* layer (key `A`) turns all of it off: a dark natural sky, no extinction.
+
+**Quality (Settings › Sky › Atmosphere quality).** Low 32×16 table, 8 + 4 integration samples;
+Medium (default) 64×32, 16 + 6; High 128×64, 32 + 8, and twinkling stars may be turned on
+(stronger toward the horizon). The table is redrawn only when the Sun moves, so every level costs
+about the same per frame; Low is for integrated GPUs (not measurable on the reference PC, which has
+none). If the p95 frame time stays over 20 ms for 5 s the sky drops one level by itself and the
+page says so (spec §7.4). Quality, tint and twinkling are page preferences (`ui.setSkyQuality`,
+`ui.setLightPollutionTint`, `ui.setScintillation`) applied through `skyControl`; the v2 Sky tab
+uses Medium, LED and no twinkling.
 
 **Horizon profile.** The site's profile (Core `HorizonMask`, edited in Locations) comes with
 `setObserver`; the renderer interpolates it exactly like `HorizonMask.AltitudeAt` and draws it as
@@ -138,7 +163,7 @@ channel (`v: 2`: requests, responses, events) shares the pipe; the engine ignore
 | `centerOn` | turn the view to a J2000 direction (optionally change the FOV) |
 | `setViewMode`, `setTheme` | dome / all-sky / finder; dark / night (an SVG colour matrix in `index.html` keeps each pixel's luminance in the red channel only) |
 | `setFov` | camera frame: visible, width and height (degrees), rotation, center (J2000, or null = middle of the view), label |
-| `setSkyAppearance` | sampled zenith brightness and limiting magnitude (start, step, two arrays) |
+| `setSkyAppearance` | sampled zenith brightness, limiting magnitude, twilight and moonlight (start, step, four arrays), the site's SQM, extinction and brightening per air mass |
 
 | Renderer → C# | |
 |---|---|

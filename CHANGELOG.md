@@ -17,7 +17,19 @@ versions follow [Semantic Versioning](https://semver.org/). Versions up to 1.0.0
 - Sky: a fast drag leaves the sky coasting for a moment (planetarium UI: Settings › Sky ›
   *Inertia when dragging*). `Home` returns to the south horizon, 30° up, with a 70° field.
 
+- Sky: a realistic atmosphere. Daylight and twilight are coloured by sunlight scattered in the
+  air (blue by day, orange toward a setting Sun, deep blue in twilight), moonlight and light
+  pollution brighten the sky toward the horizon and around the Moon, and stars dim and redden near
+  the horizon. `A` turns it on and off.
+- Sky (planetarium UI): Settings › Sky › *Atmosphere quality* (Low, Medium, High), *Light pollution
+  colour* (sodium, LED, neutral) and *Twinkling stars* (High). When frames get slow the sky lowers
+  its quality by itself and says so.
+
 ### Changed
+- Sky: the sky's brightness now comes from the same model as the capture feasibility (site sky,
+  Krisciunas & Schaefer moonlight, twilight), so what the sky shows and what the planner computes
+  agree. Moonlight is brighter or fainter than before depending on the Moon's height and distance;
+  each star is hidden by the sky around it rather than by the zenith alone.
 - Sky: the first view of a new installation looks 30° up (was 35°). In very wide views only the
   brightest names, the planets, the Sun and the Moon are labelled; bright stars grow a little as
   the field narrows.
