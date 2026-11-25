@@ -39,11 +39,15 @@ public sealed class AppEndpoints
 
         ui ??= SynchronizationContextUiDispatcher.ForCurrentThread();
         time ??= TimeProvider.System;
+        var selection = new SelectionEndpoints(shell, ui, time);
         _modules =
         [
             new AppInfoEndpoints(shell.Settings.Theme, AppBuild.Version, host),
             new ObserverEndpoints(shell.Observer, ui, time),
             new SkyEndpoints(shell, ui, time),
+            new NightEndpoints(shell.Observer, shell.Weather, ui, time),
+            selection,
+            new SearchEndpoints(shell, selection),
             new InterfaceEndpoints(shell.Settings, store, host, logger, ui, time),
             new LayoutEndpoints(store, logger),
         ];

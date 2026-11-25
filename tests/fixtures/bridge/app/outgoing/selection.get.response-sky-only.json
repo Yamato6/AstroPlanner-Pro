@@ -1,0 +1,28 @@
+{
+  "v": 2,
+  "kind": "res",
+  "id": 16,
+  "type": "selection.get",
+  "payload": {
+    "revision": 4,
+    "target": {
+      "id": null,
+      "title": "Moon",
+      "typeName": null,
+      "constellation": null,
+      "magnitude": null,
+      "coordinates": null,
+      "altitudeDegrees": null,
+      "azimuthDegrees": null,
+      "transitLocal": null,
+      "maximumAltitudeDegrees": null,
+      "bestWindow": null,
+      "verdict": null,
+      "verdictText": null,
+      "score": null,
+      "recommended": null,
+      "reasons": [],
+      "isInPlan": false
+    }
+  }
+}

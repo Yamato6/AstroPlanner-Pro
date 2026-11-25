@@ -7,6 +7,7 @@
     "revision": 0,
     "theme": "dark",
     "reduceTransparency": false,
+    "autoHideToolbars": false,
     "isFullScreen": false
   }
 }
