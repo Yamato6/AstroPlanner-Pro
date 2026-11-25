@@ -1,0 +1,9 @@
+{
+  "v": 2,
+  "kind": "req",
+  "id": 22,
+  "type": "ui.setTheme",
+  "payload": {
+    "theme": "night"
+  }
+}

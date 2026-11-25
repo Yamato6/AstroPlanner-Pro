@@ -165,6 +165,57 @@ public sealed class SqliteStoreTests : TempFolderTest
     }
 
     [Fact]
+    public void WindowLayouts_AreEmptyUntilSaved_ThenSaveReplacesThem()
+    {
+        var store = new SqliteInterfaceStore(Database());
+        store.LoadLayouts().Should().BeEmpty();
+
+        store.SaveLayouts(
+        [
+            new WindowLayout("settings", true, false, WindowArrangement.DockRight, 120, 80, 420, 560, 380, 3),
+            new WindowLayout("help", false, false, WindowArrangement.Floating, -40, 60, 520, 600, 360, 1),
+        ]);
+        store.SaveLayouts(
+        [
+            new WindowLayout("help", true, true, WindowArrangement.Maximized, -40, 60, 520, 600, 360, 2),
+            new WindowLayout("help", true, false, WindowArrangement.Floating, 10, 20, 500, 400, 360, 4),
+        ]);
+
+        // In z-order; the last of two rows for one window wins.
+        new SqliteInterfaceStore(Database()).LoadLayouts().Should().Equal(
+            new WindowLayout("help", true, false, WindowArrangement.Floating, 10, 20, 500, 400, 360, 4));
+    }
+
+    [Fact]
+    public void WindowLayouts_WithAnArrangementFromANewerVersion_FloatInstead()
+    {
+        var database = Database();
+        new SqliteInterfaceStore(database).SaveLayouts([new WindowLayout("help", true, false, WindowArrangement.DockLeft, 0, 0, 400, 300, 360, 1)]);
+        using (var connection = database.Open())
+        using (var command = connection.CreateCommand())
+        {
+            command.CommandText = "UPDATE window_layouts SET arrangement = 'Tabbed'";
+            command.ExecuteNonQuery();
+        }
+
+        new SqliteInterfaceStore(database).LoadLayouts().Single().Arrangement.Should().Be(WindowArrangement.Floating);
+    }
+
+    [Fact]
+    public void InterfacePreferences_DefaultUntilSaved_ThenRoundTrip_AndSurviveDamage()
+    {
+        var database = Database();
+        var store = new SqliteInterfaceStore(database);
+        store.LoadPreferences().ReduceTransparency.Should().BeFalse();
+
+        store.SavePreferences(new InterfacePreferences { ReduceTransparency = true });
+        new SqliteInterfaceStore(Database()).LoadPreferences().ReduceTransparency.Should().BeTrue();
+
+        SettingsTable.Write(database, "ui", "{ broken");
+        store.LoadPreferences().Should().Be(new InterfacePreferences());
+    }
+
+    [Fact]
     public void Plan_KeepsOrderAndNotes_AndSaveReplacesIt()
     {
         var service = new SqlitePlanService(Database());

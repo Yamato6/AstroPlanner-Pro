@@ -24,6 +24,37 @@ export const appInfoResponseSchema = z.strictObject({
 });
 export type AppInfoResponse = z.infer<typeof appInfoResponseSchema>;
 
+export const noParametersSchema = z.strictObject({});
+export type NoParameters = z.infer<typeof noParametersSchema>;
+
+export const aboutCreditSchema = z.strictObject({
+  title: z.string().min(1).max(100),
+  text: z.string().min(1).max(2000),
+  url: z.string().min(1).max(200).nullable(),
+});
+export type AboutCredit = z.infer<typeof aboutCreditSchema>;
+
+export const aboutResponseSchema = z.strictObject({
+  version: z.string().min(1).max(32),
+  description: z.string().min(1).max(2000),
+  credits: z.array(aboutCreditSchema).min(0).max(16),
+  yourData: z.string().min(1).max(1000),
+  dataFolder: z.string().min(1).max(1024),
+  license: z.string().min(1).max(500),
+  repositoryUrl: z.string().min(1).max(200),
+});
+export type AboutResponse = z.infer<typeof aboutResponseSchema>;
+
+export const openLinkRequestSchema = z.strictObject({
+  url: z.string().min(1).max(2048),
+});
+export type OpenLinkRequest = z.infer<typeof openLinkRequestSchema>;
+
+export const openLinkResponseSchema = z.strictObject({
+  opened: z.boolean(),
+});
+export type OpenLinkResponse = z.infer<typeof openLinkResponseSchema>;
+
 export const observerGetRequestSchema = z.strictObject({});
 export type ObserverGetRequest = z.infer<typeof observerGetRequestSchema>;
 
@@ -60,9 +91,6 @@ export const observerSnapshotSchema = z.strictObject({
   inputError: z.string().min(0).max(500).nullable(),
 });
 export type ObserverSnapshot = z.infer<typeof observerSnapshotSchema>;
-
-export const noParametersSchema = z.strictObject({});
-export type NoParameters = z.infer<typeof noParametersSchema>;
 
 export const skyLayerStateSchema = z.strictObject({
   key: z.enum(['stars', 'constellationLines', 'constellationNames', 'constellationBoundaries', 'milkyWay', 'deepSky', 'bodies', 'satellites', 'labels', 'altAzGrid', 'equatorialGrid', 'ecliptic', 'meridian', 'ground', 'skyBrightness']),
@@ -112,6 +140,43 @@ export const skySetViewModeRequestSchema = z.strictObject({
 });
 export type SkySetViewModeRequest = z.infer<typeof skySetViewModeRequestSchema>;
 
+export const uiSnapshotSchema = z.strictObject({
+  revision: z.int().min(0).max(2147483647),
+  theme: z.enum(['dark', 'night']),
+  reduceTransparency: z.boolean(),
+  isFullScreen: z.boolean(),
+});
+export type UiSnapshot = z.infer<typeof uiSnapshotSchema>;
+
+export const uiSetThemeRequestSchema = z.strictObject({
+  theme: z.enum(['dark', 'night']),
+});
+export type UiSetThemeRequest = z.infer<typeof uiSetThemeRequestSchema>;
+
+export const switchRequestSchema = z.strictObject({
+  enabled: z.boolean(),
+});
+export type SwitchRequest = z.infer<typeof switchRequestSchema>;
+
+export const windowLayoutStateSchema = z.strictObject({
+  id: z.enum(['tonight', 'targets', 'plan', 'logbook', 'equipment', 'sites', 'milkyWay', 'settings', 'help']),
+  isOpen: z.boolean(),
+  isMinimized: z.boolean(),
+  arrangement: z.enum(['floating', 'maximized', 'dockLeft', 'dockRight']),
+  x: z.int().min(-20000).max(20000),
+  y: z.int().min(-20000).max(20000),
+  width: z.int().min(1).max(20000),
+  height: z.int().min(1).max(20000),
+  dockWidth: z.int().min(1).max(20000),
+  zOrder: z.int().min(0).max(10000),
+});
+export type WindowLayoutState = z.infer<typeof windowLayoutStateSchema>;
+
+export const layoutSnapshotSchema = z.strictObject({
+  windows: z.array(windowLayoutStateSchema).min(0).max(32),
+});
+export type LayoutSnapshot = z.infer<typeof layoutSnapshotSchema>;
+
 export const themeChangedEventSchema = z.strictObject({
   theme: z.enum(['dark', 'night']),
 });
@@ -127,6 +192,11 @@ export const skyChangedEventSchema = z.strictObject({
 });
 export type SkyChangedEvent = z.infer<typeof skyChangedEventSchema>;
 
+export const uiChangedEventSchema = z.strictObject({
+  revision: z.int().min(0).max(2147483647),
+});
+export type UiChangedEvent = z.infer<typeof uiChangedEventSchema>;
+
 export const rpcErrorPayloadSchema = z.strictObject({
   code: z.enum(['bad-request', 'unknown-method', 'timeout', 'cancelled', 'too-large', 'busy', 'internal']),
   message: z.string().min(1).max(1024),
@@ -136,6 +206,9 @@ export type RpcErrorPayload = z.infer<typeof rpcErrorPayloadSchema>;
 /** Methods the web UI can call: request and response contracts. */
 export const rpcMethods = {
   'app.info': { request: appInfoRequestSchema, response: appInfoResponseSchema },
+  'app.about': { request: noParametersSchema, response: aboutResponseSchema },
+  'app.openLink': { request: openLinkRequestSchema, response: openLinkResponseSchema },
+  'app.openDataFolder': { request: noParametersSchema, response: noParametersSchema },
   'observer.get': { request: observerGetRequestSchema, response: observerSnapshotSchema },
   'sky.get': { request: noParametersSchema, response: skySnapshotSchema },
   'sky.play': { request: noParametersSchema, response: skySnapshotSchema },
@@ -145,6 +218,12 @@ export const rpcMethods = {
   'sky.setRate': { request: skySetRateRequestSchema, response: skySnapshotSchema },
   'sky.setLayer': { request: skySetLayerRequestSchema, response: skySnapshotSchema },
   'sky.setViewMode': { request: skySetViewModeRequestSchema, response: skySnapshotSchema },
+  'ui.get': { request: noParametersSchema, response: uiSnapshotSchema },
+  'ui.setTheme': { request: uiSetThemeRequestSchema, response: uiSnapshotSchema },
+  'ui.setReduceTransparency': { request: switchRequestSchema, response: uiSnapshotSchema },
+  'ui.setFullScreen': { request: switchRequestSchema, response: uiSnapshotSchema },
+  'layout.load': { request: noParametersSchema, response: layoutSnapshotSchema },
+  'layout.save': { request: layoutSnapshotSchema, response: noParametersSchema },
 } as const;
 
 /** Events the host pushes: payload contracts. */
@@ -152,4 +231,5 @@ export const appEvents = {
   'theme.changed': themeChangedEventSchema,
   'observer.changed': observerChangedEventSchema,
   'sky.changed': skyChangedEventSchema,
+  'ui.changed': uiChangedEventSchema,
 } as const;

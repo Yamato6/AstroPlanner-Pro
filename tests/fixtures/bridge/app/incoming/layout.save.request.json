@@ -1,0 +1,22 @@
+{
+  "v": 2,
+  "kind": "req",
+  "id": 21,
+  "type": "layout.save",
+  "payload": {
+    "windows": [
+      {
+        "id": "settings",
+        "isOpen": true,
+        "isMinimized": false,
+        "arrangement": "floating",
+        "x": 220,
+        "y": 120,
+        "width": 440,
+        "height": 520,
+        "dockWidth": 380,
+        "zOrder": 1
+      }
+    ]
+  }
+}

@@ -1,0 +1,34 @@
+{
+  "v": 2,
+  "kind": "res",
+  "id": 10,
+  "type": "layout.load",
+  "payload": {
+    "windows": [
+      {
+        "id": "help",
+        "isOpen": true,
+        "isMinimized": false,
+        "arrangement": "dockRight",
+        "x": 160,
+        "y": 90,
+        "width": 520,
+        "height": 620,
+        "dockWidth": 400,
+        "zOrder": 2
+      },
+      {
+        "id": "settings",
+        "isOpen": true,
+        "isMinimized": true,
+        "arrangement": "floating",
+        "x": 220,
+        "y": 120,
+        "width": 440,
+        "height": 520,
+        "dockWidth": 380,
+        "zOrder": 1
+      }
+    ]
+  }
+}

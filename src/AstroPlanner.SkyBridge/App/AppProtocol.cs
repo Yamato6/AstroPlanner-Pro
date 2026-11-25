@@ -23,6 +23,14 @@ namespace AstroPlanner.SkyBridge.App;
 [JsonSerializable(typeof(SkySetViewModeRequest))]
 [JsonSerializable(typeof(SkyChangedEvent))]
 [JsonSerializable(typeof(ThemeChangedEvent))]
+[JsonSerializable(typeof(UiSnapshot))]
+[JsonSerializable(typeof(UiSetThemeRequest))]
+[JsonSerializable(typeof(SwitchRequest))]
+[JsonSerializable(typeof(UiChangedEvent))]
+[JsonSerializable(typeof(LayoutSnapshot))]
+[JsonSerializable(typeof(AboutResponse))]
+[JsonSerializable(typeof(OpenLinkRequest))]
+[JsonSerializable(typeof(OpenLinkResponse))]
 [JsonSerializable(typeof(RpcErrorPayload))]
 public sealed partial class AppJsonContext : JsonSerializerContext;
 
@@ -80,8 +88,39 @@ public static class AppMethods
     public static RpcMethod<SkySetViewModeRequest, SkySnapshot> SkySetViewMode { get; } =
         new("sky.setViewMode", AppJsonContext.Default.SkySetViewModeRequest, AppJsonContext.Default.SkySnapshot);
 
+    public static RpcMethod<NoParameters, AboutResponse> AppAbout { get; } =
+        new("app.about", AppJsonContext.Default.NoParameters, AppJsonContext.Default.AboutResponse);
+
+    public static RpcMethod<OpenLinkRequest, OpenLinkResponse> AppOpenLink { get; } =
+        new("app.openLink", AppJsonContext.Default.OpenLinkRequest, AppJsonContext.Default.OpenLinkResponse);
+
+    public static RpcMethod<NoParameters, NoParameters> AppOpenDataFolder { get; } =
+        new("app.openDataFolder", AppJsonContext.Default.NoParameters, AppJsonContext.Default.NoParameters);
+
+    public static RpcMethod<NoParameters, UiSnapshot> UiGet { get; } =
+        new("ui.get", AppJsonContext.Default.NoParameters, AppJsonContext.Default.UiSnapshot);
+
+    public static RpcMethod<UiSetThemeRequest, UiSnapshot> UiSetTheme { get; } =
+        new("ui.setTheme", AppJsonContext.Default.UiSetThemeRequest, AppJsonContext.Default.UiSnapshot);
+
+    public static RpcMethod<SwitchRequest, UiSnapshot> UiSetReduceTransparency { get; } =
+        new("ui.setReduceTransparency", AppJsonContext.Default.SwitchRequest, AppJsonContext.Default.UiSnapshot);
+
+    public static RpcMethod<SwitchRequest, UiSnapshot> UiSetFullScreen { get; } =
+        new("ui.setFullScreen", AppJsonContext.Default.SwitchRequest, AppJsonContext.Default.UiSnapshot);
+
+    public static RpcMethod<NoParameters, LayoutSnapshot> LayoutLoad { get; } =
+        new("layout.load", AppJsonContext.Default.NoParameters, AppJsonContext.Default.LayoutSnapshot);
+
+    public static RpcMethod<LayoutSnapshot, NoParameters> LayoutSave { get; } =
+        new("layout.save", AppJsonContext.Default.LayoutSnapshot, AppJsonContext.Default.NoParameters);
+
     public static IReadOnlyList<IRpcMethod> All { get; } =
-        [AppInfo, ObserverGet, SkyGet, SkyPlay, SkyPause, SkyNow, SkyStep, SkySetRate, SkySetLayer, SkySetViewMode];
+    [
+        AppInfo, AppAbout, AppOpenLink, AppOpenDataFolder, ObserverGet,
+        SkyGet, SkyPlay, SkyPause, SkyNow, SkyStep, SkySetRate, SkySetLayer, SkySetViewMode,
+        UiGet, UiSetTheme, UiSetReduceTransparency, UiSetFullScreen, LayoutLoad, LayoutSave,
+    ];
 
     private static RpcMethod<NoParameters, SkySnapshot> Sky(string name) =>
         new(name, AppJsonContext.Default.NoParameters, AppJsonContext.Default.SkySnapshot);
@@ -99,5 +138,8 @@ public static class AppEvents
     public static AppEvent<SkyChangedEvent> SkyChanged { get; } =
         new("sky.changed", AppJsonContext.Default.SkyChangedEvent);
 
-    public static IReadOnlyList<IAppEvent> All { get; } = [ThemeChanged, ObserverChanged, SkyChanged];
+    public static AppEvent<UiChangedEvent> UiChanged { get; } =
+        new("ui.changed", AppJsonContext.Default.UiChangedEvent);
+
+    public static IReadOnlyList<IAppEvent> All { get; } = [ThemeChanged, ObserverChanged, SkyChanged, UiChanged];
 }

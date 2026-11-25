@@ -1,0 +1,26 @@
+{
+  "v": 2,
+  "kind": "res",
+  "id": 12,
+  "type": "app.about",
+  "payload": {
+    "version": "2.0.0",
+    "description": "Astrophotography and observation planner.",
+    "credits": [
+      {
+        "title": "Cloud forecast",
+        "text": "Open-Meteo.com (data under the CC BY 4.0 license)",
+        "url": "https://open-meteo.com/"
+      },
+      {
+        "title": "Catalogs",
+        "text": "OpenNGC by Mattia Verga and the HYG database, both under CC BY-SA 4.0.",
+        "url": null
+      }
+    ],
+    "yourData": "Settings, plan, logbook and logs are stored only on this computer.",
+    "dataFolder": "C:\\Users\\someone\\AppData\\Local\\AstroPlannerPro",
+    "license": "\u00A9 2026 Yamato6. Free software under the MIT license.",
+    "repositoryUrl": "https://github.com/Yamato6/AstroPlanner-Pro"
+  }
+}

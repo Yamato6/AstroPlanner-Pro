@@ -12,7 +12,7 @@ public sealed class AppEndpointsTests
     {
         var shell = TestShell.Create();
         var sent = new List<string>();
-        var endpoints = new AppEndpoints(shell, sent.Add, new NullLogger());
+        var endpoints = new AppEndpoints(shell, new FakeAppHost(), new FakeInterfaceStore(), sent.Add, new NullLogger());
 
         await endpoints.Dispatcher.HandleAsync("""{"v":2,"kind":"req","id":1,"type":"app.info","payload":{}}""");
 
@@ -27,7 +27,7 @@ public sealed class AppEndpointsTests
     {
         var shell = TestShell.Create();
         var sent = new List<string>();
-        var endpoints = new AppEndpoints(shell, sent.Add, new NullLogger());
+        var endpoints = new AppEndpoints(shell, new FakeAppHost(), new FakeInterfaceStore(), sent.Add, new NullLogger());
 
         shell.IsNightTheme = true;
         endpoints.Stop();
@@ -43,7 +43,7 @@ public sealed class AppEndpointsTests
     {
         var shell = TestShell.Create();
         var sent = new List<string>();
-        var endpoints = new AppEndpoints(shell, sent.Add, new NullLogger());
+        var endpoints = new AppEndpoints(shell, new FakeAppHost(), new FakeInterfaceStore(), sent.Add, new NullLogger());
 
         foreach (var method in AppMethods.All)
         {

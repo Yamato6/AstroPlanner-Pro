@@ -1,0 +1,9 @@
+{
+  "v": 2,
+  "kind": "res",
+  "id": 13,
+  "type": "app.openLink",
+  "payload": {
+    "opened": true
+  }
+}

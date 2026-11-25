@@ -1,5 +1,6 @@
 using AstroPlanner.Application.Bridge;
 using AstroPlanner.Application.ViewModels;
+using AstroPlanner.Core.Interfaces;
 using AstroPlanner.SkyBridge.App;
 
 namespace AstroPlanner.UI.Services;
@@ -13,11 +14,16 @@ public sealed class AppEndpoints
 {
     private readonly IEndpointModule[] _modules;
 
+    /// <param name="host">What only the window can do (full screen, data folder, browser).</param>
+    /// <param name="store">The planetarium UI's window layout and preferences.</param>
     /// <param name="ui">The view models' thread; defaults to the calling (UI) thread.</param>
     /// <param name="time">Clock of the change-event coalescing; defaults to the system clock.</param>
-    public AppEndpoints(ShellViewModel shell, Action<string> send, IAppLogger logger, IUiDispatcher? ui = null, TimeProvider? time = null)
+    public AppEndpoints(ShellViewModel shell, IAppHost host, IInterfaceStore store, Action<string> send, IAppLogger logger,
+        IUiDispatcher? ui = null, TimeProvider? time = null)
     {
         ArgumentNullException.ThrowIfNull(shell);
+        ArgumentNullException.ThrowIfNull(host);
+        ArgumentNullException.ThrowIfNull(store);
         ArgumentNullException.ThrowIfNull(logger);
         Dispatcher = new RpcDispatcher(send, (message, exception) =>
         {
@@ -35,9 +41,11 @@ public sealed class AppEndpoints
         time ??= TimeProvider.System;
         _modules =
         [
-            new AppInfoEndpoints(shell.Settings.Theme, AppBuild.Version),
+            new AppInfoEndpoints(shell.Settings.Theme, AppBuild.Version, host),
             new ObserverEndpoints(shell.Observer, ui, time),
             new SkyEndpoints(shell, ui, time),
+            new InterfaceEndpoints(shell.Settings, store, host, logger, ui, time),
+            new LayoutEndpoints(store, logger),
         ];
         foreach (var module in _modules)
         {

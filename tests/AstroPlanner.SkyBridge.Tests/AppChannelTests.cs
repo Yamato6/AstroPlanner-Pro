@@ -53,7 +53,33 @@ public sealed class AppChannelTests
         ["sky.play.response-sky-only-selection"] = AppMessageCodec.Response(7, AppMethods.SkyPlay.Name,
             SampleSky with { IsPlaying = true, Rate = 600, Selection = new SkySelection(null, "Moon", null) }, AppMethods.SkyPlay.Response),
         ["sky.changed.event"] = AppMessageCodec.Event(AppEvents.SkyChanged, new SkyChangedEvent(8)),
+        ["ui.get.response"] = AppMessageCodec.Response(9, AppMethods.UiGet.Name,
+            new UiSnapshot(0, AppThemes.Dark, false, false), AppMethods.UiGet.Response),
+        ["ui.changed.event"] = AppMessageCodec.Event(AppEvents.UiChanged, new UiChangedEvent(1)),
+        ["layout.load.response"] = AppMessageCodec.Response(10, AppMethods.LayoutLoad.Name, SampleLayout, AppMethods.LayoutLoad.Response),
+        ["layout.save.response"] = AppMessageCodec.Response(11, AppMethods.LayoutSave.Name, new NoParameters(), AppMethods.LayoutSave.Response),
+        ["app.about.response"] = AppMessageCodec.Response(12, AppMethods.AppAbout.Name, SampleAbout, AppMethods.AppAbout.Response),
+        ["app.openLink.response"] = AppMessageCodec.Response(13, AppMethods.AppOpenLink.Name, new OpenLinkResponse(true), AppMethods.AppOpenLink.Response),
     };
+
+    // Help open and docked right, Settings minimised to the rail.
+    private static readonly LayoutSnapshot SampleLayout = new(
+    [
+        new WindowLayoutState(WindowIds.Help, true, false, WindowArrangements.DockRight, 160, 90, 520, 620, 400, 2),
+        new WindowLayoutState(WindowIds.Settings, true, true, WindowArrangements.Floating, 220, 120, 440, 520, 380, 1),
+    ]);
+
+    private static readonly AboutResponse SampleAbout = new(
+        "2.0.0",
+        "Astrophotography and observation planner.",
+        [
+            new AboutCredit("Cloud forecast", "Open-Meteo.com (data under the CC BY 4.0 license)", "https://open-meteo.com/"),
+            new AboutCredit("Catalogs", "OpenNGC by Mattia Verga and the HYG database, both under CC BY-SA 4.0.", null),
+        ],
+        "Settings, plan, logbook and logs are stored only on this computer.",
+        @"C:\Users\someone\AppData\Local\AstroPlannerPro",
+        "© 2026 Yamato6. Free software under the MIT license.",
+        "https://github.com/Yamato6/AstroPlanner-Pro");
 
     [Fact]
     public void GeneratedTypeScriptContracts_AreUpToDate()
