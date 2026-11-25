@@ -1,3 +1,4 @@
+using AstroPlanner.Core.Algorithms;
 using AstroPlanner.Core.Imaging;
 using AstroPlanner.Core.Models;
 using AstroPlanner.Core.Sky;
@@ -90,23 +91,24 @@ public sealed class SkyQualityTests
     }
 
     [Fact]
-    public void Moonlight_IsBrightestForAHighFullMoon()
+    public void Appearance_IsTheFeasibilityModelAtTheZenith()
     {
-        SkyBrightness.Moonlight(90, 0).Should().BeApproximately(18.0, 1e-9);
-        SkyBrightness.Moonlight(-1, 0).Should().Be(double.PositiveInfinity);
-        // A quarter Moon (phase angle 90ﾂｰ) is 竕・2.4 mag fainter than a full one.
-        SkyBrightness.Moonlight(90, 90).Should().BeApproximately(18.0 + 0.026 * 90 + 4e-9 * Math.Pow(90, 4), 1e-9);
-        SkyBrightness.Moonlight(30, 0).Should().BeApproximately(18.0 + 2.5 * Math.Log10(2), 1e-9);
-        SkyBrightness.Moonlight(10, 0).Should().BeGreaterThan(SkyBrightness.Moonlight(40, 0));
-    }
+        // Aguascalientes, 2026-03-03 06:00 UTC: Moon full (03-03) and high, Sun far below.
+        var observer = new ObserverLocation(21.88, -102.29, 1888);
+        var utc = new DateTime(2026, 3, 3, 6, 0, 0, DateTimeKind.Utc);
 
-    [Fact]
-    public void Zenith_IsTheSiteSkyPlusTwilightAndMoon()
-    {
-        SkyBrightness.Zenith(null, -30, -10, 0).Should().BeApproximately(SkyBrightness.NaturalSqm, 1e-12);
-        SkyBrightness.Zenith(19.5, -30, -10, 0).Should().BeApproximately(19.5, 1e-12);
-        SkyBrightness.Zenith(21.5, -30, 90, 0).Should().BeApproximately(SkyBrightness.Combine(21.5, 18.0), 1e-12);
-        SkyBrightness.Zenith(21.5, 5, -10, 0).Should().BeLessThan(7.0);
+        var sample = SkyAppearanceCalculator.At(observer, utc, siteSqm: 21.5, extinction: 0.2);
+
+        sample.MoonAltitudeDegrees.Should().BeGreaterThan(40);
+        var moon = SolarSystemCalculator.GetMoonPosition(utc);
+        var sun = SolarSystemCalculator.GetSunPosition(utc);
+        var expected = SkyBackground.At(21.5, 90, sample.SunAltitudeDegrees, true, sample.MoonAltitudeDegrees,
+            SolarSystemCalculator.GetMoonPhaseAngleDegrees(moon, sun), 90 - sample.MoonAltitudeDegrees, 0.2);
+        sample.ZenithSqm.Should().BeApproximately(expected.TotalSqm, 1e-12);
+        sample.MoonlightSqm.Should().BeApproximately(expected.MoonlightSqm, 1e-12);
+        sample.MoonlightSqm.Should().BeInRange(17, 19.5, "a high full Moon washes the zenith out to about mag 18");
+        sample.ZenithSqm.Should().BeLessThan(sample.MoonlightSqm);
+        sample.LimitingMagnitude.Should().BeApproximately(SkyBrightness.NakedEyeLimitingMagnitude(sample.ZenithSqm), 1e-12);
     }
 
     [Fact]
@@ -123,11 +125,14 @@ public sealed class SkyQualityTests
         var midnight = samples[6];
         midnight.SunAltitudeDegrees.Should().BeLessThan(-40);
         midnight.ZenithSqm.Should().BeApproximately(21.3, 0.01);
-        midnight.LimitingMagnitude.Should().BeApproximately(SkyBrightness.NakedEyeLimitingMagnitude(21.3), 1e-9);
+        midnight.LimitingMagnitude.Should().BeApproximately(SkyBrightness.NakedEyeLimitingMagnitude(midnight.ZenithSqm), 1e-9);
         var noon = samples[18];
         noon.SunAltitudeDegrees.Should().BeGreaterThan(60);
         noon.ZenithSqm.Should().BeApproximately(4.0, 0.01);
         noon.LimitingMagnitude.Should().BeLessThan(0);
+        midnight.SiteSqm.Should().BeApproximately(21.3, 1e-3, "the Kasten & Young air mass at the zenith is not exactly 1");
+        midnight.TwilightSqm.Should().Be(double.PositiveInfinity);
+        noon.TwilightSqm.Should().BeApproximately(4.0, 1e-9);
     }
 
     [Fact]

@@ -2,9 +2,9 @@ namespace AstroPlanner.Core.SkyQuality;
 
 /// <summary>
 /// Night-sky brightness at the zenith, in magnitudes per square arcsecond (the unit of an SQM
-/// meter: larger = darker). Conversions follow spec §8.4; the twilight and moonlight terms are a
-/// <b>display heuristic</b> for the sky renderer (how washed-out the sky looks), not the
-/// photometric model of the feasibility engine (Krisciunas &amp; Schaefer, M3).
+/// meter: larger = darker). Conversions follow spec §8.4. Moonlight is in
+/// <see cref="KrisciunasSchaefer"/>; the sky toward a target, and the renderer's sky, combine
+/// them in <see cref="SkyBackground"/>.
 /// </summary>
 public static class SkyBrightness
 {
@@ -15,9 +15,6 @@ public static class SkyBrightness
     public const double MinimumSqm = 16.0;
 
     public const double MaximumSqm = 22.5;
-
-    /// <summary>Full Moon at the zenith over a dark site, mag/arcsec² (display heuristic).</summary>
-    private const double FullMoonAtZenithSqm = 18.0;
 
     /// <summary>Luminance in mcd/m² that corresponds to 0 mag/arcsec² (spec §8.4: 1.08·10⁸).</summary>
     private const double ZeroPointMillicandela = 1.08e8;
@@ -122,29 +119,4 @@ public static class SkyBrightness
 
         return double.PositiveInfinity;
     }
-
-    /// <summary>
-    /// Zenith brightness added by the Moon, mag/arcsec² (infinity when it is down): a full Moon at
-    /// the zenith gives <see cref="FullMoonAtZenithSqm"/>; it fades with the Moon's brightness
-    /// against its phase angle (the same Allen relation as its magnitude) and with sin(altitude).
-    /// </summary>
-    public static double Moonlight(double moonAltitudeDegrees, double phaseAngleDegrees)
-    {
-        if (moonAltitudeDegrees <= 0)
-        {
-            return double.PositiveInfinity;
-        }
-
-        var i = Math.Abs(phaseAngleDegrees);
-        var dimming = 0.026 * i + 4e-9 * Math.Pow(i, 4);   // magnitudes fainter than full
-        var relative = Math.Pow(10, -0.4 * dimming) * Math.Sin(double.DegreesToRadians(moonAltitudeDegrees));
-        return FullMoonAtZenithSqm - 2.5 * Math.Log10(relative);
-    }
-
-    /// <summary>
-    /// Zenith brightness for the renderer: the site's dark-sky baseline (manual SQM, else a
-    /// natural sky) plus twilight and moonlight, in linear units.
-    /// </summary>
-    public static double Zenith(double? siteSqm, double sunAltitudeDegrees, double moonAltitudeDegrees, double moonPhaseAngleDegrees) =>
-        Combine(siteSqm ?? NaturalSqm, Twilight(sunAltitudeDegrees), Moonlight(moonAltitudeDegrees, moonPhaseAngleDegrees));
 }

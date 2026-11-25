@@ -456,7 +456,7 @@ public sealed partial class SkyViewModel : ObservableObject, IDisposable
             return;
         }
 
-        var now = SkyAppearanceCalculator.At(Context.Observer, _session.Clock.UtcNow, _feed.SiteSqm);
+        var now = SkyAppearanceCalculator.At(Context.Observer, _session.Clock.UtcNow, _feed.SiteSqm, Context.ExtinctionCoefficient);
         SkyBrightnessText = DisplayNames.Format(Strings.SkyBrightnessFormat, now.ZenithSqm, now.LimitingMagnitude);
     }
 

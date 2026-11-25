@@ -1,5 +1,6 @@
 using System.Globalization;
 using AstroPlanner.Core.Algorithms;
+using AstroPlanner.Core.Imaging.Feasibility;
 using AstroPlanner.Core.Models;
 using AstroPlanner.Core.Satellites;
 using AstroPlanner.Core.SkyQuality;
@@ -129,8 +130,10 @@ internal sealed class SkyBodyFeed
             return;
         }
 
+        // The same extinction and site-glow law as the feasibility engine (the user's calibration included).
+        var constants = Context.Tuning.Apply(FeasibilityConstants.Default with { ExtinctionCoefficient = Context.ExtinctionCoefficient });
         _session.Send(SkyMessageCodec.SetSkyAppearance(SkyBridgeMapper.Appearance(
-            Context.Observer, utc, TrackHalfWindow, TrackStep, SiteSqm)));
+            Context.Observer, utc, TrackHalfWindow, TrackStep, SiteSqm, constants.ExtinctionCoefficient, constants.BrighteningPerAirmass)));
     }
 
     public void SendTime() =>
