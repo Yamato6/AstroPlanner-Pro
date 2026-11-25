@@ -17,7 +17,8 @@ public sealed record Location
         string windowsTimeZoneId,
         HorizonMask? horizonMask = null,
         string notes = "",
-        double? zenithSqm = null)
+        double? zenithSqm = null,
+        string? landscapeId = null)
     {
         Id = RequireText(id, nameof(id));
         Name = RequireText(name, nameof(name));
@@ -33,6 +34,7 @@ public sealed record Location
         HorizonMask = horizonMask ?? HorizonMask.Flat;
         Notes = notes ?? string.Empty;
         ZenithSqm = zenithSqm is null ? null : ValidateSqm(zenithSqm.Value);
+        LandscapeId = Landscapes.Validate(landscapeId);
     }
 
     public string Id { get; init; }
@@ -47,6 +49,16 @@ public sealed record Location
 
     /// <summary>Measured zenith sky brightness (SQM, mag/arcsec²) typed by the user, or null (spec §4.8).</summary>
     public double? ZenithSqm { get; init; }
+
+    /// <summary>
+    /// The landscape the sky shows around this site (spec §8.5): a landscape id of the media
+    /// folder, <see cref="Landscapes.Flat"/>, or null for the horizon profile alone (the default).
+    /// </summary>
+    public string? LandscapeId
+    {
+        get;
+        init => field = Landscapes.Validate(value);
+    }
 
     public ObserverLocation ToObserver() => new(LatitudeDegrees, LongitudeDegrees, ElevationMeters);
 

@@ -207,6 +207,26 @@ public class ReleaseTests
         properties.Should().OnlyContain(p => !string.IsNullOrWhiteSpace((string?)p.GetValue(null)));
     }
 
+    // ─── The sky's images (R2c) ─────────────────────────────────────────
+
+    [Fact]
+    public void MediaFolder_SitsNextToTheExe_AndShipsInTheInstallerAndTheZip()
+    {
+        // The build copies data/build/media next to the exe (UI.csproj), and so into this folder.
+        var media = Services.AppPaths.MediaDirectory;
+        File.Exists(Path.Combine(media, AstroPlanner.Application.Services.MediaLibrary.ManifestFileName)).Should().BeTrue();
+        var library = AstroPlanner.Application.Services.MediaLibrary.Load(media);
+        library.IsAvailable.Should().BeTrue();
+        library.Landscapes.Should().HaveCountGreaterThanOrEqualTo(3);
+
+        var root = AccessibilityTests.RepositoryRoot();
+        File.ReadAllText(Path.Combine(root, "installer", "AstroPlanner.iss"))
+            .Should().Contain(@"Source: ""{#PublishDir}\data\*""; DestDir: ""{app}\data""");
+        var workflow = File.ReadAllText(Path.Combine(root, ".github", "workflows", "ci.yml"));
+        workflow.Should().Contain(@"Copy-Item publish\data portable\data -Recurse");
+        workflow.Should().Contain("'data/manifest.json'");
+    }
+
     // ─── Release notes ──────────────────────────────────────────────────
 
     [Fact]

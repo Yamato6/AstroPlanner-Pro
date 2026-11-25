@@ -271,6 +271,30 @@ export const layoutSnapshotSchema = z.strictObject({
 });
 export type LayoutSnapshot = z.infer<typeof layoutSnapshotSchema>;
 
+export const landscapeOptionSchema = z.strictObject({
+  id: z.string().min(1).max(40),
+  name: z.string().min(1).max(100),
+  author: z.string().min(1).max(200),
+  license: z.string().min(1).max(50),
+  url: z.string().min(1).max(200),
+});
+export type LandscapeOption = z.infer<typeof landscapeOptionSchema>;
+
+export const landscapeSnapshotSchema = z.strictObject({
+  revision: z.int().min(0).max(2147483647),
+  mediaAvailable: z.boolean(),
+  siteName: z.string().min(1).max(200).nullable(),
+  landscapeId: z.string().min(1).max(40).nullable(),
+  landscapes: z.array(landscapeOptionSchema).min(0).max(32),
+  horizonFromLandscape: z.boolean(),
+});
+export type LandscapeSnapshot = z.infer<typeof landscapeSnapshotSchema>;
+
+export const landscapeSetRequestSchema = z.strictObject({
+  landscapeId: z.string().min(1).max(40).nullable(),
+});
+export type LandscapeSetRequest = z.infer<typeof landscapeSetRequestSchema>;
+
 export const themeChangedEventSchema = z.strictObject({
   theme: z.enum(['dark', 'night']),
 });
@@ -300,6 +324,11 @@ export const selectionChangedEventSchema = z.strictObject({
   revision: z.int().min(0).max(2147483647),
 });
 export type SelectionChangedEvent = z.infer<typeof selectionChangedEventSchema>;
+
+export const landscapeChangedEventSchema = z.strictObject({
+  revision: z.int().min(0).max(2147483647),
+});
+export type LandscapeChangedEvent = z.infer<typeof landscapeChangedEventSchema>;
 
 export const rpcErrorPayloadSchema = z.strictObject({
   code: z.enum(['bad-request', 'unknown-method', 'timeout', 'cancelled', 'too-large', 'busy', 'internal']),
@@ -344,6 +373,9 @@ export const rpcMethods = {
   'ui.setFullScreen': { request: switchRequestSchema, response: uiSnapshotSchema },
   'layout.load': { request: noParametersSchema, response: layoutSnapshotSchema },
   'layout.save': { request: layoutSnapshotSchema, response: noParametersSchema },
+  'landscape.get': { request: noParametersSchema, response: landscapeSnapshotSchema },
+  'landscape.set': { request: landscapeSetRequestSchema, response: landscapeSnapshotSchema },
+  'landscape.useHorizon': { request: noParametersSchema, response: landscapeSnapshotSchema },
 } as const;
 
 /** Events the host pushes: payload contracts. */
@@ -354,4 +386,5 @@ export const appEvents = {
   'ui.changed': uiChangedEventSchema,
   'night.changed': nightChangedEventSchema,
   'selection.changed': selectionChangedEventSchema,
+  'landscape.changed': landscapeChangedEventSchema,
 } as const;

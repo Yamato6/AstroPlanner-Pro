@@ -38,12 +38,15 @@ internal sealed class SkyBodyFeed
     private int _sentSatelliteCount = -1;
 
     /// <param name="catalog">The catalog's objects: the comets and asteroids to draw, and the planets' names.</param>
-    public SkyBodyFeed(SkySession session, Func<IEnumerable<CelestialObject>> catalog, SatelliteState? satellites)
+    public SkyBodyFeed(SkySession session, Func<IEnumerable<CelestialObject>> catalog, SatelliteState? satellites, MediaLibrary media)
     {
         _session = session;
         _catalog = catalog;
         _satellites = satellites;
+        _media = media;
     }
+
+    private readonly MediaLibrary _media;
 
     /// <summary>Most satellites drawn at once (those above the horizon in the ±15 min window, brightest first).</summary>
     public const int SatelliteCountLimit = 60;
@@ -71,11 +74,22 @@ internal sealed class SkyBodyFeed
         }
 
         var utc = _session.Clock.UtcNow;
-        _session.Send(SkyMessageCodec.SetObserver(SkyBridgeMapper.ToPayload(
-            Context.LocationName, Context.Observer, Context.MinimumAltitude, Context.HorizonMask)));
+        SendObserver();
         SendFrame(utc);
         SendBodies(utc);
         SendTime();
+    }
+
+    /// <summary>The site, its horizon and its landscape (also alone, when only the landscape changes).</summary>
+    public void SendObserver()
+    {
+        if (!_session.IsReady || Context.InputError is not null)
+        {
+            return;
+        }
+
+        _session.Send(SkyMessageCodec.SetObserver(SkyBridgeMapper.ToPayload(
+            Context.LocationName, Context.Observer, Context.MinimumAltitude, Context.HorizonMask, _media.Resolve(Context.LandscapeId))));
     }
 
     /// <summary>While playing: a new frame and tracks when the sky time has moved far enough, and the clock.</summary>

@@ -285,7 +285,7 @@ public sealed class SqliteLocationRepository(AppDatabase database) : ILocationRe
         using var command = connection.CreateCommand();
         command.CommandText = """
             SELECT id, name, latitude_degrees, longitude_degrees, elevation_meters, iana_time_zone_id,
-                   windows_time_zone_id, horizon_mask, notes, zenith_sqm
+                   windows_time_zone_id, horizon_mask, notes, zenith_sqm, landscape_id
             FROM locations ORDER BY position, name
             """;
         using var reader = command.ExecuteReader();
@@ -295,7 +295,8 @@ public sealed class SqliteLocationRepository(AppDatabase database) : ILocationRe
             locations.Add(new Location(
                 reader.GetString(0), reader.GetString(1), reader.GetDouble(2), reader.GetDouble(3), reader.GetDouble(4),
                 reader.GetString(5), reader.GetString(6), HorizonMaskJson.Parse(reader.GetString(7)), reader.GetString(8),
-                reader.IsDBNull(9) ? null : reader.GetDouble(9)));
+                reader.IsDBNull(9) ? null : reader.GetDouble(9),
+                reader.IsDBNull(10) || !Landscapes.IsValidId(reader.GetString(10)) ? null : reader.GetString(10)));
         }
 
         return locations;
@@ -308,14 +309,14 @@ public sealed class SqliteLocationRepository(AppDatabase database) : ILocationRe
         using var command = connection.CreateCommand();
         command.CommandText = """
             INSERT INTO locations (id, position, name, latitude_degrees, longitude_degrees, elevation_meters,
-                                   iana_time_zone_id, windows_time_zone_id, horizon_mask, notes, zenith_sqm)
+                                   iana_time_zone_id, windows_time_zone_id, horizon_mask, notes, zenith_sqm, landscape_id)
             VALUES ($id, COALESCE((SELECT position FROM locations WHERE id = $id), (SELECT COALESCE(MAX(position), -1) + 1 FROM locations)),
-                    $name, $lat, $lon, $elev, $iana, $windows, $mask, $notes, $sqm)
+                    $name, $lat, $lon, $elev, $iana, $windows, $mask, $notes, $sqm, $landscape)
             ON CONFLICT (id) DO UPDATE SET
                 name = excluded.name, latitude_degrees = excluded.latitude_degrees, longitude_degrees = excluded.longitude_degrees,
                 elevation_meters = excluded.elevation_meters, iana_time_zone_id = excluded.iana_time_zone_id,
                 windows_time_zone_id = excluded.windows_time_zone_id, horizon_mask = excluded.horizon_mask, notes = excluded.notes,
-                zenith_sqm = excluded.zenith_sqm
+                zenith_sqm = excluded.zenith_sqm, landscape_id = excluded.landscape_id
             """;
         command.Parameters.AddWithValue("$id", location.Id);
         command.Parameters.AddWithValue("$name", location.Name);
@@ -327,6 +328,7 @@ public sealed class SqliteLocationRepository(AppDatabase database) : ILocationRe
         command.Parameters.AddWithValue("$mask", HorizonMaskJson.Serialize(location.HorizonMask));
         command.Parameters.AddWithValue("$notes", location.Notes);
         command.Parameters.AddWithValue("$sqm", location.ZenithSqm is { } sqm ? sqm : DBNull.Value);
+        command.Parameters.AddWithValue("$landscape", (object?)location.LandscapeId ?? DBNull.Value);
         command.ExecuteNonQuery();
     }
 

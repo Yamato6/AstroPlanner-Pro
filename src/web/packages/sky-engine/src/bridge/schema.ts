@@ -51,6 +51,8 @@ const initPayload = z.strictObject({
   viewMode,
   theme: z.enum(['dark', 'night']),
   showStats: z.boolean(),
+  /** The sky's images (panorama, landscapes: media.ts), or null/absent without the media folder. */
+  mediaBaseUrl: z.url().nullish(),
 });
 
 const observerPayload = z.strictObject({
@@ -63,6 +65,11 @@ const observerPayload = z.strictObject({
     .array(z.strictObject({ azimuth: z.number().min(0).max(360), altitude: z.number().min(-10).max(90) }))
     .max(720),
   refraction: refractionSchema,
+  /** A landscape id of the media manifest, 'flat', or null/absent for the horizon profile. */
+  landscape: z
+    .string()
+    .regex(/^[a-z0-9-]{1,40}$/)
+    .nullish(),
 });
 
 const timePayload = z.strictObject({ utc, rate: z.number().min(-1e6).max(1e6) });

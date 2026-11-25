@@ -43,6 +43,9 @@ namespace AstroPlanner.SkyBridge.App;
 [JsonSerializable(typeof(SearchGoRequest))]
 [JsonSerializable(typeof(SearchResolveRequest))]
 [JsonSerializable(typeof(SearchResolveResponse))]
+[JsonSerializable(typeof(LandscapeSnapshot))]
+[JsonSerializable(typeof(LandscapeSetRequest))]
+[JsonSerializable(typeof(LandscapeChangedEvent))]
 [JsonSerializable(typeof(RpcErrorPayload))]
 public sealed partial class AppJsonContext : JsonSerializerContext;
 
@@ -164,6 +167,16 @@ public static class AppMethods
     public static RpcMethod<LayoutSnapshot, NoParameters> LayoutSave { get; } =
         new("layout.save", AppJsonContext.Default.LayoutSnapshot, AppJsonContext.Default.NoParameters);
 
+    public static RpcMethod<NoParameters, LandscapeSnapshot> LandscapeGet { get; } =
+        new("landscape.get", AppJsonContext.Default.NoParameters, AppJsonContext.Default.LandscapeSnapshot);
+
+    public static RpcMethod<LandscapeSetRequest, LandscapeSnapshot> LandscapeSet { get; } =
+        new("landscape.set", AppJsonContext.Default.LandscapeSetRequest, AppJsonContext.Default.LandscapeSnapshot);
+
+    /// <summary>Copies the landscape's horizon into the active site's horizon mask (it then counts for every calculation).</summary>
+    public static RpcMethod<NoParameters, LandscapeSnapshot> LandscapeUseHorizon { get; } =
+        new("landscape.useHorizon", AppJsonContext.Default.NoParameters, AppJsonContext.Default.LandscapeSnapshot);
+
     public static IReadOnlyList<IRpcMethod> All { get; } =
     [
         AppInfo, AppAbout, AppOpenLink, AppOpenDataFolder, ObserverGet,
@@ -171,6 +184,7 @@ public static class AppMethods
         NightGet, SelectionGet, SelectionCenter, SelectionFrame, SelectionAddToPlan, SelectionRemoveFromPlan, SelectionClear,
         SearchQuery, SearchGo, SearchResolve,
         UiGet, UiSetTheme, UiSetReduceTransparency, UiSetAutoHide, UiSetSkyInertia, UiSetSkyQuality, UiSetLightPollutionTint, UiSetScintillation, UiSetFullScreen, LayoutLoad, LayoutSave,
+        LandscapeGet, LandscapeSet, LandscapeUseHorizon,
     ];
 
     private static RpcMethod<NoParameters, SelectionSnapshot> Selection(string name) =>
@@ -201,5 +215,9 @@ public static class AppEvents
     public static AppEvent<SelectionChangedEvent> SelectionChanged { get; } =
         new("selection.changed", AppJsonContext.Default.SelectionChangedEvent);
 
-    public static IReadOnlyList<IAppEvent> All { get; } = [ThemeChanged, ObserverChanged, SkyChanged, UiChanged, NightChanged, SelectionChanged];
+    public static AppEvent<LandscapeChangedEvent> LandscapeChanged { get; } =
+        new("landscape.changed", AppJsonContext.Default.LandscapeChangedEvent);
+
+    public static IReadOnlyList<IAppEvent> All { get; } =
+        [ThemeChanged, ObserverChanged, SkyChanged, UiChanged, NightChanged, SelectionChanged, LandscapeChanged];
 }

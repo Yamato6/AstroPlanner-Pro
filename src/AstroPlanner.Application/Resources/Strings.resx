@@ -655,6 +655,10 @@
   <data name="SettingsExtinctionTooltip" xml:space="preserve"><value>How much the atmosphere dims objects per air mass (V band). 0.15–0.2 at a high, dry site; 0.25 typical; 0.3–0.4 hazy or humid.</value></data>
   <data name="ReasonFramingPoint" xml:space="preserve"><value>A point of light at this scale: nothing to frame.</value></data>
   <data name="AboutLightPollution" xml:space="preserve"><value>Light pollution:</value></data>
+  <data name="AboutMilkyWay" xml:space="preserve"><value>Milky Way panorama:</value></data>
+  <data name="AboutMilkyWayText" xml:space="preserve"><value>"The Milky Way panorama" by ESO/S. Brunier (eso0932a), CC BY 4.0. Changed: stars removed, background set to black, reprojected from galactic to equatorial coordinates.</value></data>
+  <data name="AboutLandscapes" xml:space="preserve"><value>Landscapes:</value></data>
+  <data name="AboutLandscapesText" xml:space="preserve"><value>photos from Poly Haven (polyhaven.com), CC0: Open field, Mountains and Desert by Greg Zaal; Edge of town by Dimitrios Savva and Jarod Guest. Changed: sky made transparent, horizon profile derived.</value></data>
   <data name="AboutLightPollutionText" xml:space="preserve"><value>grids derived from the World Atlas 2015 of artificial night sky brightness, Falchi, F. et al. (2016), Science Advances 2, e1600377; data: GFZ Data Services, doi:10.5880/GFZ.1.4.2016.001, CC BY-NC 4.0. Because of this NonCommercial license AstroPlanner Pro is and stays free of charge.</value></data>
   <data name="PlanSummaryRigFormat" xml:space="preserve"><value>Rig: {0}</value></data>
   <data name="PlanScheduleNoRig" xml:space="preserve"><value>Choose an active rig (Equipment tab) to schedule the night and get sub-exposure suggestions.</value></data>

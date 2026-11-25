@@ -409,22 +409,16 @@ void main() {
 }
 `;
 
-export function skyPassFragment(displayLevel: string): string {
-  return /* glsl */ `
+// The direction under a pixel of a full-screen pass (north/east/up): the inverse of the dome
+// projection (uMode 0) or of the all-sky chart (1). False outside the all-sky disc.
+const pixelDirection = /* glsl */ `
 ${domeUniforms}
-${photometry}
 uniform float uMode;
 uniform vec2 uChartScale;
 uniform vec2 uViewport;      // drawing buffer, px
-uniform vec3 uNightChroma;   // colours of luminance 1
-uniform vec3 uTintChroma;
-uniform vec3 uMoonChroma;
 
-${displayLevel}
-
-void main() {
+bool pixelNeu(out vec3 neu) {
   vec2 clip = gl_FragCoord.xy / uViewport * 2.0 - 1.0;
-  vec3 neu;
   if (uMode < 0.5) {
     vec2 p = vec2(clip.x * uAspect, clip.y) / uProjScale;
     float r = length(p);
@@ -432,15 +426,38 @@ void main() {
     vec2 u = r > 1e-9 ? p / r : vec2(0.0);
     vec3 world = transpose(uDomeBasis) * vec3(u * sin(theta), cos(theta));
     neu = vec3(-world.z, world.x, world.y);
-  } else {
-    float n = clip.y / uChartScale.y;
-    float e = -clip.x / uChartScale.x;
-    float r = length(vec2(n, e));
-    if (r > 1.0) discard;
-    float altitude = radians(90.0 * (1.0 - r));
-    float az = atan(e, n);
-    neu = vec3(cos(altitude) * cos(az), cos(altitude) * sin(az), sin(altitude));
+    return true;
   }
+  float n = clip.y / uChartScale.y;
+  float e = -clip.x / uChartScale.x;
+  float r = length(vec2(n, e));
+  if (r > 1.0) return false;
+  float altitude = radians(90.0 * (1.0 - r));
+  float az = atan(e, n);
+  neu = vec3(cos(altitude) * cos(az), cos(altitude) * sin(az), sin(altitude));
+  return true;
+}
+`;
+
+export function skyPassFragment(displayLevel: string): string {
+  return /* glsl */ `
+${pixelDirection}
+${photometry}
+uniform mat3 uFrame;         // J2000 → north/east/up (orthogonal: its transpose inverts it)
+uniform vec3 uNightChroma;   // colours of luminance 1
+uniform vec3 uTintChroma;
+uniform vec3 uMoonChroma;
+// The Milky Way panorama (media.ts): J2000 equirectangular, u = RA / 360°, v = (90° − Dec) / 180°.
+uniform sampler2D uPanorama;
+uniform float uPanoramaOn;
+uniform float uPanoramaGain; // display brightness of a white texel under a natural sky, field fade included
+uniform float uPanoramaLod;
+
+${displayLevel}
+
+void main() {
+  vec3 neu;
+  if (!pixelNeu(neu)) discard;
   float natural; float artificial; float moon; float twilight; vec3 twilightColor;
   skyParts(neu, natural, artificial, moon, twilight, twilightColor);
   float total = max(natural + artificial + moon + twilight, 1e-30);
@@ -448,10 +465,52 @@ void main() {
   // Twilight colours a little desaturated (a display, not a spectrum).
   vec3 tw = twilight > 0.0 ? mix(vec3(1.0), twilightColor / max(lum(twilightColor), 1e-9), 0.8) : vec3(0.0);
   vec3 chroma = (natural * uNightChroma + artificial * uTintChroma + moon * uMoonChroma + twilight * tw) / total;
-  gl_FragColor = vec4(min(chroma / max(lum(chroma), 1e-6) * level, vec3(1.0)), 1.0);
+  vec3 sky = min(chroma / max(lum(chroma), 1e-6) * level, vec3(1.0));
+  // The Milky Way: the panorama over the sky, as visible as the sky is dark — its contrast is the
+  // share of the natural sky in the sky's light (all of it under a dark sky; a few per cent in
+  // town, in moonlight or twilight) — and dimmed by the air like the stars.
+  if (uPanoramaOn > 0.5 && neu.z > -0.2) {
+    vec3 j = transpose(uFrame) * neu;
+    vec2 uv = vec2(fract(atan(j.y, j.x) / 6.28318530718), acos(clamp(j.z, -1.0, 1.0)) / 3.14159265359);
+    vec3 texel = textureLod(uPanorama, uv, uPanoramaLod).rgb;
+    float altitude = degrees(asin(clamp(neu.z, -1.0, 1.0)));
+    float extinction = uBrightnessOn > 0.5 ? pow(10.0, -0.4 * uExtinction * min(kastenYoung(altitude), 40.0)) : 1.0;
+    float visibility = natural / total;
+    sky = min(sky + texel * uPanoramaGain * visibility * extinction, vec3(1.0));
+  }
+  gl_FragColor = vec4(sky, 1.0);
 }
 `;
 }
+
+// The landscape (media.ts): a 360° photo with a transparent sky, drawn over the stars as a
+// full-screen pass. Columns are azimuth 0°–360°, rows run from uTopAltitude down to −90°; its
+// light follows the sky at the horizon (uLight, uSaturation: night is dark and nearly grey).
+export const landscapeVertex = skyPassVertex;
+
+export const landscapeFragment = /* glsl */ `
+${pixelDirection}
+float lum(vec3 c) { return dot(c, vec3(0.2126, 0.7152, 0.0722)); }
+uniform sampler2D uLandscape;
+uniform float uTopAltitude;
+uniform float uLandscapeLod;
+uniform vec3 uLight;
+uniform float uSaturation;
+
+void main() {
+  vec3 neu;
+  if (!pixelNeu(neu)) discard;
+  float altitude = degrees(asin(clamp(neu.z, -1.0, 1.0)));
+  if (altitude > uTopAltitude) discard;
+  float azimuth = degrees(atan(neu.y, neu.x));
+  vec2 uv = vec2(fract(azimuth / 360.0), (uTopAltitude - altitude) / (uTopAltitude + 90.0));
+  vec4 texel = textureLod(uLandscape, uv, uLandscapeLod);
+  if (texel.a < 0.02) discard;
+  vec3 linear = pow(texel.rgb, vec3(2.2)) * uLight;
+  linear = mix(vec3(lum(linear)), linear, uSaturation);
+  gl_FragColor = vec4(pow(linear, vec3(1.0 / 2.2)), texel.a);
+}
+`;
 
 // Horizon profile: opaque ground drawn over the sky (positions in north/east/up).
 export const silhouetteVertex = /* glsl */ `

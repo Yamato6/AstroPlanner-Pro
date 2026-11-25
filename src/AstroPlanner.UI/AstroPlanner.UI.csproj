@@ -102,6 +102,13 @@
     </ItemGroup>
   </Target>
 
+  <!-- The sky's images (Milky Way panorama, landscapes; data/build/media, built by the DataBuilder)
+       sit next to the exe as data/, outside the single file: the app works without them. -->
+  <ItemGroup>
+    <None Include="..\..\data\build\media\**\*" Link="data\%(RecursiveDir)%(Filename)%(Extension)"
+          CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" ExcludeFromSingleFile="true" />
+  </ItemGroup>
+
   <ItemGroup>
     <InternalsVisibleTo Include="AstroPlanner.UI.Tests" />
   </ItemGroup>

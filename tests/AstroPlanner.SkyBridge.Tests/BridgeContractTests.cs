@@ -41,8 +41,9 @@ public sealed class BridgeContractTests
         return new Dictionary<string, string>(StringComparer.Ordinal)
         {
             [SkyMessageTypes.Init] = SkyMessageCodec.Init(new InitPayload(
-                "https://data.astroplanner/", RefractionModel.Standard, new SkyLayers(), SkyViewModes.Dome, "dark", ShowStats: false)),
-            [SkyMessageTypes.SetObserver] = SkyMessageCodec.SetObserver(SkyBridgeMapper.ToPayload("Aguascalientes", Aguascalientes, 20, mask)),
+                "https://data.astroplanner/", RefractionModel.Standard, new SkyLayers(), SkyViewModes.Dome, "dark", ShowStats: false,
+                MediaBaseUrl: "https://media.astroplanner/")),
+            [SkyMessageTypes.SetObserver] = SkyMessageCodec.SetObserver(SkyBridgeMapper.ToPayload("Aguascalientes", Aguascalientes, 20, mask, "open-field")),
             [SkyMessageTypes.SetTime] = SkyMessageCodec.SetTime(new TimePayload(SkyMessageCodec.FormatUtc(Utc), 60)),
             [SkyMessageTypes.SetTimeRate] = SkyMessageCodec.SetTimeRate(new TimeRatePayload(0)),
             [SkyMessageTypes.FrameTransform] = SkyMessageCodec.FrameTransform(SkyBridgeMapper.ToPayload(SkyFrame.Compute(Aguascalientes, Utc))),

@@ -48,11 +48,11 @@ public sealed class SkyViewModelTests
     private readonly FakeSkyViewStore _store = new();
     private readonly FakePlanService _plan = new();
 
-    private async Task<(ShellViewModel Shell, FakeSkyChannel Channel)> CreateAsync(bool ready = true)
+    private async Task<(ShellViewModel Shell, FakeSkyChannel Channel)> CreateAsync(bool ready = true, MediaLibrary? media = null)
     {
         var shell = TestShell.Create(
             catalog: [TestCatalog.M42, TestCatalog.M31, TestCatalog.M13, .. SolarSystemCatalog.Planets],
-            time: _time, plan: _plan, skyStore: _store);
+            time: _time, plan: _plan, skyStore: _store, media: media);
         await shell.LoadCommand.ExecuteAsync(null);
         await shell.Targets.NightEphemeridesTask;
         var channel = new FakeSkyChannel();
@@ -81,6 +81,23 @@ public sealed class SkyViewModelTests
         // Mexico City defaults, the time of the context.
         channel.Last("setObserver").GetProperty("latitudeDegrees").GetDouble().Should().BeApproximately(19.4326, 1e-9);
         channel.Last("setTime").GetProperty("utc").GetString().Should().Be("2026-01-16T04:00:00.000Z");
+    }
+
+    [Fact]
+    public async Task TheMediaFolder_AndTheSitesLandscape_ReachTheRenderer()
+    {
+        var (shell, channel) = await CreateAsync(media: MediaLibrary.Parse(Bridge.LandscapeEndpointsTests.Manifest()));
+        channel.Last("init").GetProperty("mediaBaseUrl").GetString().Should().Be("https://media.astroplanner/");
+        channel.Last("setObserver").GetProperty("landscape").ValueKind.Should().Be(JsonValueKind.Null);
+
+        shell.Observer.LandscapeId = "mountains";
+        channel.Last("setObserver").GetProperty("landscape").GetString().Should().Be("mountains");
+
+        shell.Observer.LandscapeId = "uninstalled";
+        channel.Last("setObserver").GetProperty("landscape").ValueKind.Should().Be(JsonValueKind.Null, "a missing landscape shows the profile");
+
+        var (_, plain) = await CreateAsync();
+        plain.Last("init").GetProperty("mediaBaseUrl").ValueKind.Should().Be(JsonValueKind.Null);
     }
 
     [Fact]

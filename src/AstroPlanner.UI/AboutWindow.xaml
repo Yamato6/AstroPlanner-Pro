@@ -59,6 +59,14 @@
             <Run Text="{x:Static res:Strings.AboutLightPollutionText}"/>
         </TextBlock>
         <TextBlock Style="{StaticResource CreditStyle}">
+            <Run FontWeight="SemiBold" Text="{x:Static res:Strings.AboutMilkyWay}"/>
+            <Run Text="{x:Static res:Strings.AboutMilkyWayText}"/>
+        </TextBlock>
+        <TextBlock Style="{StaticResource CreditStyle}">
+            <Run FontWeight="SemiBold" Text="{x:Static res:Strings.AboutLandscapes}"/>
+            <Run Text="{x:Static res:Strings.AboutLandscapesText}"/>
+        </TextBlock>
+        <TextBlock Style="{StaticResource CreditStyle}">
             <Run FontWeight="SemiBold" Text="{x:Static res:Strings.AboutAlgorithms}"/>
             <Run Text="{x:Static res:Strings.AboutAlgorithmsText}"/>
         </TextBlock>

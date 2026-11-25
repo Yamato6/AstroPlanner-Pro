@@ -10,7 +10,7 @@ namespace AstroPlanner.UI.Sky;
 
 /// <summary>
 /// Hosts the sky renderer in WebView2 (spec §5.4) and is the real <see cref="ISkyChannel"/>.
-/// Security: only the two local virtual hosts can be loaded; any other navigation or new window
+/// Security: only the local virtual hosts can be loaded; any other navigation or new window
 /// is cancelled (links on the SafeLinks allow-list open in the browser); dev tools, context
 /// menus, script dialogs, zoom, autofill, browser shortcuts and host objects are off; messages
 /// are accepted only from the app host and validated by <see cref="SkyMessageCodec"/>.
@@ -19,6 +19,7 @@ public sealed class SkyHost : Border, ISkyChannel, IDisposable
 {
     public const string AppHost = SkyHosts.AppHost;
     public const string DataHost = SkyHosts.DataHost;
+    public const string MediaHost = SkyHosts.MediaHost;
     public static readonly Uri AppOrigin = new($"https://{AppHost}/");
 
     private readonly WebView2 _webView = new() { DefaultBackgroundColor = System.Drawing.Color.FromArgb(5, 11, 22) };
@@ -112,6 +113,11 @@ public sealed class SkyHost : Border, ISkyChannel, IDisposable
         core.SetVirtualHostNameToFolderMapping(AppHost, folders.AppDirectory, CoreWebView2HostResourceAccessKind.DenyCors);
         // The page (app host) fetches the data host: cross-origin reads must be allowed for it.
         core.SetVirtualHostNameToFolderMapping(DataHost, folders.DataDirectory, CoreWebView2HostResourceAccessKind.Allow);
+        // The sky's images next to the exe (read-only), only when they were installed.
+        if (File.Exists(Path.Combine(AppPaths.MediaDirectory, AstroPlanner.Application.Services.MediaLibrary.ManifestFileName)))
+        {
+            core.SetVirtualHostNameToFolderMapping(MediaHost, AppPaths.MediaDirectory, CoreWebView2HostResourceAccessKind.Allow);
+        }
         core.NavigationStarting += OnNavigationStarting;
         core.FrameNavigationStarting += OnNavigationStarting;
         core.NewWindowRequested += OnNewWindowRequested;

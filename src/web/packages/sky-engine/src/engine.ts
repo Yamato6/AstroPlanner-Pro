@@ -10,6 +10,8 @@ import type {
   ViewMode,
 } from './bridge/schema';
 import { loadSkyData } from './data/loader';
+import type { SkyQuality } from './render/atmosphere';
+import { loadMediaManifest } from './render/media';
 import type { FrameTransform, Mat3, RefractionModel, Vec3 } from './math/frame';
 import { Inertia } from './render/camera';
 import { SkyView, type Selection } from './render/sky';
@@ -58,6 +60,15 @@ export function mountSky(container: HTMLElement, options: MountOptions = {}): vo
     const mode = params.get('mode');
     return mode === 'dome' || mode === 'allSky' || mode === 'finder' ? mode : null;
   })();
+
+  /** Benchmark: the atmosphere quality and the landscape, whatever the preferences and the site. */
+  const benchmarkQuality = ((): SkyQuality | null => {
+    const quality = params.get('quality');
+    return quality === 'low' || quality === 'medium' || quality === 'high' ? quality : null;
+  })();
+  const benchmarkLandscape = /^[a-z0-9-]{1,40}$/.test(params.get('landscape') ?? '')
+    ? params.get('landscape')
+    : null;
 
   function parseSize(value: string | null): { width: number; height: number } | null {
     const match = /^(\d{3,4})x(\d{3,4})$/.exec(value ?? '');
@@ -155,9 +166,26 @@ export function mountSky(container: HTMLElement, options: MountOptions = {}): vo
     resize();
     created.render(clock.now());
     created.setMode(benchmarkMode ?? state.mode);
+    if (benchmarkQuality) {
+      created.setQuality(benchmarkQuality);
+    }
     if (state.pendingCenter) {
       created.centerOn(state.pendingCenter.vector, state.pendingCenter.fov);
       state.pendingCenter = null;
+    }
+    // The sky's images arrive after the first frame; without them the sky works as before.
+    const mediaBaseUrl = message.payload.mediaBaseUrl;
+    if (mediaBaseUrl) {
+      created.onMediaError = reportError;
+      loadMediaManifest(mediaBaseUrl)
+        .then((manifest) => {
+          if (manifest) {
+            created.setMedia(mediaBaseUrl, manifest);
+          } else {
+            reportError('sky media: manifest.json is missing or not valid');
+          }
+        })
+        .catch(reportError);
     }
     registerSkyControl({
       home: () => {
@@ -180,7 +208,7 @@ export function mountSky(container: HTMLElement, options: MountOptions = {}): vo
         }
       },
       setQuality: (quality) => {
-        created.setQuality(quality);
+        created.setQuality(benchmarkQuality ?? quality);
         slowFrames.reset();
       },
       setLightPollutionTint: (tint) => {
@@ -199,8 +227,10 @@ export function mountSky(container: HTMLElement, options: MountOptions = {}): vo
         initialize(message).catch(reportError);
         break;
       case 'setObserver':
-        state.observer = message.payload;
-        view?.setObserver(message.payload);
+        state.observer = benchmarkLandscape
+          ? { ...message.payload, landscape: benchmarkLandscape }
+          : message.payload;
+        view?.setObserver(state.observer);
         break;
       case 'setTime':
         clock.set(Date.parse(message.payload.utc), message.payload.rate);
@@ -363,10 +393,11 @@ export function mountSky(container: HTMLElement, options: MountOptions = {}): vo
   function reportView(current: SkyView): void {
     const fovDegrees = Math.round(current.view().fovDegrees * 100) / 100;
     const starLimitMagnitude = Math.round(current.viewLimit * 10) / 10;
-    const key = `${fovDegrees}|${current.mode}|${starLimitMagnitude}`;
+    const credits = current.mediaCredits;
+    const key = `${fovDegrees}|${current.mode}|${starLimitMagnitude}|${credits.map((c) => c.kind + c.author).join(',')}`;
     if (key !== lastView) {
       lastView = key;
-      skyEvents.emit('view', { fovDegrees, mode: current.mode, starLimitMagnitude });
+      skyEvents.emit('view', { fovDegrees, mode: current.mode, starLimitMagnitude, credits });
     }
   }
 

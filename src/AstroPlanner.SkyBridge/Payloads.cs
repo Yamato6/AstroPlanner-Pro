@@ -101,19 +101,27 @@ public sealed record SkyLayers(
     double StarLimitMagnitude = 8.5,
     double DeepSkyLimitMagnitude = 12.0);
 
-/// <summary>First message after <c>ready</c>: data location, refraction model and initial state.</summary>
+/// <summary>
+/// First message after <c>ready</c>: data location, refraction model and initial state.
+/// <see cref="MediaBaseUrl"/>: the sky's images (panorama, landscapes; its manifest.json), or null
+/// when the app has no media folder.
+/// </summary>
 public sealed record InitPayload(
     string DataBaseUrl,
     RefractionModel Refraction,
     SkyLayers Layers,
     string ViewMode,
     string Theme,
-    bool ShowStats);
+    bool ShowStats,
+    string? MediaBaseUrl = null);
 
 /// <summary>A horizon mask point.</summary>
 public sealed record HorizonPointDto(double Azimuth, double Altitude);
 
-/// <summary>Observer site.</summary>
+/// <summary>
+/// Observer site. <see cref="Landscape"/>: a landscape id of the media manifest, <c>"flat"</c>, or
+/// null for the horizon profile drawn from <see cref="Horizon"/>.
+/// </summary>
 public sealed record ObserverPayload(
     string Name,
     double LatitudeDegrees,
@@ -121,7 +129,8 @@ public sealed record ObserverPayload(
     double ElevationMeters,
     double MinimumAltitudeDegrees,
     IReadOnlyList<HorizonPointDto> Horizon,
-    RefractionModel Refraction);
+    RefractionModel Refraction,
+    string? Landscape = null);
 
 /// <summary>Sky time and the rate it advances at (1 = real time, 0 = paused).</summary>
 public sealed record TimePayload(string Utc, double Rate);

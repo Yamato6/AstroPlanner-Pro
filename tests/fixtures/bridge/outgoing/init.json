@@ -31,6 +31,7 @@
     },
     "viewMode": "dome",
     "theme": "dark",
-    "showStats": false
+    "showStats": false,
+    "mediaBaseUrl": "https://media.astroplanner/"
   }
 }
