@@ -39,6 +39,15 @@
   --verdict-poor: #e07a5f;
   --verdict-impossible: #8c93a3;
 
+  /* The darkness bar: daylight, the three twilights, night; the Moon up; clouds. */
+  --darkness-day: #4f7bb0;
+  --darkness-civil: #34557f;
+  --darkness-nautical: #213a5b;
+  --darkness-astronomical: #142640;
+  --darkness-night: #0a1424;
+  --darkness-moon: #e8edf5;
+  --darkness-cloud: #8fa8c8;
+
   /* Type: Inter, tabular numerals for data. */
   --font-ui: 'Inter Variable', 'Segoe UI', system-ui, sans-serif;
   --font-size-xs: 11px;
@@ -94,6 +103,14 @@
   --verdict-marginal: #e46a58;
   --verdict-poor: #ff4a38;
   --verdict-impossible: #8a3a30;
+
+  --darkness-day: #a8342a;
+  --darkness-civil: #7a2219;
+  --darkness-nautical: #4e150f;
+  --darkness-astronomical: #2a0a07;
+  --darkness-night: #0c0202;
+  --darkness-moon: #ff8470;
+  --darkness-cloud: #cc5c4c;
 
   --shadow-panel: 0 8px 24px rgb(0 0 0 / 60%);
 }

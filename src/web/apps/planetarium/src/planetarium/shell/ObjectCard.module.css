@@ -1,0 +1,144 @@
+.card {
+  position: fixed;
+  top: calc(var(--space-2) * 2 + var(--bar-height));
+  left: calc(var(--space-2) * 2 + var(--rail-width));
+  width: 340px;
+  max-width: calc(100vw - var(--rail-width) - var(--space-2) * 4);
+  padding: var(--space-2) var(--space-2) var(--space-3) var(--space-3);
+  box-sizing: border-box;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.title {
+  flex: 1;
+  min-width: 0;
+  margin: 0;
+  overflow: hidden;
+  color: var(--text-strong);
+  font-size: var(--font-size-lg);
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.collapsed {
+  padding-bottom: var(--space-2);
+}
+
+.subtitle {
+  margin: 0 0 var(--space-2);
+  color: var(--text-muted);
+}
+
+.facts {
+  display: grid;
+  gap: 2px;
+  margin: 0 0 var(--space-2);
+}
+
+.fact {
+  display: grid;
+  grid-template-columns: 7rem 1fr;
+  gap: var(--space-2);
+}
+
+.fact dt {
+  color: var(--text-muted);
+}
+
+.fact dd {
+  margin: 0;
+  font-variant-numeric: tabular-nums;
+}
+
+.why {
+  margin: 0 0 var(--space-2);
+  padding-top: var(--space-2);
+  border-top: 1px solid var(--border-hairline);
+}
+
+.verdict {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  color: var(--text-strong);
+  font-weight: 600;
+}
+
+.verdict button {
+  margin-left: auto;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--text-muted);
+  font: inherit;
+  font-weight: 400;
+  text-decoration: underline;
+  text-decoration-color: var(--border-strong);
+  text-underline-offset: 2px;
+  cursor: pointer;
+}
+
+.verdict button[data-hovered] {
+  color: var(--text-strong);
+}
+
+/* The verdict's colour is the only saturated hue in the card. */
+.dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+
+.dot[data-verdict='excellent'] {
+  background: var(--verdict-excellent);
+}
+
+.dot[data-verdict='good'] {
+  background: var(--verdict-good);
+}
+
+.dot[data-verdict='marginal'] {
+  background: var(--verdict-marginal);
+}
+
+.dot[data-verdict='unlikely'] {
+  background: var(--verdict-poor);
+}
+
+.dot[data-verdict='notPossible'] {
+  background: var(--verdict-impossible);
+}
+
+.score {
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+  font-weight: 400;
+}
+
+.recommended {
+  margin: var(--space-1) 0 0;
+  color: var(--text-primary);
+  font-size: var(--font-size-sm);
+}
+
+.reasons {
+  margin: var(--space-1) 0 0;
+  padding-left: var(--space-4);
+  color: var(--text-primary);
+  font-size: var(--font-size-sm);
+}
+
+.reasons li + li {
+  margin-top: 2px;
+}
+
+.actions {
+  display: flex;
+  gap: 2px;
+}

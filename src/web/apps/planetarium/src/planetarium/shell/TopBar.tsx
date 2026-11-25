@@ -1,6 +1,7 @@
 import { Panel, ToggleIconButton } from '@astroplanner/ui-kit';
 import { Clock, Flashlight, MapPin, Moon } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
+import { siteTime } from '../app/format';
 import { useSnapshot, useUiCommand } from '../app/hostQueries';
 import { host } from '../host';
 import classes from './TopBar.module.css';
@@ -18,22 +19,8 @@ export function wallClock(local: string | null | undefined): string | null {
   return local ? local.slice(11, 16) : null;
 }
 
-/** The site's local time of a UTC instant, "21:42". */
-export function siteTime(utcMs: number, timeZone: string): string {
-  try {
-    return new Intl.DateTimeFormat('en-GB', {
-      timeZone,
-      hour: '2-digit',
-      minute: '2-digit',
-      hour12: false,
-    }).format(utcMs);
-  } catch {
-    return new Date(utcMs).toISOString().slice(11, 16); // unknown zone: UTC rather than nothing
-  }
-}
-
 /** Site, tonight's darkness and the sky time (spec §3.2). Search and menus join it in R1c. */
-export function TopBar() {
+export function TopBar({ idle = false }: { readonly idle?: boolean }) {
   const { t } = useTranslation();
   const observer = useSnapshot('observer.get');
   const sky = useSnapshot('sky.get');
@@ -46,7 +33,13 @@ export function TopBar() {
   const dawn = wallClock(night?.astronomicalDawnLocal);
 
   return (
-    <Panel className={styles.bar} role="banner" aria-label={t('topBar.label')}>
+    <Panel
+      className={styles.bar}
+      role="banner"
+      aria-label={t('topBar.label')}
+      data-toolbar=""
+      data-idle={idle || undefined}
+    >
       <div className={styles.brand}>
         <span className={styles.mark} aria-hidden="true" />
         <span className={styles.name}>{t('app.name')}</span>

@@ -20,6 +20,7 @@ export function SettingsWindow() {
   const setTheme = useUiCommand('ui.setTheme');
   const setReduceTransparency = useUiCommand('ui.setReduceTransparency');
   const setFullScreen = useUiCommand('ui.setFullScreen');
+  const setAutoHide = useUiCommand('ui.setAutoHide');
   const reset = useWindows((state) => state.reset);
   const unavailable = !host.connected || !ui;
 
@@ -48,6 +49,16 @@ export function SettingsWindow() {
           }}
         >
           {t('settings.reduceTransparency')}
+        </Switch>
+        <Switch
+          isSelected={ui?.autoHideToolbars ?? false}
+          isDisabled={unavailable}
+          description={t('settings.autoHideDescription')}
+          onChange={(enabled) => {
+            setAutoHide.mutate({ enabled });
+          }}
+        >
+          {t('settings.autoHide')}
         </Switch>
         <Switch
           isSelected={ui?.isFullScreen ?? false}

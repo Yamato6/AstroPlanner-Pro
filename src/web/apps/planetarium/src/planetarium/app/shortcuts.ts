@@ -35,16 +35,40 @@ export function isTextEntry(target: EventTarget | null): boolean {
   return false;
 }
 
-/** The shortcut an event triggers, if any. */
+/** A symbol ("/", ",") needs Shift on some keyboards (Spanish "/" is Shift+7): Shift is not part of it. */
+const isSymbol = (key: string): boolean => key.length === 1 && !/[\p{L}\p{N} ]/u.test(key);
+
+/**
+ * True when a key belongs to something else: a menu, a list or a modal dialog (the palette), where
+ * letters search and arrows move.
+ */
+export function isOwnedByWidget(target: EventTarget | null): boolean {
+  return (
+    target instanceof Element &&
+    target.closest('[role="menu"], [role="listbox"], [aria-modal="true"]') !== null
+  );
+}
+
+/**
+ * The shortcut an event triggers, if any: none for a key something else already handled, nor for
+ * the copies of key events React Aria's autocomplete sends to its list (they target the list).
+ */
 export function match(shortcuts: readonly Shortcut[], event: KeyboardEvent): Shortcut | undefined {
-  if (event.altKey || event.metaKey || event.repeat || isTextEntry(event.target)) {
+  if (
+    event.altKey ||
+    event.metaKey ||
+    event.repeat ||
+    event.defaultPrevented ||
+    isTextEntry(event.target) ||
+    isOwnedByWidget(event.target)
+  ) {
     return undefined;
   }
   return shortcuts.find(
     (s) =>
       s.key.toLowerCase() === event.key.toLowerCase() &&
       (s.ctrl ?? false) === event.ctrlKey &&
-      (s.shift ?? false) === event.shiftKey,
+      ((s.shift === undefined && isSymbol(s.key)) || (s.shift ?? false) === event.shiftKey),
   );
 }
 
