@@ -70,20 +70,52 @@ export function ecliptic(): Float32Array {
   return new Float32Array(out);
 }
 
-/** Vertex pairs of the segment tables (stride 7 floats: x1 y1 z1 x2 y2 z2 group). */
-export function segmentVertices(table: { count: number; float32: Float32Array; uint32: Uint32Array }): {
+/** Longest piece a segment table line is drawn with, degrees (the wide dome projection curves). */
+export const MAX_SEGMENT_DEGREES = 2;
+
+/**
+ * Vertex pairs of the segment tables (stride 7 floats: x1 y1 z1 x2 y2 z2 group). Lines longer
+ * than `maxDegrees` are split along their great circle: the dome's stereographic projection
+ * curves them, and a piece whose end is culled is dropped whole.
+ */
+export function segmentVertices(
+  table: { count: number; float32: Float32Array; uint32: Uint32Array },
+  maxDegrees = MAX_SEGMENT_DEGREES,
+): {
   positions: Float32Array;
   groups: Float32Array;
 } {
-  const positions = new Float32Array(table.count * 6);
-  const groups = new Float32Array(table.count * 2);
+  const positions: number[] = [];
+  const groups: number[] = [];
   for (let i = 0; i < table.count; i++) {
-    for (let k = 0; k < 6; k++) {
-      positions[i * 6 + k] = table.float32[i * 7 + k] ?? 0;
-    }
+    const a: Vec3 = [table.float32[i * 7] ?? 0, table.float32[i * 7 + 1] ?? 0, table.float32[i * 7 + 2] ?? 0];
+    const b: Vec3 = [
+      table.float32[i * 7 + 3] ?? 0,
+      table.float32[i * 7 + 4] ?? 0,
+      table.float32[i * 7 + 5] ?? 0,
+    ];
     const group = table.uint32[i * 7 + 6] ?? 0;
-    groups[i * 2] = group;
-    groups[i * 2 + 1] = group;
+    const cosine = Math.min(1, Math.max(-1, a[0] * b[0] + a[1] * b[1] + a[2] * b[2]));
+    const angle = Math.acos(cosine);
+    const pieces = Math.max(1, Math.ceil(angle / DEG / maxDegrees));
+    let previous = a;
+    for (let k = 1; k <= pieces; k++) {
+      const next = k === pieces ? b : slerp(a, b, angle, k / pieces);
+      positions.push(...previous, ...next);
+      groups.push(group, group);
+      previous = next;
+    }
   }
-  return { positions, groups };
+  return { positions: new Float32Array(positions), groups: new Float32Array(groups) };
+}
+
+/** Point at fraction `t` of the great-circle arc from `a` to `b` (`angle` apart, radians). */
+function slerp(a: Vec3, b: Vec3, angle: number, t: number): Vec3 {
+  const sine = Math.sin(angle);
+  if (sine < 1e-9) {
+    return a;
+  }
+  const wa = Math.sin((1 - t) * angle) / sine;
+  const wb = Math.sin(t * angle) / sine;
+  return [a[0] * wa + b[0] * wb, a[1] * wa + b[1] * wb, a[2] * wa + b[2] * wb];
 }

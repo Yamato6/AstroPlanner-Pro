@@ -11,7 +11,9 @@ import type {
 } from './bridge/schema';
 import { loadSkyData } from './data/loader';
 import type { FrameTransform, Mat3, RefractionModel, Vec3 } from './math/frame';
+import { Inertia } from './render/camera';
 import { SkyView, type Selection } from './render/sky';
+import { registerSkyControl } from './control';
 import { FrameStats } from './stats';
 import { SkyClock } from './time/clock';
 
@@ -139,6 +141,9 @@ export function mountSky(container: HTMLElement, options: MountOptions = {}): vo
     created.setRefraction(message.payload.refraction);
     created.showStats = state.showStats;
     created.onFovChanged = scheduleFovChanged;
+    created.onTrackingChanged = (active, reason) => {
+      skyEvents.emit('tracking', { active, reason });
+    };
     if (state.frame) created.setFrame(state.frame);
     if (state.observer) created.setObserver(state.observer);
     created.setBodies(state.bodies);
@@ -154,6 +159,27 @@ export function mountSky(container: HTMLElement, options: MountOptions = {}): vo
       created.centerOn(state.pendingCenter.vector, state.pendingCenter.fov);
       state.pendingCenter = null;
     }
+    registerSkyControl({
+      home: () => {
+        inertia.stop();
+        created.flyHome(performance.now());
+      },
+      setTracking: (on) => {
+        if (on) {
+          inertia.stop();
+          return created.startTracking(performance.now(), clock.now());
+        }
+        created.stopTracking('manual');
+        return false;
+      },
+      isTracking: () => created.isTracking,
+      setInertia: (on) => {
+        inertiaEnabled = on;
+        if (!on) {
+          inertia.stop();
+        }
+      },
+    });
     requestAnimationFrame(loop);
   }
 
@@ -206,7 +232,9 @@ export function mountSky(container: HTMLElement, options: MountOptions = {}): vo
         const length = Math.hypot(p.x, p.y, p.z) || 1;
         const vector: Vec3 = [p.x / length, p.y / length, p.z / length];
         if (view) {
-          view.centerOn(vector, p.fovDegrees);
+          // A flight; the view is reported once it has arrived.
+          inertia.stop();
+          view.flyTo(vector, p.fovDegrees, performance.now());
           scheduleViewChanged();
         } else {
           state.pendingCenter = { vector, fov: p.fovDegrees };
@@ -264,7 +292,23 @@ export function mountSky(container: HTMLElement, options: MountOptions = {}): vo
       }
     }
 
+    const coast = inertia.step(now);
+    if (coast) {
+      current.pan(
+        coast.dx,
+        coast.dy,
+        current.renderer.domElement.clientWidth / 2,
+        current.renderer.domElement.clientHeight / 2,
+      );
+      if (!inertia.active) {
+        scheduleViewChanged();
+      }
+    }
+
     try {
+      if (current.animate(now, clock.now())) {
+        scheduleViewChanged();
+      }
       current.render(clock.now());
       reportView(current);
     } catch (error) {
@@ -373,8 +417,12 @@ export function mountSky(container: HTMLElement, options: MountOptions = {}): vo
 
   /** A drag pans the view, or moves the field-of-view rectangle when it starts inside it. */
   let drag: { x: number; y: number; moved: number; fov: boolean } | null = null;
+  /** What a drag leaves when it is released fast (spec §8.1); the page may turn it off. */
+  const inertia = new Inertia();
+  let inertiaEnabled = true;
 
   overlay.addEventListener('pointerdown', (event) => {
+    inertia.stop();
     drag = {
       x: event.clientX,
       y: event.clientY,
@@ -391,7 +439,11 @@ export function mountSky(container: HTMLElement, options: MountOptions = {}): vo
       if (drag.fov) {
         view.moveFov(drag.x, drag.y, event.clientX, event.clientY);
       } else {
+        if (dx !== 0 || dy !== 0) {
+          view.interrupt();
+        }
         view.pan(dx, dy, event.clientX, event.clientY);
+        inertia.sample(event.clientX, event.clientY, event.timeStamp);
         scheduleViewChanged();
       }
       drag = { ...drag, x: event.clientX, y: event.clientY, moved: drag.moved + Math.abs(dx) + Math.abs(dy) };
@@ -420,6 +472,11 @@ export function mountSky(container: HTMLElement, options: MountOptions = {}): vo
 
   overlay.addEventListener('pointerup', (event) => {
     const wasClick = drag !== null && drag.moved < 4 && event.button === 0;
+    if (drag && !drag.fov && !wasClick && inertiaEnabled) {
+      inertia.release(event.timeStamp);
+    } else {
+      inertia.stop();
+    }
     drag = null;
     if (wasClick) {
       selectAt(event.clientX, event.clientY);
@@ -462,6 +519,7 @@ export function mountSky(container: HTMLElement, options: MountOptions = {}): vo
         view.rotateFov(Math.sign(event.deltaY || event.deltaX) * (event.ctrlKey ? 5 : 1));
         return;
       }
+      view?.stopFlight();
       view?.zoom(Math.exp(event.deltaY * 0.0012));
       scheduleViewChanged();
     },
@@ -507,6 +565,24 @@ export function mountSky(container: HTMLElement, options: MountOptions = {}): vo
   window.addEventListener('keydown', (event) => {
     if (options.keyboard === false) {
       return;
+    }
+    // Camera keys the sky handles itself (the v3 shell has them in its registry).
+    if (view && !event.ctrlKey && !event.altKey && !event.metaKey) {
+      if (event.key === 'Home') {
+        event.preventDefault();
+        inertia.stop();
+        view.flyHome(performance.now());
+        return;
+      }
+      if (event.key === 't' || event.key === 'T') {
+        event.preventDefault();
+        if (view.isTracking) {
+          view.stopTracking('manual');
+        } else {
+          view.startTracking(performance.now(), clock.now());
+        }
+        return;
+      }
     }
     const action = shortcuts[event.key];
     if (action && !event.ctrlKey && !event.altKey && !event.metaKey) {

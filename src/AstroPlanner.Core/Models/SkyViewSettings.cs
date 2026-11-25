@@ -47,7 +47,7 @@ public sealed class SkyViewSettings
     public double DeepSkyLimitMagnitude { get; set; } = 10;
 
     public double AzimuthDegrees { get; set; } = 180;
-    public double AltitudeDegrees { get; set; } = 35;
+    public double AltitudeDegrees { get; set; } = 30;
     public double FovDegrees { get; set; } = 70;
 
     /// <summary>Frame-rate overlay in the renderer.</summary>

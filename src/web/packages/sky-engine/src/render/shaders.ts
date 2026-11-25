@@ -2,12 +2,38 @@
 // frame matrix computed from C# (uFrame = J2000 → north/east/up) and the Core refraction model,
 // then maps north/east/up to three.js world space (x = east, y = up, z = −north).
 
+// Dome projection (mirrors render/projection.ts, domeProject): r(θ) = k·tan(θ/k) around the view
+// direction, k = 1 perspective … 2 stereographic. Directions beyond uMaxTheta are culled: the
+// vertex goes past the far plane and vCull makes the fragments of its segments/triangles discard.
+const domeProjection = /* glsl */ `
+uniform mat3 uDomeBasis;       // rows: right, up, forward (world space)
+uniform float uProjK;
+uniform float uProjScale;      // clip units (y) per unit of r
+uniform float uAspect;         // width / height
+uniform float uMaxTheta;       // radians
+varying float vCull;
+
+vec4 domeClip(vec3 world) {
+  vec3 d = uDomeBasis * normalize(world);
+  float perpendicular = length(d.xy);
+  float theta = atan(perpendicular, d.z);
+  if (theta > uMaxTheta) {
+    vCull = 1.0;
+    return vec4(0.0, 0.0, 2.0, 1.0);
+  }
+  float r = uProjK * tan(theta / uProjK) * uProjScale;
+  vec2 u = perpendicular > 1e-9 ? d.xy / perpendicular : vec2(0.0);
+  return vec4(u.x * r / uAspect, u.y * r, 0.0, 1.0);
+}
+`;
+
 const common = /* glsl */ `
+${domeProjection}
 uniform mat3 uFrame;
 uniform vec4 uRefraction;      // a, b, c, d of Saemundsson's formula
 uniform float uRefractionMin;  // below this true altitude no refraction is applied
 uniform float uApplyRefraction;
-uniform float uMode;           // 0 dome (perspective camera), 1 all-sky, 2 finder (gnomonic)
+uniform float uMode;           // 0 dome (domeClip), 1 all-sky, 2 finder (gnomonic)
 uniform mat3 uFinder;          // finder: rows east, north, center (J2000)
 uniform vec2 uChartScale;      // all-sky: clip units per horizon radius; finder: per unit of tan(angle)
 
@@ -29,6 +55,7 @@ vec3 apparentWorld(vec3 j2000) {
 
 // Clip position of a J2000 direction in the current view mode (mirrors render/projection.ts).
 vec4 skyClip(vec3 j2000) {
+  vCull = 0.0;
   if (uMode > 1.5) {
     // Gnomonic: w = cos(distance from the center), so the GPU clips the far hemisphere itself.
     vec3 p = uFinder * j2000;
@@ -44,13 +71,14 @@ vec4 skyClip(vec3 j2000) {
     float r = (90.0 - vAltitude) / 90.0;
     return vec4(-direction.y * r * uChartScale.x, direction.x * r * uChartScale.y, 0.0, 1.0);
   }
-  return projectionMatrix * viewMatrix * vec4(world, 1.0);
+  return domeClip(world);
 }
 `;
 
 const horizonCut = /* glsl */ `
 uniform float uHideBelowHorizon;
 varying float vAltitude;
+varying float vCull;
 `;
 
 export const starVertex = /* glsl */ `
@@ -85,6 +113,7 @@ varying vec3 vColor;
 varying float vAlpha;
 
 void main() {
+  if (vCull > 0.001) discard;
   if (vAlpha <= 0.0 || (uHideBelowHorizon > 0.5 && vAltitude < 0.0)) discard;
   float d = length(gl_PointCoord - 0.5) * 2.0;
   float shape = 1.0 - smoothstep(0.35, 1.0, d);
@@ -112,6 +141,7 @@ uniform float uGroupFade;   // Milky Way: inner density levels are drawn stronge
 varying float vGroup;
 
 void main() {
+  if (vCull > 0.001) discard;
   if (uHideBelowHorizon > 0.5 && vAltitude < -0.05) discard;
   float alpha = uOpacity * (uGroupFade > 0.0 ? (0.45 + uGroupFade * vGroup) : 1.0);
   gl_FragColor = vec4(uColor, alpha);
@@ -185,6 +215,7 @@ varying float vHighlight;
 varying float vSize;
 
 void main() {
+  if (vCull > 0.001) discard;
   if (vSize <= 0.0 || (uHideBelowHorizon > 0.5 && vAltitude < 0.0)) discard;
   vec2 p = (gl_PointCoord - 0.5) * 2.0;
   p.y = -p.y;
@@ -212,18 +243,22 @@ void main() {
 `;
 
 export const groundVertex = /* glsl */ `
+${domeProjection}
 varying vec3 vWorld;
 void main() {
   vWorld = position;
-  gl_Position = projectionMatrix * viewMatrix * vec4(position, 1.0);
+  vCull = 0.0;
+  gl_Position = domeClip(position);
 }
 `;
 
 export const groundFragment = /* glsl */ `
 uniform vec3 uGround;
 uniform vec3 uHorizon;
+varying float vCull;
 varying vec3 vWorld;
 void main() {
+  if (vCull > 0.001) discard;
   float depth = clamp(-normalize(vWorld).y * 6.0, 0.0, 1.0);
   gl_FragColor = vec4(mix(uHorizon, uGround, depth), 1.0);
 }
@@ -231,10 +266,12 @@ void main() {
 
 // Sky backdrop of the dome: an upper hemisphere colored from the zenith to the (brighter) horizon.
 export const skyDomeVertex = /* glsl */ `
+${domeProjection}
 varying vec3 vWorld;
 void main() {
   vWorld = position;
-  gl_Position = projectionMatrix * viewMatrix * vec4(position, 1.0);
+  vCull = 0.0;
+  gl_Position = domeClip(position);
 }
 `;
 
@@ -248,8 +285,10 @@ vec3 skyGradient(float sinAltitude) {
 
 export const skyDomeFragment = /* glsl */ `
 ${skyGradient}
+varying float vCull;
 varying vec3 vWorld;
 void main() {
+  if (vCull > 0.001) discard;
   gl_FragColor = vec4(skyGradient(normalize(vWorld).y), 1.0);
 }
 `;
@@ -283,8 +322,10 @@ void main() {
 export const silhouetteFragment = /* glsl */ `
 uniform vec3 uGround;
 uniform vec3 uHorizon;
+varying float vCull;
 varying float vAltitude;
 void main() {
+  if (vCull > 0.001) discard;
   gl_FragColor = vec4(mix(uHorizon, uGround, clamp(1.0 - vAltitude / 25.0, 0.0, 1.0) * 0.6), 1.0);
 }
 `;

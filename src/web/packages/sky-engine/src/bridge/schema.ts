@@ -110,7 +110,7 @@ const centerOnPayload = z.strictObject({
   x: z.number(),
   y: z.number(),
   z: z.number(),
-  fovDegrees: z.number().min(0.5).max(180).nullable(),
+  fovDegrees: z.number().min(0.25).max(180).nullable(),
 });
 const viewModePayload = z.strictObject({ mode: viewMode });
 const themePayload = z.strictObject({ theme: z.enum(['dark', 'night']) });
