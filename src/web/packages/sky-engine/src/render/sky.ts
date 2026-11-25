@@ -1,6 +1,7 @@
 // The sky view: one three.js scene whose shaders apply the C#-computed frame in three projections
-// (3D dome, all-sky chart, finder chart), plus a 2D canvas overlay for the Sun, Moon, planets,
-// labels, cardinal points and the camera field-of-view overlay.
+// (3D dome, all-sky chart, finder chart), plus a 2D canvas overlay (overlay.ts) for the Sun, Moon,
+// planets, labels, cardinal points and the camera field-of-view overlay. The scene's catalog
+// objects come from catalogLayers.ts, the panorama and the landscapes from mediaLayers.ts.
 import * as THREE from 'three';
 import type { Fov, Layers, MovingBody, Observer, SkyAppearance } from '../bridge/schema';
 import { Dso, Star, UNKNOWN_MAGNITUDE } from '../data/buffers';
@@ -8,7 +9,6 @@ import type { SkyData } from '../data/loader';
 import {
   apparentHorizontal,
   fromHorizontal,
-  interpolateTrack,
   j2000ToHorizontal,
   neuToWorld,
   toHorizontal,
@@ -23,11 +23,9 @@ import {
 } from '../math/frame';
 import {
   appearanceAt,
-  COLOR_STOPS,
   DARK_SKY,
   deepSkyLoss,
   displayLevel,
-  displayLuminance,
   milkyWayFactor,
   skyColor,
   starCap,
@@ -36,19 +34,16 @@ import {
   type AppearanceTrack,
 } from './appearance';
 import { AtmosphereTable, type SkyQuality } from './atmosphere';
-import { extinctionAt, fluxOf, nakedEyeLimit, skyBrightnessAt } from './photometry';
+import { bodyPosition, dsoVector, inTrack, starVector, toBodyTrack, type BodyTrack } from './bodies';
 import { Flight, HOME_VIEW, MAX_ALTITUDE, MIN_ALTITUDE, type DomeView } from './camera';
-import { dsoShape, palette, starColor } from './colors';
-import { altAzGrid, ecliptic, equatorialGrid, meridian, segmentVertices } from './grids';
+import { LayerFactory } from './catalogLayers';
+import { palette } from './colors';
+import { altAzGrid, ecliptic, equatorialGrid, meridian } from './grids';
 import { hasObstruction, maskAltitude, silhouetteTriangles, type HorizonPoint } from './horizon';
-import {
-  equirectangularLod,
-  landscapeHorizon,
-  loadMediaImage,
-  panoramaFieldFade,
-  type LandscapeEntry,
-  type MediaManifest,
-} from './media';
+import { landscapeHorizon, type LandscapeEntry, type MediaManifest } from './media';
+import { MediaLayers, type MediaCredit } from './mediaLayers';
+import { SkyOverlay, type FovState, type OverlayView, type Placed, type Selection } from './overlay';
+import { extinctionAt, fluxOf, nakedEyeLimit, skyBrightnessAt } from './photometry';
 import { pickNearest, type PickCandidate } from './picking';
 import {
   allSkyGeometry,
@@ -62,12 +57,9 @@ import {
   domeProject,
   domeScale,
   finderGeometry,
-  fovOutline,
-  fovUpMarker,
   gnomonic,
   gnomonicInverse,
   insidePolygon,
-  raDec,
   rotateTowards,
   separationDegrees,
   tangentBasis,
@@ -77,74 +69,35 @@ import {
   type ViewMode,
 } from './projection';
 import {
-  dsoFragment,
-  dsoVertex,
   groundFragment,
   groundVertex,
-  landscapeFragment,
-  landscapeVertex,
-  lineFragment,
-  lineVertex,
   silhouetteFragment,
   silhouetteVertex,
   skyPassFragment,
   skyPassVertex,
-  starFragment,
-  starVertex,
 } from './shaders';
+import {
+  clampFov,
+  color,
+  DAY_GROUND,
+  DAY_HORIZON,
+  displayLevelGlsl,
+  domeStarScale,
+  MAX_FINDER_FOV,
+  MAX_FOV,
+  MIN_FINDER_FOV,
+  MIN_FOV,
+  MOON_CHROMA,
+  TINTS,
+  unitChroma,
+  type LightPollutionTint,
+  type Rgb,
+} from './skyStyle';
 
-export interface BodyTrack {
-  readonly body: MovingBody;
-  readonly startMs: number;
-}
-
-export interface Selection {
-  readonly kind: 'star' | 'dso' | 'body';
-  readonly id: string;
-}
-
+export type { BodyTrack } from './bodies';
+export type { MediaCredit } from './mediaLayers';
+export type { Selection } from './overlay';
 export type { ScreenPoint, ViewMode } from './projection';
-
-/**
- * Display brightness of the panorama under a dark natural sky (the texel's colour × this): the
- * star clouds of Sagittarius about 0.3, the faint band a few hundredths over the 0.04 of the sky.
- */
-export const PANORAMA_GAIN = 0.6;
-
-/** Light on the landscape under a dark natural sky (linear, 1 = the daylight photo): dim and bluish. */
-const LANDSCAPE_NIGHT: Rgb = [0.05, 0.06, 0.08];
-
-/**
- * Widest landscape or panorama texture: 4096 px (11 px per degree). An 8192 px landscape costs
- * about 280 MB more in WebView2's GPU process and takes the app past its 1.2 GB (spec §11).
- */
-const MEDIA_MAX_WIDTH = 4096;
-
-/** An image of the media folder now on the GPU, with the credit it must show. */
-export interface MediaCredit {
-  readonly kind: 'panorama' | 'landscape';
-  readonly author: string;
-  readonly license: string;
-}
-
-/** A projected point with its apparent horizontal position (90°/0 in the finder). */
-interface Placed extends ScreenPoint {
-  readonly altitude: number;
-  readonly azimuth: number;
-}
-
-interface FovState {
-  readonly widthDegrees: number;
-  readonly heightDegrees: number;
-  rotationDegrees: number;
-  center: Vec3 | null;
-  readonly label: string;
-}
-
-interface FinderLabel {
-  readonly vector: Vec3;
-  readonly text: string;
-}
 
 /** Why tracking stopped: a manual pan, the selection changed or vanished, or another mode. */
 export type TrackingStop = 'manual' | 'selection' | 'lost' | 'mode';
@@ -155,72 +108,7 @@ type FlightTarget =
   | { readonly kind: 'selection'; readonly fov: number };
 
 const IDENTITY: Mat3 = [1, 0, 0, 0, 1, 0, 0, 0, 1];
-/** Dome field of view, degrees: M57 (1.4′) fills a good part of the narrowest; 180° is a hemisphere. */
-export const MIN_FOV = 0.25;
-export const MAX_FOV = 180;
-/** Above this field (degrees) only the brightest star names, no Messier and no minor-body labels are drawn. */
-const WIDE_LABEL_FOV = 110;
-const MIN_FINDER_FOV = 0.5;
-const MAX_FINDER_FOV = 60;
 const MILKY_WAY_OPACITY = 0.22;
-const FINDER_LABELS = 60;
-const CARDINALS = ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW'] as const;
-const FOV_COLOR = '#ff6f6f';
-/** Satellite trail: the last minute of the path, in 5 s pieces. */
-const SATELLITE_TRAIL_STEPS = 12;
-const SATELLITE_TRAIL_STEP_MS = 5000;
-
-/** Light-pollution glow colour (spec §8.2): high-pressure sodium, white LED or neutral. */
-export type LightPollutionTint = 'sodium' | 'led' | 'neutral';
-
-type Rgb = readonly [number, number, number];
-
-/** A colour scaled to luminance 1 (the sky pass multiplies it by the display level). */
-function unitChroma(rgb: Rgb): THREE.Vector3 {
-  const l = displayLuminance(rgb) || 1;
-  return new THREE.Vector3(rgb[0] / l, rgb[1] / l, rgb[2] / l);
-}
-
-const TINTS: Readonly<Record<LightPollutionTint, Rgb>> = {
-  sodium: [1.0, 0.66, 0.36],
-  led: [0.86, 0.88, 0.95],
-  neutral: [0.8, 0.8, 0.8],
-};
-/** Moonlight looks blue-grey to dark-adapted eyes (desaturated). */
-const MOON_CHROMA: Rgb = [0.66, 0.74, 0.88];
-/** The ground lit by day (sRGB). */
-const DAY_GROUND: Rgb = [0.2, 0.22, 0.18];
-const DAY_HORIZON: Rgb = [0.42, 0.46, 0.44];
-
-/** The display curve as GLSL (piecewise linear over COLOR_STOPS' luminance). */
-function displayLevelGlsl(): string {
-  const stops = COLOR_STOPS.map(([sqm, rgb]) => [sqm, displayLuminance(rgb)] as const);
-  const first = stops[0] ?? [22, 0];
-  const last = stops[stops.length - 1] ?? [4, 1];
-  const lines = [`  if (sqm >= ${first[0].toFixed(3)}) return ${first[1].toFixed(5)};`];
-  for (let k = 1; k < stops.length; k++) {
-    const [upperSqm, upperY] = stops[k - 1] ?? first;
-    const [lowerSqm, lowerY] = stops[k] ?? last;
-    lines.push(
-      `  if (sqm >= ${lowerSqm.toFixed(3)}) return mix(${upperY.toFixed(5)}, ${lowerY.toFixed(5)}, (${upperSqm.toFixed(3)} - sqm) / ${(upperSqm - lowerSqm).toFixed(3)});`,
-    );
-  }
-  lines.push(`  return ${last[1].toFixed(5)};`);
-  return `float displayLevel(float sqm) {\n${lines.join('\n')}\n}`;
-}
-
-function color(rgb: readonly [number, number, number]): THREE.Color {
-  return new THREE.Color(rgb[0], rgb[1], rgb[2]);
-}
-
-/** Dome star size: bright stars grow a little as the field narrows (×1 at 60°, ×1.5 at 1° and below). */
-export function domeStarScale(fovDegrees: number): number {
-  return 1 + Math.min(0.5, Math.max(0, 0.28 * Math.log10(60 / fovDegrees)));
-}
-
-function clampFov(value: number, min: number, max: number): number {
-  return Math.min(max, Math.max(min, value));
-}
 
 export class SkyView {
   readonly renderer: THREE.WebGLRenderer;
@@ -272,24 +160,9 @@ export class SkyView {
     uGround: { value: color(palette.ground) },
     uHorizon: { value: color(palette.horizon) },
   };
-  private readonly panoramaUniforms = {
-    uPanorama: { value: null as THREE.Texture | null },
-    uPanoramaOn: { value: 0 },
-    uPanoramaGain: { value: 0 },
-    uPanoramaLod: { value: 0 },
-  };
-  private readonly landscapeUniforms = {
-    uLandscape: { value: null as THREE.Texture | null },
-    uTopAltitude: { value: 0 },
-    uLandscapeLod: { value: 0 },
-    uLight: { value: new THREE.Vector3(1, 1, 1) },
-    uSaturation: { value: 1 },
-  };
-  private media: { readonly baseUrl: string; readonly manifest: MediaManifest } | null = null;
-  private panorama: { readonly texture: THREE.Texture; readonly width: number } | null = null;
-  private landscape: { readonly entry: LandscapeEntry; texture: THREE.Texture | null; width: number } | null =
-    null;
-  private readonly landscapePass: THREE.Mesh;
+  private readonly mediaLayers: MediaLayers;
+  private readonly layerFactory: LayerFactory;
+  private readonly overlayLayer: SkyOverlay;
   /** The dome camera of the last frame (projection of the overlay, picking, unproject). */
   private dome: DomeCamera = domeCamera(35, 180, 70, 1, 1);
   private readonly starLimitUniform = { value: 8.5 };
@@ -344,7 +217,6 @@ export class SkyView {
   private readonly starCount: number;
   private fovState: FovState | null = null;
   private fovScreen: (ScreenPoint | null)[] = [];
-  private finderLabels: { key: string; items: FinderLabel[] } = { key: '', items: [] };
   private chart: ChartGeometry = { cx: 0, cy: 0, scale: 1 };
   private finderBasis: Mat3 = IDENTITY;
 
@@ -386,6 +258,24 @@ export class SkyView {
       throw new Error('2D canvas not available');
     }
     this.overlay = context;
+    this.overlayLayer = new SkyOverlay(context);
+    this.layerFactory = new LayerFactory(this.scene, this.shared, this.pixelRatio);
+
+    // The panorama (sampled by the sky pass) and the landscape, a full-screen pass drawn over
+    // the stars and lines once its image is loaded.
+    this.mediaLayers = new MediaLayers(
+      this.renderer,
+      this.scene,
+      {
+        ...this.domeUniforms(),
+        uMode: this.shared.uMode,
+        uChartScale: this.shared.uChartScale,
+        uViewport: this.skyPassUniforms.uViewport,
+      },
+      (error) => {
+        this.onMediaError?.(error);
+      },
+    );
 
     // The sky: a full-screen pass in the dome and the all-sky chart (the finder has a flat
     // background), drawn before everything else.
@@ -396,7 +286,7 @@ export class SkyView {
       new THREE.ShaderMaterial({
         vertexShader: skyPassVertex,
         fragmentShader: skyPassFragment(displayLevelGlsl()),
-        uniforms: { ...this.shared, ...this.skyPassUniforms, ...this.panoramaUniforms },
+        uniforms: { ...this.shared, ...this.skyPassUniforms, ...this.mediaLayers.panoramaUniforms },
         depthTest: false,
         depthWrite: false,
       }),
@@ -421,45 +311,26 @@ export class SkyView {
     this.ground.frustumCulled = false;
     this.scene.add(this.ground);
 
-    // The landscape: a full-screen pass over the stars and lines (renderOrder), once its image is loaded.
-    this.landscapePass = new THREE.Mesh(
-      new THREE.PlaneGeometry(2, 2),
-      new THREE.ShaderMaterial({
-        vertexShader: landscapeVertex,
-        fragmentShader: landscapeFragment,
-        uniforms: {
-          ...this.domeUniforms(),
-          uMode: this.shared.uMode,
-          uChartScale: this.shared.uChartScale,
-          uViewport: this.skyPassUniforms.uViewport,
-          ...this.landscapeUniforms,
-        },
-        transparent: true,
-        depthTest: false,
-        depthWrite: false,
-      }),
-    );
-    this.landscapePass.renderOrder = 20;
-    this.landscapePass.frustumCulled = false;
-    this.landscapePass.visible = false;
-    this.scene.add(this.landscapePass);
-
-    this.milkyWay = this.segments(data.milkyWay, palette.milkyWay, this.milkyWayOpacity, 0.15);
+    const f = this.layerFactory;
+    this.milkyWay = f.segments(data.milkyWay, palette.milkyWay, this.milkyWayOpacity, 0.15);
     this.milkyWay.renderOrder = -5;
-    this.constellationBounds = this.segments(data.constellationBounds, palette.constellationBounds, {
+    this.constellationBounds = f.segments(data.constellationBounds, palette.constellationBounds, {
       value: 0.35,
     });
-    this.constellationLines = this.segments(data.constellationLines, palette.constellationLines, {
+    this.constellationLines = f.segments(data.constellationLines, palette.constellationLines, {
       value: 0.55,
     });
-    this.altAz = this.lines(altAzGrid(), palette.altAzGrid, 0.35, this.horizonFrame);
-    this.meridianLine = this.lines(meridian(), palette.meridian, 0.6, this.horizonFrame);
-    this.eclipticLine = this.lines(ecliptic(), palette.ecliptic, 0.5);
+    this.altAz = f.lines(altAzGrid(), palette.altAzGrid, 0.35, this.horizonFrame);
+    this.meridianLine = f.lines(meridian(), palette.meridian, 0.6, this.horizonFrame);
+    this.eclipticLine = f.lines(ecliptic(), palette.ecliptic, 0.5);
 
-    const built = this.buildStars(starMultiplier);
+    const built = f.stars(data, starMultiplier, {
+      uLimit: this.starLimitUniform,
+      uStarScale: this.starScaleUniform,
+    });
     this.stars = built.points;
     this.starCount = built.count;
-    const dso = this.buildDsos();
+    const dso = f.dsos(data, this.dsoUniforms, this.dsoIdIndex);
     this.dsos = dso.points;
     this.dsoHighlight = dso.highlight;
   }
@@ -478,157 +349,6 @@ export class SkyView {
 
   get starsDrawn(): number {
     return this.starCount;
-  }
-
-  private material(
-    vertexShader: string,
-    fragmentShader: string,
-    uniforms: Record<string, THREE.IUniform>,
-    frame: Record<string, THREE.IUniform> = {},
-  ): THREE.ShaderMaterial {
-    return new THREE.ShaderMaterial({
-      vertexShader,
-      fragmentShader,
-      uniforms: { ...this.shared, ...frame, ...uniforms },
-      transparent: true,
-      depthTest: false,
-      depthWrite: false,
-      blending: THREE.AdditiveBlending,
-    });
-  }
-
-  private lineMaterial(
-    rgb: readonly [number, number, number],
-    opacity: THREE.IUniform,
-    groupFade: number,
-    frame: Record<string, THREE.IUniform>,
-  ): THREE.ShaderMaterial {
-    return this.material(
-      lineVertex,
-      lineFragment,
-      { uColor: { value: color(rgb) }, uOpacity: opacity, uGroupFade: { value: groupFade } },
-      frame,
-    );
-  }
-
-  private segments(
-    table: SkyData['milkyWay'],
-    rgb: readonly [number, number, number],
-    opacity: THREE.IUniform,
-    groupFade = 0,
-  ): THREE.LineSegments {
-    const { positions, groups } = segmentVertices(table);
-    const geometry = new THREE.BufferGeometry();
-    geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
-    geometry.setAttribute('group', new THREE.BufferAttribute(groups, 1));
-    const lines = new THREE.LineSegments(geometry, this.lineMaterial(rgb, opacity, groupFade, {}));
-    lines.frustumCulled = false;
-    this.scene.add(lines);
-    return lines;
-  }
-
-  private lines(
-    positions: Float32Array,
-    rgb: readonly [number, number, number],
-    opacity: number,
-    frame: Record<string, THREE.IUniform> = {},
-  ): THREE.LineSegments {
-    const geometry = new THREE.BufferGeometry();
-    geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
-    geometry.setAttribute('group', new THREE.BufferAttribute(new Float32Array(positions.length / 3), 1));
-    const lines = new THREE.LineSegments(geometry, this.lineMaterial(rgb, { value: opacity }, 0, frame));
-    lines.frustumCulled = false;
-    this.scene.add(lines);
-    return lines;
-  }
-
-  private buildStars(multiplier: number): { points: THREE.Points; count: number } {
-    const { stars } = this.data;
-    const copies = Math.max(1, Math.floor(multiplier));
-    const count = stars.count * copies;
-    const positions = new Float32Array(count * 3);
-    const magnitudes = new Float32Array(count);
-    const colors = new Float32Array(count * 3);
-    for (let copy = 0; copy < copies; copy++) {
-      // Stress mode: extra copies are rotated a little so that they do not overlap.
-      const angle = copy * 0.37;
-      const c = Math.cos(angle);
-      const s = Math.sin(angle);
-      for (let i = 0; i < stars.count; i++) {
-        const base = i * Star.stride;
-        const x = stars.float32[base + Star.x] ?? 0;
-        const y = stars.float32[base + Star.y] ?? 0;
-        const z = stars.float32[base + Star.z] ?? 0;
-        const k = copy * stars.count + i;
-        positions[k * 3] = c * x - s * y;
-        positions[k * 3 + 1] = s * x + c * y;
-        positions[k * 3 + 2] = z;
-        magnitudes[k] = stars.float32[base + Star.magnitude] ?? 99;
-        const rgb = starColor(stars.float32[base + Star.colorIndex] ?? 0.65);
-        colors.set(rgb, k * 3);
-      }
-    }
-    const geometry = new THREE.BufferGeometry();
-    geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
-    geometry.setAttribute('magnitude', new THREE.BufferAttribute(magnitudes, 1));
-    geometry.setAttribute('starColor', new THREE.BufferAttribute(colors, 3));
-    const material = this.material(starVertex, starFragment, {
-      uLimit: this.starLimitUniform,
-      uStarScale: this.starScaleUniform,
-      uPixelRatio: { value: this.pixelRatio },
-    });
-    const points = new THREE.Points(geometry, material);
-    points.frustumCulled = false;
-    this.scene.add(points);
-    return { points, count };
-  }
-
-  private buildDsos(): { points: THREE.Points; highlight: Float32Array } {
-    const { dsos, dsoIndex, dsoTypes } = this.data;
-    const n = dsos.count;
-    const positions = new Float32Array(n * 3);
-    const magnitude = new Float32Array(n);
-    const major = new Float32Array(n);
-    const minor = new Float32Array(n);
-    const pa = new Float32Array(n);
-    const shape = new Float32Array(n);
-    const highlight = new Float32Array(n);
-    for (let i = 0; i < n; i++) {
-      const base = i * Dso.stride;
-      positions[i * 3] = dsos.float32[base + Dso.x] ?? 0;
-      positions[i * 3 + 1] = dsos.float32[base + Dso.y] ?? 0;
-      positions[i * 3 + 2] = dsos.float32[base + Dso.z] ?? 0;
-      magnitude[i] = dsos.float32[base + Dso.magnitude] ?? UNKNOWN_MAGNITUDE;
-      major[i] = dsos.float32[base + Dso.major] ?? 0;
-      minor[i] = dsos.float32[base + Dso.minor] ?? 0;
-      pa[i] = dsos.float32[base + Dso.positionAngle] ?? -1;
-      shape[i] = dsoShape(dsoTypes[dsos.uint32[base + Dso.type] ?? 0] ?? '');
-      const id = dsoIndex[i]?.[0];
-      if (id !== undefined) {
-        this.dsoIdIndex.set(id, i);
-      }
-    }
-    const geometry = new THREE.BufferGeometry();
-    geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
-    geometry.setAttribute('magnitude', new THREE.BufferAttribute(magnitude, 1));
-    geometry.setAttribute('majorAxis', new THREE.BufferAttribute(major, 1));
-    geometry.setAttribute('minorAxis', new THREE.BufferAttribute(minor, 1));
-    geometry.setAttribute('positionAngle', new THREE.BufferAttribute(pa, 1));
-    geometry.setAttribute('shape', new THREE.BufferAttribute(shape, 1));
-    geometry.setAttribute('highlight', new THREE.BufferAttribute(highlight, 1));
-    const material = this.material(dsoVertex, dsoFragment, {
-      ...this.dsoUniforms,
-      uPixelRatio: { value: this.pixelRatio },
-      uColors: { value: palette.dsoShapes.map(color) },
-      uPlanColor: { value: color(palette.plan) },
-      uSelectedColor: { value: color(palette.selected) },
-    });
-    material.blending = THREE.NormalBlending;
-    const points = new THREE.Points(geometry, material);
-    points.frustumCulled = false;
-    points.renderOrder = 5;
-    this.scene.add(points);
-    return { points, highlight };
   }
 
   private buildSilhouette(): void {
@@ -682,7 +402,11 @@ export class SkyView {
         this.scene.remove(this.equatorial);
         this.equatorial.geometry.dispose();
       }
-      this.equatorial = this.lines(equatorialGrid(frame.precession), palette.equatorialGrid, 0.3);
+      this.equatorial = this.layerFactory.lines(
+        equatorialGrid(frame.precession),
+        palette.equatorialGrid,
+        0.3,
+      );
     }
   }
 
@@ -701,17 +425,7 @@ export class SkyView {
    * Way and the horizon profile stay).
    */
   setMedia(baseUrl: string, manifest: MediaManifest): void {
-    this.media = { baseUrl, manifest };
-    const width = Math.min(manifest.panorama.width, this.maxTextureWidth(MEDIA_MAX_WIDTH));
-    loadMediaImage(baseUrl, manifest.panorama.file, width)
-      .then((image) => {
-        const imageWidth = image.width;
-        this.panorama = { texture: this.equirectangularTexture(image), width: imageWidth };
-        this.panoramaUniforms.uPanorama.value = this.panorama.texture;
-      })
-      .catch((error: unknown) => {
-        this.onMediaError?.(error);
-      });
+    this.mediaLayers.setMedia(baseUrl, manifest);
     this.applyLandscape();
   }
 
@@ -720,7 +434,7 @@ export class SkyView {
 
   /** The landscapes of the media folder (empty without it). */
   get landscapes(): readonly LandscapeEntry[] {
-    return this.media?.manifest.landscapes ?? [];
+    return this.mediaLayers.landscapes;
   }
 
   /**
@@ -737,44 +451,7 @@ export class SkyView {
 
   /** The images on screen now, whose credits the page shows (spec §8.3: CC BY). */
   get mediaCredits(): MediaCredit[] {
-    const credits: MediaCredit[] = [];
-    const panorama = this.media?.manifest.panorama;
-    if (
-      panorama &&
-      this.panoramaUniforms.uPanoramaOn.value > 0 &&
-      this.panoramaUniforms.uPanoramaGain.value > 0 &&
-      this.milkyWayVisible
-    ) {
-      credits.push({ kind: 'panorama', author: panorama.credit.author, license: panorama.credit.license });
-    }
-    if (this.landscape?.texture && this.landscapePass.visible) {
-      const { credit } = this.landscape.entry;
-      credits.push({ kind: 'landscape', author: credit.author, license: credit.license });
-    }
-    return credits;
-  }
-
-  private maxTextureWidth(wanted: number): number {
-    return Math.min(wanted, this.renderer.capabilities.maxTextureSize);
-  }
-
-  /**
-   * An equirectangular image on the GPU, with mipmaps. The decoded image is uploaded now and
-   * released (it would otherwise stay in the page's memory as well as in the GPU's).
-   */
-  private equirectangularTexture(image: ImageBitmap): THREE.Texture {
-    const texture = new THREE.Texture(image);
-    texture.flipY = false; // rows top-down: v = 0 at the top (ImageBitmaps are never flipped)
-    texture.wrapS = THREE.RepeatWrapping;
-    texture.wrapT = THREE.ClampToEdgeWrapping;
-    texture.minFilter = THREE.LinearMipmapLinearFilter;
-    texture.magFilter = THREE.LinearFilter;
-    texture.generateMipmaps = true;
-    texture.anisotropy = Math.min(4, this.renderer.capabilities.getMaxAnisotropy());
-    texture.needsUpdate = true;
-    this.renderer.initTexture(texture);
-    image.close();
-    return texture;
+    return this.mediaLayers.credits(this.milkyWayVisible);
   }
 
   /**
@@ -784,33 +461,7 @@ export class SkyView {
    */
   private applyLandscape(): void {
     const id = this.observer?.landscape ?? null;
-    const entry = id === null ? null : (this.media?.manifest.landscapes.find((l) => l.id === id) ?? null);
-    if (entry?.id !== this.landscape?.entry.id) {
-      this.landscape?.texture?.dispose();
-      this.landscapeUniforms.uLandscape.value = null;
-      this.landscape = entry ? { entry, texture: null, width: 0 } : null;
-      if (entry && this.media) {
-        const requested = this.landscape;
-        loadMediaImage(
-          this.media.baseUrl,
-          entry.file,
-          Math.min(entry.width, this.maxTextureWidth(MEDIA_MAX_WIDTH)),
-        )
-          .then((image) => {
-            if (this.landscape !== requested || !requested) {
-              image.close();
-              return;
-            }
-            requested.width = image.width;
-            requested.texture = this.equirectangularTexture(image);
-            this.landscapeUniforms.uLandscape.value = requested.texture;
-            this.landscapeUniforms.uTopAltitude.value = entry.topAltitudeDegrees;
-          })
-          .catch((error: unknown) => {
-            this.onMediaError?.(error);
-          });
-      }
-    }
+    const entry = this.mediaLayers.selectLandscape(id);
     this.horizonPoints = entry
       ? landscapeHorizon(entry)
       : id === 'flat'
@@ -819,34 +470,8 @@ export class SkyView {
     this.buildSilhouette();
   }
 
-  /** Panorama and landscape uniforms for this frame (after the sky light is known). */
-  private updateMedia(groundLight: number): void {
-    const degreesPerPixel = 1 / Math.max(1e-6, this.pixelsPerDegree * this.pixelRatio);
-    const finder = this.mode === 'finder';
-    const p = this.panoramaUniforms;
-    p.uPanoramaOn.value = this.panorama && this.layers.milkyWay && !finder ? 1 : 0;
-    p.uPanoramaGain.value = PANORAMA_GAIN * (this.mode === 'dome' ? panoramaFieldFade(this.fov) : 1);
-    p.uPanoramaLod.value = this.panorama ? equirectangularLod(this.panorama.width, degreesPerPixel) : 0;
-
-    const l = this.landscapeUniforms;
-    const ready = this.landscape?.texture ? this.landscape : null;
-    this.landscapePass.visible = ready !== null && this.layers.ground && !finder;
-    if (ready) {
-      l.uLandscapeLod.value = equirectangularLod(ready.width, degreesPerPixel);
-      // Daylight shows the photo as taken; the night darkens it to a faint, nearly grey shape
-      // tinted by the sky at the horizon (moonlight and the towns' glow raise it).
-      const k = groundLight;
-      l.uLight.value.set(
-        LANDSCAPE_NIGHT[0] * (1 - k) + k,
-        LANDSCAPE_NIGHT[1] * (1 - k) + k,
-        LANDSCAPE_NIGHT[2] * (1 - k) + k,
-      );
-      l.uSaturation.value = 0.25 + 0.75 * k;
-    }
-  }
-
   setBodies(bodies: MovingBody[]): void {
-    this.bodies = bodies.map((body) => ({ body, startMs: Date.parse(body.track.startUtc) }));
+    this.bodies = bodies.map(toBodyTrack);
   }
 
   setAppearance(appearance: SkyAppearance): void {
@@ -932,7 +557,7 @@ export class SkyView {
     this.constellationLines.visible = l.constellationLines;
     this.constellationBounds.visible = l.constellationBoundaries;
     // The panorama replaces the outline Milky Way once it is loaded.
-    this.milkyWay.visible = l.milkyWay && !(this.panorama && !finder);
+    this.milkyWay.visible = l.milkyWay && !(this.mediaLayers.hasPanorama && !finder);
     // Alt-az lines are in the horizon frame: they have no place on the (equatorial) finder chart.
     this.altAz.visible = l.altAzGrid && !finder;
     this.meridianLine.visible = l.meridian && !finder;
@@ -944,7 +569,7 @@ export class SkyView {
     this.ground.visible = dome && l.ground;
     this.skyPass.visible = !finder;
     if (this.silhouette) {
-      this.silhouette.visible = !finder && l.ground && !this.landscape?.texture;
+      this.silhouette.visible = !finder && l.ground && !this.mediaLayers.hasLandscapeImage;
     }
     this.shared.uHideBelowHorizon.value = this.mode === 'allSky' ? 1 : finder ? 0 : l.ground ? 1 : 0;
   }
@@ -1226,7 +851,7 @@ export class SkyView {
   /** The Sun and the Moon now, north/east/up (null without their tracks). */
   private bodyNeu(kind: 'sun' | 'moon', utcMs: number): Vec3 | null {
     const track = this.bodies.find((t) => t.body.kind === kind);
-    return track ? transform(this.currentH, this.bodyPosition(track, utcMs)) : null;
+    return track ? transform(this.currentH, bodyPosition(track, utcMs)) : null;
   }
 
   private moonHorizontal: Horizontal | null = null;
@@ -1277,7 +902,13 @@ export class SkyView {
     };
     mix(palette.ground, DAY_GROUND, this.groundColors.uGround.value);
     mix(palette.horizon, DAY_HORIZON, this.groundColors.uHorizon.value);
-    this.updateMedia(light);
+    this.mediaLayers.update({
+      mode: this.mode,
+      fov: this.fov,
+      layers: this.layers,
+      degreesPerPixel: 1 / Math.max(1e-6, this.pixelsPerDegree * this.pixelRatio),
+      groundLight: light,
+    });
   }
 
   /** The sky brightness now (for diagnostics and tests). */
@@ -1476,517 +1107,36 @@ export class SkyView {
     }
 
     this.renderer.render(this.scene, this.camera);
-    this.drawOverlay(utcMs);
+    this.fovScreen = this.overlayLayer.draw(this.overlayView(), utcMs, this.fovState);
   }
 
-  // ---- overlay -----------------------------------------------------------------------------
-
-  private bodyPosition(track: BodyTrack, utcMs: number): Vec3 {
-    return interpolateTrack(track.body.track.vectors, track.startMs, track.body.track.stepSeconds, utcMs);
-  }
-
-  /** Screen directions of celestial north and east at a J2000 point (unit vectors in canvas px). */
-  private screenAxes(j2000: Vec3, at: ScreenPoint): { north: ScreenPoint; east: ScreenPoint } | null {
-    const offset = (direction: Vec3): ScreenPoint | null => {
-      const p: Vec3 = [
-        j2000[0] + direction[0] * 1e-3,
-        j2000[1] + direction[1] * 1e-3,
-        j2000[2] + direction[2] * 1e-3,
-      ];
-      const s = this.place(p, 1e6, false);
-      if (!s) {
-        return null;
-      }
-      const length = Math.hypot(s.x - at.x, s.y - at.y) || 1;
-      return { x: (s.x - at.x) / length, y: (s.y - at.y) / length };
+  /** The view as the overlay reads it this frame. */
+  private overlayView(): OverlayView {
+    return {
+      data: this.data,
+      layers: this.layers,
+      mode: this.mode,
+      width: this.width,
+      height: this.height,
+      effectiveFov: this.effectiveFov,
+      starLimit: this.starLimit,
+      pixelsPerDegree: this.pixelsPerDegree,
+      chart: this.chart,
+      finderCenter: this.finderCenter,
+      finderFov: this.finderFov,
+      minimumAltitudeDegrees: this.observer?.minimumAltitudeDegrees ?? 0,
+      plan: this.plan,
+      selection: this.selection,
+      bodies: this.bodies,
+      stats: this.showStats && this.statsText ? this.statsText : null,
+      place: (j2000, margin, cut) => this.place(j2000, margin, cut),
+      placeHorizontal: (altitude, azimuth, margin) => this.placeHorizontal(altitude, azimuth, margin),
+      selectionPosition: (selection, utcMs) => this.selectionPosition(selection, utcMs),
+      dsoVisible: (i) => this.dsoVisible(i),
     };
-    const north = offset([-j2000[0] * j2000[2], -j2000[1] * j2000[2], 1 - j2000[2] * j2000[2]]);
-    const east = offset([-j2000[1], j2000[0], 0]);
-    return north && east ? { north, east } : null;
-  }
-
-  private drawOverlay(utcMs: number): void {
-    const g = this.overlay;
-    g.clearRect(0, 0, this.width, this.height);
-    g.font = '12px "Segoe UI", sans-serif';
-    g.textBaseline = 'middle';
-    const occupied = new Set<string>();
-    const label = (text: string, x: number, y: number, style: string, force = false): void => {
-      const key = `${Math.round(x / 70)}:${Math.round(y / 16)}`;
-      if (!force && occupied.has(key)) {
-        return;
-      }
-      occupied.add(key);
-      g.fillStyle = style;
-      g.fillText(text, x, y);
-    };
-    const labels = this.layers.labels;
-
-    if (this.mode === 'allSky') {
-      this.drawAllSkyFrame();
-    }
-
-    if (this.layers.constellationNames) {
-      g.textAlign = 'center';
-      for (const constellation of this.data.constellations) {
-        const p = this.place(constellation.label);
-        if (p) {
-          label(constellation.name.toUpperCase(), p.x, p.y, palette.constellationLabel);
-        }
-      }
-    }
-
-    g.textAlign = 'left';
-    if (labels && this.layers.stars) {
-      if (this.mode === 'finder') {
-        for (const item of this.finderStarLabels()) {
-          const p = this.place(item.vector);
-          if (p) {
-            label(item.text, p.x + 5, p.y - 6, palette.label);
-          }
-        }
-      } else {
-        // Label density follows the field: only the brightest names in a very wide view.
-        const limit = Math.min(this.effectiveFov > WIDE_LABEL_FOV ? 1.5 : 2.5, this.starLimit - 3.5);
-        const { stars, starNames } = this.data;
-        for (let i = 0; i < stars.count; i++) {
-          const magnitude = stars.float32[i * Star.stride + Star.magnitude] ?? 99;
-          if (magnitude > limit) {
-            break;
-          }
-          const name = starNames.get(stars.uint32[i * Star.stride + Star.hygId] ?? 0);
-          if (!name) {
-            continue;
-          }
-          const p = this.place(this.starVector(i));
-          if (p) {
-            label(name, p.x + 6, p.y - 6, palette.label);
-          }
-        }
-      }
-    }
-
-    if (labels && this.layers.deepSky) {
-      const showAll = this.effectiveFov < 15;
-      const showMessier = this.effectiveFov <= WIDE_LABEL_FOV;
-      this.data.dsoIndex.forEach(([id], i) => {
-        const highlighted = this.plan.has(id) || (this.selection?.kind === 'dso' && this.selection.id === id);
-        if (!highlighted && !((showMessier && /^M\d/.test(id)) || (showAll && this.dsoVisible(i)))) {
-          return;
-        }
-        const p = this.place(this.dsoVector(i));
-        if (p) {
-          label(id, p.x + 8, p.y + 8, highlighted ? '#ffb45e' : palette.label, highlighted);
-        }
-      });
-    }
-
-    for (const track of this.bodies) {
-      if (track.body.kind === 'satellite') {
-        if (this.layers.satellites) {
-          this.drawSatellite(track, utcMs, labels ? label : null);
-        }
-      } else if (this.layers.bodies) {
-        // In a very wide view only the Sun, the Moon, the planets and what is selected or
-        // planned keep their names (minor bodies would bury the sky in labels).
-        const minor = track.body.kind === 'comet' || track.body.kind === 'asteroid';
-        const named =
-          !minor ||
-          this.effectiveFov <= WIDE_LABEL_FOV ||
-          this.plan.has(track.body.id) ||
-          (this.selection?.kind === 'body' && this.selection.id === track.body.id);
-        this.drawBody(track, utcMs, labels && named ? label : null);
-      }
-    }
-
-    if (this.selection && this.selection.kind !== 'dso') {
-      const position = this.selectionPosition(this.selection, utcMs);
-      const p = position ? this.place(position) : null;
-      if (p) {
-        g.strokeStyle = '#ffffff';
-        g.lineWidth = 1.5;
-        g.beginPath();
-        g.arc(p.x, p.y, 12, 0, Math.PI * 2);
-        g.stroke();
-      }
-    }
-
-    this.drawFov();
-
-    if (this.mode === 'dome' && this.layers.ground) {
-      g.textAlign = 'center';
-      g.font = 'bold 14px "Segoe UI", sans-serif';
-      CARDINALS.forEach((name, i) => {
-        const p = this.placeHorizontal(0, i * 45);
-        if (p) {
-          label(name, p.x, p.y - 12, palette.cardinal, true);
-        }
-      });
-    } else if (this.mode === 'finder') {
-      this.drawFinderFrame();
-    }
-
-    if (this.showStats && this.statsText) {
-      g.textAlign = 'left';
-      g.font = '12px Consolas, monospace';
-      g.fillStyle = '#7fe08a';
-      g.fillText(this.statsText, 8, 14);
-    }
-  }
-
-  /** All-sky chart: horizon circle, minimum altitude and cardinal points around it. */
-  private drawAllSkyFrame(): void {
-    const g = this.overlay;
-    const { cx, cy, scale } = this.chart;
-    g.strokeStyle = 'rgba(255, 180, 94, 0.55)';
-    g.lineWidth = 1.5;
-    g.beginPath();
-    g.arc(cx, cy, scale, 0, Math.PI * 2);
-    g.stroke();
-    const minimum = this.observer?.minimumAltitudeDegrees ?? 0;
-    if (minimum > 0) {
-      g.save();
-      g.setLineDash([5, 5]);
-      g.strokeStyle = 'rgba(255, 180, 94, 0.35)';
-      g.lineWidth = 1;
-      g.beginPath();
-      g.arc(cx, cy, ((90 - minimum) / 90) * scale, 0, Math.PI * 2);
-      g.stroke();
-      g.restore();
-    }
-    g.textAlign = 'center';
-    g.font = 'bold 14px "Segoe UI", sans-serif';
-    g.fillStyle = palette.cardinal;
-    CARDINALS.forEach((name, i) => {
-      const az = i * 45 * (Math.PI / 180);
-      const r = scale + (i % 2 === 0 ? 16 : 14);
-      g.font = i % 2 === 0 ? 'bold 14px "Segoe UI", sans-serif' : '11px "Segoe UI", sans-serif';
-      g.fillText(name, cx - r * Math.sin(az), cy - r * Math.cos(az));
-    });
-  }
-
-  /** Finder chart: center coordinates, field, compass and a scale bar. */
-  private drawFinderFrame(): void {
-    const g = this.overlay;
-    const { raHours, decDegrees } = raDec(this.finderCenter);
-    const raH = Math.floor(raHours);
-    const raM = (raHours - raH) * 60;
-    const sign = decDegrees < 0 ? '−' : '+';
-    const decAbs = Math.abs(decDegrees);
-    const decD = Math.floor(decAbs);
-    const decM = Math.round((decAbs - decD) * 60);
-    const text =
-      `α ${raH.toString().padStart(2, '0')}h ${raM.toFixed(1).padStart(4, '0')}m   ` +
-      `δ ${sign}${decD.toString().padStart(2, '0')}° ${decM.toString().padStart(2, '0')}′   ` +
-      (this.finderFov < 2 ? `${(this.finderFov * 60).toFixed(0)}′` : `${this.finderFov.toFixed(1)}°`);
-    g.font = '12px "Segoe UI", sans-serif';
-    g.textAlign = 'left';
-    g.fillStyle = palette.label;
-    g.fillText(text, 10, this.height - 14);
-
-    // Compass: north up, east left (a mirror image of a map, as on the sky).
-    const x = this.width - 40;
-    const y = 44;
-    g.strokeStyle = palette.cardinal;
-    g.fillStyle = palette.cardinal;
-    g.lineWidth = 1.5;
-    g.beginPath();
-    g.moveTo(x, y);
-    g.lineTo(x, y - 24);
-    g.moveTo(x, y);
-    g.lineTo(x - 24, y);
-    g.stroke();
-    g.textAlign = 'center';
-    g.font = 'bold 12px "Segoe UI", sans-serif';
-    g.fillText('N', x, y - 32);
-    g.fillText('E', x - 32, y);
-
-    // Scale bar of a round angle about a fifth of the width.
-    const pixelsPerDegree = this.pixelsPerDegree;
-    const target = this.width / 5 / pixelsPerDegree;
-    const steps = [1 / 60, 5 / 60, 10 / 60, 15 / 60, 0.5, 1, 2, 5, 10, 20];
-    const angle = steps.reduce((best, s) => (Math.abs(s - target) < Math.abs(best - target) ? s : best), 1);
-    const length = angle * pixelsPerDegree;
-    const bx = this.width - 20 - length;
-    const by = this.height - 14;
-    g.beginPath();
-    g.moveTo(bx, by);
-    g.lineTo(bx + length, by);
-    g.moveTo(bx, by - 4);
-    g.lineTo(bx, by + 4);
-    g.moveTo(bx + length, by - 4);
-    g.lineTo(bx + length, by + 4);
-    g.stroke();
-    g.font = '11px "Segoe UI", sans-serif';
-    g.fillText(angle < 1 ? `${Math.round(angle * 60)}′` : `${angle}°`, bx + length / 2, by - 10);
-  }
-
-  /** The camera field: the sensor rectangle, a tick on its "up" side and its label. */
-  private drawFov(): void {
-    const fov = this.fovState;
-    if (!fov?.center) {
-      this.fovScreen = [];
-      return;
-    }
-    const g = this.overlay;
-    const outline = fovOutline(fov.center, fov.widthDegrees, fov.heightDegrees, fov.rotationDegrees);
-    this.fovScreen = outline.map((v) => this.place(v, 1e5, false));
-    g.strokeStyle = FOV_COLOR;
-    g.lineWidth = 1.6;
-    g.beginPath();
-    let drawing = false;
-    for (const p of this.fovScreen) {
-      if (!p) {
-        drawing = false;
-        continue;
-      }
-      if (drawing) {
-        g.lineTo(p.x, p.y);
-      } else {
-        g.moveTo(p.x, p.y);
-        drawing = true;
-      }
-    }
-    g.stroke();
-
-    const steps = (outline.length - 1) / 4;
-    const topMiddle = this.fovScreen[Math.round(steps / 2)];
-    const tick = this.place(fovUpMarker(fov.center, fov.heightDegrees, fov.rotationDegrees), 1e5, false);
-    if (topMiddle && tick) {
-      g.beginPath();
-      g.moveTo(topMiddle.x, topMiddle.y);
-      g.lineTo(tick.x, tick.y);
-      g.stroke();
-    }
-    const corner = this.fovScreen[0];
-    if (corner && fov.label) {
-      g.font = '12px "Segoe UI", sans-serif';
-      g.textAlign = 'left';
-      g.fillStyle = FOV_COLOR;
-      g.fillText(fov.label, corner.x + 4, corner.y - 9);
-    }
-  }
-
-  /** Named stars and magnitudes for the finder (recomputed only when the chart changes). */
-  private finderStarLabels(): FinderLabel[] {
-    const limit = Math.min(this.starLimit - 1.5, 11);
-    const c = this.finderCenter;
-    const key = `${c.map((v) => v.toFixed(5)).join(',')}|${this.finderFov.toFixed(3)}|${this.width}x${this.height}|${limit.toFixed(1)}`;
-    if (key === this.finderLabels.key) {
-      return this.finderLabels.items;
-    }
-    const halfDiagonal =
-      Math.atan(Math.hypot(this.width, this.height) / 2 / this.chart.scale) * (180 / Math.PI);
-    const cosLimit = Math.cos(Math.min(89, halfDiagonal + 0.5) * (Math.PI / 180));
-    const items: FinderLabel[] = [];
-    const { stars, starNames } = this.data;
-    for (let i = 0; i < stars.count && items.length < FINDER_LABELS; i++) {
-      const magnitude = stars.float32[i * Star.stride + Star.magnitude] ?? 99;
-      if (magnitude > limit) {
-        break;
-      }
-      const v = this.starVector(i);
-      if (v[0] * c[0] + v[1] * c[1] + v[2] * c[2] < cosLimit) {
-        continue;
-      }
-      const name = starNames.get(stars.uint32[i * Star.stride + Star.hygId] ?? 0);
-      items.push({ vector: v, text: name ?? magnitude.toFixed(1) });
-    }
-    this.finderLabels = { key, items };
-    return items;
-  }
-
-  private drawBody(
-    track: BodyTrack,
-    utcMs: number,
-    label: ((text: string, x: number, y: number, style: string, force?: boolean) => void) | null,
-  ): void {
-    const j2000 = this.bodyPosition(track, utcMs);
-    const p = this.place(j2000);
-    if (!p) {
-      return;
-    }
-    const g = this.overlay;
-    const body = track.body;
-    const minimumRadius = { planet: 2.5, comet: 3, asteroid: 1.8, satellite: 2, sun: 6, moon: 6 }[body.kind];
-    const radius = Math.max(minimumRadius, ((body.diameterArcsec / 3600) * this.pixelsPerDegree) / 2);
-
-    if (body.kind === 'sun') {
-      const glow = g.createRadialGradient(p.x, p.y, radius * 0.5, p.x, p.y, radius * 4);
-      glow.addColorStop(0, 'rgba(255, 236, 170, 0.8)');
-      glow.addColorStop(1, 'rgba(255, 236, 170, 0)');
-      g.fillStyle = glow;
-      g.beginPath();
-      g.arc(p.x, p.y, radius * 4, 0, Math.PI * 2);
-      g.fill();
-      g.fillStyle = '#fff3c4';
-      g.beginPath();
-      g.arc(p.x, p.y, radius, 0, Math.PI * 2);
-      g.fill();
-    } else if (body.kind === 'moon') {
-      this.drawMoon(p, radius, j2000, body);
-    } else if (body.kind === 'comet') {
-      this.drawComet(p, radius, j2000, body);
-    } else if (body.kind === 'asteroid') {
-      g.fillStyle = '#cfc8bc';
-      g.beginPath();
-      g.arc(p.x, p.y, radius, 0, Math.PI * 2);
-      g.fill();
-    } else {
-      g.fillStyle = '#f5c26b';
-      g.beginPath();
-      g.arc(p.x, p.y, radius, 0, Math.PI * 2);
-      g.fill();
-    }
-
-    if (label) {
-      g.textAlign = 'left';
-      label(body.name, p.x + radius + 4, p.y - radius - 2, palette.bodyLabel, true);
-    }
-  }
-
-  /** Whether a satellite's short track covers the instant (outside it the satellite is not drawn). */
-  private inTrack(track: BodyTrack, utcMs: number): boolean {
-    const count = Math.floor(track.body.track.vectors.length / 3);
-    const span = (count - 1) * track.body.track.stepSeconds * 1000;
-    return utcMs >= track.startMs && utcMs <= track.startMs + span;
-  }
-
-  /** Whether the Sun lights a satellite at the instant (nearest track sample). */
-  private isSunlit(track: BodyTrack, utcMs: number): boolean {
-    const index = Math.round((utcMs - track.startMs) / (track.body.track.stepSeconds * 1000));
-    return (track.body.sunlit?.[index] ?? 1) === 1;
-  }
-
-  /**
-   * A satellite: a dot, bright while sunlit and dim in the Earth's shadow, with a fading trail of
-   * the last minute of its path.
-   */
-  private drawSatellite(
-    track: BodyTrack,
-    utcMs: number,
-    label: ((text: string, x: number, y: number, style: string, force?: boolean) => void) | null,
-  ): void {
-    if (!this.inTrack(track, utcMs)) {
-      return;
-    }
-    const p = this.place(this.bodyPosition(track, utcMs));
-    if (!p) {
-      return;
-    }
-    const g = this.overlay;
-    const lit = this.isSunlit(track, utcMs);
-    const rgb = lit ? '226, 238, 255' : '110, 118, 134';
-    let previous: ScreenPoint = p;
-    g.lineWidth = 1.5;
-    g.lineCap = 'round';
-    for (let k = 1; k <= SATELLITE_TRAIL_STEPS; k++) {
-      const t = utcMs - k * SATELLITE_TRAIL_STEP_MS;
-      if (t < track.startMs) {
-        break;
-      }
-      const q = this.place(this.bodyPosition(track, t));
-      if (!q) {
-        break;
-      }
-      g.strokeStyle = `rgba(${rgb}, ${(0.6 * (1 - k / (SATELLITE_TRAIL_STEPS + 1))).toFixed(3)})`;
-      g.beginPath();
-      g.moveTo(previous.x, previous.y);
-      g.lineTo(q.x, q.y);
-      g.stroke();
-      previous = q;
-    }
-    g.fillStyle = `rgb(${rgb})`;
-    g.beginPath();
-    g.arc(p.x, p.y, lit ? 2.4 : 1.6, 0, Math.PI * 2);
-    g.fill();
-    if (label && lit) {
-      g.textAlign = 'left';
-      label(track.body.name, p.x + 6, p.y - 4, palette.bodyLabel);
-    }
-  }
-
-  /**
-   * A comet: a fuzzy head and a short tail pointing away from the Sun (brightLimbAngleDegrees is
-   * the position angle of the Sun's direction, as for the Moon's bright limb).
-   */
-  private drawComet(p: ScreenPoint, radius: number, j2000: Vec3, body: MovingBody): void {
-    const g = this.overlay;
-    const axes = this.screenAxes(j2000, p);
-    const chi = (body.brightLimbAngleDegrees * Math.PI) / 180 + Math.PI;
-    const tail = axes
-      ? {
-          x: Math.cos(chi) * axes.north.x + Math.sin(chi) * axes.east.x,
-          y: Math.cos(chi) * axes.north.y + Math.sin(chi) * axes.east.y,
-        }
-      : { x: 0, y: -1 };
-    const length = Math.hypot(tail.x, tail.y) || 1;
-    const end = { x: p.x + (tail.x / length) * radius * 9, y: p.y + (tail.y / length) * radius * 9 };
-
-    const gradient = g.createLinearGradient(p.x, p.y, end.x, end.y);
-    gradient.addColorStop(0, 'rgba(160, 232, 216, 0.75)');
-    gradient.addColorStop(1, 'rgba(160, 232, 216, 0)');
-    g.strokeStyle = gradient;
-    g.lineWidth = radius * 1.2;
-    g.lineCap = 'round';
-    g.beginPath();
-    g.moveTo(p.x, p.y);
-    g.lineTo(end.x, end.y);
-    g.stroke();
-
-    const head = g.createRadialGradient(p.x, p.y, 0, p.x, p.y, radius * 2);
-    head.addColorStop(0, 'rgba(214, 250, 240, 1)');
-    head.addColorStop(1, 'rgba(160, 232, 216, 0)');
-    g.fillStyle = head;
-    g.beginPath();
-    g.arc(p.x, p.y, radius * 2, 0, Math.PI * 2);
-    g.fill();
-  }
-
-  /** The Moon with its phase: the bright limb points at position angle χ, the terminator is an ellipse. */
-  private drawMoon(p: ScreenPoint, radius: number, j2000: Vec3, body: MovingBody): void {
-    const g = this.overlay;
-    g.fillStyle = '#20242c';
-    g.beginPath();
-    g.arc(p.x, p.y, radius, 0, Math.PI * 2);
-    g.fill();
-
-    const axes = this.screenAxes(j2000, p);
-    const chi = (body.brightLimbAngleDegrees * Math.PI) / 180;
-    const direction = axes
-      ? {
-          x: Math.cos(chi) * axes.north.x + Math.sin(chi) * axes.east.x,
-          y: Math.cos(chi) * axes.north.y + Math.sin(chi) * axes.east.y,
-        }
-      : { x: 1, y: 0 };
-    const cosI = Math.cos((body.phaseAngleDegrees * Math.PI) / 180);
-
-    g.save();
-    g.translate(p.x, p.y);
-    g.rotate(Math.atan2(direction.y, direction.x));
-    g.fillStyle = '#e8e3c8';
-    g.beginPath();
-    g.moveTo(0, -radius);
-    g.arc(0, 0, radius, -Math.PI / 2, Math.PI / 2, false);
-    g.ellipse(0, 0, Math.max(0.01, radius * Math.abs(cosI)), radius, 0, Math.PI / 2, -Math.PI / 2, cosI < 0);
-    g.closePath();
-    g.fill();
-    g.restore();
   }
 
   // ---- picking -----------------------------------------------------------------------------
-
-  private starVector(i: number): Vec3 {
-    const base = i * Star.stride;
-    const f = this.data.stars.float32;
-    return [f[base + Star.x] ?? 0, f[base + Star.y] ?? 0, f[base + Star.z] ?? 0];
-  }
-
-  private dsoVector(i: number): Vec3 {
-    const base = i * Dso.stride;
-    const f = this.data.dsos.float32;
-    return [f[base + Dso.x] ?? 0, f[base + Dso.y] ?? 0, f[base + Dso.z] ?? 0];
-  }
 
   private dsoVisible(i: number): boolean {
     const base = i * Dso.stride;
@@ -2000,19 +1150,19 @@ export class SkyView {
   private selectionPosition(selection: Selection, utcMs: number): Vec3 | null {
     if (selection.kind === 'body') {
       const track = this.bodies.find((t) => t.body.id === selection.id);
-      return track ? this.bodyPosition(track, utcMs) : null;
+      return track ? bodyPosition(track, utcMs) : null;
     }
     if (selection.kind === 'star') {
       const id = Number(selection.id);
       for (let i = 0; i < this.data.stars.count; i++) {
         if (this.data.stars.uint32[i * Star.stride + Star.hygId] === id) {
-          return this.starVector(i);
+          return starVector(this.data, i);
         }
       }
       return null;
     }
     const index = this.dsoIdIndex.get(selection.id);
-    return index === undefined ? null : this.dsoVector(index);
+    return index === undefined ? null : dsoVector(this.data, index);
   }
 
   /** J2000 direction of a selectable object. */
@@ -2024,10 +1174,10 @@ export class SkyView {
     const pixelsPerDegree = this.pixelsPerDegree;
     for (const track of this.bodies) {
       const satellite = track.body.kind === 'satellite';
-      if (satellite ? !this.layers.satellites || !this.inTrack(track, utcMs) : !this.layers.bodies) {
+      if (satellite ? !this.layers.satellites || !inTrack(track, utcMs) : !this.layers.bodies) {
         continue;
       }
-      const p = this.place(this.bodyPosition(track, utcMs), 0);
+      const p = this.place(bodyPosition(track, utcMs), 0);
       if (p) {
         const radius = Math.max(4, ((track.body.diameterArcsec / 3600) * pixelsPerDegree) / 2);
         yield {
@@ -2048,7 +1198,7 @@ export class SkyView {
         if (!highlighted && !this.dsoVisible(i)) {
           continue;
         }
-        const p = this.place(this.dsoVector(i), 0);
+        const p = this.place(dsoVector(this.data, i), 0);
         if (p) {
           const major = this.data.dsos.float32[i * Dso.stride + Dso.major] ?? 0;
           const name = this.data.dsoIndex[i]?.[1];
@@ -2071,7 +1221,7 @@ export class SkyView {
         if (magnitude > limit) {
           break;
         }
-        const p = this.place(this.starVector(i), 0);
+        const p = this.place(starVector(this.data, i), 0);
         if (p) {
           const hygId = this.data.stars.uint32[i * Star.stride + Star.hygId] ?? 0;
           const hip = this.data.stars.uint32[i * Star.stride + Star.hip] ?? 0;

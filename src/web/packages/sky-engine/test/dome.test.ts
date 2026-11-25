@@ -10,7 +10,7 @@ import {
   domeProject,
   separationDegrees,
 } from '../src/render/projection';
-import { domeStarScale, MAX_FOV, MIN_FOV } from '../src/render/sky';
+import { domeStarScale, MAX_FOV, MIN_FOV } from '../src/render/skyStyle';
 import { fromHorizontal, neuToWorld, type Vec3 } from '../src/math/frame';
 
 const W = 1920;

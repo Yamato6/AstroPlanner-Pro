@@ -2,7 +2,7 @@
 // motion that is the page's own state. The engine registers the handlers once it is mounted;
 // before that every call does nothing; the last options are kept and applied once it is.
 import type { SkyQuality } from './render/atmosphere';
-import type { LightPollutionTint } from './render/sky';
+import type { LightPollutionTint } from './render/skyStyle';
 
 export type { LightPollutionTint, SkyQuality };
 

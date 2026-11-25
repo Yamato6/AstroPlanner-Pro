@@ -14,6 +14,13 @@ src/web                  npm workspace: packages/sky-engine (three.js scene, sha
 data/build/sky           static data built by the DataBuilder (`build-sky`)
 ```
 
+Inside `sky-engine/src/render`, `sky.ts` (`SkyView`) owns the scene, the camera, the uniforms and
+the per-frame state, and delegates: `catalogLayers.ts` builds the star, deep-sky and line objects,
+`mediaLayers.ts` holds the panorama and the landscape (R2c), `overlay.ts` draws the 2D canvas
+(labels, bodies, frames, the camera field), `bodies.ts` places the moving bodies and catalog
+entries, and `skyStyle.ts` keeps the colours and field limits. A new layer (R3's survey tiles)
+gets its own module the same way.
+
 ## The transform (§5.3)
 
 Static objects are sent once, as binary buffers of **J2000 unit vectors**. Every frame the
