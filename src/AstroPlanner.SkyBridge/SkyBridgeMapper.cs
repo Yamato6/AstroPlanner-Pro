@@ -2,6 +2,7 @@ using AstroPlanner.Core.Algorithms;
 using AstroPlanner.Core.Models;
 using AstroPlanner.Core.Satellites;
 using AstroPlanner.Core.Sky;
+using AstroPlanner.Core.SkyQuality;
 
 namespace AstroPlanner.SkyBridge;
 
@@ -92,24 +93,37 @@ public static class SkyBridgeMapper
 
     /// <summary>
     /// Sky brightness around <paramref name="utc"/> (± <paramref name="halfWindow"/>, every
-    /// <paramref name="step"/>) for a site of zenith SQM <paramref name="siteSqm"/> (null = unknown).
+    /// <paramref name="step"/>) for a site of zenith SQM <paramref name="siteSqm"/> (null = unknown),
+    /// V extinction <paramref name="extinction"/> and site-glow brightening per air mass
+    /// <paramref name="brighteningPerAirmass"/> (the feasibility constants).
     /// </summary>
     public static SkyAppearancePayload Appearance(
         ObserverLocation observer,
         DateTime utc,
         TimeSpan halfWindow,
         TimeSpan step,
-        double? siteSqm)
+        double? siteSqm,
+        double extinction = Airmass.DefaultExtinctionCoefficient,
+        double brighteningPerAirmass = SkyBackground.DefaultBrighteningPerAirmass)
     {
         ArgumentNullException.ThrowIfNull(observer);
         var start = utc - halfWindow;
-        var samples = SkyAppearanceCalculator.Sample(observer, start, utc + halfWindow, step, siteSqm);
+        var samples = SkyAppearanceCalculator.Sample(observer, start, utc + halfWindow, step, siteSqm, extinction);
         return new SkyAppearancePayload(
             SkyMessageCodec.FormatUtc(start),
             step.TotalSeconds,
             [.. samples.Select(s => Math.Round(s.ZenithSqm, 3))],
-            [.. samples.Select(s => Math.Round(s.LimitingMagnitude, 3))]);
+            [.. samples.Select(s => Math.Round(s.LimitingMagnitude, 3))],
+            [.. samples.Select(s => Part(s.TwilightSqm))],
+            [.. samples.Select(s => Part(s.MoonlightSqm))],
+            Math.Round(samples.Count > 0 ? samples[0].SiteSqm : SkyBrightness.NaturalSqm, 3),
+            Math.Round(extinction, 4),
+            Math.Round(brighteningPerAirmass, 4));
     }
+
+    /// <summary>A part of the sky brightness for the protocol: rounded, or <see cref="SkyAppearancePayload.None"/>.</summary>
+    private static double Part(double sqm) =>
+        double.IsFinite(sqm) && sqm < SkyAppearancePayload.None ? Math.Round(sqm, 3) : SkyAppearancePayload.None;
 
     /// <summary>A J2000 direction for the protocol, rounded like every other vector.</summary>
     public static VectorDto ToVector(Vector3d direction) =>

@@ -203,6 +203,16 @@ test('Settings switches the interface options and resets the layout', async ({ p
   expect(host.calls('ui.setFullScreen')).toEqual([{ enabled: true }]);
   expect(host.calls('ui.setSkyInertia')).toEqual([{ enabled: false }]);
 
+  // Twinkling needs High quality.
+  await expect(settings.getByRole('switch', { name: 'Twinkling stars' })).toBeDisabled();
+  await settings.getByRole('radio', { name: 'High' }).click();
+  await expect(settings.getByRole('switch', { name: 'Twinkling stars' })).toBeEnabled();
+  await settings.getByText('Twinkling stars', { exact: true }).click();
+  await settings.getByRole('radio', { name: 'Sodium' }).click();
+  expect(host.calls('ui.setSkyQuality')).toEqual([{ quality: 'high' }]);
+  expect(host.calls('ui.setScintillation')).toEqual([{ enabled: true }]);
+  expect(host.calls('ui.setLightPollutionTint')).toEqual([{ tint: 'sodium' }]);
+
   await rail(page, 'Help').click(); // opens over Settings
   await rail(page, 'Settings').click(); // Settings back in front
   await settings.getByRole('button', { name: 'Reset' }).click();

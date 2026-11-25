@@ -54,7 +54,7 @@ public sealed class AppChannelTests
             SampleSky with { IsPlaying = true, Rate = 600, Selection = new SkySelection(null, "Moon", null) }, AppMethods.SkyPlay.Response),
         ["sky.changed.event"] = AppMessageCodec.Event(AppEvents.SkyChanged, new SkyChangedEvent(8)),
         ["ui.get.response"] = AppMessageCodec.Response(9, AppMethods.UiGet.Name,
-            new UiSnapshot(0, AppThemes.Dark, false, false, true, false), AppMethods.UiGet.Response),
+            new UiSnapshot(0, AppThemes.Dark, false, false, true, SkyQualities.Medium, LightPollutionTints.Led, false, false), AppMethods.UiGet.Response),
         ["ui.changed.event"] = AppMessageCodec.Event(AppEvents.UiChanged, new UiChangedEvent(1)),
         ["layout.load.response"] = AppMessageCodec.Response(10, AppMethods.LayoutLoad.Name, SampleLayout, AppMethods.LayoutLoad.Response),
         ["layout.save.response"] = AppMessageCodec.Response(11, AppMethods.LayoutSave.Name, new NoParameters(), AppMethods.LayoutSave.Response),

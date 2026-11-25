@@ -45,3 +45,49 @@ export class FrameStats {
     this.total = 0;
   }
 }
+
+/**
+ * Spec §7.4: when the p95 frame time stays over the budget (20 ms) for five whole seconds in a
+ * row, the sky should get cheaper. Stalls (> 250 ms: a hidden window, a breakpoint) do not count.
+ */
+export class SlowFrameWatch {
+  private frames: number[] = [];
+  private windowStart = -1;
+  private slowSeconds = 0;
+
+  constructor(
+    private readonly budgetMs = 20,
+    private readonly seconds = 5,
+  ) {}
+
+  /** Adds a frame of `frameMs` ending at `nowMs`; true when the sky has been slow long enough. */
+  add(frameMs: number, nowMs: number): boolean {
+    if (frameMs > 250) {
+      this.reset();
+      return false;
+    }
+    if (this.windowStart < 0) {
+      this.windowStart = nowMs;
+    }
+    this.frames.push(frameMs);
+    if (nowMs - this.windowStart < 1000) {
+      return false;
+    }
+    const sorted = [...this.frames].sort((a, b) => a - b);
+    const p95 = sorted[Math.min(sorted.length - 1, Math.floor(sorted.length * 0.95))] ?? 0;
+    this.slowSeconds = p95 > this.budgetMs ? this.slowSeconds + 1 : 0;
+    this.frames = [];
+    this.windowStart = nowMs;
+    if (this.slowSeconds >= this.seconds) {
+      this.slowSeconds = 0;
+      return true;
+    }
+    return false;
+  }
+
+  reset(): void {
+    this.frames = [];
+    this.windowStart = -1;
+    this.slowSeconds = 0;
+  }
+}

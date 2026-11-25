@@ -35,6 +35,8 @@ export interface SkyEventMap {
     readonly active: boolean;
     readonly reason: 'started' | 'manual' | 'selection' | 'lost' | 'mode';
   };
+  /** The sky lowered its quality by itself because frames were slow (spec §7.4). */
+  readonly quality: { readonly quality: 'low' | 'medium' | 'high'; readonly reason: 'slow' };
   /** A right click: where, on what point of the sky and on which object (now selected), if any. */
   readonly contextMenu: {
     readonly x: number;
@@ -50,6 +52,7 @@ const listeners: { [K in keyof SkyEventMap]: Set<Listener<K>> } = {
   view: new Set(),
   cursor: new Set(),
   tracking: new Set(),
+  quality: new Set(),
   contextMenu: new Set(),
 };
 

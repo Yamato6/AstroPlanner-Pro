@@ -53,7 +53,14 @@ export function useSnapshot<M extends SnapshotMethod>(method: M) {
 /** Runs a `ui.*` command (theme, transparency, full screen) and stores the snapshot it answers with. */
 export function useUiCommand<
   M extends
-    'ui.setTheme' | 'ui.setReduceTransparency' | 'ui.setAutoHide' | 'ui.setSkyInertia' | 'ui.setFullScreen',
+    | 'ui.setTheme'
+    | 'ui.setReduceTransparency'
+    | 'ui.setAutoHide'
+    | 'ui.setSkyInertia'
+    | 'ui.setSkyQuality'
+    | 'ui.setLightPollutionTint'
+    | 'ui.setScintillation'
+    | 'ui.setFullScreen',
 >(method: M) {
   const client = useQueryClient();
   return useMutation({

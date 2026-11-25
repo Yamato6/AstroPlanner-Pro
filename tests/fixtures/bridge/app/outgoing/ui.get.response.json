@@ -9,6 +9,9 @@
     "reduceTransparency": false,
     "autoHideToolbars": false,
     "skyInertia": true,
+    "skyQuality": "medium",
+    "lightPollutionTint": "led",
+    "scintillation": false,
     "isFullScreen": false
   }
 }

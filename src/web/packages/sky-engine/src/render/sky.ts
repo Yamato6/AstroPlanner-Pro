@@ -11,6 +11,7 @@ import {
   interpolateTrack,
   j2000ToHorizontal,
   neuToWorld,
+  toHorizontal,
   transform,
   transpose,
   worldToNeu,
@@ -22,9 +23,11 @@ import {
 } from '../math/frame';
 import {
   appearanceAt,
+  COLOR_STOPS,
   DARK_SKY,
   deepSkyLoss,
-  horizonColor,
+  displayLevel,
+  displayLuminance,
   milkyWayFactor,
   skyColor,
   starCap,
@@ -32,6 +35,8 @@ import {
   type AppearanceNow,
   type AppearanceTrack,
 } from './appearance';
+import { AtmosphereTable, type SkyQuality } from './atmosphere';
+import { extinctionAt, fluxOf, nakedEyeLimit, skyBrightnessAt } from './photometry';
 import { Flight, HOME_VIEW, MAX_ALTITUDE, MIN_ALTITUDE, type DomeView } from './camera';
 import { dsoShape, palette, starColor } from './colors';
 import { altAzGrid, ecliptic, equatorialGrid, meridian, segmentVertices } from './grids';
@@ -72,10 +77,8 @@ import {
   lineVertex,
   silhouetteFragment,
   silhouetteVertex,
-  skyDiscFragment,
-  skyDiscVertex,
-  skyDomeFragment,
-  skyDomeVertex,
+  skyPassFragment,
+  skyPassVertex,
   starFragment,
   starVertex,
 } from './shaders';
@@ -135,6 +138,45 @@ const FOV_COLOR = '#ff6f6f';
 const SATELLITE_TRAIL_STEPS = 12;
 const SATELLITE_TRAIL_STEP_MS = 5000;
 
+/** Light-pollution glow colour (spec §8.2): high-pressure sodium, white LED or neutral. */
+export type LightPollutionTint = 'sodium' | 'led' | 'neutral';
+
+type Rgb = readonly [number, number, number];
+
+/** A colour scaled to luminance 1 (the sky pass multiplies it by the display level). */
+function unitChroma(rgb: Rgb): THREE.Vector3 {
+  const l = displayLuminance(rgb) || 1;
+  return new THREE.Vector3(rgb[0] / l, rgb[1] / l, rgb[2] / l);
+}
+
+const TINTS: Readonly<Record<LightPollutionTint, Rgb>> = {
+  sodium: [1.0, 0.66, 0.36],
+  led: [0.86, 0.88, 0.95],
+  neutral: [0.8, 0.8, 0.8],
+};
+/** Moonlight looks blue-grey to dark-adapted eyes (desaturated). */
+const MOON_CHROMA: Rgb = [0.66, 0.74, 0.88];
+/** The ground lit by day (sRGB). */
+const DAY_GROUND: Rgb = [0.2, 0.22, 0.18];
+const DAY_HORIZON: Rgb = [0.42, 0.46, 0.44];
+
+/** The display curve as GLSL (piecewise linear over COLOR_STOPS' luminance). */
+function displayLevelGlsl(): string {
+  const stops = COLOR_STOPS.map(([sqm, rgb]) => [sqm, displayLuminance(rgb)] as const);
+  const first = stops[0] ?? [22, 0];
+  const last = stops[stops.length - 1] ?? [4, 1];
+  const lines = [`  if (sqm >= ${first[0].toFixed(3)}) return ${first[1].toFixed(5)};`];
+  for (let k = 1; k < stops.length; k++) {
+    const [upperSqm, upperY] = stops[k - 1] ?? first;
+    const [lowerSqm, lowerY] = stops[k] ?? last;
+    lines.push(
+      `  if (sqm >= ${lowerSqm.toFixed(3)}) return mix(${upperY.toFixed(5)}, ${lowerY.toFixed(5)}, (${upperSqm.toFixed(3)} - sqm) / ${(upperSqm - lowerSqm).toFixed(3)});`,
+    );
+  }
+  lines.push(`  return ${last[1].toFixed(5)};`);
+  return `float displayLevel(float sqm) {\n${lines.join('\n')}\n}`;
+}
+
 function color(rgb: readonly [number, number, number]): THREE.Color {
   return new THREE.Color(rgb[0], rgb[1], rgb[2]);
 }
@@ -168,6 +210,35 @@ export class SkyView {
     uProjScale: { value: 1 },
     uAspect: { value: 1 },
     uMaxTheta: { value: 1.5 },
+    // Sky brightness (photometry, spec §8.2).
+    uSiteFlux: { value: fluxOf(22) },
+    uNaturalFlux: { value: fluxOf(22) },
+    uTwilightFlux: { value: 0 },
+    uMoonFlux: { value: 0 },
+    uExtinction: { value: 0.25 },
+    uBrightening: { value: 0.5 },
+    uBrightnessOn: { value: 1 },
+    uSunNeu: { value: new THREE.Vector3(0, 0, -1) },
+    uMoonNeu: { value: new THREE.Vector3(0, 0, -1) },
+    uAtmosphere: { value: null as THREE.Texture | null },
+    uHasAtmosphere: { value: 0 },
+    uFieldBonus: { value: 0 },
+    uScintillation: { value: 0 },
+    uTime: { value: 0 },
+  };
+  private readonly atmosphere: AtmosphereTable;
+  private quality: SkyQuality = 'medium';
+  private scintillation = false;
+  private frameMs = 0;
+  private readonly skyPassUniforms = {
+    uViewport: { value: new THREE.Vector2(1, 1) },
+    uNightChroma: { value: unitChroma(skyColor(22)) },
+    uTintChroma: { value: unitChroma(TINTS.led) },
+    uMoonChroma: { value: unitChroma(MOON_CHROMA) },
+  };
+  private readonly groundColors = {
+    uGround: { value: color(palette.ground) },
+    uHorizon: { value: color(palette.horizon) },
   };
   /** The dome camera of the last frame (projection of the overlay, picking, unproject). */
   private dome: DomeCamera = domeCamera(35, 180, 70, 1, 1);
@@ -181,10 +252,6 @@ export class SkyView {
   private readonly horizonFrame = {
     uFrame: { value: new THREE.Matrix3() },
     uApplyRefraction: { value: 0 },
-  };
-  private readonly backdrop = {
-    uZenithColor: { value: new THREE.Color(palette.background) },
-    uHorizonColor: { value: new THREE.Color(palette.background) },
   };
   private readonly milkyWayOpacity = { value: MILKY_WAY_OPACITY };
 
@@ -201,8 +268,7 @@ export class SkyView {
   private equatorial: THREE.LineSegments | null = null;
   private equatorialPrecession: Mat3 | null = null;
   private readonly ground: THREE.Mesh;
-  private readonly skyDome: THREE.Mesh;
-  private readonly skyDisc: THREE.Mesh;
+  private readonly skyPass: THREE.Mesh;
   private silhouette: THREE.Mesh | null = null;
 
   private frame: FrameTransform | null = null;
@@ -271,34 +337,23 @@ export class SkyView {
     }
     this.overlay = context;
 
-    // Sky backdrop (dome: upper hemisphere; all-sky: disc) colored by the sky brightness.
-    this.skyDome = new THREE.Mesh(
-      new THREE.SphereGeometry(5, 64, 16, 0, Math.PI * 2, 0, Math.PI / 2),
+    // The sky: a full-screen pass in the dome and the all-sky chart (the finder has a flat
+    // background), drawn before everything else.
+    this.atmosphere = new AtmosphereTable(this.quality);
+    this.shared.uAtmosphere = this.atmosphere.texture;
+    this.skyPass = new THREE.Mesh(
+      new THREE.PlaneGeometry(2, 2),
       new THREE.ShaderMaterial({
-        vertexShader: skyDomeVertex,
-        fragmentShader: skyDomeFragment,
-        uniforms: { ...this.backdrop, ...this.domeUniforms() },
-        side: THREE.BackSide,
+        vertexShader: skyPassVertex,
+        fragmentShader: skyPassFragment(displayLevelGlsl()),
+        uniforms: { ...this.shared, ...this.skyPassUniforms },
         depthTest: false,
         depthWrite: false,
       }),
     );
-    this.skyDome.renderOrder = -20;
-    this.skyDome.frustumCulled = false;
-    this.scene.add(this.skyDome);
-    this.skyDisc = new THREE.Mesh(
-      new THREE.CircleGeometry(1, 160),
-      new THREE.ShaderMaterial({
-        vertexShader: skyDiscVertex,
-        fragmentShader: skyDiscFragment,
-        uniforms: { ...this.backdrop, uChartScale: this.shared.uChartScale },
-        depthTest: false,
-        depthWrite: false,
-      }),
-    );
-    this.skyDisc.renderOrder = -20;
-    this.skyDisc.frustumCulled = false;
-    this.scene.add(this.skyDisc);
+    this.skyPass.renderOrder = -20;
+    this.skyPass.frustumCulled = false;
+    this.scene.add(this.skyPass);
 
     // Ground: a lower hemisphere drawn behind everything; objects below the horizon are discarded.
     this.ground = new THREE.Mesh(
@@ -306,11 +361,7 @@ export class SkyView {
       new THREE.ShaderMaterial({
         vertexShader: groundVertex,
         fragmentShader: groundFragment,
-        uniforms: {
-          uGround: { value: color(palette.ground) },
-          uHorizon: { value: color(palette.horizon) },
-          ...this.domeUniforms(),
-        },
+        uniforms: { ...this.groundColors, ...this.domeUniforms() },
         side: THREE.BackSide,
         depthTest: false,
         depthWrite: false,
@@ -524,8 +575,7 @@ export class SkyView {
       uniforms: {
         ...this.shared,
         ...this.horizonFrame,
-        uGround: { value: color(palette.ground) },
-        uHorizon: { value: color(palette.horizon) },
+        ...this.groundColors,
       },
       side: THREE.DoubleSide,
       // Transparent (though fully opaque) so that it is sorted with the stars and lines and
@@ -667,8 +717,7 @@ export class SkyView {
     }
     this.dsos.visible = l.deepSky;
     this.ground.visible = dome && l.ground;
-    this.skyDome.visible = dome;
-    this.skyDisc.visible = this.mode === 'allSky';
+    this.skyPass.visible = !finder;
     if (this.silhouette) {
       this.silhouette.visible = !finder && l.ground;
     }
@@ -826,6 +875,7 @@ export class SkyView {
   /** Advances a flight and tracking to this frame (before {@link render}); true when a flight arrived. */
   animate(nowMs: number, utcMs: number): boolean {
     this.lastUtcMs = utcMs;
+    this.frameMs = nowMs;
     if (this.frame) {
       this.currentH = j2000ToHorizontal(this.frame, utcMs);
     }
@@ -885,17 +935,123 @@ export class SkyView {
     }
   }
 
-  /** Effective star limit: fainter stars appear as the field narrows; a bright sky hides them. */
+  /** Fainter stars appear as the field narrows (magnitudes). */
+  private get fieldBonus(): number {
+    return Math.min(3, Math.max(0, 2 * Math.log10(60 / this.effectiveFov)));
+  }
+
+  /**
+   * Star limit at the zenith: fainter stars appear as the field narrows; a bright sky hides
+   * them. The darkest part of the sky, so no star fainter than this is drawn anywhere (labels,
+   * picking, the finder chart); the dome applies the limit of each star's own sky.
+   */
   get starLimit(): number {
-    const bonus = Math.min(3, Math.max(0, 2 * Math.log10(60 / this.effectiveFov)));
+    const bonus = this.fieldBonus;
     const limit = Math.min(9.5, this.layers.starLimitMagnitude + bonus);
     return this.layers.skyBrightness ? Math.min(limit, starCap(this.appearance) + bonus) : limit;
   }
 
+  /**
+   * Faintest catalog star drawn at the middle of the view (the HUD): the limit of the sky there,
+   * less what the air in front takes away.
+   */
+  get viewLimit(): number {
+    if (this.mode !== 'dome' || !this.layers.skyBrightness) {
+      return this.starLimit;
+    }
+    const bonus = this.fieldBonus;
+    const moon = this.moonHorizontal;
+    const center = fromHorizontal(this.altitude, this.azimuth);
+    const separation = moon
+      ? separationDegrees(center, fromHorizontal(moon.altitudeDegrees, moon.azimuthDegrees))
+      : 180;
+    const sqm = skyBrightnessAt(this.appearance, this.altitude, moon?.altitudeDegrees ?? -90, separation);
+    const limit = Math.min(9.5, this.layers.starLimitMagnitude + bonus, nakedEyeLimit(sqm) + 2 + bonus);
+    return limit - extinctionAt(Math.max(this.altitude, -6), this.appearance.extinction);
+  }
+
   private get dsoLimit(): number {
-    const bonus = Math.min(3, Math.max(0, 2 * Math.log10(60 / this.effectiveFov)));
     const loss = this.layers.skyBrightness ? deepSkyLoss(this.appearance) : 0;
-    return this.layers.deepSkyLimitMagnitude + bonus - loss;
+    return this.layers.deepSkyLimitMagnitude + this.fieldBonus - loss;
+  }
+
+  // ---- sky rendering options (the page's preferences) -------------------------------------------
+
+  /** Atmosphere quality: the scattering table's size and samples (Low for integrated GPUs). */
+  setQuality(quality: SkyQuality): void {
+    this.quality = quality;
+    this.atmosphere.setQuality(quality);
+    this.shared.uScintillation.value = this.scintillation && quality === 'high' ? 1 : 0;
+  }
+
+  get skyQuality(): SkyQuality {
+    return this.quality;
+  }
+
+  setLightPollutionTint(tint: LightPollutionTint): void {
+    this.skyPassUniforms.uTintChroma.value.copy(unitChroma(TINTS[tint]));
+  }
+
+  /** Twinkling stars (High quality only). */
+  setScintillation(on: boolean): void {
+    this.scintillation = on;
+    this.shared.uScintillation.value = on && this.quality === 'high' ? 1 : 0;
+  }
+
+  /** The Sun and the Moon now, north/east/up (null without their tracks). */
+  private bodyNeu(kind: 'sun' | 'moon', utcMs: number): Vec3 | null {
+    const track = this.bodies.find((t) => t.body.kind === kind);
+    return track ? transform(this.currentH, this.bodyPosition(track, utcMs)) : null;
+  }
+
+  private moonHorizontal: Horizontal | null = null;
+
+  /** Sky brightness uniforms, the scattering table and the ground light for this frame. */
+  private updateSky(utcMs: number): void {
+    const a = this.appearance;
+    const on = this.layers.skyBrightness;
+    const s = this.shared;
+    const sun = this.bodyNeu('sun', utcMs);
+    const moon = this.bodyNeu('moon', utcMs);
+    this.moonHorizontal = moon ? toHorizontal(moon) : null;
+    s.uBrightnessOn.value = on ? 1 : 0;
+    s.uSiteFlux.value = fluxOf(a.siteSqm);
+    s.uTwilightFlux.value = on ? fluxOf(a.twilightSqm) : 0;
+    s.uMoonFlux.value = on && moon ? fluxOf(a.moonlightSqm) : 0;
+    s.uExtinction.value = a.extinction;
+    s.uBrightening.value = a.brighteningPerAirmass;
+    s.uFieldBonus.value = this.fieldBonus;
+    s.uTime.value = this.frameMs / 1000;
+    if (sun) {
+      s.uSunNeu.value.set(sun[0], sun[1], sun[2]);
+    }
+    if (moon) {
+      s.uMoonNeu.value.set(moon[0], moon[1], moon[2]);
+    }
+    if (on && sun && s.uTwilightFlux.value > 0 && this.mode !== 'finder') {
+      this.atmosphere.update(this.renderer, toHorizontal(sun).altitudeDegrees);
+      s.uHasAtmosphere.value = this.atmosphere.texture.value ? 1 : 0;
+    } else {
+      s.uHasAtmosphere.value = 0;
+    }
+    const buffer = this.renderer.getDrawingBufferSize(new THREE.Vector2());
+    this.skyPassUniforms.uViewport.value.copy(buffer);
+
+    // The ground follows the light of the sky at the horizon: night dark, daylight grey-green.
+    const horizonSqm = skyBrightnessAt(a, 0, this.moonHorizontal?.altitudeDegrees ?? -90, 90);
+    const light = Math.min(
+      1,
+      Math.max(0, (displayLevel(horizonSqm) - displayLevel(22)) / (displayLevel(4) - displayLevel(22))),
+    );
+    const mix = (night: Rgb, day: Rgb, target: THREE.Color): void => {
+      target.setRGB(
+        night[0] + (day[0] - night[0]) * light,
+        night[1] + (day[1] - night[1]) * light,
+        night[2] + (day[2] - night[2]) * light,
+      );
+    };
+    mix(palette.ground, DAY_GROUND, this.groundColors.uGround.value);
+    mix(palette.horizon, DAY_HORIZON, this.groundColors.uHorizon.value);
   }
 
   /** The sky brightness now (for diagnostics and tests). */
@@ -1057,9 +1213,7 @@ export class SkyView {
 
     this.appearance = this.layers.skyBrightness ? appearanceAt(this.appearanceTrack, utcMs) : DARK_SKY;
     const zenith = skyColor(this.appearance.zenithSqm);
-    this.backdrop.uZenithColor.value.setRGB(zenith[0], zenith[1], zenith[2]);
-    const horizon = horizonColor(this.appearance.zenithSqm);
-    this.backdrop.uHorizonColor.value.setRGB(horizon[0], horizon[1], horizon[2]);
+    this.updateSky(utcMs);
     const background = this.scene.background as THREE.Color;
     if (this.mode === 'allSky') {
       background.set(palette.background);
@@ -1077,10 +1231,16 @@ export class SkyView {
 
     this.updateDome();
 
-    this.starLimitUniform.value = this.starLimit;
+    // The dome and the all-sky chart limit each star by its own sky (shaders.ts); the finder by the zenith.
+    const finder = this.mode === 'finder';
+    this.starLimitUniform.value = finder
+      ? this.starLimit
+      : Math.min(9.5, this.layers.starLimitMagnitude + this.fieldBonus);
     this.starScaleUniform.value =
       this.mode === 'finder' ? 1.6 : this.mode === 'dome' ? domeStarScale(this.fov) : 1;
-    this.dsoUniforms.uLimit.value = this.dsoLimit;
+    this.dsoUniforms.uLimit.value = finder
+      ? this.dsoLimit
+      : this.layers.deepSkyLimitMagnitude + this.fieldBonus;
     this.dsoUniforms.uPixelsPerDegree.value = this.pixelsPerDegree;
     this.dsoUniforms.uViewport.value.set(this.width, this.height);
 

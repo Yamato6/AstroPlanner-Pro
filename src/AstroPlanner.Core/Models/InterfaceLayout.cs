@@ -38,4 +38,13 @@ public sealed record InterfacePreferences
 
     /// <summary>A fast drag leaves the sky coasting to a stop (spec §8.1).</summary>
     public bool SkyInertia { get; init; } = true;
+
+    /// <summary>Atmosphere quality of the sky: "low", "medium" or "high" (spec §8.2).</summary>
+    public string SkyQuality { get; init; } = "medium";
+
+    /// <summary>Colour of the light-pollution glow: "sodium", "led" or "neutral" (spec §8.2).</summary>
+    public string LightPollutionTint { get; init; } = "led";
+
+    /// <summary>Twinkling stars, at High quality only (spec §8.2; off by default).</summary>
+    public bool Scintillation { get; init; }
 }

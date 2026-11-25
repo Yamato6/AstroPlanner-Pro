@@ -192,15 +192,28 @@ public sealed record FovPayload(
     string Label);
 
 /// <summary>
-/// Sampled sky brightness (Core <c>SkyAppearanceCalculator</c>), interpolated by the renderer like
-/// the body tracks: zenith brightness (mag/arcsec²) and naked-eye limiting magnitude every
-/// <c>stepSeconds</c> from <c>startUtc</c>.
+/// Sampled sky brightness (Core <c>SkyAppearanceCalculator</c>, the feasibility model at the
+/// zenith), interpolated by the renderer like the body tracks every <c>stepSeconds</c> from
+/// <c>startUtc</c>: the total and naked-eye limiting magnitude, and the twilight and moonlight
+/// parts (mag/arcsec², <see cref="SkyAppearancePayload.None"/> = none). The renderer spreads the
+/// site's glow (<c>siteSqm</c>, brightened by <c>brighteningPerAirmass</c>), the moonlight and the
+/// twilight over the sky with the laws of <c>SkyBackground</c>, and dims stars by
+/// <c>extinction</c> (mag/air mass).
 /// </summary>
 public sealed record SkyAppearancePayload(
     string StartUtc,
     double StepSeconds,
     IReadOnlyList<double> ZenithSqm,
-    IReadOnlyList<double> LimitingMagnitude);
+    IReadOnlyList<double> LimitingMagnitude,
+    IReadOnlyList<double> TwilightSqm,
+    IReadOnlyList<double> MoonlightSqm,
+    double SiteSqm,
+    double Extinction,
+    double BrighteningPerAirmass)
+{
+    /// <summary>Brightness of a part that is absent (JSON has no infinity).</summary>
+    public const double None = 99;
+}
 
 /// <summary>Renderer started: versions and capabilities.</summary>
 public sealed record ReadyPayload(string RendererVersion, int WebGlVersion);

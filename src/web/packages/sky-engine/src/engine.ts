@@ -14,7 +14,7 @@ import type { FrameTransform, Mat3, RefractionModel, Vec3 } from './math/frame';
 import { Inertia } from './render/camera';
 import { SkyView, type Selection } from './render/sky';
 import { registerSkyControl } from './control';
-import { FrameStats } from './stats';
+import { FrameStats, SlowFrameWatch } from './stats';
 import { SkyClock } from './time/clock';
 
 let mounted = false;
@@ -179,6 +179,16 @@ export function mountSky(container: HTMLElement, options: MountOptions = {}): vo
           inertia.stop();
         }
       },
+      setQuality: (quality) => {
+        created.setQuality(quality);
+        slowFrames.reset();
+      },
+      setLightPollutionTint: (tint) => {
+        created.setLightPollutionTint(tint);
+      },
+      setScintillation: (on) => {
+        created.setScintillation(on);
+      },
     });
     requestAnimationFrame(loop);
   }
@@ -269,6 +279,8 @@ export function mountSky(container: HTMLElement, options: MountOptions = {}): vo
   let benchmarkStart: number | null = null;
   let benchmarkDone = false;
   let lastError: string | null = null;
+  const slowFrames = new SlowFrameWatch();
+  let previousFrame = performance.now();
 
   function loop(now: number): void {
     const current = view;
@@ -319,6 +331,15 @@ export function mountSky(container: HTMLElement, options: MountOptions = {}): vo
       }
     }
     stats.tick(now);
+    // Too slow for five seconds: one quality level down (not while benchmarking).
+    if (!benchmark && document.visibilityState === 'visible' && slowFrames.add(now - previousFrame, now)) {
+      const lower = current.skyQuality === 'high' ? 'medium' : current.skyQuality === 'medium' ? 'low' : null;
+      if (lower) {
+        current.setQuality(lower);
+        skyEvents.emit('quality', { quality: lower, reason: 'slow' });
+      }
+    }
+    previousFrame = now;
 
     if (!firstFrameSent) {
       firstFrameSent = true;
@@ -341,7 +362,7 @@ export function mountSky(container: HTMLElement, options: MountOptions = {}): vo
   let lastView = '';
   function reportView(current: SkyView): void {
     const fovDegrees = Math.round(current.view().fovDegrees * 100) / 100;
-    const starLimitMagnitude = Math.round(current.starLimit * 10) / 10;
+    const starLimitMagnitude = Math.round(current.viewLimit * 10) / 10;
     const key = `${fovDegrees}|${current.mode}|${starLimitMagnitude}`;
     if (key !== lastView) {
       lastView = key;
