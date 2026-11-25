@@ -58,4 +58,33 @@ internal static class DataSources
         "9725566ed4fcf1a8fa311654143bb024c4fe2a792b85356be99adce07e1e83c1", "2015 (published 2016)", "CC BY-NC 4.0");
 
     public static IEnumerable<DataSource> All => new[] { OpenNgc, OpenNgcAddendum, Hyg, Wds }.Concat(D3Celestial);
+
+    /// <summary>
+    /// "The Milky Way panorama" by ESO/S. Brunier (eso0932a, 2009): 6000×3000 JPEG, equirectangular in
+    /// galactic coordinates (l = 0 in the middle, l growing to the left). Reprojected by build-media (R2c).
+    /// </summary>
+    public static readonly DataSource MilkyWayPanorama = new(
+        "eso/eso0932a.jpg", new Uri("https://cdn.eso.org/images/large/eso0932a.jpg"),
+        "60400c92c54b7c1bd12299c69e83b16e5b6256e7dabacc478c021758ecd28179", "eso0932a (2009-09-14)", "CC BY 4.0");
+
+    private const string PolyHavenBase = "https://dl.polyhaven.org/file/ph-assets/HDRIs/extra/Tonemapped%20JPG/";
+
+    /// <summary>
+    /// Poly Haven HDRIs, as their tonemapped 8192×4096 JPEG (equirectangular). Each asset is CC0;
+    /// the authors are credited anyway (data/curated/landscapes.json).
+    /// </summary>
+    public static readonly IReadOnlyList<DataSource> Landscapes =
+    [
+        new("polyhaven/noon_grass.jpg", new Uri(PolyHavenBase + "noon_grass.jpg"),
+            "dfa12d5cb0d9c662484e8e7ef847f0a9a7112c02e542b667e4a29e0be857ac02", "noon_grass (2017-11-29)", "CC0 1.0"),
+        new("polyhaven/kiara_5_noon.jpg", new Uri(PolyHavenBase + "kiara_5_noon.jpg"),
+            "846ae4d00f93edaf01eb7a2e013aea283b87640924a22534f48d473168e03b20", "kiara_5_noon (2018-04-04)", "CC0 1.0"),
+        new("polyhaven/goegap.jpg", new Uri(PolyHavenBase + "goegap.jpg"),
+            "62919c5b11e78a52e0ce320b0d425bc44f9beb153bc6b0e561cc4115df60ddd1", "goegap (2017-10-02)", "CC0 1.0"),
+        new("polyhaven/suburban_garden.jpg", new Uri(PolyHavenBase + "suburban_garden.jpg"),
+            "10e50543f150678caa38bd38d87a72d3da18361d4a0d7329fdc902ae5c8cbb74", "suburban_garden (2026-02-23)", "CC0 1.0"),
+    ];
+
+    /// <summary>The sources of build-media (downloaded by it when missing).</summary>
+    public static IEnumerable<DataSource> Media => new[] { MilkyWayPanorama }.Concat(Landscapes);
 }

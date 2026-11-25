@@ -13,7 +13,8 @@ namespace AstroPlanner.DataBuilder;
 ///   build-catalogs  data/raw + data/curated → data/build/catalogs.sqlite and data/build/sky/
 ///   build-sky       data/build/catalogs.sqlite + d3-celestial GeoJSON → data/build/sky/*.bin|json (renderer data)
 ///   build-lp-grid   data/raw/World_Atlas_2015.tif (by hand) → data/build/lp/*.bin.gz (light-pollution grids)
-///   verify          sanity checks of data/build/catalogs.sqlite, data/build/sky and data/build/lp
+///   build-media     Milky Way panorama + landscapes (downloaded when missing) → data/build/media
+///   verify          sanity checks of data/build/catalogs.sqlite, data/build/sky, data/build/lp and data/build/media
 ///   all             download, build-catalogs, build-sky and verify, in order
 /// Option: --root &lt;repository root&gt; (default: the folder containing AstroPlanner.slnx).
 /// </summary>
@@ -31,7 +32,7 @@ internal static class Program
             switch (command)
             {
                 case "download":
-                    await DownloadAsync(paths).ConfigureAwait(false);
+                    await DownloadAsync(paths, DataSources.All).ConfigureAwait(false);
                     return 0;
                 case "build-catalogs":
                     Build(paths);
@@ -42,15 +43,19 @@ internal static class Program
                 case "build-lp-grid":
                     BuildLightPollution(paths);
                     return 0;
+                case "build-media":
+                    await DownloadAsync(paths, DataSources.Media).ConfigureAwait(false);
+                    Console.WriteLine(MediaBuilder.Build(paths.Raw, paths.Curated("landscapes.json"), paths.Build("media")));
+                    return Verify(paths);
                 case "verify":
                     return Verify(paths);
                 case "all":
-                    await DownloadAsync(paths).ConfigureAwait(false);
+                    await DownloadAsync(paths, DataSources.All).ConfigureAwait(false);
                     Build(paths);
                     BuildSky(paths);
                     return Verify(paths);
                 default:
-                    Console.WriteLine("Usage: AstroPlanner.DataBuilder download | build-catalogs | build-sky | build-lp-grid | verify | all [--root <repo>]");
+                    Console.WriteLine("Usage: AstroPlanner.DataBuilder download | build-catalogs | build-sky | build-lp-grid | build-media | verify | all [--root <repo>]");
                     return command == "help" ? 0 : 2;
             }
         }
@@ -67,12 +72,12 @@ internal static class Program
         return index >= 0 && index + 1 < args.Length ? args[index + 1] : null;
     }
 
-    private static async Task DownloadAsync(RepositoryPaths paths)
+    private static async Task DownloadAsync(RepositoryPaths paths, IEnumerable<DataSource> sources)
     {
         using var http = new HttpClient { Timeout = TimeSpan.FromMinutes(10) };
         http.DefaultRequestHeaders.UserAgent.ParseAdd(UserAgent);
 
-        foreach (var source in DataSources.All)
+        foreach (var source in sources)
         {
             var path = paths.Raw(source.RelativePath);
             if (File.Exists(path) && Sha256(path) == source.Sha256)
@@ -157,6 +162,7 @@ internal static class Program
         var failures = CatalogVerifier.Verify(paths.Build(CatalogSchema.FileName), CatalogVerifier.FullBuild)
             .Concat(SkyDataBuilder.Verify(paths.Build("sky"), CatalogVerifier.FullBuild.MinimumStars, CatalogVerifier.FullBuild.MinimumObjects))
             .Concat(LightPollutionGridBuilder.Verify(paths.Build("lp"), LightPollutionGridBuilder.FullBuildCheckpoints))
+            .Concat(MediaBuilder.Verify(paths.Build("media")))
             .ToList();
         foreach (var failure in failures)
         {

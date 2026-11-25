@@ -179,6 +179,22 @@ AstroPlanner Pro is and must remain free of charge.** Only derived, quantised gr
 (`data/build/lp`, Mexico at 30″ and the world at 5′) are distributed; the credit is also shown in
 the About window.
 
+## Sky images (shipped since R2c, in `data\` next to the exe)
+
+### The Milky Way panorama — ESO/S. Brunier, CC BY 4.0
+
+"The Milky Way panorama" (eso0932a), ESO/S. Brunier, https://www.eso.org/public/images/eso0932a/,
+licensed under the Creative Commons Attribution 4.0 International license
+(https://creativecommons.org/licenses/by/4.0/). Changed for AstroPlanner Pro: stars removed,
+background set to black, reprojected from galactic to equatorial coordinates. The credit is shown
+in About and in the sky's HUD while the panorama is drawn.
+
+### Landscapes — Poly Haven, CC0 1.0
+
+360° photos from Poly Haven (https://polyhaven.com), dedicated to the public domain (CC0 1.0):
+*Noon Grass*, *Kiara 5 Noon* and *Goegap* by Greg Zaal; *Suburban Garden* by Dimitrios Savva and
+Jarod Guest. Changed: the sky made transparent, a horizon profile derived from them.
+
 ## Software libraries
 
 | Library | License |

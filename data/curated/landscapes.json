@@ -1,0 +1,45 @@
+{
+  "$comment": "Landscapes built by 'DataBuilder build-media' (docs/data-pipeline.md). source = file under data/raw; azimuthOffsetDegrees turns the photo (azimuth of its left edge); skyBlueMinimum = how much bluer than red/green a pixel must be to count as sky (lower it for a hazy sky); cutHoles = also cut out sky seen between branches (off where distant hazy hills look like sky).",
+  "landscapes": [
+    {
+      "id": "open-field",
+      "name": "Open field",
+      "source": "polyhaven/noon_grass.jpg",
+      "author": "Greg Zaal",
+      "url": "https://polyhaven.com/a/noon_grass",
+      "azimuthOffsetDegrees": 0,
+      "skyBlueMinimum": 12,
+      "cutHoles": true
+    },
+    {
+      "id": "mountains",
+      "name": "Mountains",
+      "source": "polyhaven/kiara_5_noon.jpg",
+      "author": "Greg Zaal",
+      "url": "https://polyhaven.com/a/kiara_5_noon",
+      "azimuthOffsetDegrees": 0,
+      "skyBlueMinimum": 20,
+      "cutHoles": false
+    },
+    {
+      "id": "desert",
+      "name": "Desert",
+      "source": "polyhaven/goegap.jpg",
+      "author": "Greg Zaal",
+      "url": "https://polyhaven.com/a/goegap",
+      "azimuthOffsetDegrees": 0,
+      "skyBlueMinimum": 12,
+      "cutHoles": false
+    },
+    {
+      "id": "edge-of-town",
+      "name": "Edge of town",
+      "source": "polyhaven/suburban_garden.jpg",
+      "author": "Dimitrios Savva, Jarod Guest",
+      "url": "https://polyhaven.com/a/suburban_garden",
+      "azimuthOffsetDegrees": 0,
+      "skyBlueMinimum": 12,
+      "cutHoles": true
+    }
+  ]
+}

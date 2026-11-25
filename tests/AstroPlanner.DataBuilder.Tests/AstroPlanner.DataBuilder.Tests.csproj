@@ -15,6 +15,7 @@
     <None Include="..\fixtures\wds\*.txt" Link="fixtures\wds\%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
     <None Include="..\fixtures\sky\*.json" Link="fixtures\sky\%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
     <None Include="..\..\data\curated\messier.json" Link="fixtures\curated\messier.json" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="..\..\data\curated\landscapes.json" Link="fixtures\curated\landscapes.json" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 
 </Project>
