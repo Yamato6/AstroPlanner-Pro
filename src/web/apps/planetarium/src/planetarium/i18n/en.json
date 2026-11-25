@@ -12,7 +12,85 @@
     "playing": "Playing ×{{rate}}",
     "paused": "Paused",
     "loading": "Connecting to the app…",
-    "offline": "Not connected to the app"
+    "offline": "Not connected to the app",
+    "nightVision": "Night vision"
+  },
+  "rail": {
+    "label": "Windows",
+    "minimized": "{{title}} (minimised)"
+  },
+  "window": {
+    "minimize": "Minimise",
+    "maximize": "Maximise",
+    "restore": "Restore",
+    "close": "Close",
+    "keyboardHint": "Arrow keys move the window, Shift with the arrows resizes it, Ctrl with the arrows docks or maximises it, Esc closes it."
+  },
+  "windows": {
+    "tonight": {
+      "title": "Tonight",
+      "summary": "Tonight's conditions, alerts and best targets for your rig."
+    },
+    "targets": {
+      "title": "Targets",
+      "summary": "The whole catalog with its filters, columns and feasibility."
+    },
+    "plan": { "title": "My plan", "summary": "Tonight's schedule, priorities, locks and exports." },
+    "logbook": {
+      "title": "Logbook",
+      "summary": "Your observations and captures, and predictions against results."
+    },
+    "equipment": { "title": "Equipment", "summary": "Cameras, optics, mounts and rigs, and the active rig." },
+    "sites": {
+      "title": "Sites",
+      "summary": "Your observing sites, their time zones, sky quality and horizons."
+    },
+    "milkyWay": { "title": "Milky Way", "summary": "Tonight's core window and the months ahead." },
+    "settings": { "title": "Settings" },
+    "help": { "title": "Help" }
+  },
+  "placeholder": {
+    "title": "{{title}} is coming to this interface",
+    "meanwhile": "It arrives in a later preview. Until then it is in the classic window: start AstroPlanner Pro without --ui=web."
+  },
+  "settings": {
+    "interface": "Interface",
+    "nightVision": "Night vision",
+    "nightVisionDescription": "Everything in red, to keep your eyes dark-adapted (Ctrl+Shift+N).",
+    "reduceTransparency": "Reduce transparency",
+    "reduceTransparencyDescription": "Opaque panels instead of glass over the sky.",
+    "fullScreen": "Full screen",
+    "fullScreenDescription": "The sky fills the screen, without the window frame (F11).",
+    "windows": "Windows",
+    "resetLayout": "Window layout",
+    "resetLayoutDescription": "Closes every window and forgets where they were.",
+    "reset": "Reset",
+    "classicNote": "The planner's settings (site, online services, calibration…) are in the classic window until they move here."
+  },
+  "help": {
+    "keyboard": "Keyboard",
+    "about": "About",
+    "groups": {
+      "time": "Time",
+      "sky": "Sky",
+      "interface": "Interface",
+      "windows": "Windows"
+    },
+    "windowKeys": {
+      "escape": "Close the window you are in",
+      "move": "Move the focused window",
+      "resize": "Resize the focused window",
+      "dock": "Dock it to the left or right half",
+      "maximize": "Maximise it or float it again"
+    },
+    "version": "version {{version}}",
+    "credits": "Credits",
+    "yourData": "Your data",
+    "openFolder": "Open folder",
+    "license": "License",
+    "loading": "Loading…",
+    "offline": "Not connected to the app.",
+    "failed": "The app did not answer. Close Help and open it again."
   },
   "shortcuts": {
     "togglePlay": "Play or pause time",
@@ -27,6 +105,13 @@
     "constellationNames": "Constellation names",
     "altAzGrid": "Alt/az grid",
     "equatorialGrid": "Equatorial grid",
-    "immersive": "Hide the interface"
+    "immersive": "Hide the interface",
+    "nightVision": "Night vision",
+    "fullScreen": "Full screen",
+    "settings": "Settings",
+    "help": "Help",
+    "closeWindow": "Close the window in front",
+    "nextWindow": "Next window",
+    "previousWindow": "Previous window"
   }
 }

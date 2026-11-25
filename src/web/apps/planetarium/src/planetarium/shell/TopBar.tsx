@@ -1,14 +1,14 @@
-import { Panel } from '@astroplanner/ui-kit';
-import { Clock, MapPin, Moon } from 'lucide-react';
+import { Panel, ToggleIconButton } from '@astroplanner/ui-kit';
+import { Clock, Flashlight, MapPin, Moon } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import { useSnapshot } from '../app/hostQueries';
+import { useSnapshot, useUiCommand } from '../app/hostQueries';
 import { host } from '../host';
 import classes from './TopBar.module.css';
 import { useSkyTime } from './useSkyTime';
 
 const styles = classes as Readonly<
   Record<
-    'bar' | 'brand' | 'mark' | 'name' | 'badge' | 'facts' | 'fact' | 'value' | 'muted' | 'status',
+    'bar' | 'brand' | 'mark' | 'name' | 'badge' | 'facts' | 'fact' | 'value' | 'muted' | 'status' | 'tools',
     string
   >
 >;
@@ -38,6 +38,8 @@ export function TopBar() {
   const observer = useSnapshot('observer.get');
   const sky = useSnapshot('sky.get');
   const skyTime = useSkyTime(sky.data, sky.dataUpdatedAt);
+  const ui = useSnapshot('ui.get');
+  const setTheme = useUiCommand('ui.setTheme');
 
   const night = observer.data?.night;
   const dusk = wallClock(night?.astronomicalDuskLocal);
@@ -94,6 +96,19 @@ export function TopBar() {
           ) : null}
         </dl>
       )}
+
+      <div className={styles.tools}>
+        <ToggleIconButton
+          label={t('topBar.nightVision')}
+          icon={Flashlight}
+          shortcut="Ctrl+Shift+N"
+          isDisabled={!ui.data}
+          isSelected={ui.data?.theme === 'night'}
+          onChange={(on) => {
+            setTheme.mutate({ theme: on ? 'night' : 'dark' });
+          }}
+        />
+      </div>
     </Panel>
   );
 }

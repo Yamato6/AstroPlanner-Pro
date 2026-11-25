@@ -4,7 +4,7 @@ import type { SkySnapshot } from '@astroplanner/bridge-client';
 import { useMemo } from 'react';
 import { useUi } from '../state/ui';
 import { useSkyCommand, useSnapshot } from './hostQueries';
-import { type Shortcut, useShortcuts } from './shortcuts';
+import type { Shortcut } from './shortcuts';
 
 type LayerKey = SkySnapshot['layers'][number]['key'];
 
@@ -17,6 +17,7 @@ export function neighbourRate(sky: SkySnapshot, direction: -1 | 1): number {
   return next ?? current;
 }
 
+/** The sky's shortcuts (installed by useAppShortcuts with the others). */
 export function useSkyShortcuts(): readonly Shortcut[] {
   const { data: sky } = useSnapshot('sky.get');
   const play = useSkyCommand('sky.play');
@@ -42,6 +43,7 @@ export function useSkyShortcuts(): readonly Shortcut[] {
     return [
       {
         id: 'togglePlay',
+        group: 'time',
         key: ' ',
         display: 'Space',
         run: () => {
@@ -50,6 +52,7 @@ export function useSkyShortcuts(): readonly Shortcut[] {
       },
       {
         id: 'now',
+        group: 'time',
         key: 'F5',
         display: 'F5',
         run: () => {
@@ -58,6 +61,7 @@ export function useSkyShortcuts(): readonly Shortcut[] {
       },
       {
         id: 'slower',
+        group: 'time',
         key: 'j',
         display: 'J',
         run: () => {
@@ -66,6 +70,7 @@ export function useSkyShortcuts(): readonly Shortcut[] {
       },
       {
         id: 'faster',
+        group: 'time',
         key: 'l',
         display: 'L',
         run: () => {
@@ -74,6 +79,7 @@ export function useSkyShortcuts(): readonly Shortcut[] {
       },
       {
         id: 'dome',
+        group: 'sky',
         key: '1',
         display: '1',
         run: () => {
@@ -82,6 +88,7 @@ export function useSkyShortcuts(): readonly Shortcut[] {
       },
       {
         id: 'allSky',
+        group: 'sky',
         key: '2',
         display: '2',
         run: () => {
@@ -90,6 +97,7 @@ export function useSkyShortcuts(): readonly Shortcut[] {
       },
       {
         id: 'finder',
+        group: 'sky',
         key: '3',
         display: '3',
         run: () => {
@@ -98,6 +106,7 @@ export function useSkyShortcuts(): readonly Shortcut[] {
       },
       {
         id: 'constellationLines',
+        group: 'sky',
         key: 'c',
         display: 'C',
         run: () => {
@@ -106,6 +115,7 @@ export function useSkyShortcuts(): readonly Shortcut[] {
       },
       {
         id: 'constellationBoundaries',
+        group: 'sky',
         key: 'b',
         display: 'B',
         run: () => {
@@ -114,6 +124,7 @@ export function useSkyShortcuts(): readonly Shortcut[] {
       },
       {
         id: 'constellationNames',
+        group: 'sky',
         key: 'n',
         display: 'N',
         run: () => {
@@ -122,6 +133,7 @@ export function useSkyShortcuts(): readonly Shortcut[] {
       },
       {
         id: 'altAzGrid',
+        group: 'sky',
         key: 'g',
         display: 'G',
         run: () => {
@@ -130,16 +142,16 @@ export function useSkyShortcuts(): readonly Shortcut[] {
       },
       {
         id: 'equatorialGrid',
+        group: 'sky',
         key: 'e',
         display: 'E',
         run: () => {
           toggleLayer('equatorialGrid');
         },
       },
-      { id: 'immersive', key: 'h', display: 'H', run: toggleImmersive },
+      { id: 'immersive', group: 'interface', key: 'h', display: 'H', run: toggleImmersive },
     ];
   }, [sky, play, pause, now, setRate, setLayer, setViewMode, toggleImmersive]);
 
-  useShortcuts(shortcuts);
   return shortcuts;
 }

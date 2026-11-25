@@ -1,0 +1,186 @@
+/* Content of the windows: dense, quiet, aligned to one 4 px grid. */
+
+.section + .section {
+  margin-top: var(--space-4);
+  padding-top: var(--space-3);
+  border-top: 1px solid var(--border-hairline);
+}
+
+.heading {
+  margin: 0 0 var(--space-2);
+  color: var(--text-muted);
+  font-size: var(--font-size-xs);
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+  padding: var(--space-2) 0;
+}
+
+.rowText {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.muted {
+  color: var(--text-muted);
+  font-size: var(--font-size-sm);
+}
+
+.note {
+  margin: var(--space-4) 0 0;
+  color: var(--text-muted);
+  font-size: var(--font-size-sm);
+}
+
+.about p {
+  margin: 0 0 var(--space-2);
+}
+
+.about > .section:first-of-type {
+  margin-top: var(--space-4);
+}
+
+/* Empty state of a window that has not moved here yet. */
+.empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  min-height: 100%;
+  max-width: 360px;
+  margin: 0 auto;
+  text-align: center;
+}
+
+.empty p {
+  margin: 0;
+}
+
+.emptyIcon {
+  color: var(--text-muted);
+}
+
+.emptyTitle {
+  color: var(--text-strong);
+  font-size: var(--font-size-lg);
+  font-weight: 600;
+}
+
+/* Help: tabs, keyboard map, About. */
+.tabs {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.tabList {
+  display: flex;
+  gap: var(--space-1);
+  border-bottom: 1px solid var(--border-hairline);
+}
+
+.tab {
+  margin-bottom: -1px;
+  padding: var(--space-1) var(--space-3) var(--space-2);
+  border-bottom: 2px solid transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+}
+
+.tab[data-hovered] {
+  color: var(--text-primary);
+}
+
+.tab[data-selected] {
+  border-bottom-color: var(--accent);
+  color: var(--text-strong);
+}
+
+.keys,
+.credits {
+  margin: 0;
+}
+
+.keys > div {
+  display: grid;
+  grid-template-columns: 8rem 1fr;
+  align-items: baseline;
+  gap: var(--space-3);
+  padding: 3px 0;
+}
+
+.keys dt,
+.keys dd,
+.credits dd {
+  margin: 0;
+}
+
+.kbd {
+  display: inline-block;
+  padding: 0 var(--space-1);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  background: var(--surface-solid);
+  color: var(--text-strong);
+  font-family: inherit;
+  font-size: var(--font-size-sm);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.credits > div + div {
+  margin-top: var(--space-2);
+}
+
+.credits dt {
+  color: var(--text-strong);
+  font-weight: 600;
+}
+
+.version {
+  color: var(--text-strong);
+  font-size: var(--font-size-lg);
+  font-weight: 600;
+}
+
+.link {
+  display: inline-flex;
+  align-items: baseline;
+  gap: var(--space-1);
+  color: var(--text-primary);
+  text-decoration: underline;
+  text-decoration-color: var(--border-strong);
+  text-underline-offset: 2px;
+  cursor: pointer;
+}
+
+.link[data-hovered] {
+  color: var(--text-strong);
+}
+
+.folder {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.path {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  color: var(--text-muted);
+  font-family: Consolas, 'Cascadia Mono', monospace;
+  font-size: var(--font-size-sm);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}

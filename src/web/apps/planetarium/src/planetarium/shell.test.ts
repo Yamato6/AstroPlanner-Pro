@@ -29,9 +29,9 @@ function key(init: KeyboardEventInit, target?: EventTarget): KeyboardEvent {
 describe('shortcuts', () => {
   const run = vi.fn();
   const shortcuts: Shortcut[] = [
-    { id: 'togglePlay', key: ' ', display: 'Space', run },
-    { id: 'lines', key: 'c', display: 'C', run },
-    { id: 'night', key: 'n', display: 'Ctrl+Shift+N', ctrl: true, shift: true, run },
+    { group: 'sky', id: 'togglePlay', key: ' ', display: 'Space', run },
+    { group: 'sky', id: 'lines', key: 'c', display: 'C', run },
+    { group: 'sky', id: 'night', key: 'n', display: 'Ctrl+Shift+N', ctrl: true, shift: true, run },
   ];
 
   it('match letters in either case, with the exact modifiers', () => {
