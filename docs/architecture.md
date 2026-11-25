@@ -99,6 +99,18 @@ AstroPlanner v1's `%LocalAppData%\AstroPlanner` is only ever read, by the import
 
 One test project per layer (`tests/AstroPlanner.*.Tests`), no network: HTTP goes through
 `StubHttpHandler` and recorded fixtures, astronomy is checked against JPL Horizons and Meeus,
-and the bridge against golden files. UI tests build the view-model graph with `TestShell.Create`;
+and the bridge against golden files. UI tests build the view-model graph with `TestShell.Create`
+(`LoadAndSettleAsync` loads it and waits for the ephemerides and feasibility);
 `AccessibilityTests` also builds the real windows on an STA thread. Core has an 85 % line-coverage
-gate in CI.
+gate in CI, Application 80 %.
+
+- Shared helpers: `tests/Shared` (linked into the projects that need them), `OnlineTestKit.cs` in
+  Online.Tests (recorded answers, an in-memory cache), `Fixtures` in DataBuilder.Tests.
+- Timing budgets carry `[Trait("Category", "Performance")]` and run apart from coverage.
+- Tests of the WPF views carry `[Trait("Retires", "R5")]` (`MainWindowLogicTests`,
+  `SkyBindingTests`, `AccessibilityTests`): R5 deletes those views, and their tests go or move
+  with them (`dotnet test --filter Retires=R5` lists them).
+- CI (`.github/workflows/ci.yml`): the jobs `web` (lint, build, Vitest, Playwright) and `dotnet`
+  (build, DataBuilder `verify`, performance tests, tests with coverage and its gates; NuGet
+  packages cached) run side by side, and `test`, the check `main` requires, passes only when both
+  did.

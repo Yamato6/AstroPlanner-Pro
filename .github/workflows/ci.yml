@@ -11,14 +11,12 @@ permissions:
   contents: read
 
 jobs:
-  test:
+  # The web workspace and the .NET solution are tested by two jobs that run side by side; the
+  # job "test" (the check main requires) passes only when both do.
+  web:
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v7
-
-      - uses: actions/setup-dotnet@v6
-        with:
-          dotnet-version: 10.0.x
 
       - uses: actions/setup-node@v7
         with:
@@ -27,8 +25,7 @@ jobs:
           cache-dependency-path: src/web/package-lock.json
 
       # Web workspace (sky engine + pages, spec §12): lint, type-check + build, tests (contract
-      # and projection cross-check share tests/fixtures/bridge with the C# suite). The UI build
-      # embeds apps/planetarium/dist.
+      # and projection cross-check share tests/fixtures/bridge with the C# suite).
       - name: Web workspace
         working-directory: src/web
         run: |
@@ -52,6 +49,30 @@ jobs:
           path: |
             src/web/playwright-report/
             src/web/test-results/
+
+  dotnet:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-dotnet@v6
+        with:
+          dotnet-version: 10.0.x
+
+      # The UI build builds the web pages itself (npm ci + npm run build) to embed them.
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: src/web/.nvmrc
+          cache: npm
+          cache-dependency-path: src/web/package-lock.json
+
+      # Restoring the NuGet packages took about half of the build. Only this job uses the cache:
+      # the release job restores from nuget.org.
+      - uses: actions/cache@v6
+        with:
+          path: ~/.nuget/packages
+          key: nuget-${{ runner.os }}-${{ hashFiles('Directory.Packages.props', '**/*.csproj', '**/Directory.Build.props') }}
+          restore-keys: nuget-${{ runner.os }}-
 
       - name: Build (warnings are errors)
         run: dotnet build AstroPlanner.slnx -c Release -warnaserror
@@ -103,6 +124,16 @@ jobs:
           path: |
             TestResults/**/*.trx
             coverage-report/
+
+  # The required check: fails unless both test jobs succeeded (a skipped job would pass it).
+  test:
+    if: always()
+    needs: [web, dotnet]
+    runs-on: ubuntu-latest
+    steps:
+      - name: The web and .NET jobs passed
+        if: needs.web.result != 'success' || needs.dotnet.result != 'success'
+        run: exit 1
 
   release:
     # Only when a version tag is pushed, e.g. v2.0.0 or v2.0.0-rc.1
