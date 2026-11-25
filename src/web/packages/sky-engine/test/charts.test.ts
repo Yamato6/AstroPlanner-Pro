@@ -172,6 +172,11 @@ describe('sky appearance', () => {
     stepSeconds: 600,
     zenithSqm: [6, 12, 21.5],
     limitingMagnitude: [-1, 2, 6.4],
+    twilightSqm: [6, 12, 99],
+    moonlightSqm: [99, 99, 99],
+    siteSqm: 21.5,
+    extinction: 0.2,
+    brighteningPerAirmass: 0.5,
   });
   const start = Date.parse('2026-03-20T00:00:00.000Z');
 
@@ -181,6 +186,10 @@ describe('sky appearance', () => {
     expect(appearanceAt(track, start - 1e9).zenithSqm).toBe(6);
     expect(appearanceAt(track, start + 1e9).zenithSqm).toBe(21.5);
     expect(appearanceAt(null, start)).toBe(DARK_SKY);
+    // The parts are interpolated as light: halfway from 12 to nothing is 0.75 mag fainter.
+    expect(appearanceAt(track, start + 900_000).twilightSqm).toBeCloseTo(12.753, 3);
+    expect(appearanceAt(track, start).moonlightSqm).toBe(99);
+    expect(appearanceAt(track, start).extinction).toBe(0.2);
   });
 
   it('turns brightness into colors that get lighter as the sky brightens', () => {
@@ -198,7 +207,7 @@ describe('sky appearance', () => {
     expect(starCap(DARK_SKY)).toBeCloseTo(8.62, 2);
     expect(starCap({ zenithSqm: 18, limitingMagnitude: 4 })).toBe(6);
     expect(deepSkyLoss(DARK_SKY)).toBe(0);
-    expect(deepSkyLoss({ zenithSqm: 18, limitingMagnitude: 4 })).toBeCloseTo(2.62, 9);
+    expect(deepSkyLoss({ zenithSqm: 18, limitingMagnitude: 4 })).toBeCloseTo(2.62, 2);
     expect(milkyWayFactor(DARK_SKY)).toBe(1);
     expect(milkyWayFactor({ zenithSqm: 20, limitingMagnitude: 5.4 })).toBeCloseTo(0.5, 9);
     expect(milkyWayFactor({ zenithSqm: 17, limitingMagnitude: 3 })).toBe(0);

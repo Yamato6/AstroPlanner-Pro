@@ -5,12 +5,16 @@
 // Dome projection (mirrors render/projection.ts, domeProject): r(θ) = k·tan(θ/k) around the view
 // direction, k = 1 perspective … 2 stereographic. Directions beyond uMaxTheta are culled: the
 // vertex goes past the far plane and vCull makes the fragments of its segments/triangles discard.
-const domeProjection = /* glsl */ `
+const domeUniforms = /* glsl */ `
 uniform mat3 uDomeBasis;       // rows: right, up, forward (world space)
 uniform float uProjK;
 uniform float uProjScale;      // clip units (y) per unit of r
 uniform float uAspect;         // width / height
 uniform float uMaxTheta;       // radians
+`;
+
+const domeProjection = /* glsl */ `
+${domeUniforms}
 varying float vCull;
 
 vec4 domeClip(vec3 world) {
@@ -27,8 +31,110 @@ vec4 domeClip(vec3 world) {
 }
 `;
 
+// Sky brightness over the sky (mirrors render/photometry.ts; spec §8.2): Core's zenith levels
+// spread with SkyBackground's laws — the site's glow brightened by air mass, Krisciunas & Schaefer
+// moonlight, and twilight shaped by the scattering table (atmosphere.ts). Fluxes are 10^(−0.4·SQM).
+const photometry = /* glsl */ `
+uniform float uSiteFlux;
+uniform float uNaturalFlux;
+uniform float uTwilightFlux;
+uniform float uMoonFlux;
+uniform float uExtinction;
+uniform float uBrightening;
+uniform float uBrightnessOn;   // the sky brightness layer (off: a dark sky, no extinction)
+uniform vec3 uSunNeu;          // Sun and Moon, north/east/up unit vectors
+uniform vec3 uMoonNeu;
+uniform sampler2D uAtmosphere; // scattering table: x = view altitude, y = azimuth from the Sun
+uniform float uHasAtmosphere;
+const float MULTIPLE_SCATTERING = 0.15;
+
+float log10f(float x) { return log(x) * 0.4342944819; }
+
+float kastenYoung(float altitude) {
+  float shifted = altitude + 6.07995;
+  if (shifted <= 0.0) return 1e4;
+  float d = sin(radians(altitude)) + 0.50572 * pow(shifted, -1.6364);
+  return d <= 0.0 ? 1e4 : 1.0 / d;
+}
+
+float siteGlow(float altitude) {
+  return 1.0 + max(0.0, uBrightening) * (min(kastenYoung(max(altitude, 0.0)), 5.6) - 1.0);
+}
+
+float ksAirmass(float zenithDistance) {
+  float s = sin(radians(zenithDistance));
+  return inversesqrt(1.0 - 0.96 * s * s);
+}
+
+float ksScatter(float rho) {
+  float c = cos(radians(rho));
+  return 229086.765 * (1.06 + c * c) + pow(10.0, 6.15 - rho / 40.0);
+}
+
+float moonRatio(float rho, float zenithRho, float zenithDistance) {
+  float toward = 1.0 - pow(10.0, -0.4 * uExtinction * ksAirmass(min(zenithDistance, 90.0)));
+  float atZenith = 1.0 - pow(10.0, -0.4 * uExtinction);
+  return atZenith <= 0.0 ? 0.0 : ksScatter(rho) / ksScatter(zenithRho) * toward / atZenith;
+}
+
+vec3 atmosphereAt(vec3 neu) {
+  float altitude = degrees(asin(clamp(neu.z, -1.0, 1.0)));
+  float az = atan(neu.y, neu.x);
+  float sunAz = atan(uSunNeu.y, uSunNeu.x);
+  float fromSun = abs(mod(degrees(az - sunAz) + 540.0, 360.0) - 180.0);
+  vec2 uv = vec2(sqrt(clamp((altitude + 5.0) / 95.0, 0.0, 1.0)), fromSun / 180.0);
+  return max(texture2D(uAtmosphere, uv).rgb, vec3(0.0));
+}
+
+float lum(vec3 c) { return dot(c, vec3(0.2126, 0.7152, 0.0722)); }
+
+// The parts of the sky's flux toward a direction: site (natural, artificial), moonlight (with
+// a glare halo) and twilight; twilightColor = the scattering colour there.
+void skyParts(vec3 neu, out float natural, out float artificial, out float moon, out float twilight, out vec3 twilightColor) {
+  float altitude = degrees(asin(clamp(neu.z, -1.0, 1.0)));
+  float glow = siteGlow(altitude);
+  float site = uSiteFlux * glow;
+  natural = min(site, uNaturalFlux * glow);
+  artificial = site - natural;
+  moon = 0.0;
+  if (uMoonFlux > 0.0 && uMoonNeu.z > 0.0) {
+    float rho = degrees(acos(clamp(dot(neu, uMoonNeu), -1.0, 1.0)));
+    float moonAltitude = degrees(asin(clamp(uMoonNeu.z, -1.0, 1.0)));
+    moon = uMoonFlux * (moonRatio(rho, 90.0 - moonAltitude, 90.0 - max(altitude, 0.0)) + 6.0 * exp(-rho / 2.0));
+  }
+  twilight = 0.0;
+  twilightColor = vec3(0.0);
+  if (uTwilightFlux > 0.0 && uHasAtmosphere > 0.5) {
+    // Single scattering plus a diffuse share of the zenith light, a stand-in for multiple
+    // scattering: it lights the Earth's shadow opposite a set Sun, which single scattering
+    // leaves black.
+    vec3 zenithLight = atmosphereAt(vec3(0.0, 0.0, 1.0));
+    vec3 here = atmosphereAt(neu) + MULTIPLE_SCATTERING * zenithLight;
+    float zenith = lum(zenithLight) * (1.0 + MULTIPLE_SCATTERING);
+    twilight = uTwilightFlux * lum(here) / max(zenith, 1e-12);
+    // Display white balance: single scattering leaves a sunset zenith lavender; photographs and
+    // the eye see it blue (calibration by eye, not physics). The horizon keeps its own colours.
+    vec3 balance = mix(vec3(1.0), vec3(0.6, 0.9, 1.15), smoothstep(5.0, 40.0, altitude));
+    twilightColor = sqrt(here * balance);
+  } else if (uTwilightFlux > 0.0) {
+    twilight = uTwilightFlux;
+  }
+}
+
+float skySqm(vec3 neu) {
+  float natural; float artificial; float moon; float twilight; vec3 c;
+  skyParts(neu, natural, artificial, moon, twilight, c);
+  return -2.5 * log10f(max(natural + artificial + moon + twilight, 1e-30));
+}
+
+float nakedEyeLimit(float sqm) {
+  return 7.93 - 5.0 * log10f(pow(10.0, 4.316 - sqm / 5.0) + 1.0);
+}
+`;
+
 const common = /* glsl */ `
 ${domeProjection}
+${photometry}
 uniform mat3 uFrame;
 uniform vec4 uRefraction;      // a, b, c, d of Saemundsson's formula
 uniform float uRefractionMin;  // below this true altitude no refraction is applied
@@ -38,9 +144,11 @@ uniform mat3 uFinder;          // finder: rows east, north, center (J2000)
 uniform vec2 uChartScale;      // all-sky: clip units per horizon radius; finder: per unit of tan(angle)
 
 varying float vAltitude;
+vec3 gNeu; // north/east/up direction of the last projected vertex (for the photometry)
 
 vec3 apparentWorld(vec3 j2000) {
   vec3 neu = uFrame * j2000;
+  gNeu = neu;
   float trueAlt = degrees(asin(clamp(neu.z, -1.0, 1.0)));
   float alt = trueAlt;
   if (uApplyRefraction > 0.5 && trueAlt >= uRefractionMin) {
@@ -56,6 +164,7 @@ vec3 apparentWorld(vec3 j2000) {
 // Clip position of a J2000 direction in the current view mode (mirrors render/projection.ts).
 vec4 skyClip(vec3 j2000) {
   vCull = 0.0;
+  gNeu = uFrame * j2000;
   if (uMode > 1.5) {
     // Gnomonic: w = cos(distance from the center), so the GPU clips the far hemisphere itself.
     vec3 p = uFinder * j2000;
@@ -88,22 +197,42 @@ attribute vec3 starColor;
 uniform float uLimit;
 uniform float uPixelRatio;
 uniform float uStarScale;  // finder chart: larger, firmer dots
+uniform float uFieldBonus; // fainter stars as the field narrows (magnitudes)
+uniform float uScintillation;
+uniform float uTime;       // seconds
 varying vec3 vColor;
 varying float vAlpha;
 
 void main() {
   gl_Position = skyClip(position);
-  if (magnitude > uLimit) {
+  float shown = magnitude;
+  float limit = uLimit;
+  vColor = starColor;
+  // In the dome and the all-sky chart each star is dimmed and reddened by the air it shines
+  // through, and hidden when the sky around it is too bright (the naked-eye limit there + 2).
+  if (uBrightnessOn > 0.5 && uMode < 1.5) {
+    float airmass = min(kastenYoung(vAltitude), 40.0);
+    shown += uExtinction * airmass;
+    limit = min(limit, nakedEyeLimit(skySqm(gNeu)) + 2.0 + uFieldBonus);
+    float reddening = clamp(uExtinction * (airmass - 1.0), 0.0, 3.0);
+    vColor *= vec3(1.0, 1.0 - 0.09 * reddening, 1.0 - 0.2 * reddening);
+  }
+  if (shown > limit) {
     gl_PointSize = 0.0;
     vAlpha = 0.0;
     return;
   }
   // Relative flux above the limit drives size and brightness.
-  float flux = pow(10.0, -0.4 * (magnitude - uLimit));
+  float flux = pow(10.0, -0.4 * (shown - limit));
   gl_PointSize = clamp(1.3 * pow(flux, 0.17), 1.3, 9.0) * uStarScale * uPixelRatio;
   float minimumAlpha = uStarScale > 1.0 ? 0.65 : 0.3;
   vAlpha = clamp(0.3 * pow(flux, 0.3), minimumAlpha, 1.0);
-  vColor = starColor;
+  if (uScintillation > 0.5 && uMode < 1.5) {
+    // Twinkling grows toward the horizon (more air); a per-star phase from its position.
+    float strength = 0.35 * clamp((kastenYoung(vAltitude) - 1.0) / 6.0, 0.05, 1.0);
+    float phase = dot(position, vec3(127.1, 311.7, 74.7));
+    vAlpha *= 1.0 - strength * (0.5 + 0.5 * sin(uTime * 9.0 + phase) * sin(uTime * 5.3 + phase * 1.7));
+  }
 }
 `;
 
@@ -178,7 +307,14 @@ void main() {
 
   float sizePx = majorAxis / 60.0 * uPixelsPerDegree;
   bool known = magnitude < 98.0;
-  bool visible = highlight > 0.5 || (known ? magnitude <= uLimit : sizePx >= 10.0);
+  float shown = magnitude;
+  float limit = uLimit;
+  if (uBrightnessOn > 0.5 && uMode < 1.5) {
+    // Dimmed by the air, and the limit falls by what the sky there hides (dark sky: 6.62).
+    shown += uExtinction * min(kastenYoung(vAltitude), 40.0);
+    limit -= max(0.0, 6.62 - nakedEyeLimit(skySqm(gNeu)));
+  }
+  bool visible = highlight > 0.5 || (known ? shown <= limit : sizePx >= 10.0);
   if (!visible) {
     gl_PointSize = 0.0;
     vSize = 0.0;
@@ -264,52 +400,58 @@ void main() {
 }
 `;
 
-// Sky backdrop of the dome: an upper hemisphere colored from the zenith to the (brighter) horizon.
-export const skyDomeVertex = /* glsl */ `
-${domeProjection}
-varying vec3 vWorld;
+// The sky (dome and all-sky chart): one full-screen pass that finds the direction under each
+// pixel (the inverse of the projection) and draws its brightness with the display curve and the
+// colour of what lights it: the natural sky, light pollution, moonlight, twilight or daylight.
+export const skyPassVertex = /* glsl */ `
 void main() {
-  vWorld = position;
-  vCull = 0.0;
-  gl_Position = domeClip(position);
+  gl_Position = vec4(position.xy, 0.0, 1.0);
 }
 `;
 
-const skyGradient = /* glsl */ `
-uniform vec3 uZenithColor;
-uniform vec3 uHorizonColor;
-vec3 skyGradient(float sinAltitude) {
-  return mix(uHorizonColor, uZenithColor, pow(clamp(sinAltitude, 0.0, 1.0), 0.35));
-}
-`;
-
-export const skyDomeFragment = /* glsl */ `
-${skyGradient}
-varying float vCull;
-varying vec3 vWorld;
-void main() {
-  if (vCull > 0.001) discard;
-  gl_FragColor = vec4(skyGradient(normalize(vWorld).y), 1.0);
-}
-`;
-
-// Sky backdrop of the all-sky chart: a disc in clip space, r = 1 at the horizon.
-export const skyDiscVertex = /* glsl */ `
+export function skyPassFragment(displayLevel: string): string {
+  return /* glsl */ `
+${domeUniforms}
+${photometry}
+uniform float uMode;
 uniform vec2 uChartScale;
-varying float vRadius;
-void main() {
-  vRadius = length(position.xy);
-  gl_Position = vec4(position.x * uChartScale.x, position.y * uChartScale.y, 0.0, 1.0);
-}
-`;
+uniform vec2 uViewport;      // drawing buffer, px
+uniform vec3 uNightChroma;   // colours of luminance 1
+uniform vec3 uTintChroma;
+uniform vec3 uMoonChroma;
 
-export const skyDiscFragment = /* glsl */ `
-${skyGradient}
-varying float vRadius;
+${displayLevel}
+
 void main() {
-  gl_FragColor = vec4(skyGradient(sin((1.0 - vRadius) * 1.5707963)), 1.0);
+  vec2 clip = gl_FragCoord.xy / uViewport * 2.0 - 1.0;
+  vec3 neu;
+  if (uMode < 0.5) {
+    vec2 p = vec2(clip.x * uAspect, clip.y) / uProjScale;
+    float r = length(p);
+    float theta = uProjK * atan(r / uProjK);
+    vec2 u = r > 1e-9 ? p / r : vec2(0.0);
+    vec3 world = transpose(uDomeBasis) * vec3(u * sin(theta), cos(theta));
+    neu = vec3(-world.z, world.x, world.y);
+  } else {
+    float n = clip.y / uChartScale.y;
+    float e = -clip.x / uChartScale.x;
+    float r = length(vec2(n, e));
+    if (r > 1.0) discard;
+    float altitude = radians(90.0 * (1.0 - r));
+    float az = atan(e, n);
+    neu = vec3(cos(altitude) * cos(az), cos(altitude) * sin(az), sin(altitude));
+  }
+  float natural; float artificial; float moon; float twilight; vec3 twilightColor;
+  skyParts(neu, natural, artificial, moon, twilight, twilightColor);
+  float total = max(natural + artificial + moon + twilight, 1e-30);
+  float level = displayLevel(-2.5 * log10f(total));
+  // Twilight colours a little desaturated (a display, not a spectrum).
+  vec3 tw = twilight > 0.0 ? mix(vec3(1.0), twilightColor / max(lum(twilightColor), 1e-9), 0.8) : vec3(0.0);
+  vec3 chroma = (natural * uNightChroma + artificial * uTintChroma + moon * uMoonChroma + twilight * tw) / total;
+  gl_FragColor = vec4(min(chroma / max(lum(chroma), 1e-6) * level, vec3(1.0)), 1.0);
 }
 `;
+}
 
 // Horizon profile: opaque ground drawn over the sky (positions in north/east/up).
 export const silhouetteVertex = /* glsl */ `

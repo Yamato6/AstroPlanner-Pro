@@ -127,14 +127,28 @@ const fovPayload = z.strictObject({
   center: vectorSchema.nullable(),
   label: z.string().max(MAX_TEXT),
 });
+/** A part of the sky brightness that is absent (C# SkyAppearancePayload.None). */
+export const NO_LIGHT_SQM = 99;
+const partSqm = z.number().min(-5).max(NO_LIGHT_SQM);
 const skyAppearancePayload = z
   .strictObject({
     startUtc: utc,
     stepSeconds: z.number().positive(),
     zenithSqm: z.array(z.number().min(-5).max(30)).min(1).max(2000),
     limitingMagnitude: z.array(z.number().min(-30).max(10)).min(1).max(2000),
+    twilightSqm: z.array(partSqm).min(1).max(2000),
+    moonlightSqm: z.array(partSqm).min(1).max(2000),
+    siteSqm: z.number().min(10).max(25),
+    extinction: z.number().min(0).max(3),
+    brighteningPerAirmass: z.number().min(0).max(5),
   })
-  .refine((p) => p.zenithSqm.length === p.limitingMagnitude.length, 'one limiting magnitude per sample');
+  .refine(
+    (p) =>
+      p.zenithSqm.length === p.limitingMagnitude.length &&
+      p.zenithSqm.length === p.twilightSqm.length &&
+      p.zenithSqm.length === p.moonlightSqm.length,
+    'every part has one value per sample',
+  );
 
 function envelope<T extends string, P extends z.ZodType>(type: T, payload: P) {
   return z.strictObject({ v: z.literal(PROTOCOL_VERSION), type: z.literal(type), payload });
