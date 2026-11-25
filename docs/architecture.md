@@ -111,6 +111,6 @@ gate in CI, Application 80 %.
   `SkyBindingTests`, `AccessibilityTests`): R5 deletes those views, and their tests go or move
   with them (`dotnet test --filter Retires=R5` lists them).
 - CI (`.github/workflows/ci.yml`): the jobs `web` (lint, build, Vitest, Playwright) and `dotnet`
-  (build, DataBuilder `verify`, performance tests, tests with coverage and its gates; NuGet
-  packages cached) run side by side, and `test`, the check `main` requires, passes only when both
-  did.
+  (build without the web pages, DataBuilder `verify`, performance tests, tests with coverage and
+  its gates; NuGet packages cached) run side by side, and `test`, the check `main` requires,
+  passes only when both did. The release job builds the exe with the pages and requires them.

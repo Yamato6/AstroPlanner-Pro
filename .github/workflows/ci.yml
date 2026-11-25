@@ -59,13 +59,6 @@ jobs:
         with:
           dotnet-version: 10.0.x
 
-      # The UI build builds the web pages itself (npm ci + npm run build) to embed them.
-      - uses: actions/setup-node@v7
-        with:
-          node-version-file: src/web/.nvmrc
-          cache: npm
-          cache-dependency-path: src/web/package-lock.json
-
       # Restoring the NuGet packages took about half of the build. Only this job uses the cache:
       # the release job restores from nuget.org.
       - uses: actions/cache@v6
@@ -74,8 +67,10 @@ jobs:
           key: nuget-${{ runner.os }}-${{ hashFiles('Directory.Packages.props', '**/*.csproj', '**/Directory.Build.props') }}
           restore-keys: nuget-${{ runner.os }}-
 
+      # The web pages are built and tested by the job "web": this build does not embed them
+      # (the release job does, and fails without them: RequireSkyRenderer).
       - name: Build (warnings are errors)
-        run: dotnet build AstroPlanner.slnx -c Release -warnaserror
+        run: dotnet build AstroPlanner.slnx -c Release -warnaserror -p:SkipSkyRendererBuild=true
 
       # The committed catalogs.sqlite must pass the sanity checks (no download: sources are
       # only fetched by developers, see docs/data-pipeline.md).
