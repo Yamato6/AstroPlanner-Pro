@@ -40,6 +40,14 @@ public sealed class InterfaceEndpointsTests
         return response.GetProperty("payload");
     }
 
+    /// <summary>The whole response of a request that may fail.</summary>
+    private async Task<string> CallRawAsync(RpcDispatcher rpc, string method, string payload)
+    {
+        _sent.Clear();
+        await rpc.HandleAsync($$$"""{"v":2,"kind":"req","id":1,"type":"{{{method}}}","payload":{{{payload}}}}""");
+        return _sent.Single(m => m.Contains("\"res\"", StringComparison.Ordinal));
+    }
+
     private List<JsonElement> Events(string name) =>
         [.. _sent.Select(m => JsonElement.Parse(m)).Where(m => m.GetProperty("type").GetString() == name)];
 
@@ -108,6 +116,39 @@ public sealed class InterfaceEndpointsTests
         off.GetProperty("skyInertia").GetBoolean().Should().BeFalse();
         _store.Preferences.SkyInertia.Should().BeFalse();
         _store.Preferences.AutoHideToolbars.Should().BeTrue("the other preferences stay as they were");
+    }
+
+    [Fact]
+    public async Task SkyRendering_DefaultsToMediumAndLed_AndSavesEachChoice()
+    {
+        var (_, rpc) = Create();
+
+        var before = await CallAsync(rpc, "ui.get");
+        await CallAsync(rpc, "ui.setSkyQuality", """{"quality":"high"}""");
+        await CallAsync(rpc, "ui.setLightPollutionTint", """{"tint":"sodium"}""");
+        var after = await CallAsync(rpc, "ui.setScintillation", """{"enabled":true}""");
+
+        before.GetProperty("skyQuality").GetString().Should().Be("medium");
+        before.GetProperty("lightPollutionTint").GetString().Should().Be("led");
+        before.GetProperty("scintillation").GetBoolean().Should().BeFalse();
+        after.GetProperty("skyQuality").GetString().Should().Be("high");
+        after.GetProperty("lightPollutionTint").GetString().Should().Be("sodium");
+        after.GetProperty("scintillation").GetBoolean().Should().BeTrue();
+        _store.Preferences.Should().BeEquivalentTo(new InterfacePreferences { SkyQuality = "high", LightPollutionTint = "sodium", Scintillation = true });
+    }
+
+    [Fact]
+    public async Task SkyRendering_OutsideTheAllowedValues_IsRejected_AndAnOddSavedValueFallsBack()
+    {
+        _store.Preferences = new InterfacePreferences { SkyQuality = "ultra", LightPollutionTint = "purple" };
+        var (_, rpc) = Create();
+
+        var ui = await CallAsync(rpc, "ui.get");
+        var rejected = await CallRawAsync(rpc, "ui.setSkyQuality", """{"quality":"ultra"}""");
+
+        ui.GetProperty("skyQuality").GetString().Should().Be("medium");
+        ui.GetProperty("lightPollutionTint").GetString().Should().Be("led");
+        rejected.Should().Contain("\"error\"");
     }
 
     [Fact]

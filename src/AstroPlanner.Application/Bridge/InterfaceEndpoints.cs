@@ -49,6 +49,12 @@ public sealed class InterfaceEndpoints : IEndpointModule
             Run(() => SavePreferences(_preferences with { AutoHideToolbars = request.Enabled })));
         rpc.Register(AppMethods.UiSetSkyInertia, (request, _) =>
             Run(() => SavePreferences(_preferences with { SkyInertia = request.Enabled })));
+        rpc.Register(AppMethods.UiSetSkyQuality, (request, _) =>
+            Run(() => SavePreferences(_preferences with { SkyQuality = request.Quality })));
+        rpc.Register(AppMethods.UiSetLightPollutionTint, (request, _) =>
+            Run(() => SavePreferences(_preferences with { LightPollutionTint = request.Tint })));
+        rpc.Register(AppMethods.UiSetScintillation, (request, _) =>
+            Run(() => SavePreferences(_preferences with { Scintillation = request.Enabled })));
         rpc.Register(AppMethods.UiSetFullScreen, (request, _) => Run(() => _host.SetFullScreen(request.Enabled)));
         _settings.Theme.Changed += OnChanged;
         _host.FullScreenChanged += OnChanged;
@@ -57,7 +63,14 @@ public sealed class InterfaceEndpoints : IEndpointModule
     /// <summary>The current state as a contract.</summary>
     public UiSnapshot Snapshot() =>
         new(_changes.Revision, _settings.Theme.SkyTheme, _preferences.ReduceTransparency, _preferences.AutoHideToolbars,
-            _preferences.SkyInertia, _host.IsFullScreen);
+            _preferences.SkyInertia,
+            Allowed(_preferences.SkyQuality, SkyQualities.Medium, SkyQualities.Low, SkyQualities.Medium, SkyQualities.High),
+            Allowed(_preferences.LightPollutionTint, LightPollutionTints.Led, LightPollutionTints.Sodium, LightPollutionTints.Led, LightPollutionTints.Neutral),
+            _preferences.Scintillation, _host.IsFullScreen);
+
+    /// <summary>A saved choice if it is still one of <paramref name="allowed"/>, else the default (an edited or older file).</summary>
+    private static string Allowed(string? value, string fallback, params string[] allowed) =>
+        value is not null && allowed.Contains(value, StringComparer.Ordinal) ? value : fallback;
 
     private void SavePreferences(InterfacePreferences preferences)
     {

@@ -83,7 +83,23 @@
     "autoHideDescription": "The top bar and the dock fade after 3 s without input.",
     "sky": "Sky",
     "skyInertia": "Inertia when dragging",
-    "skyInertiaDescription": "A quick drag leaves the sky turning for a moment."
+    "skyInertiaDescription": "A quick drag leaves the sky turning for a moment.",
+    "skyQuality": "Atmosphere quality",
+    "skyQualityDescription": "Low keeps integrated graphics smooth; High adds finer twilight colours.",
+    "quality": {
+      "low": "Low",
+      "medium": "Medium",
+      "high": "High"
+    },
+    "lightPollutionTint": "Light pollution colour",
+    "lightPollutionTintDescription": "The glow of the towns near the horizon.",
+    "tint": {
+      "sodium": "Sodium",
+      "led": "LED",
+      "neutral": "Neutral"
+    },
+    "scintillation": "Twinkling stars",
+    "scintillationDescription": "Stars twinkle more near the horizon. High quality only."
   },
   "help": {
     "keyboard": "Keyboard",
@@ -135,7 +151,8 @@
     "search": "Search",
     "clearSelection": "Clear the selection",
     "track": "Track the selected object",
-    "home": "Back to the south horizon"
+    "home": "Back to the south horizon",
+    "atmosphere": "Atmosphere and sky brightness"
   },
   "dock": {
     "label": "Time and view",
@@ -210,6 +227,7 @@
   },
   "sky": {
     "trackingStopped": "Tracking stopped",
-    "nothingToTrack": "Select an object in the dome view to track it"
+    "nothingToTrack": "Select an object in the dome view to track it",
+    "qualityLowered": "The sky was slow: atmosphere quality lowered to {{quality}}"
   }
 }

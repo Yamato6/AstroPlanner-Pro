@@ -17,6 +17,22 @@ public static class AppThemes
     public const string Night = "night";
 }
 
+/// <summary>Atmosphere quality levels of the sky (spec §8.2).</summary>
+public static class SkyQualities
+{
+    public const string Low = "low";
+    public const string Medium = "medium";
+    public const string High = "high";
+}
+
+/// <summary>Colours of the light-pollution glow (spec §8.2).</summary>
+public static class LightPollutionTints
+{
+    public const string Sodium = "sodium";
+    public const string Led = "led";
+    public const string Neutral = "neutral";
+}
+
 /// <summary><c>app.info</c> takes no parameters.</summary>
 public sealed record AppInfoRequest;
 
@@ -162,8 +178,8 @@ public sealed record ThemeChangedEvent(
 
 /// <summary>
 /// The interface state the host keeps (<c>ui.get</c>, and the answer of every <c>ui.*</c>
-/// command): theme, reduce transparency, hiding idle toolbars and the sky's drag inertia (saved),
-/// full screen (the window's).
+/// command): theme, reduce transparency, hiding idle toolbars and the sky's options (drag
+/// inertia, atmosphere quality, light-pollution tint, twinkling) (saved), full screen (the window's).
 /// </summary>
 public sealed record UiSnapshot(
     [property: Range(0, int.MaxValue)] int Revision,
@@ -171,6 +187,9 @@ public sealed record UiSnapshot(
     bool ReduceTransparency,
     bool AutoHideToolbars,
     bool SkyInertia,
+    [property: AllowedValues(SkyQualities.Low, SkyQualities.Medium, SkyQualities.High)] string SkyQuality,
+    [property: AllowedValues(LightPollutionTints.Sodium, LightPollutionTints.Led, LightPollutionTints.Neutral)] string LightPollutionTint,
+    bool Scintillation,
     bool IsFullScreen);
 
 /// <summary><c>sky.setTime</c>: shows the sky at this instant (and pauses), e.g. from the darkness bar.</summary>
@@ -276,7 +295,15 @@ public sealed record SearchResolveResponse(
 public sealed record UiSetThemeRequest(
     [property: AllowedValues(AppThemes.Dark, AppThemes.Night)] string Theme);
 
-/// <summary>Turns an option on or off (<c>ui.setReduceTransparency</c>, <c>ui.setAutoHide</c>, <c>ui.setSkyInertia</c>, <c>ui.setFullScreen</c>).</summary>
+/// <summary><c>ui.setSkyQuality</c>: the sky's atmosphere quality.</summary>
+public sealed record UiSetSkyQualityRequest(
+    [property: AllowedValues(SkyQualities.Low, SkyQualities.Medium, SkyQualities.High)] string Quality);
+
+/// <summary><c>ui.setLightPollutionTint</c>: the colour of the light-pollution glow.</summary>
+public sealed record UiSetLightPollutionTintRequest(
+    [property: AllowedValues(LightPollutionTints.Sodium, LightPollutionTints.Led, LightPollutionTints.Neutral)] string Tint);
+
+/// <summary>Turns an option on or off (<c>ui.setReduceTransparency</c>, <c>ui.setAutoHide</c>, <c>ui.setSkyInertia</c>, <c>ui.setScintillation</c>, <c>ui.setFullScreen</c>).</summary>
 public sealed record SwitchRequest(bool Enabled);
 
 /// <summary><c>ui.changed</c>: theme, transparency or full screen changed.</summary>

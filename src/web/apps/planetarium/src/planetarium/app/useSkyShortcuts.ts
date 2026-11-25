@@ -163,6 +163,15 @@ export function useSkyShortcuts(): readonly Shortcut[] {
         },
       },
       {
+        id: 'atmosphere',
+        group: 'sky',
+        key: 'a',
+        display: 'A',
+        run: () => {
+          toggleLayer('skyBrightness');
+        },
+      },
+      {
         id: 'track',
         group: 'sky',
         key: 't',

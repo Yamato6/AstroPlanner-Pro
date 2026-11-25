@@ -25,6 +25,8 @@ namespace AstroPlanner.SkyBridge.App;
 [JsonSerializable(typeof(ThemeChangedEvent))]
 [JsonSerializable(typeof(UiSnapshot))]
 [JsonSerializable(typeof(UiSetThemeRequest))]
+[JsonSerializable(typeof(UiSetSkyQualityRequest))]
+[JsonSerializable(typeof(UiSetLightPollutionTintRequest))]
 [JsonSerializable(typeof(SwitchRequest))]
 [JsonSerializable(typeof(UiChangedEvent))]
 [JsonSerializable(typeof(LayoutSnapshot))]
@@ -144,6 +146,15 @@ public static class AppMethods
     public static RpcMethod<SwitchRequest, UiSnapshot> UiSetSkyInertia { get; } =
         new("ui.setSkyInertia", AppJsonContext.Default.SwitchRequest, AppJsonContext.Default.UiSnapshot);
 
+    public static RpcMethod<UiSetSkyQualityRequest, UiSnapshot> UiSetSkyQuality { get; } =
+        new("ui.setSkyQuality", AppJsonContext.Default.UiSetSkyQualityRequest, AppJsonContext.Default.UiSnapshot);
+
+    public static RpcMethod<UiSetLightPollutionTintRequest, UiSnapshot> UiSetLightPollutionTint { get; } =
+        new("ui.setLightPollutionTint", AppJsonContext.Default.UiSetLightPollutionTintRequest, AppJsonContext.Default.UiSnapshot);
+
+    public static RpcMethod<SwitchRequest, UiSnapshot> UiSetScintillation { get; } =
+        new("ui.setScintillation", AppJsonContext.Default.SwitchRequest, AppJsonContext.Default.UiSnapshot);
+
     public static RpcMethod<SwitchRequest, UiSnapshot> UiSetFullScreen { get; } =
         new("ui.setFullScreen", AppJsonContext.Default.SwitchRequest, AppJsonContext.Default.UiSnapshot);
 
@@ -159,7 +170,7 @@ public static class AppMethods
         SkyGet, SkyPlay, SkyPause, SkyNow, SkyStep, SkySetRate, SkySetLayer, SkySetViewMode, SkySetTime,
         NightGet, SelectionGet, SelectionCenter, SelectionFrame, SelectionAddToPlan, SelectionRemoveFromPlan, SelectionClear,
         SearchQuery, SearchGo, SearchResolve,
-        UiGet, UiSetTheme, UiSetReduceTransparency, UiSetAutoHide, UiSetSkyInertia, UiSetFullScreen, LayoutLoad, LayoutSave,
+        UiGet, UiSetTheme, UiSetReduceTransparency, UiSetAutoHide, UiSetSkyInertia, UiSetSkyQuality, UiSetLightPollutionTint, UiSetScintillation, UiSetFullScreen, LayoutLoad, LayoutSave,
     ];
 
     private static RpcMethod<NoParameters, SelectionSnapshot> Selection(string name) =>

@@ -225,6 +225,9 @@ export const uiSnapshotSchema = z.strictObject({
   reduceTransparency: z.boolean(),
   autoHideToolbars: z.boolean(),
   skyInertia: z.boolean(),
+  skyQuality: z.enum(['low', 'medium', 'high']),
+  lightPollutionTint: z.enum(['sodium', 'led', 'neutral']),
+  scintillation: z.boolean(),
   isFullScreen: z.boolean(),
 });
 export type UiSnapshot = z.infer<typeof uiSnapshotSchema>;
@@ -238,6 +241,16 @@ export const switchRequestSchema = z.strictObject({
   enabled: z.boolean(),
 });
 export type SwitchRequest = z.infer<typeof switchRequestSchema>;
+
+export const uiSetSkyQualityRequestSchema = z.strictObject({
+  quality: z.enum(['low', 'medium', 'high']),
+});
+export type UiSetSkyQualityRequest = z.infer<typeof uiSetSkyQualityRequestSchema>;
+
+export const uiSetLightPollutionTintRequestSchema = z.strictObject({
+  tint: z.enum(['sodium', 'led', 'neutral']),
+});
+export type UiSetLightPollutionTintRequest = z.infer<typeof uiSetLightPollutionTintRequestSchema>;
 
 export const windowLayoutStateSchema = z.strictObject({
   id: z.enum(['tonight', 'targets', 'plan', 'logbook', 'equipment', 'sites', 'milkyWay', 'settings', 'help']),
@@ -325,6 +338,9 @@ export const rpcMethods = {
   'ui.setReduceTransparency': { request: switchRequestSchema, response: uiSnapshotSchema },
   'ui.setAutoHide': { request: switchRequestSchema, response: uiSnapshotSchema },
   'ui.setSkyInertia': { request: switchRequestSchema, response: uiSnapshotSchema },
+  'ui.setSkyQuality': { request: uiSetSkyQualityRequestSchema, response: uiSnapshotSchema },
+  'ui.setLightPollutionTint': { request: uiSetLightPollutionTintRequestSchema, response: uiSnapshotSchema },
+  'ui.setScintillation': { request: switchRequestSchema, response: uiSnapshotSchema },
   'ui.setFullScreen': { request: switchRequestSchema, response: uiSnapshotSchema },
   'layout.load': { request: noParametersSchema, response: layoutSnapshotSchema },
   'layout.save': { request: layoutSnapshotSchema, response: noParametersSchema },

@@ -224,6 +224,14 @@ export class MockHost {
           ? goldenPayload('search.resolve.response')
           : { found: false, message: `${text} was not found.` };
       }
+      case 'ui.setSkyQuality':
+        return this.updateUi({ skyQuality: (payload as { quality: UiSnapshot['skyQuality'] }).quality });
+      case 'ui.setLightPollutionTint':
+        return this.updateUi({
+          lightPollutionTint: (payload as { tint: UiSnapshot['lightPollutionTint'] }).tint,
+        });
+      case 'ui.setScintillation':
+        return this.updateUi({ scintillation: (payload as { enabled: boolean }).enabled });
       case 'ui.setSkyInertia':
         return this.updateUi({ skyInertia: (payload as { enabled: boolean }).enabled });
       case 'ui.setAutoHide':
