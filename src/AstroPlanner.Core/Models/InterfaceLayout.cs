@@ -35,4 +35,7 @@ public sealed record InterfacePreferences
 
     /// <summary>The top bar and the dock fade out after a few seconds without input (spec §3.1).</summary>
     public bool AutoHideToolbars { get; init; } = true;
+
+    /// <summary>A fast drag leaves the sky coasting to a stop (spec §8.1).</summary>
+    public bool SkyInertia { get; init; } = true;
 }

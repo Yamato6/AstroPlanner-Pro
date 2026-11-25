@@ -224,6 +224,8 @@ export class MockHost {
           ? goldenPayload('search.resolve.response')
           : { found: false, message: `${text} was not found.` };
       }
+      case 'ui.setSkyInertia':
+        return this.updateUi({ skyInertia: (payload as { enabled: boolean }).enabled });
       case 'ui.setAutoHide':
         return this.updateUi({ autoHideToolbars: (payload as { enabled: boolean }).enabled });
       case 'layout.load':

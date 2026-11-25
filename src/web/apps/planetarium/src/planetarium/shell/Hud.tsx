@@ -18,13 +18,18 @@ export function Hud() {
   const { data: sky } = useSnapshot('sky.get');
   const [view, setView] = useState<SkyEventMap['view'] | null>(null);
   const [cursor, setCursor] = useState<SkyPoint | null>(null);
+  const [tracking, setTracking] = useState(false);
 
   useEffect(() => {
     const stopView = skyEvents.on('view', setView);
     const stopCursor = skyEvents.on('cursor', setCursor);
+    const stopTracking = skyEvents.on('tracking', (event) => {
+      setTracking(event.active);
+    });
     return () => {
       stopView();
       stopCursor();
+      stopTracking();
     };
   }, []);
 
@@ -36,7 +41,9 @@ export function Hud() {
       <dl className={styles.list}>
         <div className={styles.item}>
           <dt className={styles.name}>{t('hud.fov')}</dt>
-          <dd className={styles.value}>{view ? formatDegrees(view.fovDegrees) : dash}</dd>
+          <dd className={styles.value}>
+            {view ? formatDegrees(view.fovDegrees, view.fovDegrees < 10 ? 2 : 1) : dash}
+          </dd>
         </div>
         <div className={styles.item}>
           <dt className={styles.name}>{t('hud.raDec')}</dt>
@@ -60,6 +67,12 @@ export function Hud() {
           <dt className={styles.name}>{t('hud.limit')}</dt>
           <dd className={styles.value}>{limit === undefined ? dash : limit.toFixed(1)}</dd>
         </div>
+        {tracking ? (
+          <div className={styles.item}>
+            <dt className={styles.name}>{t('hud.tracking')}</dt>
+            <dd className={styles.value}>{t('hud.trackingOn')}</dd>
+          </div>
+        ) : null}
       </dl>
     </div>
   );

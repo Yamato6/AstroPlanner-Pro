@@ -6,6 +6,22 @@ versions follow [Semantic Versioning](https://semver.org/). Versions up to 1.0.0
 
 ## [Unreleased]
 
+### Added
+- Sky: the dome's field of view now goes from 0.25° (small objects such as M57 fill a good part
+  of the view) to 180°. Up to 60° the view is the same perspective as before; wider fields turn
+  smoothly into a stereographic projection, which shows a whole hemisphere without stretching.
+- Sky: centering on an object (search, the card, the context menu, Targets) flies there instead
+  of jumping.
+- Sky: `T` tracks the selected object, keeping it centred while time runs; moving the view by
+  hand stops it. In the planetarium UI the HUD shows it, and the context menu has *Track*.
+- Sky: a fast drag leaves the sky coasting for a moment (planetarium UI: Settings › Sky ›
+  *Inertia when dragging*). `Home` returns to the south horizon, 30° up, with a 70° field.
+
+### Changed
+- Sky: the first view of a new installation looks 30° up (was 35°). In very wide views only the
+  brightest names, the planets, the Sun and the Moon are labelled; bright stars grow a little as
+  the field narrows.
+
 ## [3.0.0-alpha.1] — 2026-11-24
 
 First preview of the v3 planetarium UI. The classic window is still the default and works as in

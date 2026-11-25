@@ -80,7 +80,10 @@
     "reset": "Reset",
     "classicNote": "The planner's settings (site, online services, calibration…) are in the classic window until they move here.",
     "autoHide": "Hide toolbars when idle",
-    "autoHideDescription": "The top bar and the dock fade after 3 s without input."
+    "autoHideDescription": "The top bar and the dock fade after 3 s without input.",
+    "sky": "Sky",
+    "skyInertia": "Inertia when dragging",
+    "skyInertiaDescription": "A quick drag leaves the sky turning for a moment."
   },
   "help": {
     "keyboard": "Keyboard",
@@ -130,7 +133,9 @@
     "previousWindow": "Previous window",
     "commandPalette": "Search and commands",
     "search": "Search",
-    "clearSelection": "Clear the selection"
+    "clearSelection": "Clear the selection",
+    "track": "Track the selected object",
+    "home": "Back to the south horizon"
   },
   "dock": {
     "label": "Time and view",
@@ -156,7 +161,9 @@
     "raDec": "RA/Dec",
     "altAz": "Alt/Az",
     "sqm": "SQM",
-    "limit": "Limit"
+    "limit": "Limit",
+    "tracking": "Tracking",
+    "trackingOn": "On (T)"
   },
   "card": {
     "label": "Selected object",
@@ -184,7 +191,8 @@
     "added": "{{title}} added to my plan",
     "copy": "Copy coordinates",
     "copied": "Coordinates copied",
-    "copyFailed": "The coordinates could not be copied"
+    "copyFailed": "The coordinates could not be copied",
+    "track": "Track"
   },
   "palette": {
     "label": "Search objects and commands",
@@ -199,5 +207,9 @@
   "toasts": {
     "label": "Notifications",
     "close": "Close"
+  },
+  "sky": {
+    "trackingStopped": "Tracking stopped",
+    "nothingToTrack": "Select an object in the dome view to track it"
   }
 }

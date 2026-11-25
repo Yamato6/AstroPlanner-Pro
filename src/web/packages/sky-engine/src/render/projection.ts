@@ -199,3 +199,105 @@ export function raDec(v: Vec3): { raHours: number; decDegrees: number } {
   const ra = Math.atan2(v[1], v[0]) / DEG / 15;
   return { raHours: ((ra % 24) + 24) % 24, decDegrees: Math.asin(Math.max(-1, Math.min(1, v[2]))) / DEG };
 }
+
+// ---- dome ------------------------------------------------------------------------------------
+//
+// The dome view uses a generalized zenithal projection around the view direction:
+// r(θ) = k·tan(θ/k), where θ is the angle from the view center. k = 1 is the gnomonic
+// (perspective) projection, exactly what a pinhole camera shows; k = 2 is the stereographic one,
+// which stays finite up to 180°. k is 1 up to a 60° field, rises smoothly to 2 at 120° and stays
+// there, so narrow fields look as before and the field can open to 180°. Mirrored by the vertex
+// shader (shaders.ts, domeClip).
+
+/** Below this field of view (degrees) the dome is a plain perspective (k = 1). */
+export const PERSPECTIVE_FOV = 60;
+/** From this field of view (degrees) the dome is stereographic (k = 2). */
+export const STEREOGRAPHIC_FOV = 120;
+
+/** Projection parameter k for a field of view (degrees): 1 → 2 with a smoothstep between. */
+export function domeK(fovDegrees: number): number {
+  const t = Math.min(1, Math.max(0, (fovDegrees - PERSPECTIVE_FOV) / (STEREOGRAPHIC_FOV - PERSPECTIVE_FOV)));
+  return 1 + t * t * (3 - 2 * t);
+}
+
+/**
+ * Largest angle from the view center that is drawn (radians): just short of where r(θ) runs to
+ * infinity (k·90°), and never the point straight behind the camera.
+ */
+export function domeMaxAngle(k: number): number {
+  return Math.min(k * (Math.PI / 2) - 0.02, Math.PI - 0.02);
+}
+
+/** A dome camera: world-space axes (three.js: x = east, y = up, z = −north) and the field. */
+export interface DomeCamera {
+  /** Rows: right, up and forward (the view direction), unit vectors in world space. */
+  readonly basis: Mat3;
+  readonly fovDegrees: number;
+  readonly width: number;
+  readonly height: number;
+}
+
+/** Camera looking at an apparent altitude/azimuth, its "up" toward the zenith. */
+export function domeCamera(
+  altitudeDegrees: number,
+  azimuthDegrees: number,
+  fovDegrees: number,
+  width: number,
+  height: number,
+): DomeCamera {
+  const alt = altitudeDegrees * DEG;
+  const az = azimuthDegrees * DEG;
+  // World direction of (alt, az): north = −z, east = +x, up = +y.
+  const forward: Vec3 = [Math.cos(alt) * Math.sin(az), Math.sin(alt), -Math.cos(alt) * Math.cos(az)];
+  let right = cross(forward, [0, 1, 0]);
+  if (Math.hypot(right[0], right[1], right[2]) < 1e-9) {
+    right = [Math.cos(az), 0, Math.sin(az)];
+  }
+  right = normalize(right);
+  const up = cross(right, forward);
+  return {
+    basis: [right[0], right[1], right[2], up[0], up[1], up[2], forward[0], forward[1], forward[2]],
+    fovDegrees,
+    width,
+    height,
+  };
+}
+
+/** Pixels per unit of r(θ): the top of the screen is at θ = fov / 2. */
+export function domeScale(camera: DomeCamera): number {
+  const k = domeK(camera.fovDegrees);
+  return camera.height / 2 / (k * Math.tan(((camera.fovDegrees / 2) * DEG) / k));
+}
+
+/** Pixels per degree at the view center (r'(0) = 1 for every k). */
+export function domePixelsPerDegree(camera: DomeCamera): number {
+  return domeScale(camera) * DEG;
+}
+
+/** Screen position (CSS px) of a world direction, or null beyond the drawn angle. */
+export function domeProject(camera: DomeCamera, world: Vec3): ScreenPoint | null {
+  const d = transform(camera.basis, normalize(world));
+  const perpendicular = Math.hypot(d[0], d[1]);
+  const theta = Math.atan2(perpendicular, d[2]);
+  const k = domeK(camera.fovDegrees);
+  if (theta > domeMaxAngle(k)) {
+    return null;
+  }
+  const r = k * Math.tan(theta / k) * domeScale(camera);
+  const ux = perpendicular > 1e-12 ? d[0] / perpendicular : 0;
+  const uy = perpendicular > 1e-12 ? d[1] / perpendicular : 0;
+  return { x: camera.width / 2 + ux * r, y: camera.height / 2 - uy * r };
+}
+
+/** World direction under a screen point (the inverse of {@link domeProject}). */
+export function domeInverse(camera: DomeCamera, x: number, y: number): Vec3 {
+  const k = domeK(camera.fovDegrees);
+  const px = (x - camera.width / 2) / domeScale(camera);
+  const py = -(y - camera.height / 2) / domeScale(camera);
+  const r = Math.hypot(px, py);
+  const theta = k * Math.atan(r / k);
+  const s = Math.sin(theta);
+  const ux = r > 1e-12 ? px / r : 0;
+  const uy = r > 1e-12 ? py / r : 0;
+  return normalize(transform(transpose(camera.basis), [ux * s, uy * s, Math.cos(theta)]));
+}

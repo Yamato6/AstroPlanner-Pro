@@ -32,6 +32,7 @@ import {
   type AppearanceNow,
   type AppearanceTrack,
 } from './appearance';
+import { Flight, HOME_VIEW, MAX_ALTITUDE, MIN_ALTITUDE, type DomeView } from './camera';
 import { dsoShape, palette, starColor } from './colors';
 import { altAzGrid, ecliptic, equatorialGrid, meridian, segmentVertices } from './grids';
 import { hasObstruction, maskAltitude, silhouetteTriangles, type HorizonPoint } from './horizon';
@@ -40,6 +41,13 @@ import {
   allSkyGeometry,
   allSkyInverse,
   allSkyPoint,
+  domeCamera,
+  domeInverse,
+  domeK,
+  domeMaxAngle,
+  domePixelsPerDegree,
+  domeProject,
+  domeScale,
   finderGeometry,
   fovOutline,
   fovUpMarker,
@@ -51,6 +59,7 @@ import {
   separationDegrees,
   tangentBasis,
   type ChartGeometry,
+  type DomeCamera,
   type ScreenPoint,
   type ViewMode,
 } from './projection';
@@ -102,9 +111,20 @@ interface FinderLabel {
   readonly text: string;
 }
 
+/** Why tracking stopped: a manual pan, the selection changed or vanished, or another mode. */
+export type TrackingStop = 'manual' | 'selection' | 'lost' | 'mode';
+
+type FlightTarget =
+  | { readonly kind: 'direction'; readonly j2000: Vec3; readonly fov: number }
+  | { readonly kind: 'view'; readonly view: DomeView }
+  | { readonly kind: 'selection'; readonly fov: number };
+
 const IDENTITY: Mat3 = [1, 0, 0, 0, 1, 0, 0, 0, 1];
-const MIN_FOV = 1;
-const MAX_FOV = 120;
+/** Dome field of view, degrees: M57 (1.4′) fills a good part of the narrowest; 180° is a hemisphere. */
+export const MIN_FOV = 0.25;
+export const MAX_FOV = 180;
+/** Above this field (degrees) only the brightest star names, no Messier and no minor-body labels are drawn. */
+const WIDE_LABEL_FOV = 110;
 const MIN_FINDER_FOV = 0.5;
 const MAX_FINDER_FOV = 60;
 const MILKY_WAY_OPACITY = 0.22;
@@ -117,6 +137,11 @@ const SATELLITE_TRAIL_STEP_MS = 5000;
 
 function color(rgb: readonly [number, number, number]): THREE.Color {
   return new THREE.Color(rgb[0], rgb[1], rgb[2]);
+}
+
+/** Dome star size: bright stars grow a little as the field narrows (×1 at 60°, ×1.5 at 1° and below). */
+export function domeStarScale(fovDegrees: number): number {
+  return 1 + Math.min(0.5, Math.max(0, 0.28 * Math.log10(60 / fovDegrees)));
 }
 
 function clampFov(value: number, min: number, max: number): number {
@@ -138,7 +163,14 @@ export class SkyView {
     uMode: { value: 0 },
     uFinder: { value: new THREE.Matrix3() },
     uChartScale: { value: new THREE.Vector2(1, 1) },
+    uDomeBasis: { value: new THREE.Matrix3() },
+    uProjK: { value: 1 },
+    uProjScale: { value: 1 },
+    uAspect: { value: 1 },
+    uMaxTheta: { value: 1.5 },
   };
+  /** The dome camera of the last frame (projection of the overlay, picking, unproject). */
+  private dome: DomeCamera = domeCamera(35, 180, 70, 1, 1);
   private readonly starLimitUniform = { value: 8.5 };
   private readonly starScaleUniform = { value: 1 };
   private readonly dsoUniforms = {
@@ -204,13 +236,19 @@ export class SkyView {
   mode: ViewMode = 'dome';
   /** Dome view direction and field of view (degrees). */
   azimuth = 180;
-  altitude = 35;
+  altitude = 30;
   fov = 70;
   /** Finder chart center (J2000) and field. */
   finderCenter: Vec3 = [1, 0, 0];
   finderFov = 10;
   showStats = false;
   statsText = '';
+  /** Called when tracking starts or stops. */
+  onTrackingChanged: ((active: boolean, reason: TrackingStop | 'started') => void) | null = null;
+  private flight: { flight: Flight; target: FlightTarget } | null = null;
+  private tracking: Selection | null = null;
+  private trackedFixed: Vec3 | null = null;
+  private lastUtcMs = 0;
   /** Called when the field-of-view overlay gets a center from the view (null center) or is moved. */
   onFovChanged: ((center: Vec3, rotationDegrees: number) => void) | null = null;
 
@@ -239,7 +277,7 @@ export class SkyView {
       new THREE.ShaderMaterial({
         vertexShader: skyDomeVertex,
         fragmentShader: skyDomeFragment,
-        uniforms: this.backdrop,
+        uniforms: { ...this.backdrop, ...this.domeUniforms() },
         side: THREE.BackSide,
         depthTest: false,
         depthWrite: false,
@@ -268,13 +306,18 @@ export class SkyView {
       new THREE.ShaderMaterial({
         vertexShader: groundVertex,
         fragmentShader: groundFragment,
-        uniforms: { uGround: { value: color(palette.ground) }, uHorizon: { value: color(palette.horizon) } },
+        uniforms: {
+          uGround: { value: color(palette.ground) },
+          uHorizon: { value: color(palette.horizon) },
+          ...this.domeUniforms(),
+        },
         side: THREE.BackSide,
         depthTest: false,
         depthWrite: false,
       }),
     );
     this.ground.renderOrder = -10;
+    this.ground.frustumCulled = false;
     this.scene.add(this.ground);
 
     this.milkyWay = this.segments(data.milkyWay, palette.milkyWay, this.milkyWayOpacity, 0.15);
@@ -295,6 +338,18 @@ export class SkyView {
     const dso = this.buildDsos();
     this.dsos = dso.points;
     this.dsoHighlight = dso.highlight;
+  }
+
+  /** The shared dome projection uniforms (the same objects, so one update reaches every material). */
+  private domeUniforms(): Record<string, THREE.IUniform> {
+    const s = this.shared;
+    return {
+      uDomeBasis: s.uDomeBasis,
+      uProjK: s.uProjK,
+      uProjScale: s.uProjScale,
+      uAspect: s.uAspect,
+      uMaxTheta: s.uMaxTheta,
+    };
   }
 
   get starsDrawn(): number {
@@ -534,8 +589,12 @@ export class SkyView {
   }
 
   setSelection(selection: Selection | null): void {
+    const changed = selection?.kind !== this.selection?.kind || selection?.id !== this.selection?.id;
     this.selection = selection;
     this.refreshHighlights();
+    if (changed && this.tracking) {
+      this.stopTracking('selection');
+    }
   }
 
   setFov(fov: Fov): void {
@@ -557,6 +616,12 @@ export class SkyView {
   }
 
   setMode(mode: ViewMode): void {
+    if (mode !== 'dome') {
+      this.flight = null;
+      if (this.tracking) {
+        this.stopTracking('mode');
+      }
+    }
     if (mode === this.mode) {
       return;
     }
@@ -630,7 +695,7 @@ export class SkyView {
   /** Pixels per degree at the view center. */
   private get pixelsPerDegree(): number {
     if (this.mode === 'dome') {
-      return this.height / this.fov;
+      return domePixelsPerDegree(this.dome);
     }
     return this.mode === 'finder' ? this.chart.scale * (Math.PI / 180) : this.chart.scale / 90;
   }
@@ -638,7 +703,7 @@ export class SkyView {
   /** Pans by a pointer drag from (x − dx, y − dy) to (x, y), CSS pixels ("grab the sky"). */
   pan(dx: number, dy: number, x: number, y: number): void {
     if (this.mode === 'dome') {
-      const degreesPerPixel = this.fov / this.height;
+      const degreesPerPixel = 1 / this.pixelsPerDegree;
       this.azimuth = (((this.azimuth - dx * degreesPerPixel) % 360) + 360) % 360;
       this.altitude = Math.min(89.9, Math.max(-30, this.altitude + dy * degreesPerPixel));
     } else if (this.mode === 'finder') {
@@ -657,6 +722,150 @@ export class SkyView {
     } else if (this.mode === 'finder') {
       this.finderFov = clampFov(this.finderFov * factor, MIN_FINDER_FOV, MAX_FINDER_FOV);
     }
+  }
+
+  // ---- camera motion (spec §8.1, §9.2) --------------------------------------------------------
+
+  /**
+   * Flies the dome to a J2000 direction (and field), following it while the sky turns; the
+   * finder recenters at once and the all-sky chart only keeps the direction for the dome.
+   */
+  flyTo(j2000: Vec3, fovDegrees: number | null, nowMs: number): void {
+    if (this.mode !== 'dome') {
+      this.centerOn(j2000, fovDegrees);
+      return;
+    }
+    const fov = fovDegrees === null ? this.fov : clampFov(fovDegrees, MIN_FOV, MAX_FOV);
+    this.startFlight({ kind: 'direction', j2000, fov }, nowMs);
+  }
+
+  /** Flies the dome back to the south, 30° up, 70° field ("Home"). */
+  flyHome(nowMs: number): void {
+    if (this.tracking) {
+      this.stopTracking('manual');
+    }
+    if (this.mode !== 'dome') {
+      this.azimuth = HOME_VIEW.azimuth;
+      this.altitude = HOME_VIEW.altitude;
+      this.fov = HOME_VIEW.fov;
+      return;
+    }
+    this.startFlight({ kind: 'view', view: HOME_VIEW }, nowMs);
+  }
+
+  /**
+   * Keeps the selection centred while time runs (dome only): flies to it first. Returns false
+   * when there is nothing to track (no selection, another mode or no position).
+   */
+  startTracking(nowMs: number, utcMs: number): boolean {
+    const selection = this.selection;
+    if (this.mode !== 'dome' || !selection || !this.selectionPosition(selection, utcMs)) {
+      return false;
+    }
+    this.tracking = selection;
+    this.trackedFixed = selection.kind === 'body' ? null : this.selectionPosition(selection, utcMs);
+    this.startFlight({ kind: 'selection', fov: this.fov }, nowMs);
+    this.onTrackingChanged?.(true, 'started');
+    return true;
+  }
+
+  /** Stops tracking and says why ('manual': the user moved the view). */
+  stopTracking(reason: TrackingStop): void {
+    if (!this.tracking) {
+      return;
+    }
+    this.tracking = null;
+    if (this.flight?.target.kind === 'selection') {
+      this.flight = null;
+    }
+    this.onTrackingChanged?.(false, reason);
+  }
+
+  /** Where the tracked object is: stars and deep-sky objects do not move (no catalog scan per frame). */
+  private trackedPosition(utcMs: number): Vec3 | null {
+    if (!this.tracking) {
+      return null;
+    }
+    return this.trackedFixed ?? this.selectionPosition(this.tracking, utcMs);
+  }
+
+  get isTracking(): boolean {
+    return this.tracking !== null;
+  }
+
+  /** The user moved the view by hand: a flight stops, and so does tracking. */
+  interrupt(): void {
+    this.flight = null;
+    this.stopTracking('manual');
+  }
+
+  private startFlight(target: FlightTarget, nowMs: number): void {
+    const view = this.flightTarget(target, null);
+    if (!view) {
+      return;
+    }
+    this.flight = {
+      flight: new Flight({ azimuth: this.azimuth, altitude: this.altitude, fov: this.fov }, view, nowMs),
+      target,
+    };
+  }
+
+  /** Where a flight is going right now (the sky turns), or null when the target has no position. */
+  private flightTarget(target: FlightTarget, utcMs: number | null): DomeView | null {
+    if (target.kind === 'view') {
+      return target.view;
+    }
+    const j2000 = target.kind === 'direction' ? target.j2000 : this.trackedPosition(utcMs ?? this.lastUtcMs);
+    if (!j2000) {
+      return null;
+    }
+    const h = apparentHorizontal(this.currentH, j2000, this.refraction);
+    return { azimuth: h.azimuthDegrees, altitude: h.altitudeDegrees, fov: target.fov };
+  }
+
+  /** Advances a flight and tracking to this frame (before {@link render}); true when a flight arrived. */
+  animate(nowMs: number, utcMs: number): boolean {
+    this.lastUtcMs = utcMs;
+    if (this.frame) {
+      this.currentH = j2000ToHorizontal(this.frame, utcMs);
+    }
+    if (this.flight) {
+      const target = this.flightTarget(this.flight.target, utcMs);
+      if (!target) {
+        this.flight = null;
+        return false;
+      } else {
+        const { view, done } = this.flight.flight.at(nowMs, target);
+        this.azimuth = view.azimuth;
+        this.altitude = view.altitude;
+        this.fov = clampFov(view.fov, MIN_FOV, MAX_FOV);
+        if (done) {
+          this.flight = null;
+        }
+        return done;
+      }
+    }
+    if (this.tracking) {
+      const j2000 = this.trackedPosition(utcMs);
+      if (!j2000) {
+        this.stopTracking('lost');
+        return false;
+      }
+      const h = apparentHorizontal(this.currentH, j2000, this.refraction);
+      this.azimuth = h.azimuthDegrees;
+      this.altitude = Math.min(MAX_ALTITUDE, Math.max(MIN_ALTITUDE, h.altitudeDegrees));
+    }
+    return false;
+  }
+
+  /** Stops a flight where it is (a manual zoom); tracking, if on, carries on. */
+  stopFlight(): void {
+    this.flight = null;
+  }
+
+  /** True while a flight runs (the engine reports the view once it ends). */
+  get isFlying(): boolean {
+    return this.flight !== null;
   }
 
   /** Turns the view to a J2000 direction at the current time (the finder recenters instead). */
@@ -694,22 +903,9 @@ export class SkyView {
     return this.appearance;
   }
 
-  private readonly scratch = new THREE.Vector3();
-
   /** Canvas position (CSS px) of a dome world direction, or null when behind the camera / off screen. */
   private project(world: Vec3, margin = 40): ScreenPoint | null {
-    const v = this.scratch.set(world[0], world[1], world[2]);
-    v.applyMatrix4(this.camera.matrixWorldInverse);
-    if (v.z >= 0) {
-      return null;
-    }
-    v.applyMatrix4(this.camera.projectionMatrix);
-    const x = ((v.x + 1) / 2) * this.width;
-    const y = ((1 - v.y) / 2) * this.height;
-    if (x < -margin || y < -margin || x > this.width + margin || y > this.height + margin) {
-      return null;
-    }
-    return { x, y };
+    return this.onScreen(domeProject(this.dome, world), margin);
   }
 
   private onScreen(p: ScreenPoint | null, margin: number): ScreenPoint | null {
@@ -771,11 +967,7 @@ export class SkyView {
       }
       neu = fromHorizontal(h.altitudeDegrees, h.azimuthDegrees);
     } else {
-      const v = new THREE.Vector3((x / this.width) * 2 - 1, 1 - (y / this.height) * 2, 0.5).unproject(
-        this.camera,
-      );
-      v.normalize();
-      neu = worldToNeu([v.x, v.y, v.z]);
+      neu = worldToNeu(domeInverse(this.dome, x, y));
     }
     return transform(transpose(this.currentH), neu);
   }
@@ -842,6 +1034,19 @@ export class SkyView {
     );
   }
 
+  /** The dome camera and its shader uniforms for the current direction and field. */
+  private updateDome(): void {
+    this.dome = domeCamera(this.altitude, this.azimuth, this.fov, this.width, this.height);
+    const b = this.dome.basis;
+    const k = domeK(this.fov);
+    const s = this.shared;
+    s.uDomeBasis.value.set(b[0], b[1], b[2], b[3], b[4], b[5], b[6], b[7], b[8]);
+    s.uProjK.value = k;
+    s.uProjScale.value = (2 * domeScale(this.dome)) / this.height;
+    s.uAspect.value = this.width / this.height;
+    s.uMaxTheta.value = domeMaxAngle(k);
+  }
+
   render(utcMs: number): void {
     if (this.frame) {
       this.currentH = j2000ToHorizontal(this.frame, utcMs);
@@ -870,17 +1075,11 @@ export class SkyView {
     this.updateChart();
     this.applyVisibility();
 
-    this.camera.fov = this.fov;
-    this.camera.aspect = this.width / this.height;
-    this.camera.updateProjectionMatrix();
-    const target = neuToWorld(fromHorizontal(this.altitude, this.azimuth));
-    this.camera.position.set(0, 0, 0);
-    this.camera.up.set(0, 1, 0);
-    this.camera.lookAt(target[0], target[1], target[2]);
-    this.camera.updateMatrixWorld();
+    this.updateDome();
 
     this.starLimitUniform.value = this.starLimit;
-    this.starScaleUniform.value = this.mode === 'finder' ? 1.6 : 1;
+    this.starScaleUniform.value =
+      this.mode === 'finder' ? 1.6 : this.mode === 'dome' ? domeStarScale(this.fov) : 1;
     this.dsoUniforms.uLimit.value = this.dsoLimit;
     this.dsoUniforms.uPixelsPerDegree.value = this.pixelsPerDegree;
     this.dsoUniforms.uViewport.value.set(this.width, this.height);
@@ -961,7 +1160,8 @@ export class SkyView {
           }
         }
       } else {
-        const limit = Math.min(2.5, this.starLimit - 3.5);
+        // Label density follows the field: only the brightest names in a very wide view.
+        const limit = Math.min(this.effectiveFov > WIDE_LABEL_FOV ? 1.5 : 2.5, this.starLimit - 3.5);
         const { stars, starNames } = this.data;
         for (let i = 0; i < stars.count; i++) {
           const magnitude = stars.float32[i * Star.stride + Star.magnitude] ?? 99;
@@ -982,9 +1182,10 @@ export class SkyView {
 
     if (labels && this.layers.deepSky) {
       const showAll = this.effectiveFov < 15;
+      const showMessier = this.effectiveFov <= WIDE_LABEL_FOV;
       this.data.dsoIndex.forEach(([id], i) => {
         const highlighted = this.plan.has(id) || (this.selection?.kind === 'dso' && this.selection.id === id);
-        if (!highlighted && !(/^M\d/.test(id) || (showAll && this.dsoVisible(i)))) {
+        if (!highlighted && !((showMessier && /^M\d/.test(id)) || (showAll && this.dsoVisible(i)))) {
           return;
         }
         const p = this.place(this.dsoVector(i));
@@ -1000,7 +1201,15 @@ export class SkyView {
           this.drawSatellite(track, utcMs, labels ? label : null);
         }
       } else if (this.layers.bodies) {
-        this.drawBody(track, utcMs, labels ? label : null);
+        // In a very wide view only the Sun, the Moon, the planets and what is selected or
+        // planned keep their names (minor bodies would bury the sky in labels).
+        const minor = track.body.kind === 'comet' || track.body.kind === 'asteroid';
+        const named =
+          !minor ||
+          this.effectiveFov <= WIDE_LABEL_FOV ||
+          this.plan.has(track.body.id) ||
+          (this.selection?.kind === 'body' && this.selection.id === track.body.id);
+        this.drawBody(track, utcMs, labels && named ? label : null);
       }
     }
 

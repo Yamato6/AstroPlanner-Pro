@@ -3,6 +3,7 @@ import { I18nProvider } from 'react-aria-components';
 import { queryClient, useSnapshot } from './app/hostQueries';
 import { ShortcutsContext, useAppShortcuts } from './app/useAppShortcuts';
 import { useHostInterface } from './app/useHostInterface';
+import { useSkyNotices } from './app/useSkyNotices';
 import { useIdle } from './app/useIdle';
 import { CommandPalette } from './shell/CommandPalette';
 import { ContextMenu } from './shell/ContextMenu';
@@ -20,6 +21,7 @@ import { WindowLayer } from './windows/WindowLayer';
 /** The shell over the sky (spec §3.2): bars, rail, card, HUD, windows, menu, palette, toasts. */
 function Shell() {
   useHostInterface();
+  useSkyNotices();
   useLayoutPersistence();
   const shortcuts = useAppShortcuts();
   const immersive = useUi((state) => state.immersive);

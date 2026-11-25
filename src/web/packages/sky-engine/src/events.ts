@@ -27,6 +27,14 @@ export interface SkyEventMap {
   };
   /** The point under the pointer, or null when it left the sky. */
   readonly cursor: SkyPoint | null;
+  /**
+   * Tracking started or stopped: 'manual' = the user moved the view, 'selection' = another (or
+   * no) object was selected, 'lost' = the object has no position, 'mode' = left the dome.
+   */
+  readonly tracking: {
+    readonly active: boolean;
+    readonly reason: 'started' | 'manual' | 'selection' | 'lost' | 'mode';
+  };
   /** A right click: where, on what point of the sky and on which object (now selected), if any. */
   readonly contextMenu: {
     readonly x: number;
@@ -41,6 +49,7 @@ type Listener<K extends keyof SkyEventMap> = (event: SkyEventMap[K]) => void;
 const listeners: { [K in keyof SkyEventMap]: Set<Listener<K>> } = {
   view: new Set(),
   cursor: new Set(),
+  tracking: new Set(),
   contextMenu: new Set(),
 };
 

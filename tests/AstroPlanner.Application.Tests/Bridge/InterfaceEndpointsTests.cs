@@ -97,6 +97,20 @@ public sealed class InterfaceEndpointsTests
     }
 
     [Fact]
+    public async Task SkyInertia_IsOnByDefault_AndSavedWhenTurnedOff()
+    {
+        var (_, rpc) = Create();
+
+        var before = await CallAsync(rpc, "ui.get");
+        var off = await CallAsync(rpc, "ui.setSkyInertia", """{"enabled":false}""");
+
+        before.GetProperty("skyInertia").GetBoolean().Should().BeTrue();
+        off.GetProperty("skyInertia").GetBoolean().Should().BeFalse();
+        _store.Preferences.SkyInertia.Should().BeFalse();
+        _store.Preferences.AutoHideToolbars.Should().BeTrue("the other preferences stay as they were");
+    }
+
+    [Fact]
     public async Task ReduceTransparency_ThatCannotBeSaved_StillAppliesForTheSession()
     {
         var (_, rpc) = Create();

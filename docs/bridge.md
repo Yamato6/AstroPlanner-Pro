@@ -104,7 +104,7 @@ creates the dispatcher and the modules; `Stop()` disposes them and cancels runni
 | `NightEndpoints` | `night.get` (tonight every 10 min of the site's clock: Sun and Moon altitudes, Moon illumination, cloud cover; for the darkness bar) | `night.changed` (only when the night, the site or the forecast change) |
 | `SelectionEndpoints` | `selection.get`, `selection.center`, `selection.frame`, `selection.addToPlan`, `selection.removeFromPlan`, `selection.clear` (the object card) | `selection.changed` |
 | `SearchEndpoints` | `search.query` (catalog matches), `search.go` (select and centre), `search.resolve` (the classic search, Sesame when allowed) | — |
-| `InterfaceEndpoints` | `ui.get`, `ui.setTheme`, `ui.setReduceTransparency`, `ui.setAutoHide`, `ui.setFullScreen` (night vision, saved transparency and idle toolbars, the window's full screen) | `ui.changed` |
+| `InterfaceEndpoints` | `ui.get`, `ui.setTheme`, `ui.setReduceTransparency`, `ui.setAutoHide`, `ui.setSkyInertia`, `ui.setFullScreen` (night vision, saved transparency, idle toolbars and the sky's drag inertia, the window's full screen) | `ui.changed` |
 | `LayoutEndpoints` | `layout.load`, `layout.save` (the floating windows, table `window_layouts`) | — |
 
 What only the window can do (full screen, the data folder, the browser) goes through

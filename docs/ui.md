@@ -112,6 +112,7 @@ whenever it is activated.
 | `F11` | full screen | `F1` / `Ctrl+,` | Help / Settings |
 | `Ctrl+W` | close the window in front | `Ctrl+Tab` / `Ctrl+Shift+Tab` | next / previous window |
 | `Ctrl+K` / `/` | search and commands | `Esc` | close the window you are in, else clear the selection |
+| `T` | track the selected object (a manual pan stops it, with a toast) | `Home` | back to south, 30° up, 70° field |
 
 ## CSP
 

@@ -21,6 +21,7 @@ export function SettingsWindow() {
   const setReduceTransparency = useUiCommand('ui.setReduceTransparency');
   const setFullScreen = useUiCommand('ui.setFullScreen');
   const setAutoHide = useUiCommand('ui.setAutoHide');
+  const setSkyInertia = useUiCommand('ui.setSkyInertia');
   const reset = useWindows((state) => state.reset);
   const unavailable = !host.connected || !ui;
 
@@ -69,6 +70,22 @@ export function SettingsWindow() {
           }}
         >
           {t('settings.fullScreen')}
+        </Switch>
+      </section>
+
+      <section className={styles.section} aria-labelledby="settings-sky">
+        <h3 id="settings-sky" className={styles.heading}>
+          {t('settings.sky')}
+        </h3>
+        <Switch
+          isSelected={ui?.skyInertia ?? true}
+          isDisabled={unavailable}
+          description={t('settings.skyInertiaDescription')}
+          onChange={(enabled) => {
+            setSkyInertia.mutate({ enabled });
+          }}
+        >
+          {t('settings.skyInertia')}
         </Switch>
       </section>
 
