@@ -106,6 +106,7 @@ creates the dispatcher and the modules; `Stop()` disposes them and cancels runni
 | `SearchEndpoints` | `search.query` (catalog matches), `search.go` (select and centre), `search.resolve` (the classic search, Sesame when allowed) | — |
 | `InterfaceEndpoints` | `ui.get`, `ui.setTheme`, `ui.setReduceTransparency`, `ui.setAutoHide`, `ui.setSkyInertia`, `ui.setSkyQuality`, `ui.setLightPollutionTint`, `ui.setScintillation`, `ui.setFullScreen` (night vision, saved transparency, idle toolbars and the sky's options, the window's full screen) | `ui.changed` |
 | `LayoutEndpoints` | `layout.load`, `layout.save` (the floating windows, table `window_layouts`) | — |
+| `LandscapeEndpoints` | `landscape.get` (the media folder's landscapes and the active saved site's choice), `landscape.set` (an id, `flat` or null; unknown ids are ignored), `landscape.useHorizon` (copies the landscape's horizon into the site's horizon mask) | `landscape.changed` |
 
 What only the window can do (full screen, the data folder, the browser) goes through
 `Application/Bridge/IAppHost`, which `WebShellWindow` implements; tests use a fake, so nothing

@@ -24,6 +24,16 @@ versions follow [Semantic Versioning](https://semver.org/). Versions up to 1.0.0
 - Sky (planetarium UI): Settings › Sky › *Atmosphere quality* (Low, Medium, High), *Light pollution
   colour* (sodium, LED, neutral) and *Twinkling stars* (High). When frames get slow the sky lowers
   its quality by itself and says so.
+- Sky: the Milky Way is a photograph ("The Milky Way panorama", ESO/S. Brunier) instead of an
+  outline. It shows as much as the sky lets it: bright under a dark sky, gone in town, in
+  moonlight or in twilight, and fainter low in the sky.
+- Sky: landscapes around the horizon — open field, mountains, desert and edge of town (Poly Haven
+  photos), lit by the sky: daylight by day, a dark shape at night. Each saved site has its own
+  (planetarium UI: Settings › Landscape), or a flat ground, or its horizon profile as before;
+  *Use the landscape horizon for calculations* makes the landscape's horizon the site's.
+  `Shift+G` shows and hides the ground.
+- The images come in a `data` folder next to the program (installer and portable zip, ~5.5 MB);
+  their credits are in About, and the Milky Way's in the sky while it shows.
 
 ### Changed
 - Sky: the sky's brightness now comes from the same model as the capture feasibility (site sky,

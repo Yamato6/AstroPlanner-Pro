@@ -49,7 +49,18 @@ the p95 frame time in parentheses, and the range.
 | v2.0.0 | classic, Sky tab | 1.51 s | 122 ms | 1,332 (1.0 ms) · 1,226–1,351 | 998 (1.4 ms) · 992–1,020 | ~750 MB |
 | `main` (R0a + R0b) | classic, Sky tab | 1.53 s | 121 ms | 1,351 (1.0 ms) · 1,302–1,365 | 949 (1.4 ms) · 672–1,013 | ~730 MB |
 | `main` | `--ui=web` (planetarium) | 1.19 s | 129 ms | 1,337 (1.0 ms) · 939–1,368 | 765 (1.8 ms) · 726–974 | ~680 MB |
+| `r2c/landscapes` (R2a–R2c) | classic, Sky tab | — | 101–126 ms | 1,382 (1.0 ms) · 1,329–1,390 | 1,563 (0.9 ms) · 1,203–1,661 | ~930 MB |
+| `r2c/landscapes` | `--ui=web`, 3 windows open | — | 187–210 ms | 1,084 (1.4 ms) · 1,024–1,154 | 1,589 (0.9 ms) · 1,575–1,650 | ~1,030–1,070 MB |
 
+- **R2 (2026-11-25), both rows:** atmosphere Medium, the Milky Way panorama and the *Edge of town*
+  landscape on a saved site, measured on the owner's PC (RX 6600). The `--ui=web` row has Settings,
+  Help and Tonight open. The spec §11 budget (≥ 60 fps, p95 ≤ 20 ms, ≤ 1.2 GB) holds with a wide
+  margin. The panorama costs about 150 MB and a 4096 px landscape about 40 MB more, almost all of
+  it in WebView2's GPU process (about 2.6 times the texture with its mipmaps); an 8192 px landscape
+  cost 280 MB more and took the app to 1.34 GB, so the images are 4096 px wide. Low, Medium and High
+  cost the same per frame here (the scattering table is redrawn only when the Sun moves). The
+  planetarium's first frame (~200 ms, was ~130) is measured with three windows restoring.
+  `--sky-quality=low|medium|high` and `--sky-landscape=ID|flat` fix those for a run.
 - **R0a and R0b have no measurable cost:** the classic window performs as in v2.0.0.
 - **The planetarium page starts faster** because its window has no Tonight view to build. Its
   all-sky numbers vary the most and should be measured again on an idle machine before R1
@@ -63,8 +74,8 @@ the p95 frame time in parentheses, and the range.
 | Metric | Budget | Baseline |
 |---|---|---|
 | Launch to first sky frame | ≤ 2.5 s warm, ≤ 4 s cold | ~1.7 s warm (window + sky first frame) |
-| Dome, 83k stars, atmosphere Medium, landscape on, 3 windows open | ≥ 60 fps, p95 ≤ 20 ms | 1,350 fps with no shell, no atmosphere, no landscape |
-| Memory (whole app) | ≤ 1.2 GB with the survey cache warm | ~730 MB |
+| Dome, 83k stars, atmosphere Medium, landscape on, 3 windows open | ≥ 60 fps, p95 ≤ 20 ms | 1,350 fps with no shell, no atmosphere, no landscape; R2c: 1,084 fps, p95 1.4 ms |
+| Memory (whole app) | ≤ 1.2 GB with the survey cache warm | ~730 MB; R2c: ~1.05 GB (survey cache not measured yet) |
 
 From R1 on, each milestone adds a row to the baseline table, measured with the same method.
 `--sky-benchmark` will be extended to open windows and the survey layer.

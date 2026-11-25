@@ -25,8 +25,9 @@ dotnet run --project tools/AstroPlanner.DataBuilder -- download        # fetch +
 dotnet run --project tools/AstroPlanner.DataBuilder -- build-catalogs  # data/raw + data/curated → data/build
 dotnet run --project tools/AstroPlanner.DataBuilder -- build-sky       # catalogs.sqlite + GeoJSON → data/build/sky (renderer data)
 dotnet run --project tools/AstroPlanner.DataBuilder -- build-lp-grid   # data/raw/World_Atlas_2015.tif (by hand) → data/build/lp
-dotnet run --project tools/AstroPlanner.DataBuilder -- verify          # sanity checks of catalogs.sqlite, data/build/sky and data/build/lp
-dotnet run --project tools/AstroPlanner.DataBuilder -- all             # download, build-catalogs, build-sky, verify (not build-lp-grid)
+dotnet run --project tools/AstroPlanner.DataBuilder -- build-media     # Milky Way panorama + landscapes (downloaded once) → data/build/media
+dotnet run --project tools/AstroPlanner.DataBuilder -- verify          # sanity checks of catalogs.sqlite, data/build/sky, data/build/lp and data/build/media
+dotnet run --project tools/AstroPlanner.DataBuilder -- all             # download, build-catalogs, build-sky, verify (not build-lp-grid or build-media)
 ```
 
 `download` skips files that are already present with the right checksum and fails if a
@@ -37,6 +38,37 @@ and review the diff of `catalogs-report.txt`.
 `build-sky` needs no download: it reads the committed `catalogs.sqlite` and GeoJSON, so it can
 be rerun at any time (it is deterministic; the formats are described in
 [sky-renderer.md](sky-renderer.md#static-data-build-sky)).
+
+## Sky images (`build-media`, R2c)
+
+`dotnet run --project tools/AstroPlanner.DataBuilder -- build-media` downloads (once, SHA-256
+pinned in `DataSources.Media` and `data/SOURCES.md`) the ESO Milky Way panorama and the Poly Haven
+landscapes into `data/raw`, and writes `data/build/media` (committed, ~5.5 MB): `manifest.json`,
+`panorama/milky-way.webp` and `landscapes/*.webp`. SkiaSharp (MIT) decodes and encodes; it is a
+DataBuilder package only, never shipped.
+
+- **Panorama** (`PanoramaBuilder`): the 6000×3000 galactic equirectangular image (l = 0 in the
+  middle, growing to the left) loses its stars — each channel is clipped to its grey-scale opening
+  over a 7×7 square plus 10/255, which removes point sources and keeps the Milky Way's extended
+  light —, its background becomes black (each channel's 5 % quantile subtracted, the rest
+  stretched) and it is reprojected to J2000 equirectangular 4096×2048 with Core's
+  `GalacticCoordinates` (the Hipparcos A_G matrix), bilinear. WebP quality 85.
+- **Landscapes** (`LandscapeBuilder`, settings in `data/curated/landscapes.json`): a pixel is
+  sky-like when it is blue (blue − max(red, 0.85 × green) > `skyBlueMinimum`), not dark and
+  smooth, above −2°. The sky is what is sky-like and connected to the top of the photo, plus
+  anything not connected to its bottom through ground (the Sun, floating wires); with `cutHoles`,
+  clearly blue pixels (20 more) enclosed by the ground too (sky between branches; off where distant
+  hazy hills look like sky). The ground's outline (2 px) takes the colour of the ground behind it,
+  thin things are darkened, transparent pixels carry the ground's colour (no sky bleeds into the
+  mipmaps). The horizon (highest ground per degree) is measured at full resolution; the image is
+  turned by `azimuthOffsetDegrees`, cropped 1° above the highest ground, halved to 4096 px wide
+  (alpha-weighted) and saved as WebP quality 80 with alpha.
+- **`verify`** checks the manifest, every file's SHA-256, the budgets (panorama ≤ 15 MB, each
+  landscape ≤ 6 MB), a 2:1 panorama, at least three landscapes and 360 sane horizon values.
+
+To add a landscape: pick a CC0 equirectangular photo with a clear sky (Poly Haven's tonemapped
+JPEG), pin it in `DataSources.Landscapes` and `data/SOURCES.md`, add it to `landscapes.json`, run
+`build-media` and look at the result over a dark background (outline, holes, the horizon).
 
 ## Light-pollution grids (`build-lp-grid`)
 

@@ -147,8 +147,9 @@ Get the latest version from **[Releases](https://github.com/Yamato6/AstroPlanner
 - **`AstroPlannerPro_<version>_Setup.exe`** — the installer. It installs for your user only (no
   administrator rights), adds a Start menu entry and an uninstaller, and updates an earlier
   version in place.
-- **`AstroPlannerPro_<version>_win-x64_portable.zip`** — a single `.exe`, no installation; unzip
-  it anywhere and run it.
+- **`AstroPlannerPro_<version>_win-x64_portable.zip`** — the `.exe` and its `data` folder (the
+  sky's Milky Way and landscapes), no installation; unzip it anywhere and run it. Without `data`
+  the app still runs, with a plain sky.
 - **`SHA256SUMS.txt`** — check a download with `Get-FileHash <file> -Algorithm SHA256`.
 
 Windows 10 (1809) or 11, x64; .NET is included. The 3D sky uses the Microsoft Edge **WebView2

@@ -125,8 +125,9 @@ colours). Stars and deep-sky objects are dimmed by k·X (X ≤ 40) and reddened,
 by the sky around it: stars to that NELM + 2 (plus the zoom bonus), deep-sky objects by the
 magnitudes lost against a dark sky. The HUD shows the limit at the middle of the view less its
 extinction; picking, labels and the finder use the zenith limit (the darkest sky). The ground
-follows the light at the horizon. The Milky Way outline keeps its rule (full at SQM ≥ 21, gone at
-≤ 19). The *Sky brightness* layer (key `A`) turns all of it off: a dark natural sky, no extinction.
+follows the light at the horizon. Without the media folder the Milky Way is its outline, with its
+rule (full at SQM ≥ 21, gone at ≤ 19); with it, the panorama below. The *Sky brightness* layer (key
+`A`) turns all of it off: a dark natural sky, no extinction.
 
 **Quality (Settings › Sky › Atmosphere quality).** Low 32×16 table, 8 + 4 integration samples;
 Medium (default) 64×32, 16 + 6; High 128×64, 32 + 8, and twinkling stars may be turned on
@@ -142,6 +143,39 @@ uses Medium, LED and no twinkling.
 an opaque silhouette (dome and all-sky) after the sky layers, and hides the labels, bodies and
 picks behind it.
 
+**Milky Way panorama and landscapes (R2c, spec §8.3, §8.5).** The media folder next to the exe
+(`data/`, from `data/build/media`, built by the DataBuilder's `build-media`:
+[data-pipeline.md](data-pipeline.md)) is served as `https://media.astroplanner/` when it exists;
+`init.mediaBaseUrl` says where (null without it) and the engine reads its `manifest.json`
+(`render/media.ts`, zod) after the first frame. Images are decoded off the main thread
+(`createImageBitmap`), uploaded with mipmaps at most 4096 px wide (an 8192 px landscape costs
+~280 MB more in WebView2's GPU process, past the 1.2 GB budget) and released from the page.
+
+- *Panorama* — "The Milky Way panorama", ESO/S. Brunier (eso0932a, CC BY 4.0): stars removed,
+  background black, reprojected to J2000 equirectangular (u = RA/360°, v = (90° − Dec)/180°). The
+  sky pass samples it per pixel (the inverse of `uFrame`, a mipmap level set per frame from the
+  pixel scale, so the RA seam never shows) and adds it to the sky's colour, scaled by its
+  *visibility*: the natural sky's share of the sky's light at that pixel (1 under a dark sky; a
+  few per cent in town, moonlight or twilight), dimmed by the air like the stars, and faded out
+  below a 20° field (5° gone). It replaces the outline Milky Way; the *Milky Way* layer turns it
+  off. Its credit is in About and in the HUD while it shows (zenith visibility ≥ 10 %, SQM ≈ 19.5).
+- *Landscapes* — four 360° photos from Poly Haven (CC0): open field, mountains, desert, edge of
+  town. Columns are azimuth 0°–360° from north, rows run from the image's top altitude down to −90°,
+  the sky is transparent, and the manifest gives each one's horizon (the ground's altitude per
+  degree). A second full-screen pass draws it over the stars and lines (alpha blended), lit by the
+  sky at the horizon: the daylight photo by day, a dim bluish, nearly grey shape at night
+  (moonlight and the towns' glow raise it). Its horizon cuts the labels and picks, and its outline
+  is drawn as the silhouette until the image is loaded. The *Ground* layer (dock, `Shift+G`)
+  turns it off.
+- *Per site* — `Location.LandscapeId` (migration `0007_location_landscape.sql`): a landscape id,
+  `flat` (no landscape, no profile) or null (the site's horizon profile, the default). C# sends it
+  in `setObserver.landscape` (`MediaLibrary.Resolve`: an id the folder lacks becomes null).
+  Settings › Landscape (`landscape.get` / `landscape.set`, [bridge.md](bridge.md)) chooses it for
+  the active saved site; *Use the landscape horizon for calculations* (`landscape.useHorizon`,
+  after a confirmation) copies the landscape's horizon into the site's horizon mask — one point
+  every 2°, the highest ground of those degrees — so that visibility and planning follow it.
+- *Without the folder* the sky works as before: outline Milky Way, horizon profile, no credits.
+
 ## Protocol (§5.4)
 
 JSON messages `{"v": 1, "type": "…", "payload": {…}}` over `PostWebMessageAsJson` /
@@ -152,8 +186,8 @@ channel (`v: 2`: requests, responses, events) shares the pipe; the engine ignore
 
 | C# → renderer | |
 |---|---|
-| `init` | data URL, refraction model, layers, view mode, theme, stats overlay |
-| `setObserver` | site, minimum altitude, horizon mask, refraction model scaled for the site (M3) |
+| `init` | data URL, refraction model, layers, view mode, theme, stats overlay; the media folder's URL or null (R2c) |
+| `setObserver` | site, minimum altitude, horizon mask, refraction model scaled for the site (M3); the site's landscape: an id, `flat` or null (R2c) |
 | `setTime` / `setTimeRate` | sky time and rate (0 = paused, 1 = real time, 3600 = 1 h/s) |
 | `frameTransform` | the matrix parameters above |
 | `movingBodies` | Sun, Moon, planets, comets, asteroids (M5a) and satellites (M5b): magnitude, size, phase, bright limb, track; satellites carry their own short track (±15 min every 10 s) and a `sunlit` flag per sample (null for the others) |
@@ -183,13 +217,18 @@ decoder and zod. Change a message on both sides and regenerate the samples in th
 
 ## Security
 
-- The renderer is loaded from `https://app.astroplanner/` and its data from
-  `https://data.astroplanner/` (`SetVirtualHostNameToFolderMapping`); nothing else can load:
+- The renderer is loaded from `https://app.astroplanner/`, its data from
+  `https://data.astroplanner/` and, when the folder exists, the sky's images from
+  `https://media.astroplanner/` (the read-only `data\` next to the exe)
+  (`SetVirtualHostNameToFolderMapping`); nothing else can load:
   `NavigationStarting` / `FrameNavigationStarting` cancel any other URL and `NewWindowRequested`
   is always handled (links on the `SafeLinks` allow-list open in the browser).
 - Strict CSP in `index.html`: `default-src 'none'; script-src 'self'; connect-src 'self'
-  https://data.astroplanner` — no inline or remote scripts, no `eval` (ESLint forbids it; zod runs
-  in `jitless` mode so it never probes `Function`).
+  https://data.astroplanner https://media.astroplanner; img-src 'self' data:
+  https://media.astroplanner` — no inline or remote scripts, no `eval` (ESLint forbids it; zod runs
+  in `jitless` mode so it never probes `Function`). The media manifest is validated (zod) and its
+  file names are limited to `folder/name.webp` (letters, digits, hyphens), so it cannot point
+  outside the folder.
 - Dev tools (Release), context menus, script dialogs, browser shortcuts, zoom, autofill, password
   saving and host objects are disabled.
 - Messages are accepted only from the app origin, are size-limited (16 KB) and validated
@@ -235,6 +274,10 @@ once to `%LocalAppData%\AstroPlannerPro\sky\<hash>\{app,data}` and removes older
 catalog database. Building without Node: `-p:SkipSkyRendererBuild=true` (the Sky tab then shows
 the 2D chart unless a previous `dist/` exists).
 
+The sky's images are not in the exe: `data/build/media` is copied next to it as `data\` (output,
+publish, the installer's `{app}\data`, the portable zip; ~5.5 MB), outside the single file, and the
+app works without it. `ReleaseTests` and the release job check it is there.
+
 WebView2 starts the first time the Sky tab is opened. Without the WebView2 Runtime (some
 Windows 10 machines) the tab falls back to the 2D chart of v1 with a notice; the installer
 checks for the runtime in M6.
@@ -245,7 +288,8 @@ The renderer draws stars as one `Points` object and lines as `LineSegments`, all
 the vertex shader, so the CPU work per frame is one matrix plus the label overlay.
 
 Benchmark: `AstroPlannerPro.exe --sky-benchmark [--sky-stars=N] [--sky-resolution=WxH]
-[--sky-mode=dome|allSky|finder]` opens the Sky tab, sweeps the view 360° for 10 s with vsync and
+[--sky-mode=dome|allSky|finder] [--sky-quality=low|medium|high] [--sky-landscape=ID|flat]` (add
+`--ui=web` for the planetarium, with the windows its saved layout opens) opens the Sky tab, sweeps the view 360° for 10 s with vsync and
 the frame cap off, and logs the average fps and the 95th-percentile frame time. `--sky-stars=2`
 draws the catalogue twice (~167k stars, the stress test); `--sky-resolution` renders at that size
 whatever the window (the canvas is scaled to fit).
