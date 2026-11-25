@@ -162,13 +162,15 @@ public sealed record ThemeChangedEvent(
 
 /// <summary>
 /// The interface state the host keeps (<c>ui.get</c>, and the answer of every <c>ui.*</c>
-/// command): theme, reduce transparency and hiding idle toolbars (saved), full screen (the window's).
+/// command): theme, reduce transparency, hiding idle toolbars and the sky's drag inertia (saved),
+/// full screen (the window's).
 /// </summary>
 public sealed record UiSnapshot(
     [property: Range(0, int.MaxValue)] int Revision,
     [property: AllowedValues(AppThemes.Dark, AppThemes.Night)] string Theme,
     bool ReduceTransparency,
     bool AutoHideToolbars,
+    bool SkyInertia,
     bool IsFullScreen);
 
 /// <summary><c>sky.setTime</c>: shows the sky at this instant (and pauses), e.g. from the darkness bar.</summary>
@@ -274,7 +276,7 @@ public sealed record SearchResolveResponse(
 public sealed record UiSetThemeRequest(
     [property: AllowedValues(AppThemes.Dark, AppThemes.Night)] string Theme);
 
-/// <summary>Turns an option on or off (<c>ui.setReduceTransparency</c>, <c>ui.setAutoHide</c>, <c>ui.setFullScreen</c>).</summary>
+/// <summary>Turns an option on or off (<c>ui.setReduceTransparency</c>, <c>ui.setAutoHide</c>, <c>ui.setSkyInertia</c>, <c>ui.setFullScreen</c>).</summary>
 public sealed record SwitchRequest(bool Enabled);
 
 /// <summary><c>ui.changed</c>: theme, transparency or full screen changed.</summary>

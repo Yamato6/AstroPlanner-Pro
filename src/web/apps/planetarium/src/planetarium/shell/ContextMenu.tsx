@@ -1,4 +1,4 @@
-import { type SkyEventMap, skyEvents } from '@astroplanner/sky-engine';
+import { type SkyEventMap, skyControl, skyEvents } from '@astroplanner/sky-engine';
 import { useQueryClient } from '@tanstack/react-query';
 import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -71,6 +71,11 @@ export function ContextMenu() {
       case 'frame':
         frame.mutate({});
         break;
+      case 'track':
+        if (!skyControl.setTracking(true)) {
+          toast(t('sky.nothingToTrack'));
+        }
+        break;
       case 'finder':
         center.mutate({});
         setViewMode.mutate({ mode: 'finder' });
@@ -121,6 +126,9 @@ export function ContextMenu() {
             <>
               <MenuItem id="center" className={styles.item}>
                 {t('contextMenu.center')}
+              </MenuItem>
+              <MenuItem id="track" className={styles.item}>
+                {t('contextMenu.track')}
               </MenuItem>
               <MenuItem id="frame" className={styles.item}>
                 {t('contextMenu.frame')}

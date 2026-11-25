@@ -224,6 +224,7 @@ export const uiSnapshotSchema = z.strictObject({
   theme: z.enum(['dark', 'night']),
   reduceTransparency: z.boolean(),
   autoHideToolbars: z.boolean(),
+  skyInertia: z.boolean(),
   isFullScreen: z.boolean(),
 });
 export type UiSnapshot = z.infer<typeof uiSnapshotSchema>;
@@ -323,6 +324,7 @@ export const rpcMethods = {
   'ui.setTheme': { request: uiSetThemeRequestSchema, response: uiSnapshotSchema },
   'ui.setReduceTransparency': { request: switchRequestSchema, response: uiSnapshotSchema },
   'ui.setAutoHide': { request: switchRequestSchema, response: uiSnapshotSchema },
+  'ui.setSkyInertia': { request: switchRequestSchema, response: uiSnapshotSchema },
   'ui.setFullScreen': { request: switchRequestSchema, response: uiSnapshotSchema },
   'layout.load': { request: noParametersSchema, response: layoutSnapshotSchema },
   'layout.save': { request: layoutSnapshotSchema, response: noParametersSchema },

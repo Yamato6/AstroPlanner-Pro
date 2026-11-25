@@ -141,6 +141,9 @@ public static class AppMethods
     public static RpcMethod<SwitchRequest, UiSnapshot> UiSetAutoHide { get; } =
         new("ui.setAutoHide", AppJsonContext.Default.SwitchRequest, AppJsonContext.Default.UiSnapshot);
 
+    public static RpcMethod<SwitchRequest, UiSnapshot> UiSetSkyInertia { get; } =
+        new("ui.setSkyInertia", AppJsonContext.Default.SwitchRequest, AppJsonContext.Default.UiSnapshot);
+
     public static RpcMethod<SwitchRequest, UiSnapshot> UiSetFullScreen { get; } =
         new("ui.setFullScreen", AppJsonContext.Default.SwitchRequest, AppJsonContext.Default.UiSnapshot);
 
@@ -156,7 +159,7 @@ public static class AppMethods
         SkyGet, SkyPlay, SkyPause, SkyNow, SkyStep, SkySetRate, SkySetLayer, SkySetViewMode, SkySetTime,
         NightGet, SelectionGet, SelectionCenter, SelectionFrame, SelectionAddToPlan, SelectionRemoveFromPlan, SelectionClear,
         SearchQuery, SearchGo, SearchResolve,
-        UiGet, UiSetTheme, UiSetReduceTransparency, UiSetAutoHide, UiSetFullScreen, LayoutLoad, LayoutSave,
+        UiGet, UiSetTheme, UiSetReduceTransparency, UiSetAutoHide, UiSetSkyInertia, UiSetFullScreen, LayoutLoad, LayoutSave,
     ];
 
     private static RpcMethod<NoParameters, SelectionSnapshot> Selection(string name) =>

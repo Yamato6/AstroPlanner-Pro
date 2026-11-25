@@ -47,6 +47,8 @@ public sealed class InterfaceEndpoints : IEndpointModule
             Run(() => SavePreferences(_preferences with { ReduceTransparency = request.Enabled })));
         rpc.Register(AppMethods.UiSetAutoHide, (request, _) =>
             Run(() => SavePreferences(_preferences with { AutoHideToolbars = request.Enabled })));
+        rpc.Register(AppMethods.UiSetSkyInertia, (request, _) =>
+            Run(() => SavePreferences(_preferences with { SkyInertia = request.Enabled })));
         rpc.Register(AppMethods.UiSetFullScreen, (request, _) => Run(() => _host.SetFullScreen(request.Enabled)));
         _settings.Theme.Changed += OnChanged;
         _host.FullScreenChanged += OnChanged;
@@ -54,7 +56,8 @@ public sealed class InterfaceEndpoints : IEndpointModule
 
     /// <summary>The current state as a contract.</summary>
     public UiSnapshot Snapshot() =>
-        new(_changes.Revision, _settings.Theme.SkyTheme, _preferences.ReduceTransparency, _preferences.AutoHideToolbars, _host.IsFullScreen);
+        new(_changes.Revision, _settings.Theme.SkyTheme, _preferences.ReduceTransparency, _preferences.AutoHideToolbars,
+            _preferences.SkyInertia, _host.IsFullScreen);
 
     private void SavePreferences(InterfacePreferences preferences)
     {

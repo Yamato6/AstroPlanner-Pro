@@ -8,6 +8,7 @@
     "theme": "dark",
     "reduceTransparency": false,
     "autoHideToolbars": false,
+    "skyInertia": true,
     "isFullScreen": false
   }
 }

@@ -195,9 +195,13 @@ test('Settings switches the interface options and resets the layout', async ({ p
   await expect(page.locator('html')).toHaveAttribute('data-theme', 'night');
   await settings.getByText('Full screen', { exact: true }).click();
   await expect(settings.getByRole('switch', { name: 'Full screen' })).toBeChecked();
+  await expect(settings.getByRole('switch', { name: 'Inertia when dragging' })).toBeChecked();
+  await settings.getByText('Inertia when dragging', { exact: true }).click();
+  await expect(settings.getByRole('switch', { name: 'Inertia when dragging' })).not.toBeChecked();
 
   expect(host.calls('ui.setReduceTransparency')).toEqual([{ enabled: true }]);
   expect(host.calls('ui.setFullScreen')).toEqual([{ enabled: true }]);
+  expect(host.calls('ui.setSkyInertia')).toEqual([{ enabled: false }]);
 
   await rail(page, 'Help').click(); // opens over Settings
   await rail(page, 'Settings').click(); // Settings back in front

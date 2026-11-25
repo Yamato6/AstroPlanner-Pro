@@ -52,6 +52,13 @@ test('layer and view-mode keys go to the host', async ({ page }) => {
   expect(host.calls('sky.setViewMode')).toEqual([{ mode: 'allSky' }]);
 });
 
+test('T without an object to track says what to do', async ({ page }) => {
+  await page.keyboard.press('t');
+  await expect(page.getByRole('region', { name: 'Notifications' })).toContainText(
+    'Select an object in the dome view to track it',
+  );
+});
+
 test('H hides the interface and brings it back', async ({ page }) => {
   await page.keyboard.press('h');
   await expect(page.getByRole('banner')).toHaveCount(0);
