@@ -2,7 +2,7 @@ import { defineConfig } from 'vitest/config';
 
 export default defineConfig({
   test: {
-    include: ['test/**/*.test.tsx'],
+    include: ['test/**/*.test.{ts,tsx}'],
     environment: 'jsdom',
     css: { modules: { classNameStrategy: 'non-scoped' } },
   },

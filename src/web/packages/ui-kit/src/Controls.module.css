@@ -1,0 +1,102 @@
+.button {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  height: var(--control-size);
+  padding: 0 var(--space-3);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  background: var(--surface-raised);
+  color: var(--text-primary);
+  font: inherit;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background-color var(--motion-fast) var(--ease-out);
+}
+
+.button[data-hovered] {
+  background: var(--surface-hover);
+  color: var(--text-strong);
+}
+
+.button[data-pressed] {
+  background: var(--surface-pressed);
+}
+
+.button[data-disabled] {
+  border-color: var(--border-hairline);
+  color: var(--text-disabled);
+  cursor: default;
+}
+
+.primary {
+  border-color: var(--accent);
+  color: var(--text-strong);
+}
+
+.field {
+  padding: var(--space-2) 0;
+}
+
+.switch {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+  color: var(--text-primary);
+  cursor: pointer;
+}
+
+.switch[data-disabled] {
+  color: var(--text-disabled);
+  cursor: default;
+}
+
+.description {
+  display: block;
+  margin-top: 2px;
+  padding-right: calc(34px + var(--space-4));
+  color: var(--text-muted);
+  font-size: var(--font-size-sm);
+}
+
+.track {
+  position: relative;
+  flex: none;
+  width: 34px;
+  height: 18px;
+  border: 1px solid var(--border-strong);
+  border-radius: 999px;
+  background: var(--surface-solid);
+  transition:
+    background-color var(--motion-fast) var(--ease-out),
+    border-color var(--motion-fast) var(--ease-out);
+}
+
+.thumb {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--text-muted);
+  transition:
+    transform var(--motion-fast) var(--ease-out),
+    background-color var(--motion-fast) var(--ease-out);
+}
+
+.switch[data-selected] .track {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+}
+
+.switch[data-selected] .thumb {
+  background: var(--accent);
+  transform: translateX(16px);
+}
+
+.switch[data-focus-visible] .track {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
+}
