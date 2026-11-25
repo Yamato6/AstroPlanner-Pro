@@ -18,6 +18,7 @@ public class ReleaseTests
     [InlineData("1.0.0-rc.1+3f2a9c1", "1.0.0", "rc.1")]   // SDK build metadata
     [InlineData("0.8", "0.8.0", null)]
     [InlineData("1.0.0.0", "1.0.0", null)]
+    [InlineData("v3.0.0-alpha.1", "3.0.0", "alpha.1")]
     public void AppVersion_ParsesReleaseAndPreReleaseTags(string text, string number, string? preRelease)
     {
         var version = AppVersion.Parse(text);
@@ -33,6 +34,8 @@ public class ReleaseTests
     [InlineData("1.0.0-beta", "1.0.0-rc.1")]
     [InlineData("0.8.0", "1.0.0-rc.1")]
     [InlineData("1.0.0", "1.0.1")]
+    [InlineData("2.0.1", "3.0.0-alpha.1")]         // the v3 preview is newer than v2
+    [InlineData("3.0.0-alpha.1", "3.0.0-beta.1")]
     public void AppVersion_OrdersLikeSemver(string lower, string higher)
     {
         (AppVersion.Parse(lower) < AppVersion.Parse(higher)).Should().BeTrue();
@@ -218,8 +221,15 @@ public class ReleaseTests
             return;   // a development build has no section yet
         }
 
-        var start = Array.FindIndex(changelog, line => line.StartsWith(heading, StringComparison.Ordinal));
-        start.Should().BeGreaterThan(0, $"CHANGELOG.md needs a '{heading}' section");
+        // Like the script: a pre-release (3.0.0-alpha.1) has its own section, or uses the final version's.
+        var own = $"## [{AppBuild.Version}]";
+        var start = Array.FindIndex(changelog, line => line.StartsWith(own, StringComparison.Ordinal));
+        if (start < 0)
+        {
+            start = Array.FindIndex(changelog, line => line.StartsWith(heading, StringComparison.Ordinal));
+        }
+
+        start.Should().BeGreaterThan(0, $"CHANGELOG.md needs a '{own}' or '{heading}' section");
         changelog.Skip(start + 1).TakeWhile(line => !line.StartsWith("## [", StringComparison.Ordinal))
             .Should().Contain(line => line.StartsWith("### ", StringComparison.Ordinal));
     }

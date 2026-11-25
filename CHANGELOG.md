@@ -6,6 +6,13 @@ versions follow [Semantic Versioning](https://semver.org/). Versions up to 1.0.0
 
 ## [Unreleased]
 
+## [3.0.0-alpha.1] — 2026-11-24
+
+First preview of the v3 planetarium UI. The classic window is still the default and works as in
+2.0; `AstroPlannerPro.exe --ui=web` opens the new interface, where the sky fills the window and
+everything floats over it. The planner's windows (Tonight, Targets, My plan…) arrive in later
+previews; until then they say so and the classic window has them.
+
 ### Changed
 - The sky renderer moved to an npm workspace, `src/web`: `packages/sky-engine` (the three.js
   renderer, unchanged, with its tests) and `apps/planetarium` (the pages). The Sky tab looks and
@@ -50,6 +57,22 @@ versions follow [Semantic Versioning](https://semver.org/). Versions up to 1.0.0
 - Planetarium UI: night vision from the top bar or `Ctrl+Shift+N` (saved, shared with the
   classic window), reduce transparency (opaque panels), full screen with `F11`, `F1` Help and
   `Ctrl+,` Settings.
+- Planetarium UI: the dock. Its darkness bar shows tonight from an hour before sunset to an hour
+  after sunrise (daylight, civil, nautical and astronomical twilight, night, the Moon above the
+  horizon, cloud cover with a forecast) and is the time scrubber. Next to it: steps of 10 min
+  (Shift 1 h, Ctrl 1 day, Alt 1 min), play/pause, the speed of time, Now, the date and time, the
+  layers and the view mode.
+- Planetarium UI: the selected object's card (type, constellation, magnitude, altitude and
+  azimuth, transit, best window, coordinates; the feasibility verdict, score and recommended
+  settings, and "Why?" with the reasons) with Center, Frame with the camera and Add to/Remove
+  from my plan; `Esc` clears the selection.
+- Planetarium UI: the HUD (field of view, RA/Dec and Alt/Az under the pointer, zenith SQM, star
+  limit), a right-click menu on the sky (center, frame, finder chart, add to plan, copy
+  coordinates), the command palette (`Ctrl+K` or `/`: catalog objects, a name searched online
+  with Sesame, windows and every command with its key), notices at the bottom right, and
+  toolbars that fade after 3 s without input (Settings can keep them).
+- Endpoints for them (`docs/bridge.md`): `sky.setTime`, `night.get` / `night.changed`,
+  `selection.*` / `selection.changed`, `search.*`, `ui.setAutoHide`.
 
 ## [2.0.1] — 2026-11-22
 

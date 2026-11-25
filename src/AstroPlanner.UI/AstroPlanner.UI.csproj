@@ -15,7 +15,7 @@
     <ApplicationManifest>app.manifest</ApplicationManifest>
 
     <!-- CI replaces the version with the tag's (e.g. 2.0.0-rc.1). -->
-    <Version>2.0.1</Version>
+    <Version>3.0.0-alpha.1</Version>
     <AssemblyTitle>AstroPlanner Pro</AssemblyTitle>
     <Description>Astrophotography planner: what to shoot tonight, when, with which gear and how likely it is to work.</Description>
   </PropertyGroup>
