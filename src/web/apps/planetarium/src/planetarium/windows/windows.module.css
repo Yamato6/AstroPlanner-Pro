@@ -228,3 +228,74 @@
   color: var(--text-disabled);
   cursor: default;
 }
+
+/* A list of one-of-many choices with a description each (the site's landscape). */
+.radioGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.radio {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-1) var(--space-2);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  outline: none;
+}
+
+.radio[data-hovered] {
+  background: var(--surface-hover);
+}
+
+.radio[data-focus-visible] {
+  box-shadow: inset 0 0 0 2px var(--focus-ring, var(--accent));
+}
+
+.radio[data-disabled] {
+  color: var(--text-disabled);
+  cursor: default;
+}
+
+.radioMark {
+  flex: none;
+  width: 14px;
+  height: 14px;
+  border: 1px solid var(--text-muted);
+  border-radius: 50%;
+}
+
+.radio[data-selected] .radioMark {
+  border-color: var(--accent);
+  box-shadow:
+    inset 0 0 0 3px var(--surface-raised, var(--accent-soft)),
+    inset 0 0 0 7px var(--accent);
+}
+
+.radioField {
+  display: flex;
+  flex-direction: column;
+}
+
+.radioDescription {
+  padding: 0 var(--space-2) var(--space-1) calc(var(--space-2) * 2 + 14px);
+  color: var(--text-muted);
+  font-size: var(--font-size-sm);
+}
+
+.confirm {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2);
+  border: 1px solid var(--border-hairline);
+  border-radius: var(--radius-sm);
+}
+
+.confirm p {
+  flex: 1 1 100%;
+  margin: 0;
+}

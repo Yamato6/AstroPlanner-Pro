@@ -11,6 +11,7 @@ import {
   type EventOf,
   type MethodName,
   aboutResponseSchema,
+  landscapeSnapshotSchema,
   layoutSnapshotSchema,
   nightTimelineSchema,
   searchResultsSchema,
@@ -18,6 +19,7 @@ import {
   observerSnapshotSchema,
   skySnapshotSchema,
   uiSnapshotSchema,
+  type LandscapeSnapshot,
   type LayoutSnapshot,
   type NightTimeline,
   type SelectionSnapshot,
@@ -78,6 +80,7 @@ export class MockHost {
   observer: ObserverSnapshot = observerSnapshotSchema.parse(goldenPayload('observer.get.response'));
   sky: SkySnapshot = skySnapshotSchema.parse(goldenPayload('sky.get.response'));
   ui: UiSnapshot = uiSnapshotSchema.parse(goldenPayload('ui.get.response'));
+  landscape: LandscapeSnapshot = landscapeSnapshotSchema.parse(goldenPayload('landscape.get.response'));
   /** The saved window layout: empty, like a first start (the golden file has a sample). */
   layout: LayoutSnapshot = { windows: [] };
   readonly openedLinks: string[] = [];
@@ -236,6 +239,23 @@ export class MockHost {
         return this.updateUi({ skyInertia: (payload as { enabled: boolean }).enabled });
       case 'ui.setAutoHide':
         return this.updateUi({ autoHideToolbars: (payload as { enabled: boolean }).enabled });
+      case 'landscape.get':
+        return this.landscape;
+      case 'landscape.set':
+        this.landscape = {
+          ...this.landscape,
+          landscapeId: (payload as { landscapeId: string | null }).landscapeId,
+          horizonFromLandscape: false,
+          revision: this.landscape.revision + 1,
+        };
+        return this.landscape;
+      case 'landscape.useHorizon':
+        this.landscape = {
+          ...this.landscape,
+          horizonFromLandscape: true,
+          revision: this.landscape.revision + 1,
+        };
+        return this.landscape;
       case 'layout.load':
         return this.layout;
       case 'layout.save':

@@ -5,11 +5,12 @@ import { formatDec, formatDegrees, formatRa } from '../app/format';
 import { useSnapshot } from '../app/hostQueries';
 import classes from './Hud.module.css';
 
-const styles = classes as Readonly<Record<'hud' | 'list' | 'item' | 'name' | 'value', string>>;
+const styles = classes as Readonly<Record<'hud' | 'list' | 'item' | 'name' | 'value' | 'credits', string>>;
 
 /**
  * The HUD (spec §3.2): field of view, the sky under the pointer (J2000 RA/Dec, Alt/Az), the
- * zenith sky quality and the faintest stars drawn. It follows the sky's own events, so moving the
+ * zenith sky quality and the faintest stars drawn, and the credits of the images on screen (the
+ * Milky Way panorama is CC BY: its author is shown whenever it is drawn). It follows the sky's own events, so moving the
  * pointer costs no messages to the app.
  */
 export function Hud() {
@@ -74,6 +75,15 @@ export function Hud() {
           </div>
         ) : null}
       </dl>
+      {view && view.credits.length > 0 ? (
+        <p className={styles.credits}>
+          {view.credits
+            .map((credit) =>
+              t(`hud.credit.${credit.kind}`, { author: credit.author, license: credit.license }),
+            )
+            .join(' · ')}
+        </p>
+      ) : null}
     </div>
   );
 }

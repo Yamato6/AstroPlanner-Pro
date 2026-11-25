@@ -32,3 +32,9 @@
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
 }
+
+.credits {
+  margin: var(--space-1) 0 0;
+  color: var(--text-muted);
+  font-size: var(--font-size-xs);
+}

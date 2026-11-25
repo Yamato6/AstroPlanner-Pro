@@ -154,6 +154,16 @@ export function useSkyShortcuts(): readonly Shortcut[] {
         },
       },
       {
+        id: 'landscape',
+        group: 'sky',
+        key: 'g',
+        shift: true,
+        display: 'Shift+G',
+        run: () => {
+          toggleLayer('ground');
+        },
+      },
+      {
         id: 'equatorialGrid',
         group: 'sky',
         key: 'e',
