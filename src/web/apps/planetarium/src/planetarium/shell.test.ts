@@ -3,7 +3,8 @@ import type { SkySnapshot } from '@astroplanner/bridge-client';
 import { describe, expect, it, vi } from 'vitest';
 import { isTextEntry, match, type Shortcut } from './app/shortcuts';
 import { neighbourRate } from './app/useSkyShortcuts';
-import { siteTime, wallClock } from './shell/TopBar';
+import { siteTime } from './app/format';
+import { wallClock } from './shell/TopBar';
 import { skyTimeAt } from './shell/useSkyTime';
 
 const sky: SkySnapshot = {

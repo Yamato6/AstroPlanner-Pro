@@ -83,6 +83,20 @@ public sealed class InterfaceEndpointsTests
     }
 
     [Fact]
+    public async Task AutoHide_IsOnByDefault_AndSavedWhenTurnedOff()
+    {
+        var (_, rpc) = Create();
+
+        var before = await CallAsync(rpc, "ui.get");
+        var off = await CallAsync(rpc, "ui.setAutoHide", """{"enabled":false}""");
+
+        before.GetProperty("autoHideToolbars").GetBoolean().Should().BeTrue();
+        off.GetProperty("autoHideToolbars").GetBoolean().Should().BeFalse();
+        _store.Preferences.AutoHideToolbars.Should().BeFalse();
+        _store.Preferences.ReduceTransparency.Should().BeFalse("the other preferences stay as they were");
+    }
+
+    [Fact]
     public async Task ReduceTransparency_ThatCannotBeSaved_StillAppliesForTheSession()
     {
         var (_, rpc) = Create();

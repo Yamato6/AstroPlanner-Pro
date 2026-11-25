@@ -1,0 +1,31 @@
+{
+  "v": 2,
+  "kind": "res",
+  "id": 15,
+  "type": "selection.get",
+  "payload": {
+    "revision": 3,
+    "target": {
+      "id": "M42",
+      "title": "M42 \u2014 Orion Nebula",
+      "typeName": "Nebula",
+      "constellation": "Orion",
+      "magnitude": "4.0",
+      "coordinates": "RA 05h 35m 17s, Dec \u221205\u00B0 23\u2032 28\u2033",
+      "altitudeDegrees": 48.2,
+      "azimuthDegrees": 152.4,
+      "transitLocal": "2026-01-15T23:46:00",
+      "maximumAltitudeDegrees": 57.4,
+      "bestWindow": "20:31\u201303:12",
+      "verdict": "excellent",
+      "verdictText": "Excellent",
+      "score": 86,
+      "recommended": "60 \u00D7 120 s at ISO 800",
+      "reasons": [
+        "Bright enough for the sky at your site",
+        "High in the sky for 6 h in darkness"
+      ],
+      "isInPlan": false
+    }
+  }
+}

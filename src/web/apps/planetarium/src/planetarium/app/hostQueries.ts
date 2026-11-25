@@ -21,6 +21,8 @@ const snapshots = {
   'observer.get': 'observer.changed',
   'sky.get': 'sky.changed',
   'ui.get': 'ui.changed',
+  'night.get': 'night.changed',
+  'selection.get': 'selection.changed',
 } as const satisfies Partial<Record<MethodName, EventName>>;
 
 export type SnapshotMethod = keyof typeof snapshots;
@@ -49,14 +51,37 @@ export function useSnapshot<M extends SnapshotMethod>(method: M) {
 }
 
 /** Runs a `ui.*` command (theme, transparency, full screen) and stores the snapshot it answers with. */
-export function useUiCommand<M extends 'ui.setTheme' | 'ui.setReduceTransparency' | 'ui.setFullScreen'>(
-  method: M,
-) {
+export function useUiCommand<
+  M extends 'ui.setTheme' | 'ui.setReduceTransparency' | 'ui.setAutoHide' | 'ui.setFullScreen',
+>(method: M) {
   const client = useQueryClient();
   return useMutation({
     mutationFn: (params: RequestOf<M>) => host.request(method, params),
     onSuccess: (snapshot) => {
       client.setQueryData(['ui.get'], snapshot);
+    },
+    onError: (error) => {
+      console.warn(method, 'failed', error);
+    },
+  });
+}
+
+/** Commands that answer with the new selection (the object card). */
+export type SelectionCommand =
+  | 'selection.center'
+  | 'selection.frame'
+  | 'selection.addToPlan'
+  | 'selection.removeFromPlan'
+  | 'selection.clear'
+  | 'search.go';
+
+/** Runs a selection command and stores the card it answers with. */
+export function useSelectionCommand<M extends SelectionCommand>(method: M) {
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: (params: RequestOf<M>) => host.request(method, params),
+    onSuccess: (snapshot) => {
+      client.setQueryData(['selection.get'], snapshot);
     },
     onError: (error) => {
       console.warn(method, 'failed', error);

@@ -17,12 +17,19 @@ import { SkyClock } from './time/clock';
 
 let mounted = false;
 
+import { skyEvents, skyPoint } from './events';
+
 export interface MountOptions {
   /**
    * Install the sky's own keyboard shortcuts (Space, 1, 2, F, /), sent to the host as
    * `shortcut` messages. Default true (the v2 Sky tab); the v3 shell has its own registry.
    */
   readonly keyboard?: boolean;
+  /**
+   * A right click selects what is under the pointer and raises `skyEvents` 'contextMenu' for the
+   * page's menu. Default false (the v2 Sky tab ignores right clicks).
+   */
+  readonly contextMenu?: boolean;
 }
 
 /**
@@ -259,6 +266,7 @@ export function mountSky(container: HTMLElement, options: MountOptions = {}): vo
 
     try {
       current.render(clock.now());
+      reportView(current);
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
       if (message !== lastError) {
@@ -283,6 +291,34 @@ export function mountSky(container: HTMLElement, options: MountOptions = {}): vo
         sendStats(current, false);
       }
     }
+  }
+
+  /** The page's HUD follows the field of view, the mode and the star limit (only when they change). */
+  let lastView = '';
+  function reportView(current: SkyView): void {
+    const fovDegrees = Math.round(current.view().fovDegrees * 100) / 100;
+    const starLimitMagnitude = Math.round(current.starLimit * 10) / 10;
+    const key = `${fovDegrees}|${current.mode}|${starLimitMagnitude}`;
+    if (key !== lastView) {
+      lastView = key;
+      skyEvents.emit('view', { fovDegrees, mode: current.mode, starLimitMagnitude });
+    }
+  }
+
+  /** The sky under the pointer for the page's HUD, at most once a frame. */
+  let cursorFrame = 0;
+  let cursorAt: { x: number; y: number } | null = null;
+  function reportCursor(x: number, y: number): void {
+    cursorAt = { x, y };
+    if (cursorFrame) {
+      return;
+    }
+    cursorFrame = requestAnimationFrame(() => {
+      cursorFrame = 0;
+      const at = cursorAt;
+      const point = at && view ? view.pointAt(at.x, at.y) : null;
+      skyEvents.emit('cursor', point ? skyPoint(point.j2000, point.horizontal) : null);
+    });
   }
 
   function sendStats(current: SkyView, isBenchmark: boolean): void {
@@ -361,23 +397,60 @@ export function mountSky(container: HTMLElement, options: MountOptions = {}): vo
       drag = { ...drag, x: event.clientX, y: event.clientY, moved: drag.moved + Math.abs(dx) + Math.abs(dy) };
       return;
     }
+    reportCursor(event.clientX, event.clientY);
     scheduleHover(event.clientX, event.clientY);
     overlay.classList.toggle('over-fov', view?.fovContains(event.clientX, event.clientY) ?? false);
   });
 
-  overlay.addEventListener('pointerup', (event) => {
-    const wasClick = drag !== null && drag.moved < 4;
-    drag = null;
-    if (wasClick && view) {
-      const picked = view.pick(event.clientX, event.clientY, clock.now());
-      const selection: Selection | null = picked ? { kind: picked.kind, id: picked.id } : null;
-      state.selection = selection;
-      view.setSelection(selection);
-      bridge.send(
-        'selectObject',
-        selection ? { kind: selection.kind, id: selection.id } : { kind: null, id: null },
-      );
+  /** Selects what is under a screen point (or nothing) and tells the host; returns what was picked. */
+  function selectAt(x: number, y: number): ReturnType<SkyView['pick']> {
+    if (!view) {
+      return null;
     }
+    const picked = view.pick(x, y, clock.now());
+    const selection: Selection | null = picked ? { kind: picked.kind, id: picked.id } : null;
+    state.selection = selection;
+    view.setSelection(selection);
+    bridge.send(
+      'selectObject',
+      selection ? { kind: selection.kind, id: selection.id } : { kind: null, id: null },
+    );
+    return picked;
+  }
+
+  overlay.addEventListener('pointerup', (event) => {
+    const wasClick = drag !== null && drag.moved < 4 && event.button === 0;
+    drag = null;
+    if (wasClick) {
+      selectAt(event.clientX, event.clientY);
+    }
+  });
+
+  overlay.addEventListener('pointerleave', () => {
+    cursorAt = null;
+    skyEvents.emit('cursor', null);
+  });
+
+  // A right click selects what is under the pointer (like a click) and offers its actions: the
+  // page draws the menu. Without an object, the menu acts on the point of the sky.
+  overlay.addEventListener('contextmenu', (event) => {
+    event.preventDefault();
+    if (!view || options.contextMenu !== true) {
+      return;
+    }
+    const picked = view.pick(event.clientX, event.clientY, clock.now());
+    if (picked) {
+      selectAt(event.clientX, event.clientY);
+    }
+    const point = view.pointAt(event.clientX, event.clientY);
+    skyEvents.emit('contextMenu', {
+      x: event.clientX,
+      y: event.clientY,
+      point: point ? skyPoint(point.j2000, point.horizontal) : null,
+      picked: picked
+        ? { kind: picked.kind, id: picked.id, label: picked.label?.slice(0, 128) ?? null }
+        : null,
+    });
   });
 
   overlay.addEventListener(

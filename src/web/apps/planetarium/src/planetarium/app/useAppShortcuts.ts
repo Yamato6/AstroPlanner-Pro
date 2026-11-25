@@ -1,8 +1,9 @@
 // Every keyboard shortcut of the page (spec §3.6): the sky's, the interface's and the windows'.
 // They are installed once here; Help lists the same array.
 import { createContext, useContext, useMemo } from 'react';
+import { useUi } from '../state/ui';
 import { useWindows } from '../state/windows';
-import { useSnapshot, useUiCommand } from './hostQueries';
+import { useSelectionCommand, useSnapshot, useUiCommand } from './hostQueries';
 import { type Shortcut, useShortcuts } from './shortcuts';
 import { useSkyShortcuts } from './useSkyShortcuts';
 
@@ -11,9 +12,39 @@ function useShellShortcuts(): readonly Shortcut[] {
   const setTheme = useUiCommand('ui.setTheme');
   const setFullScreen = useUiCommand('ui.setFullScreen');
   const { open, closeTop, cycle } = useWindows.getState();
+  const setPaletteOpen = useUi((state) => state.setPaletteOpen);
+  const clearSelection = useSelectionCommand('selection.clear');
 
   return useMemo(
     (): Shortcut[] => [
+      {
+        id: 'commandPalette',
+        group: 'interface',
+        key: 'k',
+        ctrl: true,
+        display: 'Ctrl+K',
+        run: () => {
+          setPaletteOpen(true);
+        },
+      },
+      {
+        id: 'search',
+        group: 'interface',
+        key: '/',
+        display: '/',
+        run: () => {
+          setPaletteOpen(true);
+        },
+      },
+      {
+        id: 'clearSelection',
+        group: 'sky',
+        key: 'Escape',
+        display: 'Esc',
+        run: () => {
+          clearSelection.mutate({});
+        },
+      },
       {
         id: 'nightVision',
         group: 'interface',
@@ -76,7 +107,7 @@ function useShellShortcuts(): readonly Shortcut[] {
         },
       },
     ],
-    [ui, setTheme, setFullScreen, open, closeTop, cycle],
+    [ui, setTheme, setFullScreen, open, closeTop, cycle, setPaletteOpen, clearSelection],
   );
 }
 

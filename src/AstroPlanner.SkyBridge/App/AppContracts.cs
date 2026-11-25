@@ -162,19 +162,119 @@ public sealed record ThemeChangedEvent(
 
 /// <summary>
 /// The interface state the host keeps (<c>ui.get</c>, and the answer of every <c>ui.*</c>
-/// command): theme, reduce transparency (saved) and full screen (the window's).
+/// command): theme, reduce transparency and hiding idle toolbars (saved), full screen (the window's).
 /// </summary>
 public sealed record UiSnapshot(
     [property: Range(0, int.MaxValue)] int Revision,
     [property: AllowedValues(AppThemes.Dark, AppThemes.Night)] string Theme,
     bool ReduceTransparency,
+    bool AutoHideToolbars,
     bool IsFullScreen);
+
+/// <summary><c>sky.setTime</c>: shows the sky at this instant (and pauses), e.g. from the darkness bar.</summary>
+public sealed record SkySetTimeRequest(
+    [property: Range(-62135596800000.0, 253402300799000.0)] long UtcMilliseconds);
+
+/// <summary>
+/// The observing night sampled every <see cref="StepMinutes"/> (on whole steps of the site's clock)
+/// from an hour before sunset to an hour after sunrise (<c>night.get</c>), for the darkness bar: Sun and Moon altitudes, the Moon's
+/// illumination, and cloud cover when there is a forecast (empty otherwise). Sample k is at
+/// <c>StartUtcMilliseconds + k × StepMinutes</c>.
+/// </summary>
+public sealed record NightTimeline(
+    [property: Range(0, int.MaxValue)] int Revision,
+    [property: Range(-62135596800000.0, 253402300799000.0)] long StartUtcMilliseconds,
+    [property: Range(1, 60)] int StepMinutes,
+    [property: Length(0, 400)] IReadOnlyList<double> SunAltitudeDegrees,
+    [property: Length(0, 400)] IReadOnlyList<double> MoonAltitudeDegrees,
+    [property: Range(0.0, 100.0)] double MoonIlluminatedPercent,
+    [property: Length(0, 400)] IReadOnlyList<double> CloudPercent);
+
+/// <summary><c>night.changed</c>: the night, the site or the forecast changed.</summary>
+public sealed record NightChangedEvent(
+    [property: Range(0, int.MaxValue)] int Revision);
+
+/// <summary>Verdicts of the feasibility model (<c>FeasibilityVerdict</c> in Core).</summary>
+public static class FeasibilityVerdicts
+{
+    public const string NotPossible = "notPossible";
+    public const string Unlikely = "unlikely";
+    public const string Marginal = "marginal";
+    public const string Good = "good";
+    public const string Excellent = "excellent";
+}
+
+/// <summary>
+/// The selected object for the object card (<c>selection.get</c>, and the answer of every
+/// <c>selection.*</c> command); <see cref="Target"/> is null when nothing is selected.
+/// </summary>
+public sealed record SelectionSnapshot(
+    [property: Range(0, int.MaxValue)] int Revision,
+    SelectedObject? Target);
+
+/// <summary>
+/// What the card shows, formatted by C#. A catalog object has an <see cref="Id"/> and its data;
+/// something only the sky knows (the Sun, the Moon, a star off the catalog) has a title only.
+/// Altitude and azimuth are at the observation time; the transit is the site's wall clock.
+/// </summary>
+public sealed record SelectedObject(
+    [property: StringLength(64, MinimumLength = 1)] string? Id,
+    [property: StringLength(200, MinimumLength = 1)] string Title,
+    [property: StringLength(80, MinimumLength = 1)] string? TypeName,
+    [property: StringLength(80, MinimumLength = 1)] string? Constellation,
+    [property: StringLength(16, MinimumLength = 1)] string? Magnitude,
+    [property: StringLength(80, MinimumLength = 1)] string? Coordinates,
+    [property: Range(-90.0, 90.0)] double? AltitudeDegrees,
+    [property: Range(0.0, 360.0)] double? AzimuthDegrees,
+    [property: StringLength(19, MinimumLength = 19)] string? TransitLocal,
+    [property: Range(-90.0, 90.0)] double? MaximumAltitudeDegrees,
+    [property: StringLength(80, MinimumLength = 1)] string? BestWindow,
+    [property: AllowedValues(FeasibilityVerdicts.NotPossible, FeasibilityVerdicts.Unlikely, FeasibilityVerdicts.Marginal,
+        FeasibilityVerdicts.Good, FeasibilityVerdicts.Excellent)] string? Verdict,
+    [property: StringLength(40, MinimumLength = 1)] string? VerdictText,
+    [property: Range(0, 100)] int? Score,
+    [property: StringLength(300, MinimumLength = 1)] string? Recommended,
+    [property: Length(0, 8)] IReadOnlyList<string> Reasons,
+    bool IsInPlan);
+
+/// <summary><c>selection.changed</c>: another object was selected, or the selected one changed (plan, feasibility).</summary>
+public sealed record SelectionChangedEvent(
+    [property: Range(0, int.MaxValue)] int Revision);
+
+/// <summary><c>search.query</c>: catalog objects whose ids or names match the text, best first.</summary>
+public sealed record SearchQueryRequest(
+    [property: StringLength(100, MinimumLength = 1)] string Text,
+    [property: Range(1, 50)] int Limit);
+
+/// <summary>One match of <c>search.query</c>.</summary>
+public sealed record SearchResult(
+    [property: StringLength(64, MinimumLength = 1)] string Id,
+    [property: StringLength(200, MinimumLength = 1)] string Title,
+    [property: StringLength(80, MinimumLength = 1)] string? TypeName,
+    [property: StringLength(16, MinimumLength = 1)] string? Magnitude,
+    [property: StringLength(80, MinimumLength = 1)] string? Constellation);
+
+public sealed record SearchResults(
+    [property: Length(0, 50)] IReadOnlyList<SearchResult> Results);
+
+/// <summary><c>search.go</c>: selects a catalog object and turns the view to it.</summary>
+public sealed record SearchGoRequest(
+    [property: StringLength(64, MinimumLength = 1)] string Id);
+
+/// <summary><c>search.resolve</c>: a name the catalog lacks, resolved online (Sesame) when allowed; the view turns to it.</summary>
+public sealed record SearchResolveRequest(
+    [property: StringLength(100, MinimumLength = 1)] string Text);
+
+/// <summary>Whether it was found, and the message the classic search shows.</summary>
+public sealed record SearchResolveResponse(
+    bool Found,
+    [property: StringLength(500, MinimumLength = 1)] string Message);
 
 /// <summary><c>ui.setTheme</c>: dark or night vision (saved, like the classic window's switch).</summary>
 public sealed record UiSetThemeRequest(
     [property: AllowedValues(AppThemes.Dark, AppThemes.Night)] string Theme);
 
-/// <summary>Turns an option on or off (<c>ui.setReduceTransparency</c>, <c>ui.setFullScreen</c>).</summary>
+/// <summary>Turns an option on or off (<c>ui.setReduceTransparency</c>, <c>ui.setAutoHide</c>, <c>ui.setFullScreen</c>).</summary>
 public sealed record SwitchRequest(bool Enabled);
 
 /// <summary><c>ui.changed</c>: theme, transparency or full screen changed.</summary>

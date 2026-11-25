@@ -140,10 +140,90 @@ export const skySetViewModeRequestSchema = z.strictObject({
 });
 export type SkySetViewModeRequest = z.infer<typeof skySetViewModeRequestSchema>;
 
+export const skySetTimeRequestSchema = z.strictObject({
+  utcMilliseconds: z.int().min(-62135596800000).max(253402300799000),
+});
+export type SkySetTimeRequest = z.infer<typeof skySetTimeRequestSchema>;
+
+export const nightTimelineSchema = z.strictObject({
+  revision: z.int().min(0).max(2147483647),
+  startUtcMilliseconds: z.int().min(-62135596800000).max(253402300799000),
+  stepMinutes: z.int().min(1).max(60),
+  sunAltitudeDegrees: z.array(z.number()).min(0).max(400),
+  moonAltitudeDegrees: z.array(z.number()).min(0).max(400),
+  moonIlluminatedPercent: z.number().min(0).max(100),
+  cloudPercent: z.array(z.number()).min(0).max(400),
+});
+export type NightTimeline = z.infer<typeof nightTimelineSchema>;
+
+export const selectedObjectSchema = z.strictObject({
+  id: z.string().min(1).max(64).nullable(),
+  title: z.string().min(1).max(200),
+  typeName: z.string().min(1).max(80).nullable(),
+  constellation: z.string().min(1).max(80).nullable(),
+  magnitude: z.string().min(1).max(16).nullable(),
+  coordinates: z.string().min(1).max(80).nullable(),
+  altitudeDegrees: z.number().min(-90).max(90).nullable(),
+  azimuthDegrees: z.number().min(0).max(360).nullable(),
+  transitLocal: z.string().min(19).max(19).nullable(),
+  maximumAltitudeDegrees: z.number().min(-90).max(90).nullable(),
+  bestWindow: z.string().min(1).max(80).nullable(),
+  verdict: z.enum(['notPossible', 'unlikely', 'marginal', 'good', 'excellent']).nullable(),
+  verdictText: z.string().min(1).max(40).nullable(),
+  score: z.int().min(0).max(100).nullable(),
+  recommended: z.string().min(1).max(300).nullable(),
+  reasons: z.array(z.string()).min(0).max(8),
+  isInPlan: z.boolean(),
+});
+export type SelectedObject = z.infer<typeof selectedObjectSchema>;
+
+export const selectionSnapshotSchema = z.strictObject({
+  revision: z.int().min(0).max(2147483647),
+  target: selectedObjectSchema.nullable(),
+});
+export type SelectionSnapshot = z.infer<typeof selectionSnapshotSchema>;
+
+export const searchQueryRequestSchema = z.strictObject({
+  text: z.string().min(1).max(100),
+  limit: z.int().min(1).max(50),
+});
+export type SearchQueryRequest = z.infer<typeof searchQueryRequestSchema>;
+
+export const searchResultSchema = z.strictObject({
+  id: z.string().min(1).max(64),
+  title: z.string().min(1).max(200),
+  typeName: z.string().min(1).max(80).nullable(),
+  magnitude: z.string().min(1).max(16).nullable(),
+  constellation: z.string().min(1).max(80).nullable(),
+});
+export type SearchResult = z.infer<typeof searchResultSchema>;
+
+export const searchResultsSchema = z.strictObject({
+  results: z.array(searchResultSchema).min(0).max(50),
+});
+export type SearchResults = z.infer<typeof searchResultsSchema>;
+
+export const searchGoRequestSchema = z.strictObject({
+  id: z.string().min(1).max(64),
+});
+export type SearchGoRequest = z.infer<typeof searchGoRequestSchema>;
+
+export const searchResolveRequestSchema = z.strictObject({
+  text: z.string().min(1).max(100),
+});
+export type SearchResolveRequest = z.infer<typeof searchResolveRequestSchema>;
+
+export const searchResolveResponseSchema = z.strictObject({
+  found: z.boolean(),
+  message: z.string().min(1).max(500),
+});
+export type SearchResolveResponse = z.infer<typeof searchResolveResponseSchema>;
+
 export const uiSnapshotSchema = z.strictObject({
   revision: z.int().min(0).max(2147483647),
   theme: z.enum(['dark', 'night']),
   reduceTransparency: z.boolean(),
+  autoHideToolbars: z.boolean(),
   isFullScreen: z.boolean(),
 });
 export type UiSnapshot = z.infer<typeof uiSnapshotSchema>;
@@ -197,6 +277,16 @@ export const uiChangedEventSchema = z.strictObject({
 });
 export type UiChangedEvent = z.infer<typeof uiChangedEventSchema>;
 
+export const nightChangedEventSchema = z.strictObject({
+  revision: z.int().min(0).max(2147483647),
+});
+export type NightChangedEvent = z.infer<typeof nightChangedEventSchema>;
+
+export const selectionChangedEventSchema = z.strictObject({
+  revision: z.int().min(0).max(2147483647),
+});
+export type SelectionChangedEvent = z.infer<typeof selectionChangedEventSchema>;
+
 export const rpcErrorPayloadSchema = z.strictObject({
   code: z.enum(['bad-request', 'unknown-method', 'timeout', 'cancelled', 'too-large', 'busy', 'internal']),
   message: z.string().min(1).max(1024),
@@ -218,9 +308,21 @@ export const rpcMethods = {
   'sky.setRate': { request: skySetRateRequestSchema, response: skySnapshotSchema },
   'sky.setLayer': { request: skySetLayerRequestSchema, response: skySnapshotSchema },
   'sky.setViewMode': { request: skySetViewModeRequestSchema, response: skySnapshotSchema },
+  'sky.setTime': { request: skySetTimeRequestSchema, response: skySnapshotSchema },
+  'night.get': { request: noParametersSchema, response: nightTimelineSchema },
+  'selection.get': { request: noParametersSchema, response: selectionSnapshotSchema },
+  'selection.center': { request: noParametersSchema, response: selectionSnapshotSchema },
+  'selection.frame': { request: noParametersSchema, response: selectionSnapshotSchema },
+  'selection.addToPlan': { request: noParametersSchema, response: selectionSnapshotSchema },
+  'selection.removeFromPlan': { request: noParametersSchema, response: selectionSnapshotSchema },
+  'selection.clear': { request: noParametersSchema, response: selectionSnapshotSchema },
+  'search.query': { request: searchQueryRequestSchema, response: searchResultsSchema },
+  'search.go': { request: searchGoRequestSchema, response: selectionSnapshotSchema },
+  'search.resolve': { request: searchResolveRequestSchema, response: searchResolveResponseSchema },
   'ui.get': { request: noParametersSchema, response: uiSnapshotSchema },
   'ui.setTheme': { request: uiSetThemeRequestSchema, response: uiSnapshotSchema },
   'ui.setReduceTransparency': { request: switchRequestSchema, response: uiSnapshotSchema },
+  'ui.setAutoHide': { request: switchRequestSchema, response: uiSnapshotSchema },
   'ui.setFullScreen': { request: switchRequestSchema, response: uiSnapshotSchema },
   'layout.load': { request: noParametersSchema, response: layoutSnapshotSchema },
   'layout.save': { request: layoutSnapshotSchema, response: noParametersSchema },
@@ -232,4 +334,6 @@ export const appEvents = {
   'observer.changed': observerChangedEventSchema,
   'sky.changed': skyChangedEventSchema,
   'ui.changed': uiChangedEventSchema,
+  'night.changed': nightChangedEventSchema,
+  'selection.changed': selectionChangedEventSchema,
 } as const;

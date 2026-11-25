@@ -54,13 +54,42 @@ public sealed class AppChannelTests
             SampleSky with { IsPlaying = true, Rate = 600, Selection = new SkySelection(null, "Moon", null) }, AppMethods.SkyPlay.Response),
         ["sky.changed.event"] = AppMessageCodec.Event(AppEvents.SkyChanged, new SkyChangedEvent(8)),
         ["ui.get.response"] = AppMessageCodec.Response(9, AppMethods.UiGet.Name,
-            new UiSnapshot(0, AppThemes.Dark, false, false), AppMethods.UiGet.Response),
+            new UiSnapshot(0, AppThemes.Dark, false, false, false), AppMethods.UiGet.Response),
         ["ui.changed.event"] = AppMessageCodec.Event(AppEvents.UiChanged, new UiChangedEvent(1)),
         ["layout.load.response"] = AppMessageCodec.Response(10, AppMethods.LayoutLoad.Name, SampleLayout, AppMethods.LayoutLoad.Response),
         ["layout.save.response"] = AppMessageCodec.Response(11, AppMethods.LayoutSave.Name, new NoParameters(), AppMethods.LayoutSave.Response),
         ["app.about.response"] = AppMessageCodec.Response(12, AppMethods.AppAbout.Name, SampleAbout, AppMethods.AppAbout.Response),
         ["app.openLink.response"] = AppMessageCodec.Response(13, AppMethods.AppOpenLink.Name, new OpenLinkResponse(true), AppMethods.AppOpenLink.Response),
+        ["night.get.response"] = AppMessageCodec.Response(14, AppMethods.NightGet.Name, SampleNight, AppMethods.NightGet.Response),
+        ["night.changed.event"] = AppMessageCodec.Event(AppEvents.NightChanged, new NightChangedEvent(1)),
+        ["selection.get.response"] = AppMessageCodec.Response(15, AppMethods.SelectionGet.Name,
+            new SelectionSnapshot(3, SampleSelected), AppMethods.SelectionGet.Response),
+        ["selection.get.response-sky-only"] = AppMessageCodec.Response(16, AppMethods.SelectionGet.Name,
+            new SelectionSnapshot(4, new SelectedObject(null, "Moon", null, null, null, null, null, null, null, null, null, null, null, null, null, [], false)),
+            AppMethods.SelectionGet.Response),
+        ["selection.changed.event"] = AppMessageCodec.Event(AppEvents.SelectionChanged, new SelectionChangedEvent(4)),
+        ["search.query.response"] = AppMessageCodec.Response(17, AppMethods.SearchQuery.Name, new SearchResults(
+        [
+            new SearchResult("M42", "M42 — Orion Nebula", "Nebula", "4.0", "Orion"),
+            new SearchResult("M43", "M43 — De Mairan's Nebula", "Nebula", "9.0", "Orion"),
+        ]), AppMethods.SearchQuery.Response),
+        ["search.resolve.response"] = AppMessageCodec.Response(18, AppMethods.SearchResolve.Name, new SearchResolveResponse(true,
+            "Sh2-155 (HII), not in the catalog: resolved by SIMBAD at RA 22.9500 h, Dec +62.617°. The view is centred on it."),
+            AppMethods.SearchResolve.Response),
     };
+
+    // 2026-01-15 at the sample site, from 18:30 local (an hour before sunset, to the 10 min) to 07:40, every 10 min:
+    // the Sun sets and comes back, the Moon rises at about 01:00, clouds clear after 22:00.
+    private static readonly NightTimeline SampleNight = new(1, 1768523400000, 10,
+        [.. Enumerable.Range(0, 80).Select(k => Math.Round(8 - 75 * Math.Sin(Math.PI * k / 79), 1))],
+        [.. Enumerable.Range(0, 80).Select(k => Math.Round(-30 + 60.0 * k / 79, 1))],
+        38.5,
+        [.. Enumerable.Range(0, 80).Select(k => k < 20 ? 40.0 : 0.0)]);
+
+    private static readonly SelectedObject SampleSelected = new("M42", "M42 — Orion Nebula", "Nebula", "Orion", "4.0",
+        "RA 05h 35m 17s, Dec −05° 23′ 28″", 48.2, 152.4, "2026-01-15T23:46:00", 57.4, "20:31–03:12",
+        FeasibilityVerdicts.Excellent, "Excellent", 86, "60 × 120 s at ISO 800",
+        ["Bright enough for the sky at your site", "High in the sky for 6 h in darkness"], false);
 
     // Help open and docked right, Settings minimised to the rail.
     private static readonly LayoutSnapshot SampleLayout = new(

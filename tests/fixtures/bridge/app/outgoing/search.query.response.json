@@ -1,0 +1,24 @@
+{
+  "v": 2,
+  "kind": "res",
+  "id": 17,
+  "type": "search.query",
+  "payload": {
+    "results": [
+      {
+        "id": "M42",
+        "title": "M42 \u2014 Orion Nebula",
+        "typeName": "Nebula",
+        "magnitude": "4.0",
+        "constellation": "Orion"
+      },
+      {
+        "id": "M43",
+        "title": "M43 \u2014 De Mairan\u0027s Nebula",
+        "typeName": "Nebula",
+        "magnitude": "9.0",
+        "constellation": "Orion"
+      }
+    ]
+  }
+}

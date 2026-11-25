@@ -31,6 +31,16 @@ namespace AstroPlanner.SkyBridge.App;
 [JsonSerializable(typeof(AboutResponse))]
 [JsonSerializable(typeof(OpenLinkRequest))]
 [JsonSerializable(typeof(OpenLinkResponse))]
+[JsonSerializable(typeof(SkySetTimeRequest))]
+[JsonSerializable(typeof(NightTimeline))]
+[JsonSerializable(typeof(NightChangedEvent))]
+[JsonSerializable(typeof(SelectionSnapshot))]
+[JsonSerializable(typeof(SelectionChangedEvent))]
+[JsonSerializable(typeof(SearchQueryRequest))]
+[JsonSerializable(typeof(SearchResults))]
+[JsonSerializable(typeof(SearchGoRequest))]
+[JsonSerializable(typeof(SearchResolveRequest))]
+[JsonSerializable(typeof(SearchResolveResponse))]
 [JsonSerializable(typeof(RpcErrorPayload))]
 public sealed partial class AppJsonContext : JsonSerializerContext;
 
@@ -97,6 +107,28 @@ public static class AppMethods
     public static RpcMethod<NoParameters, NoParameters> AppOpenDataFolder { get; } =
         new("app.openDataFolder", AppJsonContext.Default.NoParameters, AppJsonContext.Default.NoParameters);
 
+    public static RpcMethod<SkySetTimeRequest, SkySnapshot> SkySetTime { get; } =
+        new("sky.setTime", AppJsonContext.Default.SkySetTimeRequest, AppJsonContext.Default.SkySnapshot);
+
+    public static RpcMethod<NoParameters, NightTimeline> NightGet { get; } =
+        new("night.get", AppJsonContext.Default.NoParameters, AppJsonContext.Default.NightTimeline);
+
+    public static RpcMethod<NoParameters, SelectionSnapshot> SelectionGet { get; } = Selection("selection.get");
+    public static RpcMethod<NoParameters, SelectionSnapshot> SelectionCenter { get; } = Selection("selection.center");
+    public static RpcMethod<NoParameters, SelectionSnapshot> SelectionFrame { get; } = Selection("selection.frame");
+    public static RpcMethod<NoParameters, SelectionSnapshot> SelectionAddToPlan { get; } = Selection("selection.addToPlan");
+    public static RpcMethod<NoParameters, SelectionSnapshot> SelectionRemoveFromPlan { get; } = Selection("selection.removeFromPlan");
+    public static RpcMethod<NoParameters, SelectionSnapshot> SelectionClear { get; } = Selection("selection.clear");
+
+    public static RpcMethod<SearchQueryRequest, SearchResults> SearchQuery { get; } =
+        new("search.query", AppJsonContext.Default.SearchQueryRequest, AppJsonContext.Default.SearchResults);
+
+    public static RpcMethod<SearchGoRequest, SelectionSnapshot> SearchGo { get; } =
+        new("search.go", AppJsonContext.Default.SearchGoRequest, AppJsonContext.Default.SelectionSnapshot);
+
+    public static RpcMethod<SearchResolveRequest, SearchResolveResponse> SearchResolve { get; } =
+        new("search.resolve", AppJsonContext.Default.SearchResolveRequest, AppJsonContext.Default.SearchResolveResponse);
+
     public static RpcMethod<NoParameters, UiSnapshot> UiGet { get; } =
         new("ui.get", AppJsonContext.Default.NoParameters, AppJsonContext.Default.UiSnapshot);
 
@@ -105,6 +137,9 @@ public static class AppMethods
 
     public static RpcMethod<SwitchRequest, UiSnapshot> UiSetReduceTransparency { get; } =
         new("ui.setReduceTransparency", AppJsonContext.Default.SwitchRequest, AppJsonContext.Default.UiSnapshot);
+
+    public static RpcMethod<SwitchRequest, UiSnapshot> UiSetAutoHide { get; } =
+        new("ui.setAutoHide", AppJsonContext.Default.SwitchRequest, AppJsonContext.Default.UiSnapshot);
 
     public static RpcMethod<SwitchRequest, UiSnapshot> UiSetFullScreen { get; } =
         new("ui.setFullScreen", AppJsonContext.Default.SwitchRequest, AppJsonContext.Default.UiSnapshot);
@@ -118,9 +153,14 @@ public static class AppMethods
     public static IReadOnlyList<IRpcMethod> All { get; } =
     [
         AppInfo, AppAbout, AppOpenLink, AppOpenDataFolder, ObserverGet,
-        SkyGet, SkyPlay, SkyPause, SkyNow, SkyStep, SkySetRate, SkySetLayer, SkySetViewMode,
-        UiGet, UiSetTheme, UiSetReduceTransparency, UiSetFullScreen, LayoutLoad, LayoutSave,
+        SkyGet, SkyPlay, SkyPause, SkyNow, SkyStep, SkySetRate, SkySetLayer, SkySetViewMode, SkySetTime,
+        NightGet, SelectionGet, SelectionCenter, SelectionFrame, SelectionAddToPlan, SelectionRemoveFromPlan, SelectionClear,
+        SearchQuery, SearchGo, SearchResolve,
+        UiGet, UiSetTheme, UiSetReduceTransparency, UiSetAutoHide, UiSetFullScreen, LayoutLoad, LayoutSave,
     ];
+
+    private static RpcMethod<NoParameters, SelectionSnapshot> Selection(string name) =>
+        new(name, AppJsonContext.Default.NoParameters, AppJsonContext.Default.SelectionSnapshot);
 
     private static RpcMethod<NoParameters, SkySnapshot> Sky(string name) =>
         new(name, AppJsonContext.Default.NoParameters, AppJsonContext.Default.SkySnapshot);
@@ -141,5 +181,11 @@ public static class AppEvents
     public static AppEvent<UiChangedEvent> UiChanged { get; } =
         new("ui.changed", AppJsonContext.Default.UiChangedEvent);
 
-    public static IReadOnlyList<IAppEvent> All { get; } = [ThemeChanged, ObserverChanged, SkyChanged, UiChanged];
+    public static AppEvent<NightChangedEvent> NightChanged { get; } =
+        new("night.changed", AppJsonContext.Default.NightChangedEvent);
+
+    public static AppEvent<SelectionChangedEvent> SelectionChanged { get; } =
+        new("selection.changed", AppJsonContext.Default.SelectionChangedEvent);
+
+    public static IReadOnlyList<IAppEvent> All { get; } = [ThemeChanged, ObserverChanged, SkyChanged, UiChanged, NightChanged, SelectionChanged];
 }

@@ -32,4 +32,7 @@ public sealed record InterfacePreferences
 {
     /// <summary>Opaque panels instead of glass over the sky (spec §3.3).</summary>
     public bool ReduceTransparency { get; init; }
+
+    /// <summary>The top bar and the dock fade out after a few seconds without input (spec §3.1).</summary>
+    public bool AutoHideToolbars { get; init; } = true;
 }

@@ -8,7 +8,7 @@ using AstroPlanner.SkyBridge.App;
 namespace AstroPlanner.Application.Bridge;
 
 /// <summary>
-/// The <c>sky.*</c> area: time (play, pause, now, step, rate), layers, view mode and the current
+/// The <c>sky.*</c> area: time (play, pause, now, step, set, rate), layers, view mode and the current
 /// selection, through the same view models as the classic Sky tab. Every command answers with
 /// the new <see cref="SkySnapshot"/>; <c>sky.changed</c> announces changes made elsewhere.
 /// </summary>
@@ -51,6 +51,8 @@ public sealed class SkyEndpoints : IEndpointModule
             }
         }));
         rpc.Register(AppMethods.SkySetViewMode, (request, _) => Run(() => _sky.Modes.SetViewMode(request.Mode)));
+        rpc.Register(AppMethods.SkySetTime, (request, _) =>
+            Run(() => _sky.Time.SetTime(TimeOf(request.UtcMilliseconds))));
 
         _sky.PropertyChanged += OnChanged;
         _sky.Time.PropertyChanged += OnChanged;
@@ -101,6 +103,13 @@ public sealed class SkyEndpoints : IEndpointModule
         command();
         return Answer();
     }
+
+    /// <summary>The instant, limited to the years the ephemerides are good for.</summary>
+    internal static DateTime TimeOf(long utcMilliseconds) =>
+        DateTimeOffset.FromUnixTimeMilliseconds(Math.Clamp(utcMilliseconds, EarliestUtcMilliseconds, LatestUtcMilliseconds)).UtcDateTime;
+
+    private static readonly long EarliestUtcMilliseconds = new DateTimeOffset(1900, 1, 1, 0, 0, 0, TimeSpan.Zero).ToUnixTimeMilliseconds();
+    private static readonly long LatestUtcMilliseconds = new DateTimeOffset(2100, 12, 31, 0, 0, 0, TimeSpan.Zero).ToUnixTimeMilliseconds();
 
     private int NearestRate(int rate) =>
         (int)_sky.Time.Rates.MinBy(candidate => Math.Abs(Math.Log(candidate) - Math.Log(rate)));

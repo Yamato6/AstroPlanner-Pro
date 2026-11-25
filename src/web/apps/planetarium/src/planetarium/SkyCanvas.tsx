@@ -8,8 +8,8 @@ export function SkyCanvas() {
 
   useEffect(() => {
     if (container.current) {
-      // The shell's shortcut registry owns the keyboard on this page.
-      mountSky(container.current, { keyboard: false });
+      // The shell's shortcut registry owns the keyboard on this page; right clicks open its menu.
+      mountSky(container.current, { keyboard: false, contextMenu: true });
     }
   }, []);
 

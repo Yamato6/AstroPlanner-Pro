@@ -1,0 +1,8 @@
+{
+  "v": 2,
+  "kind": "evt",
+  "type": "night.changed",
+  "payload": {
+    "revision": 1
+  }
+}

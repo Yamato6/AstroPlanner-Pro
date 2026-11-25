@@ -8,7 +8,7 @@ namespace AstroPlanner.Application.Bridge;
 
 /// <summary>
 /// The <c>ui.*</c> area: night vision (the same saved theme as the classic window's switch),
-/// reduce transparency (saved with the planetarium UI's preferences) and full screen (the host
+/// reduce transparency and hiding idle toolbars (saved with the planetarium UI's preferences) and full screen (the host
 /// window's). Every command answers with the new <see cref="UiSnapshot"/>; <c>ui.changed</c>
 /// announces changes made elsewhere (the classic Settings, the window leaving full screen).
 /// </summary>
@@ -43,7 +43,10 @@ public sealed class InterfaceEndpoints : IEndpointModule
         rpc.Register(AppMethods.UiGet, (_, _) => Answer());
         rpc.Register(AppMethods.UiSetTheme, (request, _) =>
             Run(() => _settings.SetTheme(request.Theme == AppThemes.Night ? AppTheme.Night : AppTheme.Dark)));
-        rpc.Register(AppMethods.UiSetReduceTransparency, (request, _) => Run(() => SetReduceTransparency(request.Enabled)));
+        rpc.Register(AppMethods.UiSetReduceTransparency, (request, _) =>
+            Run(() => SavePreferences(_preferences with { ReduceTransparency = request.Enabled })));
+        rpc.Register(AppMethods.UiSetAutoHide, (request, _) =>
+            Run(() => SavePreferences(_preferences with { AutoHideToolbars = request.Enabled })));
         rpc.Register(AppMethods.UiSetFullScreen, (request, _) => Run(() => _host.SetFullScreen(request.Enabled)));
         _settings.Theme.Changed += OnChanged;
         _host.FullScreenChanged += OnChanged;
@@ -51,16 +54,16 @@ public sealed class InterfaceEndpoints : IEndpointModule
 
     /// <summary>The current state as a contract.</summary>
     public UiSnapshot Snapshot() =>
-        new(_changes.Revision, _settings.Theme.SkyTheme, _preferences.ReduceTransparency, _host.IsFullScreen);
+        new(_changes.Revision, _settings.Theme.SkyTheme, _preferences.ReduceTransparency, _preferences.AutoHideToolbars, _host.IsFullScreen);
 
-    private void SetReduceTransparency(bool enabled)
+    private void SavePreferences(InterfacePreferences preferences)
     {
-        if (enabled == _preferences.ReduceTransparency)
+        if (preferences == _preferences)
         {
             return;
         }
 
-        _preferences = _preferences with { ReduceTransparency = enabled };
+        _preferences = preferences;
         try
         {
             _store.SavePreferences(_preferences);

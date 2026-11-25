@@ -780,6 +780,12 @@ export class SkyView {
     return transform(transpose(this.currentH), neu);
   }
 
+  /** The sky under a screen point: J2000 direction and apparent altitude/azimuth (null off the sky). */
+  pointAt(x: number, y: number): { j2000: Vec3; horizontal: Horizontal } | null {
+    const j2000 = this.unproject(x, y);
+    return j2000 ? { j2000, horizontal: apparentHorizontal(this.currentH, j2000, this.refraction) } : null;
+  }
+
   /** J2000 direction at the middle of the view. */
   viewCenter(): Vec3 {
     if (this.mode === 'finder') {

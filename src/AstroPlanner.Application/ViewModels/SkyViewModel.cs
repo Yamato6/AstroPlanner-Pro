@@ -376,6 +376,21 @@ public sealed partial class SkyViewModel : ObservableObject, IDisposable
     [RelayCommand]
     private void OpenDetails() => OpenDetailsRequested?.Invoke(this, EventArgs.Empty);
 
+    /// <summary>Nothing selected, in the sky or in Targets.</summary>
+    public void ClearSelection()
+    {
+        SkyOnlySelectionText = null;
+        _targets.SelectedObject = null;
+        _sentSelectionId = null;
+        if (_session.IsReady)
+        {
+            _session.Send(SkyMessageCodec.SelectObject(new SelectionPayload(null, null)));
+        }
+
+        OnPropertyChanged(nameof(SelectedText));
+        OnPropertyChanged(nameof(HasCatalogSelection));
+    }
+
     private void CenterOn(CelestialObject target, double? fovDegrees)
     {
         if (DirectionOf(target) is { } v)

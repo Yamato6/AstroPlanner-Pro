@@ -10,10 +10,10 @@ the classic window through the app channel ([bridge.md](bridge.md)).
 | Folder | Content |
 |---|---|
 | `packages/ui-kit` | Design tokens (`tokens.css`), Inter (`fonts.css`), accessible components on React Aria (`IconButton`, `ToggleIconButton`, `Button`, `Switch`, `Panel`), the window manager (`windows/`) |
-| `apps/planetarium/src/planetarium/app` | Host queries (TanStack Query), the shortcut registry, i18n |
-| `apps/planetarium/src/planetarium/shell` | Top bar, left rail (later: dock, HUD, object card, context menu, palette) |
+| `apps/planetarium/src/planetarium/app` | Host queries (TanStack Query), the shortcut registry, idle toolbars, formatting, i18n |
+| `apps/planetarium/src/planetarium/shell` | Top bar, left rail, dock and darkness bar, HUD, object card, context menu, command palette, toasts |
 | `apps/planetarium/src/planetarium/windows` | The window registry, the window layer, layout persistence, Settings, Help |
-| `apps/planetarium/src/planetarium/state` | Page-only state (zustand): immersive mode, the window layout |
+| `apps/planetarium/src/planetarium/state` | Page-only state (zustand): immersive mode, the palette, the window layout, toasts |
 | `apps/planetarium/src/planetarium/i18n/en.json` | UI chrome strings; domain text comes formatted from C# |
 | `apps/planetarium/e2e` | Playwright tests against a mock host |
 
@@ -66,10 +66,40 @@ tested; `FloatingWindow` draws one window and turns pointer and keyboard gesture
 The registry (`windows/registry.ts`) lists every window in rail order with its icon and size.
 R1b ships Settings and Help; the others show an empty state until R4 brings them.
 
+## Shell
+
+- **Dock** (bottom): the darkness bar, then the time controls (steps of 10 min; Shift 1 h, Ctrl
+  1 day, Alt 1 min; play/pause; the speed; Now; the date and time in the site's zone, applied
+  with Enter or on leaving the field), the layer switches and the view mode.
+- **Darkness bar** (the signature detail): tonight from an hour before sunset to an hour after
+  sunrise, sampled by C# every 10 min of the site's clock (`night.get`, from Core's
+  `NightSkySamples`): daylight, civil, nautical and astronomical twilight and night as bands, the
+  Moon above the horizon as a light strip at the top (brighter for a fuller Moon) and the cloud
+  cover at the bottom when there is a forecast. It is a React Aria slider: dragging or the arrow
+  keys (10 min) move a preview, and the sky time is set when it is released (`sky.setTime`).
+- **Object card** (top left): the selection from `selection.get`, every text formatted by C#;
+  "Why?" opens the feasibility reasons; Center, Frame with the camera, Add to / Remove from my
+  plan. The Moon, the Sun or a satellite show their name only.
+- **HUD** (bottom left): field of view, J2000 RA/Dec and Alt/Az under the pointer, zenith SQM and
+  the star limit. It follows the engine's page events (`skyEvents`: `view`, `cursor`), so the
+  pointer costs no messages to the host.
+- **Context menu**: a right click selects what is under the pointer (`mountSky(…, {
+  contextMenu: true })`; the classic Sky tab keeps ignoring right clicks) and offers its actions,
+  or the point's coordinates on empty sky.
+- **Command palette** (`Ctrl+K`, `/`): catalog matches from `search.query` (exact id or name
+  first, then the brightest), the windows and every command of the registry with its key;
+  "Search online" runs the classic search (`search.resolve`, Sesame when allowed).
+- **Toasts** (bottom right): `aria-live="polite"`, never focused; errors stay until closed.
+- **Idle toolbars**: the top bar and the dock fade after 3 s without input and come back with the
+  first movement or key, never while the focus is in them; Settings › Interface turns it off.
+
 ## Keyboard
 
 One registry (`app/shortcuts.ts`) declares every shortcut, so Help and the command palette can
-list them; no shortcut fires while a text field has focus. The sky's own keys are off on this
+list them; no shortcut fires while a text field has focus, inside a menu, a list or a modal
+dialog (React Aria's autocomplete re-sends keys to its list), or for a key something else
+already handled. A symbol (`/`, `,`) matches with or without Shift (Spanish keyboards type `/`
+with Shift+7). The sky's own keys are off on this
 page (`mountSky(container, { keyboard: false })`). The window gives the page the keyboard focus
 whenever it is activated.
 
@@ -81,6 +111,7 @@ whenever it is activated.
 | `H` | hide the interface | `Ctrl+Shift+N` | night vision |
 | `F11` | full screen | `F1` / `Ctrl+,` | Help / Settings |
 | `Ctrl+W` | close the window in front | `Ctrl+Tab` / `Ctrl+Shift+Tab` | next / previous window |
+| `Ctrl+K` / `/` | search and commands | `Esc` | close the window you are in, else clear the selection |
 
 ## CSP
 
@@ -100,5 +131,5 @@ npm run e2e -w @astroplanner/planetarium   # Playwright (installed Edge) against
 The mock host (`e2e/mockHost.ts`) replaces `window.chrome.webview`: it validates every request
 against the contracts generated from C# and answers from the C# golden files
 (`tests/fixtures/bridge/app/outgoing`), so it cannot drift from the real host. The E2E suite runs
-the production build (`vite preview`) and checks the shell flows, the window manager (drag, snap, resize, keyboard, restore after restart), axe (WCAG 2.2 AA, both themes, windows open)
+the production build (`vite preview`) and checks the shell flows, the window manager (drag, snap, resize, keyboard, restore after restart), the dock and darkness bar, the card, the palette, toasts and idle toolbars, axe (WCAG 2.2 AA, both themes, with windows, the card and the palette open)
 and that no request breaks its contract.

@@ -115,6 +115,13 @@ public sealed partial class SkyTimeViewModel : ObservableObject, IDisposable
         ApplyToContext(_session.Context.ToUtc(_session.Context.ObservationDateTime).AddMinutes(delta));
     }
 
+    /// <summary>Shows the sky at this UTC instant (and pauses): the planetarium's darkness bar and date field.</summary>
+    public void SetTime(DateTime utc)
+    {
+        Pause();
+        ApplyToContext(utc);
+    }
+
     [RelayCommand]
     private void Now()
     {

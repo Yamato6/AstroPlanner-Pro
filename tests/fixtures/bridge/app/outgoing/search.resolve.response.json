@@ -1,0 +1,10 @@
+{
+  "v": 2,
+  "kind": "res",
+  "id": 18,
+  "type": "search.resolve",
+  "payload": {
+    "found": true,
+    "message": "Sh2-155 (HII), not in the catalog: resolved by SIMBAD at RA 22.9500 h, Dec \u002B62.617\u00B0. The view is centred on it."
+  }
+}

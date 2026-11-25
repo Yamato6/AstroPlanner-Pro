@@ -1,0 +1,222 @@
+.dock {
+  position: fixed;
+  left: calc(var(--space-2) * 2 + var(--rail-width));
+  right: var(--space-2);
+  bottom: var(--space-2);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  padding: var(--space-2) var(--space-3) var(--space-2);
+  box-sizing: border-box;
+  transition: opacity var(--motion-medium) var(--ease-out);
+}
+
+/* Idle: out of the way until the pointer moves or a key is pressed (spec §3.1). */
+.dock[data-idle] {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.group {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 2px;
+}
+
+.divider {
+  width: 1px;
+  height: 20px;
+  margin: 0 var(--space-1);
+  background: var(--border-hairline);
+}
+
+.now {
+  height: var(--control-size);
+  margin: 0 var(--space-1);
+  padding: 0 var(--space-2);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--text-primary);
+  font: inherit;
+  cursor: pointer;
+}
+
+.now[data-hovered] {
+  background: var(--surface-hover);
+}
+
+.date {
+  display: inline-flex;
+}
+
+.segmentInput {
+  display: inline-flex;
+  align-items: center;
+  height: var(--control-size);
+  padding: 0 var(--space-1);
+  border: 1px solid var(--border-hairline);
+  border-radius: var(--radius-sm);
+  background: var(--surface-solid);
+  color: var(--text-strong);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.segmentInput [role='spinbutton'] {
+  display: inline-block;
+  min-width: 24px;
+  min-height: 24px;
+  line-height: 24px;
+  text-align: center;
+}
+
+.segmentInput [data-type='literal'] {
+  color: var(--text-muted);
+}
+
+.segmentInput [data-focused] {
+  border-radius: 2px;
+  background: var(--accent-soft);
+  color: var(--text-strong);
+  outline: none;
+}
+
+.segmented {
+  display: inline-flex;
+  margin-left: var(--space-1);
+  border: 1px solid var(--border-hairline);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+}
+
+.segment {
+  height: calc(var(--control-size) - 2px);
+  padding: 0 var(--space-2);
+  border: 0;
+  background: transparent;
+  color: var(--text-muted);
+  font: inherit;
+  font-variant-numeric: tabular-nums;
+  cursor: pointer;
+}
+
+.segment + .segment {
+  border-left: 1px solid var(--border-hairline);
+}
+
+.segment[data-hovered] {
+  background: var(--surface-hover);
+  color: var(--text-primary);
+}
+
+.segment[data-selected] {
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+
+/* ---- the darkness bar ---------------------------------------------------------------------- */
+
+.bar {
+  display: grid;
+  grid-template-columns: 1fr;
+}
+
+.barLabel {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.track {
+  position: relative;
+  height: 14px;
+  cursor: pointer;
+}
+
+.strip {
+  display: block;
+  box-sizing: border-box;
+  width: 100%;
+  height: 100%;
+  border: 1px solid var(--border-strong);
+  border-radius: 3px;
+}
+
+.day {
+  fill: var(--darkness-day);
+}
+
+.civil {
+  fill: var(--darkness-civil);
+}
+
+.nautical {
+  fill: var(--darkness-nautical);
+}
+
+.astronomical {
+  fill: var(--darkness-astronomical);
+}
+
+.night {
+  fill: var(--darkness-night);
+}
+
+.moon {
+  fill: var(--darkness-moon);
+}
+
+.cloud {
+  fill: var(--darkness-cloud);
+}
+
+/* The sky time: a thin cursor across the bar. */
+.thumb {
+  top: -4px;
+  width: 4px;
+  height: 22px;
+  border: 1px solid var(--page-background);
+  border-radius: 2px;
+  background: var(--text-strong);
+}
+
+.thumb[data-dragging],
+.thumb[data-hovered] {
+  background: var(--accent);
+}
+
+.thumb[data-focus-visible] {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
+}
+
+/* The sky shows another night: the cursor waits at the edge, dimmed. */
+.away {
+  opacity: 0.35;
+}
+
+.ticks {
+  position: relative;
+  height: 14px;
+}
+
+.tick {
+  position: absolute;
+  top: 1px;
+  transform: translateX(-50%);
+  color: var(--text-muted);
+  font-size: var(--font-size-xs);
+  font-variant-numeric: tabular-nums;
+}

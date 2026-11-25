@@ -135,6 +135,18 @@ public static class DisplayNames
             : Format(Strings.DoubleStarPairNoAngleFormat, pair.Name, pair.SeparationArcsec, pair.PrimaryMagnitude, pair.CompanionMagnitude, pair.LastYear);
     }
 
+    /// <summary>"RA 05h 35m 17s, Dec −05° 23′ 28″" (equatorial coordinates, rounded to the second).</summary>
+    public static string RaDec(EquatorialCoordinates coordinates)
+    {
+        ArgumentNullException.ThrowIfNull(coordinates);
+        var raSeconds = (int)Math.Round(((coordinates.RightAscensionHours % 24 + 24) % 24) * 3600) % 86400;
+        var decSeconds = (int)Math.Round(Math.Abs(coordinates.DeclinationDegrees) * 3600);
+        var ra = string.Format(CultureInfo.InvariantCulture, "{0:00}h {1:00}m {2:00}s", raSeconds / 3600, raSeconds / 60 % 60, raSeconds % 60);
+        var dec = string.Format(CultureInfo.InvariantCulture, "{0}{1:00}° {2:00}′ {3:00}″",
+            coordinates.DeclinationDegrees < 0 ? "−" : "+", decSeconds / 3600, decSeconds / 60 % 60, decSeconds % 60);
+        return Format(Strings.RaDecFormat, ra, dec);
+    }
+
     /// <summary>Eight-point compass direction of an azimuth (north = 0°, east = 90°): "N", "NE", …</summary>
     public static string Compass(double azimuthDegrees)
     {

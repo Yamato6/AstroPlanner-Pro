@@ -419,6 +419,7 @@
   <data name="LocationsDefaultName" xml:space="preserve"><value>My site</value></data>
   <data name="HorizonFlat" xml:space="preserve"><value>Flat</value></data>
   <data name="HorizonPointsFormat" xml:space="preserve"><value>{0} points</value></data>
+  <data name="RaDecFormat" xml:space="preserve"><value>RA {0}, Dec {1}</value></data>
   <data name="CoordinatesFormat" xml:space="preserve"><value>{0:0.####}°, {1:0.####}°</value></data>
   <data name="ElevationFormat" xml:space="preserve"><value>{0:0} m</value></data>
   <data name="ImportV1Title" xml:space="preserve"><value>Import from AstroPlanner v1</value></data>

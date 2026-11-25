@@ -1,6 +1,6 @@
 import type { LucideIcon } from 'lucide-react';
 import type { ReactNode } from 'react';
-import { Button, ToggleButton, Tooltip, TooltipTrigger } from 'react-aria-components';
+import { Button, type PressEvent, ToggleButton, Tooltip, TooltipTrigger } from 'react-aria-components';
 import classes from './IconButton.module.css';
 
 const styles = classes as Readonly<Record<'button' | 'tooltip' | 'kbd' | 'reason', string>>;
@@ -18,7 +18,8 @@ interface CommonProps {
 }
 
 export interface IconButtonProps extends CommonProps {
-  readonly onPress?: () => void;
+  /** The press, with its modifier keys (Shift, Ctrl, Alt). */
+  readonly onPress?: (event: PressEvent) => void;
 }
 
 export interface ToggleIconButtonProps extends CommonProps {

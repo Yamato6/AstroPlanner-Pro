@@ -1,0 +1,47 @@
+/* A point where the right click happened: the menu opens from it. */
+.anchor {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 1px;
+  height: 1px;
+  pointer-events: none;
+}
+
+.popover {
+  min-width: 200px;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-md);
+  background: var(--surface-tooltip);
+  box-shadow: var(--shadow-panel);
+}
+
+.menu {
+  padding: var(--space-1);
+  outline: none;
+}
+
+.item {
+  padding: var(--space-1) var(--space-3);
+  border-radius: var(--radius-sm);
+  color: var(--text-primary);
+  cursor: pointer;
+  outline: none;
+}
+
+.item[data-focused] {
+  background: var(--surface-hover);
+  color: var(--text-strong);
+}
+
+.item[data-disabled] {
+  color: var(--text-disabled);
+  cursor: default;
+}
+
+.separator {
+  height: 1px;
+  margin: var(--space-1) 0;
+  border: 0;
+  background: var(--border-hairline);
+}

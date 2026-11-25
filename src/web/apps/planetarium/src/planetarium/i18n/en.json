@@ -35,19 +35,32 @@
       "title": "Targets",
       "summary": "The whole catalog with its filters, columns and feasibility."
     },
-    "plan": { "title": "My plan", "summary": "Tonight's schedule, priorities, locks and exports." },
+    "plan": {
+      "title": "My plan",
+      "summary": "Tonight's schedule, priorities, locks and exports."
+    },
     "logbook": {
       "title": "Logbook",
       "summary": "Your observations and captures, and predictions against results."
     },
-    "equipment": { "title": "Equipment", "summary": "Cameras, optics, mounts and rigs, and the active rig." },
+    "equipment": {
+      "title": "Equipment",
+      "summary": "Cameras, optics, mounts and rigs, and the active rig."
+    },
     "sites": {
       "title": "Sites",
       "summary": "Your observing sites, their time zones, sky quality and horizons."
     },
-    "milkyWay": { "title": "Milky Way", "summary": "Tonight's core window and the months ahead." },
-    "settings": { "title": "Settings" },
-    "help": { "title": "Help" }
+    "milkyWay": {
+      "title": "Milky Way",
+      "summary": "Tonight's core window and the months ahead."
+    },
+    "settings": {
+      "title": "Settings"
+    },
+    "help": {
+      "title": "Help"
+    }
   },
   "placeholder": {
     "title": "{{title}} is coming to this interface",
@@ -65,7 +78,9 @@
     "resetLayout": "Window layout",
     "resetLayoutDescription": "Closes every window and forgets where they were.",
     "reset": "Reset",
-    "classicNote": "The planner's settings (site, online services, calibration…) are in the classic window until they move here."
+    "classicNote": "The planner's settings (site, online services, calibration…) are in the classic window until they move here.",
+    "autoHide": "Hide toolbars when idle",
+    "autoHideDescription": "The top bar and the dock fade after 3 s without input."
   },
   "help": {
     "keyboard": "Keyboard",
@@ -112,6 +127,77 @@
     "help": "Help",
     "closeWindow": "Close the window in front",
     "nextWindow": "Next window",
-    "previousWindow": "Previous window"
+    "previousWindow": "Previous window",
+    "commandPalette": "Search and commands",
+    "search": "Search",
+    "clearSelection": "Clear the selection"
+  },
+  "dock": {
+    "label": "Time and view",
+    "darknessBar": "Tonight's darkness",
+    "skyTime": "Sky time",
+    "time": "Time",
+    "back": "Back 10 min (Shift: 1 h, Ctrl: 1 day, Alt: 1 min)",
+    "forward": "Forward 10 min (Shift: 1 h, Ctrl: 1 day, Alt: 1 min)",
+    "play": "Play time",
+    "pause": "Pause time",
+    "now": "Now",
+    "dateTime": "Sky date and time",
+    "rate": "Speed of time",
+    "layers": "Layers",
+    "viewMode": "View",
+    "dome": "Dome",
+    "allSky": "All-sky",
+    "finder": "Finder"
+  },
+  "hud": {
+    "label": "Sky under the pointer",
+    "fov": "FOV",
+    "raDec": "RA/Dec",
+    "altAz": "Alt/Az",
+    "sqm": "SQM",
+    "limit": "Limit"
+  },
+  "card": {
+    "label": "Selected object",
+    "expand": "Show details",
+    "collapse": "Hide details",
+    "clear": "Clear the selection",
+    "magnitude": "mag {{magnitude}}",
+    "altAz": "Alt / Az",
+    "transit": "Transit",
+    "bestWindow": "Best window",
+    "coordinates": "J2000",
+    "why": "Why?",
+    "actions": "Actions",
+    "center": "Center",
+    "frame": "Frame with the camera",
+    "addToPlan": "Add to my plan",
+    "removeFromPlan": "Remove from my plan"
+  },
+  "contextMenu": {
+    "label": "Sky actions",
+    "center": "Center",
+    "frame": "Frame with the camera",
+    "finder": "Finder chart",
+    "addToPlan": "Add to my plan",
+    "added": "{{title}} added to my plan",
+    "copy": "Copy coordinates",
+    "copied": "Coordinates copied",
+    "copyFailed": "The coordinates could not be copied"
+  },
+  "palette": {
+    "label": "Search objects and commands",
+    "placeholder": "Search objects, windows and commands…",
+    "objects": "Objects",
+    "windows": "Windows",
+    "commands": "Commands",
+    "online": "Search online for “{{name}}”",
+    "nothing": "Nothing matches",
+    "resolveFailed": "Searching online for {{name}} failed"
+  },
+  "toasts": {
+    "label": "Notifications",
+    "close": "Close"
   }
 }
