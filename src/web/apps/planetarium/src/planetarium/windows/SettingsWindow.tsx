@@ -6,6 +6,7 @@ import { useTranslation } from 'react-i18next';
 import { useSnapshot, useUiCommand } from '../app/hostQueries';
 import { host } from '../host';
 import { useWindows } from '../state/windows';
+import { LandscapeSection } from './LandscapeSection';
 import classes from './windows.module.css';
 
 const styles = classes as Readonly<
@@ -174,6 +175,8 @@ export function SettingsWindow() {
           {t('settings.scintillation')}
         </Switch>
       </section>
+
+      <LandscapeSection />
 
       <section className={styles.section} aria-labelledby="settings-windows">
         <h3 id="settings-windows" className={styles.heading}>

@@ -145,6 +145,7 @@ public partial class App : System.Windows.Application
         services.AddSingleton<WeatherState>();
         services.AddSingleton<EquipmentState>();
         services.AddSingleton<ThemeState>();
+        services.AddSingleton(sp => MediaLibrary.Load(AppPaths.MediaDirectory, sp.GetRequiredService<IAppLogger>()));
 
         // View models
         services.AddSingleton<SettingsViewModel>();

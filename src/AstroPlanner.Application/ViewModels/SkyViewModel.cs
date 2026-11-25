@@ -41,13 +41,15 @@ public sealed partial class SkyViewModel : ObservableObject, IDisposable
         INameResolver? nameResolver = null,
         OnlineInfoState? online = null,
         SatelliteState? satellites = null,
-        ThemeState? theme = null)
+        ThemeState? theme = null,
+        MediaLibrary? media = null)
     {
+        Media = media ?? MediaLibrary.None;
         _targets = targets;
         _plan = plan;
         _theme = theme;
         _session = new SkySession(context, store, logger, time ?? TimeProvider.System);
-        _feed = new SkyBodyFeed(_session, () => _targets.AllObjects.Select(row => row.Target), satellites);
+        _feed = new SkyBodyFeed(_session, () => _targets.AllObjects.Select(row => row.Target), satellites, Media);
         Map = new SkyMapViewModel(context, () => _targets.Objects, () => _targets.SelectedObject,
             row => _targets.SelectedObject = row, () => _plan.Items.Select(item => item.Id));
         Layers = new SkyLayersViewModel(_session);
@@ -93,6 +95,9 @@ public sealed partial class SkyViewModel : ObservableObject, IDisposable
     }
 
     private IObserverContext Context => _session.Context;
+
+    /// <summary>The sky's images next to the exe (panorama, landscapes), or <see cref="MediaLibrary.None"/>.</summary>
+    public MediaLibrary Media { get; }
 
     /// <summary>The sky clock: play, pause, step and rate.</summary>
     public SkyTimeViewModel Time { get; }
@@ -276,7 +281,8 @@ public sealed partial class SkyViewModel : ObservableObject, IDisposable
     private void SendAll()
     {
         _session.Send(SkyMessageCodec.Init(new InitPayload(
-            $"https://{SkyHosts.DataHost}/", RefractionModel.Standard, Layers.Layers(), Modes.ViewMode, _theme?.SkyTheme ?? "dark", Layers.ShowStats)));
+            $"https://{SkyHosts.DataHost}/", RefractionModel.Standard, Layers.Layers(), Modes.ViewMode, _theme?.SkyTheme ?? "dark", Layers.ShowStats,
+            Media.BaseUrl)));
         SendSiteAndTime();
         _session.Send(SkyMessageCodec.CenterOn(CenterOnView()));
         SendHighlights();
@@ -358,6 +364,10 @@ public sealed partial class SkyViewModel : ObservableObject, IDisposable
         {
             _feed.SendAppearance(_session.Clock.UtcNow);
             UpdateSkyBrightnessText();
+        }
+        else if (e.PropertyName == nameof(IObserverContext.LandscapeId))
+        {
+            _feed.SendObserver();
         }
     }
 

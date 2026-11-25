@@ -13,4 +13,10 @@ public static class AppPaths
         "AstroPlannerPro");
 
     public static string DataFile(string fileName) => Path.Combine(DataDirectory, fileName);
+
+    /// <summary>
+    /// The sky's images shipped next to the exe (<c>data\</c>: panorama, landscapes, manifest.json),
+    /// read-only; absent in a build without them.
+    /// </summary>
+    public static string MediaDirectory { get; } = Path.Combine(AppContext.BaseDirectory, "data");
 }

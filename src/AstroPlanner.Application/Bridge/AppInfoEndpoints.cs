@@ -15,6 +15,8 @@ public sealed class AppInfoEndpoints : IEndpointModule
     public static readonly Uri RepositoryUrl = new("https://github.com/Yamato6/AstroPlanner-Pro");
 
     private static readonly Uri OpenMeteoUrl = new("https://open-meteo.com/");
+    private static readonly Uri MilkyWayUrl = new("https://www.eso.org/public/images/eso0932a/");
+    private static readonly Uri PolyHavenUrl = new("https://polyhaven.com/");
 
     private readonly ThemeState _theme;
     private readonly AppVersion _version;
@@ -57,6 +59,8 @@ public sealed class AppInfoEndpoints : IEndpointModule
             new AboutCredit(Title(Strings.AboutOnlineData), Strings.AboutOnlineDataText, null),
             new AboutCredit(Title(Strings.AboutCatalogs), Strings.AboutCatalogsText, null),
             new AboutCredit(Title(Strings.AboutLightPollution), Strings.AboutLightPollutionText, null),
+            new AboutCredit(Title(Strings.AboutMilkyWay), Strings.AboutMilkyWayText, MilkyWayUrl.AbsoluteUri),
+            new AboutCredit(Title(Strings.AboutLandscapes), Strings.AboutLandscapesText, PolyHavenUrl.AbsoluteUri),
             new AboutCredit(Title(Strings.AboutAlgorithms), Strings.AboutAlgorithmsText, null),
             new AboutCredit(Title(Strings.AboutLibraries), Strings.AboutLibrariesText, null),
         ],

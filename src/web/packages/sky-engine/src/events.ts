@@ -24,6 +24,12 @@ export interface SkyEventMap {
     readonly fovDegrees: number;
     readonly mode: SkyViewMode;
     readonly starLimitMagnitude: number;
+    /** The images on screen whose authors must be credited (the Milky Way panorama, the landscape). */
+    readonly credits: readonly {
+      readonly kind: 'panorama' | 'landscape';
+      readonly author: string;
+      readonly license: string;
+    }[];
   };
   /** The point under the pointer, or null when it left the sky. */
   readonly cursor: SkyPoint | null;

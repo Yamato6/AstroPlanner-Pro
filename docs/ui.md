@@ -64,7 +64,11 @@ tested; `FloatingWindow` draws one window and turns pointer and keyboard gesture
 - Windows only move a composited layer: the sky is never re-rendered for them.
 
 The registry (`windows/registry.ts`) lists every window in rail order with its icon and size.
-R1b ships Settings and Help; the others show an empty state until R4 brings them.
+R1b ships Settings and Help; the others show an empty state until R4 brings them. Settings ›
+Landscape (R2c, `LandscapeSection`) is a radio list (React Aria `RadioField`): the site's horizon
+profile, a flat ground or one of the media folder's landscapes, each with its credit; *Use the
+landscape horizon for calculations* asks for a confirmation in place before it replaces the site's
+horizon. It needs a saved active site and the media folder, and says so when either is missing.
 
 ## Shell
 
@@ -81,8 +85,9 @@ R1b ships Settings and Help; the others show an empty state until R4 brings them
   "Why?" opens the feasibility reasons; Center, Frame with the camera, Add to / Remove from my
   plan. The Moon, the Sun or a satellite show their name only.
 - **HUD** (bottom left): field of view, J2000 RA/Dec and Alt/Az under the pointer, zenith SQM and
-  the star limit. It follows the engine's page events (`skyEvents`: `view`, `cursor`), so the
-  pointer costs no messages to the host.
+  the star limit, and below them the credits of the images on screen (the Milky Way panorama, CC
+  BY: shown whenever it is visible; the landscape). It follows the engine's page events
+  (`skyEvents`: `view`, `cursor`), so the pointer costs no messages to the host.
 - **Context menu**: a right click selects what is under the pointer (`mountSky(…, {
   contextMenu: true })`; the classic Sky tab keeps ignoring right clicks) and offers its actions,
   or the point's coordinates on empty sky.
@@ -113,7 +118,7 @@ whenever it is activated.
 | `Ctrl+W` | close the window in front | `Ctrl+Tab` / `Ctrl+Shift+Tab` | next / previous window |
 | `Ctrl+K` / `/` | search and commands | `Esc` | close the window you are in, else clear the selection |
 | `T` | track the selected object (a manual pan stops it, with a toast) | `Home` | back to south, 30° up, 70° field |
-| `A` | atmosphere and sky brightness | | |
+| `A` | atmosphere and sky brightness | `Shift+G` | ground and landscape |
 
 ## CSP
 

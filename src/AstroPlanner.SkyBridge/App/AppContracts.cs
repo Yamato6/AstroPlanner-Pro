@@ -310,6 +310,37 @@ public sealed record SwitchRequest(bool Enabled);
 public sealed record UiChangedEvent(
     [property: Range(0, int.MaxValue)] int Revision);
 
+/// <summary>A landscape the active site can show (<c>landscape.get</c>); credited as the image asks.</summary>
+public sealed record LandscapeOption(
+    [property: StringLength(40, MinimumLength = 1)] string Id,
+    [property: StringLength(100, MinimumLength = 1)] string Name,
+    [property: StringLength(200, MinimumLength = 1)] string Author,
+    [property: StringLength(50, MinimumLength = 1)] string License,
+    [property: StringLength(200, MinimumLength = 1)] string Url);
+
+/// <summary>
+/// <c>landscape.get</c>: what the sky shows around the active saved site (spec §8.5).
+/// <see cref="LandscapeId"/>: one of <see cref="Landscapes"/>, <c>"flat"</c>, or null (the site's
+/// horizon profile). <see cref="SiteName"/> is null when the site in use is not a saved one (a
+/// landscape belongs to a saved site). <see cref="HorizonFromLandscape"/>: the site's horizon
+/// mask already is the landscape's.
+/// </summary>
+public sealed record LandscapeSnapshot(
+    [property: Range(0, int.MaxValue)] int Revision,
+    bool MediaAvailable,
+    [property: StringLength(200, MinimumLength = 1)] string? SiteName,
+    [property: StringLength(40, MinimumLength = 1)] string? LandscapeId,
+    [property: Length(0, 32)] IReadOnlyList<LandscapeOption> Landscapes,
+    bool HorizonFromLandscape);
+
+/// <summary><c>landscape.set</c>: the active site's landscape (an id, <c>"flat"</c>, or null for the horizon profile).</summary>
+public sealed record LandscapeSetRequest(
+    [property: StringLength(40, MinimumLength = 1)] string? LandscapeId);
+
+/// <summary><c>landscape.changed</c>: the site, its landscape or its horizon changed.</summary>
+public sealed record LandscapeChangedEvent(
+    [property: Range(0, int.MaxValue)] int Revision);
+
 /// <summary>Ids of the planetarium UI's windows (spec §3.4).</summary>
 public static class WindowIds
 {

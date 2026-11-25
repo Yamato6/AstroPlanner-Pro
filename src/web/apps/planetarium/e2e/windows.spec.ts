@@ -220,6 +220,41 @@ test('Settings switches the interface options and resets the layout', async ({ p
   await expect.poll(() => host.layout.windows).toEqual([]);
 });
 
+test("Settings › Landscape chooses the site's landscape and uses its horizon after a confirmation", async ({
+  page,
+}) => {
+  await rail(page, 'Settings').click();
+  const settings = dialog(page, 'Settings');
+  const landscapes = settings.getByRole('radiogroup', { name: 'Around Home' });
+
+  // The golden snapshot: Open field chosen for "Home", its horizon not in use yet.
+  await expect(landscapes.getByRole('radio', { name: 'Open field' })).toBeChecked();
+  await expect(landscapes).toContainText('Greg Zaal, Poly Haven · CC0 1.0');
+
+  await landscapes.getByText('Mountains', { exact: true }).click();
+  await landscapes.getByText('Horizon profile', { exact: true }).click();
+  await landscapes.getByText('Flat ground', { exact: true }).click();
+  expect(host.calls('landscape.set')).toEqual([
+    { landscapeId: 'mountains' },
+    { landscapeId: null },
+    { landscapeId: 'flat' },
+  ]);
+  await expect(settings.getByRole('button', { name: 'Use…' })).toHaveCount(0);
+
+  await landscapes.getByText('Mountains', { exact: true }).click();
+  await settings.getByRole('button', { name: 'Use…' }).click();
+  const confirm = settings.getByRole('group', { name: 'Use the landscape horizon for calculations' });
+  await expect(confirm).toContainText('Replace the horizon of Home with the one of Mountains?');
+  await confirm.getByRole('button', { name: 'Cancel' }).click();
+  expect(host.calls('landscape.useHorizon')).toEqual([]);
+
+  await settings.getByRole('button', { name: 'Use…' }).click();
+  await confirm.getByRole('button', { name: 'Replace' }).click();
+  expect(host.calls('landscape.useHorizon')).toEqual([{}]);
+  await expect(settings).toContainText("The site's horizon already is this landscape's.");
+  await expect(settings.getByRole('button', { name: 'Use…' })).toBeDisabled();
+});
+
 test('Help lists every shortcut and shows About from the app', async ({ page }) => {
   await page.keyboard.press('F1');
   const help = dialog(page, 'Help');

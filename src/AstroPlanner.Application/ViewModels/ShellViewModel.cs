@@ -92,6 +92,7 @@ public sealed partial class ShellViewModel : ObservableObject, IDisposable
 
         _context.LocationName = DescribeLocation();
         _context.ZenithSqm = locations.ActiveLocation?.ZenithSqm;
+        _context.LandscapeId = locations.ActiveLocation?.LandscapeId;
         _context.Darkness = settings.AllowNauticalTwilight ? DarknessDefinition.Nautical : DarknessDefinition.Astronomical;
         _context.ExtinctionCoefficient = settings.ExtinctionCoefficient;
         _context.Tuning = settings.Tuning;
@@ -236,6 +237,7 @@ public sealed partial class ShellViewModel : ObservableObject, IDisposable
         Locations.Reload();
         _context.LocationName = DescribeLocation();
         _context.ZenithSqm = Locations.ActiveLocation?.ZenithSqm;
+        _context.LandscapeId = Locations.ActiveLocation?.LandscapeId;
         _context.Darkness = settings.Darkness;
         _context.ExtinctionCoefficient = settings.ExtinctionCoefficient;
         _context.Tuning = settings.Tuning ?? new();

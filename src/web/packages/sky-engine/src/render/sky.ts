@@ -41,6 +41,14 @@ import { Flight, HOME_VIEW, MAX_ALTITUDE, MIN_ALTITUDE, type DomeView } from './
 import { dsoShape, palette, starColor } from './colors';
 import { altAzGrid, ecliptic, equatorialGrid, meridian, segmentVertices } from './grids';
 import { hasObstruction, maskAltitude, silhouetteTriangles, type HorizonPoint } from './horizon';
+import {
+  equirectangularLod,
+  landscapeHorizon,
+  loadMediaImage,
+  panoramaFieldFade,
+  type LandscapeEntry,
+  type MediaManifest,
+} from './media';
 import { pickNearest, type PickCandidate } from './picking';
 import {
   allSkyGeometry,
@@ -73,6 +81,8 @@ import {
   dsoVertex,
   groundFragment,
   groundVertex,
+  landscapeFragment,
+  landscapeVertex,
   lineFragment,
   lineVertex,
   silhouetteFragment,
@@ -94,6 +104,28 @@ export interface Selection {
 }
 
 export type { ScreenPoint, ViewMode } from './projection';
+
+/**
+ * Display brightness of the panorama under a dark natural sky (the texel's colour × this): the
+ * star clouds of Sagittarius about 0.3, the faint band a few hundredths over the 0.04 of the sky.
+ */
+export const PANORAMA_GAIN = 0.6;
+
+/** Light on the landscape under a dark natural sky (linear, 1 = the daylight photo): dim and bluish. */
+const LANDSCAPE_NIGHT: Rgb = [0.05, 0.06, 0.08];
+
+/**
+ * Widest landscape or panorama texture: 4096 px (11 px per degree). An 8192 px landscape costs
+ * about 280 MB more in WebView2's GPU process and takes the app past its 1.2 GB (spec §11).
+ */
+const MEDIA_MAX_WIDTH = 4096;
+
+/** An image of the media folder now on the GPU, with the credit it must show. */
+export interface MediaCredit {
+  readonly kind: 'panorama' | 'landscape';
+  readonly author: string;
+  readonly license: string;
+}
 
 /** A projected point with its apparent horizontal position (90°/0 in the finder). */
 interface Placed extends ScreenPoint {
@@ -240,6 +272,24 @@ export class SkyView {
     uGround: { value: color(palette.ground) },
     uHorizon: { value: color(palette.horizon) },
   };
+  private readonly panoramaUniforms = {
+    uPanorama: { value: null as THREE.Texture | null },
+    uPanoramaOn: { value: 0 },
+    uPanoramaGain: { value: 0 },
+    uPanoramaLod: { value: 0 },
+  };
+  private readonly landscapeUniforms = {
+    uLandscape: { value: null as THREE.Texture | null },
+    uTopAltitude: { value: 0 },
+    uLandscapeLod: { value: 0 },
+    uLight: { value: new THREE.Vector3(1, 1, 1) },
+    uSaturation: { value: 1 },
+  };
+  private media: { readonly baseUrl: string; readonly manifest: MediaManifest } | null = null;
+  private panorama: { readonly texture: THREE.Texture; readonly width: number } | null = null;
+  private landscape: { readonly entry: LandscapeEntry; texture: THREE.Texture | null; width: number } | null =
+    null;
+  private readonly landscapePass: THREE.Mesh;
   /** The dome camera of the last frame (projection of the overlay, picking, unproject). */
   private dome: DomeCamera = domeCamera(35, 180, 70, 1, 1);
   private readonly starLimitUniform = { value: 8.5 };
@@ -346,7 +396,7 @@ export class SkyView {
       new THREE.ShaderMaterial({
         vertexShader: skyPassVertex,
         fragmentShader: skyPassFragment(displayLevelGlsl()),
-        uniforms: { ...this.shared, ...this.skyPassUniforms },
+        uniforms: { ...this.shared, ...this.skyPassUniforms, ...this.panoramaUniforms },
         depthTest: false,
         depthWrite: false,
       }),
@@ -370,6 +420,29 @@ export class SkyView {
     this.ground.renderOrder = -10;
     this.ground.frustumCulled = false;
     this.scene.add(this.ground);
+
+    // The landscape: a full-screen pass over the stars and lines (renderOrder), once its image is loaded.
+    this.landscapePass = new THREE.Mesh(
+      new THREE.PlaneGeometry(2, 2),
+      new THREE.ShaderMaterial({
+        vertexShader: landscapeVertex,
+        fragmentShader: landscapeFragment,
+        uniforms: {
+          ...this.domeUniforms(),
+          uMode: this.shared.uMode,
+          uChartScale: this.shared.uChartScale,
+          uViewport: this.skyPassUniforms.uViewport,
+          ...this.landscapeUniforms,
+        },
+        transparent: true,
+        depthTest: false,
+        depthWrite: false,
+      }),
+    );
+    this.landscapePass.renderOrder = 20;
+    this.landscapePass.frustumCulled = false;
+    this.landscapePass.visible = false;
+    this.scene.add(this.landscapePass);
 
     this.milkyWay = this.segments(data.milkyWay, palette.milkyWay, this.milkyWayOpacity, 0.15);
     this.milkyWay.renderOrder = -5;
@@ -617,8 +690,159 @@ export class SkyView {
     this.observer = observer;
     // Refraction scaled by the site's pressure (computed in C#, applied by the shader).
     this.setRefraction(observer.refraction);
-    this.horizonPoints = [...observer.horizon].sort((a, b) => a.azimuth - b.azimuth);
+    this.applyLandscape();
+  }
+
+  // ---- media (panorama, landscapes) ----------------------------------------------------------
+
+  /**
+   * The media folder's manifest: loads the panorama, and the site's landscape when it has one.
+   * Called once, after the sky is built (the images arrive later; until then the outline Milky
+   * Way and the horizon profile stay).
+   */
+  setMedia(baseUrl: string, manifest: MediaManifest): void {
+    this.media = { baseUrl, manifest };
+    const width = Math.min(manifest.panorama.width, this.maxTextureWidth(MEDIA_MAX_WIDTH));
+    loadMediaImage(baseUrl, manifest.panorama.file, width)
+      .then((image) => {
+        const imageWidth = image.width;
+        this.panorama = { texture: this.equirectangularTexture(image), width: imageWidth };
+        this.panoramaUniforms.uPanorama.value = this.panorama.texture;
+      })
+      .catch((error: unknown) => {
+        this.onMediaError?.(error);
+      });
+    this.applyLandscape();
+  }
+
+  /** Called when an image of the media folder could not be loaded (logged by the engine). */
+  onMediaError: ((error: unknown) => void) | null = null;
+
+  /** The landscapes of the media folder (empty without it). */
+  get landscapes(): readonly LandscapeEntry[] {
+    return this.media?.manifest.landscapes ?? [];
+  }
+
+  /**
+   * Is the panorama visible at all (its contrast at the zenith, the darkest sky: natural light
+   * over all of it, ≥ 10 % — a sky of SQM ≈ 19.5 or darker)? Its credit shows only then.
+   */
+  private get milkyWayVisible(): boolean {
+    if (!this.layers.skyBrightness) {
+      return true;
+    }
+    const a = this.appearance;
+    return fluxOf(22) / fluxOf(a.zenithSqm) >= 0.1;
+  }
+
+  /** The images on screen now, whose credits the page shows (spec §8.3: CC BY). */
+  get mediaCredits(): MediaCredit[] {
+    const credits: MediaCredit[] = [];
+    const panorama = this.media?.manifest.panorama;
+    if (
+      panorama &&
+      this.panoramaUniforms.uPanoramaOn.value > 0 &&
+      this.panoramaUniforms.uPanoramaGain.value > 0 &&
+      this.milkyWayVisible
+    ) {
+      credits.push({ kind: 'panorama', author: panorama.credit.author, license: panorama.credit.license });
+    }
+    if (this.landscape?.texture && this.landscapePass.visible) {
+      const { credit } = this.landscape.entry;
+      credits.push({ kind: 'landscape', author: credit.author, license: credit.license });
+    }
+    return credits;
+  }
+
+  private maxTextureWidth(wanted: number): number {
+    return Math.min(wanted, this.renderer.capabilities.maxTextureSize);
+  }
+
+  /**
+   * An equirectangular image on the GPU, with mipmaps. The decoded image is uploaded now and
+   * released (it would otherwise stay in the page's memory as well as in the GPU's).
+   */
+  private equirectangularTexture(image: ImageBitmap): THREE.Texture {
+    const texture = new THREE.Texture(image);
+    texture.flipY = false; // rows top-down: v = 0 at the top (ImageBitmaps are never flipped)
+    texture.wrapS = THREE.RepeatWrapping;
+    texture.wrapT = THREE.ClampToEdgeWrapping;
+    texture.minFilter = THREE.LinearMipmapLinearFilter;
+    texture.magFilter = THREE.LinearFilter;
+    texture.generateMipmaps = true;
+    texture.anisotropy = Math.min(4, this.renderer.capabilities.getMaxAnisotropy());
+    texture.needsUpdate = true;
+    this.renderer.initTexture(texture);
+    image.close();
+    return texture;
+  }
+
+  /**
+   * The site's landscape (setObserver.landscape): a landscape of the media folder replaces the
+   * horizon profile (its own horizon cuts the labels; its outline is drawn until the image is
+   * loaded), "flat" shows none, null the site's profile.
+   */
+  private applyLandscape(): void {
+    const id = this.observer?.landscape ?? null;
+    const entry = id === null ? null : (this.media?.manifest.landscapes.find((l) => l.id === id) ?? null);
+    if (entry?.id !== this.landscape?.entry.id) {
+      this.landscape?.texture?.dispose();
+      this.landscapeUniforms.uLandscape.value = null;
+      this.landscape = entry ? { entry, texture: null, width: 0 } : null;
+      if (entry && this.media) {
+        const requested = this.landscape;
+        loadMediaImage(
+          this.media.baseUrl,
+          entry.file,
+          Math.min(entry.width, this.maxTextureWidth(MEDIA_MAX_WIDTH)),
+        )
+          .then((image) => {
+            if (this.landscape !== requested || !requested) {
+              image.close();
+              return;
+            }
+            requested.width = image.width;
+            requested.texture = this.equirectangularTexture(image);
+            this.landscapeUniforms.uLandscape.value = requested.texture;
+            this.landscapeUniforms.uTopAltitude.value = entry.topAltitudeDegrees;
+          })
+          .catch((error: unknown) => {
+            this.onMediaError?.(error);
+          });
+      }
+    }
+    this.horizonPoints = entry
+      ? landscapeHorizon(entry)
+      : id === 'flat'
+        ? []
+        : [...(this.observer?.horizon ?? [])].sort((a, b) => a.azimuth - b.azimuth);
     this.buildSilhouette();
+  }
+
+  /** Panorama and landscape uniforms for this frame (after the sky light is known). */
+  private updateMedia(groundLight: number): void {
+    const degreesPerPixel = 1 / Math.max(1e-6, this.pixelsPerDegree * this.pixelRatio);
+    const finder = this.mode === 'finder';
+    const p = this.panoramaUniforms;
+    p.uPanoramaOn.value = this.panorama && this.layers.milkyWay && !finder ? 1 : 0;
+    p.uPanoramaGain.value = PANORAMA_GAIN * (this.mode === 'dome' ? panoramaFieldFade(this.fov) : 1);
+    p.uPanoramaLod.value = this.panorama ? equirectangularLod(this.panorama.width, degreesPerPixel) : 0;
+
+    const l = this.landscapeUniforms;
+    const ready = this.landscape?.texture ? this.landscape : null;
+    this.landscapePass.visible = ready !== null && this.layers.ground && !finder;
+    if (ready) {
+      l.uLandscapeLod.value = equirectangularLod(ready.width, degreesPerPixel);
+      // Daylight shows the photo as taken; the night darkens it to a faint, nearly grey shape
+      // tinted by the sky at the horizon (moonlight and the towns' glow raise it).
+      const k = groundLight;
+      l.uLight.value.set(
+        LANDSCAPE_NIGHT[0] * (1 - k) + k,
+        LANDSCAPE_NIGHT[1] * (1 - k) + k,
+        LANDSCAPE_NIGHT[2] * (1 - k) + k,
+      );
+      l.uSaturation.value = 0.25 + 0.75 * k;
+    }
   }
 
   setBodies(bodies: MovingBody[]): void {
@@ -707,7 +931,8 @@ export class SkyView {
     this.stars.visible = l.stars;
     this.constellationLines.visible = l.constellationLines;
     this.constellationBounds.visible = l.constellationBoundaries;
-    this.milkyWay.visible = l.milkyWay;
+    // The panorama replaces the outline Milky Way once it is loaded.
+    this.milkyWay.visible = l.milkyWay && !(this.panorama && !finder);
     // Alt-az lines are in the horizon frame: they have no place on the (equatorial) finder chart.
     this.altAz.visible = l.altAzGrid && !finder;
     this.meridianLine.visible = l.meridian && !finder;
@@ -719,7 +944,7 @@ export class SkyView {
     this.ground.visible = dome && l.ground;
     this.skyPass.visible = !finder;
     if (this.silhouette) {
-      this.silhouette.visible = !finder && l.ground;
+      this.silhouette.visible = !finder && l.ground && !this.landscape?.texture;
     }
     this.shared.uHideBelowHorizon.value = this.mode === 'allSky' ? 1 : finder ? 0 : l.ground ? 1 : 0;
   }
@@ -1052,6 +1277,7 @@ export class SkyView {
     };
     mix(palette.ground, DAY_GROUND, this.groundColors.uGround.value);
     mix(palette.horizon, DAY_HORIZON, this.groundColors.uHorizon.value);
+    this.updateMedia(light);
   }
 
   /** The sky brightness now (for diagnostics and tests). */

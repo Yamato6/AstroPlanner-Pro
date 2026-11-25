@@ -1,0 +1,29 @@
+{
+  "v": 2,
+  "kind": "res",
+  "id": 19,
+  "type": "landscape.get",
+  "payload": {
+    "revision": 2,
+    "mediaAvailable": true,
+    "siteName": "Home",
+    "landscapeId": "open-field",
+    "landscapes": [
+      {
+        "id": "open-field",
+        "name": "Open field",
+        "author": "Greg Zaal, Poly Haven",
+        "license": "CC0 1.0",
+        "url": "https://polyhaven.com/a/noon_grass"
+      },
+      {
+        "id": "mountains",
+        "name": "Mountains",
+        "author": "Greg Zaal, Poly Haven",
+        "license": "CC0 1.0",
+        "url": "https://polyhaven.com/a/kiara_5_noon"
+      }
+    ],
+    "horizonFromLandscape": false
+  }
+}

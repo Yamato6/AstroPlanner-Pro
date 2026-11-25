@@ -174,13 +174,15 @@ jobs:
           Copy-Item LICENSE portable\LICENSE.txt
           Copy-Item README.md portable\
           Copy-Item THIRD_PARTY_NOTICES.md portable\
+          Copy-Item publish\data portable\data -Recurse
           $zip = "dist\AstroPlannerPro_${{ steps.version.outputs.value }}_win-x64_portable.zip"
           Compress-Archive -Path portable\* -DestinationPath $zip
           # The zip must have the app and its licenses (spec §12).
           Add-Type -AssemblyName System.IO.Compression.FileSystem
           $archive = [IO.Compression.ZipFile]::OpenRead((Resolve-Path $zip))
           try { $entries = $archive.Entries.FullName } finally { $archive.Dispose() }
-          foreach ($required in 'AstroPlannerPro.exe', 'LICENSE.txt', 'README.md', 'THIRD_PARTY_NOTICES.md') {
+          $entries = $entries -replace '\\', '/'
+          foreach ($required in 'AstroPlannerPro.exe', 'LICENSE.txt', 'README.md', 'THIRD_PARTY_NOTICES.md', 'data/manifest.json') {
             if ($entries -notcontains $required) { throw "The portable zip lacks $required." }
           }
 

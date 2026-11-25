@@ -18,7 +18,9 @@ public static class SafeLinks
         // M5a: comet and asteroid elements.
         "minorplanetcenter.net",
         // M5b: satellite elements.
-        "celestrak.org"
+        "celestrak.org",
+        // R2c: credits of the sky's images.
+        "eso.org", "polyhaven.com"
     ];
 
     public static bool IsAllowed(Uri? uri) =>

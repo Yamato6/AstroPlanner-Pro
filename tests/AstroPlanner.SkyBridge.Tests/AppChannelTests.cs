@@ -76,6 +76,12 @@ public sealed class AppChannelTests
         ["search.resolve.response"] = AppMessageCodec.Response(18, AppMethods.SearchResolve.Name, new SearchResolveResponse(true,
             "Sh2-155 (HII), not in the catalog: resolved by SIMBAD at RA 22.9500 h, Dec +62.617°. The view is centred on it."),
             AppMethods.SearchResolve.Response),
+        ["landscape.get.response"] = AppMessageCodec.Response(19, AppMethods.LandscapeGet.Name, new LandscapeSnapshot(2, true, "Home", "open-field",
+        [
+            new LandscapeOption("open-field", "Open field", "Greg Zaal, Poly Haven", "CC0 1.0", "https://polyhaven.com/a/noon_grass"),
+            new LandscapeOption("mountains", "Mountains", "Greg Zaal, Poly Haven", "CC0 1.0", "https://polyhaven.com/a/kiara_5_noon"),
+        ], false), AppMethods.LandscapeGet.Response),
+        ["landscape.changed.event"] = AppMessageCodec.Event(AppEvents.LandscapeChanged, new LandscapeChangedEvent(3)),
     };
 
     // 2026-01-15 at the sample site, from 18:30 local (an hour before sunset, to the 10 min) to 07:40, every 10 min:

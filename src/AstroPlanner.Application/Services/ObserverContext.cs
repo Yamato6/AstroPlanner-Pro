@@ -34,6 +34,9 @@ public interface IObserverContext : INotifyPropertyChanged, INotifyDataErrorInfo
     /// <summary>Local horizon of the active location (flat by default).</summary>
     HorizonMask HorizonMask { get; set; }
 
+    /// <summary>The active saved site's landscape (<see cref="Location.LandscapeId"/>); only the sky uses it.</summary>
+    string? LandscapeId { get; set; }
+
     /// <summary>
     /// Manual zenith sky brightness of the active location (SQM reading or Bortle estimate,
     /// mag/arcsec²), or null to use the light-pollution atlas.
@@ -138,6 +141,9 @@ public sealed partial class ObserverContext(IAstronomyService astronomy, TimePro
 
     [ObservableProperty]
     public partial HorizonMask HorizonMask { get; set; } = HorizonMask.Flat;
+
+    [ObservableProperty]
+    public partial string? LandscapeId { get; set; }
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(EffectiveZenithSqm), nameof(ZenithSqmSource))]

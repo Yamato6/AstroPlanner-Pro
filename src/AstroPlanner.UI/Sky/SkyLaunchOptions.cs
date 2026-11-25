@@ -1,6 +1,8 @@
 using System.Globalization;
 using System.Text.RegularExpressions;
+using AstroPlanner.Core.Models;
 using AstroPlanner.SkyBridge;
+using AstroPlanner.SkyBridge.App;
 
 namespace AstroPlanner.UI.Sky;
 
@@ -12,7 +14,9 @@ namespace AstroPlanner.UI.Sky;
 /// <item><c>--sky-benchmark</c>: 10 s camera sweep, frame statistics logged;</item>
 /// <item><c>--sky-stars=N</c>: the star catalogue drawn N times (stress test, 1–8);</item>
 /// <item><c>--sky-resolution=WxH</c>: render at a fixed size (e.g. 1920x1080) whatever the window;</item>
-/// <item><c>--sky-mode=dome|allSky|finder</c>: benchmark one projection.</item>
+/// <item><c>--sky-mode=dome|allSky|finder</c>: benchmark one projection;</item>
+/// <item><c>--sky-quality=low|medium|high</c>: the atmosphere quality, whatever the preference;</item>
+/// <item><c>--sky-landscape=ID</c>: show this landscape of the media folder (or <c>flat</c>), whatever the site's.</item>
 /// </list>
 /// </summary>
 public static partial class SkyLaunchOptions
@@ -41,6 +45,18 @@ public static partial class SkyLaunchOptions
                 .FirstOrDefault(m => string.Equals(m, mode, StringComparison.OrdinalIgnoreCase)) is { } known)
         {
             parameters.Add("mode=" + known);
+        }
+
+        if (Value(args, "--sky-quality=") is { } quality
+            && new[] { SkyQualities.Low, SkyQualities.Medium, SkyQualities.High }
+                .FirstOrDefault(q => string.Equals(q, quality, StringComparison.OrdinalIgnoreCase)) is { } level)
+        {
+            parameters.Add("quality=" + level);
+        }
+
+        if (Value(args, "--sky-landscape=") is { } landscape && Landscapes.IsValidId(landscape))
+        {
+            parameters.Add("landscape=" + landscape);
         }
 
         return parameters.Count == 0 ? "" : "?" + string.Join('&', parameters);

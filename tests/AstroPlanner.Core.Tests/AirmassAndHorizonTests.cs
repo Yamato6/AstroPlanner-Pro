@@ -151,4 +151,18 @@ public sealed class LocationTests
 
         act.Should().Throw<ArgumentOutOfRangeException>();
     }
+
+    [Fact]
+    public void Location_LandscapeIds_AreFileNameSafe()
+    {
+        var home = new Location("home", "Home", 21.88, -102.29, 1888, "America/Mexico_City", "Central Standard Time (Mexico)",
+            landscapeId: "edge-of-town");
+
+        home.LandscapeId.Should().Be("edge-of-town");
+        (home with { LandscapeId = Landscapes.Flat }).LandscapeId.Should().Be("flat");
+        (home with { LandscapeId = null }).LandscapeId.Should().BeNull();
+        FluentActions.Invoking(() => home with { LandscapeId = "../data" }).Should().Throw<ArgumentException>();
+        FluentActions.Invoking(() => home with { LandscapeId = "Mountains" }).Should().Throw<ArgumentException>();
+        Landscapes.IsValidId(new string('a', Landscapes.MaximumIdLength + 1)).Should().BeFalse();
+    }
 }

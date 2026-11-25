@@ -83,6 +83,36 @@ public sealed partial class LocationsViewModel : ObservableObject
     /// <summary>The active saved location, or null when the site in use is not saved.</summary>
     public Location? ActiveLocation => Locations.FirstOrDefault(l => l.IsActive)?.Location;
 
+    /// <summary>
+    /// Saves <paramref name="update"/> of the active site and applies its horizon and landscape to
+    /// the context. False when no saved site is active or it could not be saved (logged).
+    /// </summary>
+    public bool UpdateActive(Func<Location, Location> update)
+    {
+        ArgumentNullException.ThrowIfNull(update);
+        if (ActiveLocation is not { } active)
+        {
+            return false;
+        }
+
+        var updated = update(active);
+        try
+        {
+            _repository.Save(updated);
+        }
+        catch (Exception ex) when (ex is IOException or InvalidDataException or UnauthorizedAccessException or InvalidOperationException
+                                       or System.Data.Common.DbException)
+        {
+            _logger.LogError("Could not save the location.", ex);
+            return false;
+        }
+
+        Reload();
+        _context.LandscapeId = updated.LandscapeId;
+        _context.HorizonMask = updated.HorizonMask;
+        return true;
+    }
+
     public void Reload()
     {
         var selectedId = SelectedLocation?.Id;

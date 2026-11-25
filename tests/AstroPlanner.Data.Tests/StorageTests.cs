@@ -325,7 +325,8 @@ public sealed class SqliteStoreTests : TempFolderTest
         var repository = new SqliteLocationRepository(Database());
         var mask = new HorizonMask([new HorizonPoint(90, 15), new HorizonPoint(270, 5)]);
         var home = new Location("home", "Home", 21.88, -102.29, 1888, "America/Mexico_City", "Central Standard Time (Mexico)", mask, "Roof");
-        var dark = new Location("dark", "Dark site", 22.1, -102.6, 2100, "America/Mexico_City", "Central Standard Time (Mexico)", zenithSqm: 21.4);
+        var dark = new Location("dark", "Dark site", 22.1, -102.6, 2100, "America/Mexico_City", "Central Standard Time (Mexico)", zenithSqm: 21.4,
+            landscapeId: "mountains");
 
         repository.Save(home);
         repository.Save(dark);
@@ -337,6 +338,8 @@ public sealed class SqliteStoreTests : TempFolderTest
         all[0].Notes.Should().Be("Roof");
         all[0].ZenithSqm.Should().BeNull();
         all[1].ZenithSqm.Should().Be(21.4);
+        all[0].LandscapeId.Should().BeNull();
+        all[1].LandscapeId.Should().Be("mountains");
 
         repository.Delete("home");
         repository.Delete("missing");

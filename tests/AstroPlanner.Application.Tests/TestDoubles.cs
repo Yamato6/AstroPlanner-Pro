@@ -202,7 +202,8 @@ internal static class TestShell
         INameResolver? resolver = null,
         IImageDecoder? decoder = null,
         ISmallBodyService? smallBodies = null,
-        ISatelliteService? satellites = null)
+        ISatelliteService? satellites = null,
+        MediaLibrary? media = null)
     {
         var logger = new NullLogger();
         var astronomy = new AstronomyService();
@@ -225,7 +226,7 @@ internal static class TestShell
         var about = new ObjectInfoViewModel(info, online, logger, time);
         var detail = new ObjectDetailViewModel(astronomy, context, weatherState, targets, planViewModel, logbook, framing, about, equipmentState);
         var sky = new SkyViewModel(context, targets, planViewModel, skyStore ?? new FakeSkyViewStore(), logger, time, equipmentState,
-            resolver, online, satelliteState, theme);
+            resolver, online, satelliteState, theme, media);
         var tonight = new TonightViewModel(context, weatherState, logbook, targets, equipmentState, planViewModel, astronomy, satelliteState);
         var locationsViewModel = new LocationsViewModel(locations ?? new FakeLocationRepository(), settingsViewModel, context, logger, atlas);
         return new ShellViewModel(

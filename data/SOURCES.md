@@ -82,6 +82,33 @@ lists M102 as a duplicate of M101; the app keeps the usual identification, as v1
 | License | Freely distributed for satellite observers; only the factual magnitudes are kept, credited in THIRD_PARTY_NOTICES. |
 | Used for | Embedded in `AstroPlanner.Core`: intrinsic magnitude (1000 km, full phase) of a satellite, scaled by range and phase. |
 
+## The Milky Way panorama — ESO/S. Brunier (R2c)
+
+| | |
+|---|---|
+| Source | ESO, "The Milky Way panorama" (eso0932a, 2009-09-14), https://www.eso.org/public/images/eso0932a/ — photographer Serge Brunier |
+| File | `https://cdn.eso.org/images/large/eso0932a.jpg` (6000×3000 JPEG, equirectangular in galactic coordinates) → `data/raw/eso/eso0932a.jpg` — SHA-256 `60400c92c54b7c1bd12299c69e83b16e5b6256e7dabacc478c021758ecd28179` |
+| Downloaded | 2026-11-25 |
+| License | **CC BY 4.0** (ESO's images, https://www.eso.org/public/outreach/copyright/, checked 2026-11-24): the credit must read "ESO/S. Brunier" and changes must be stated |
+| Changes | Stars removed, background set to black, reprojected from galactic to J2000 equatorial coordinates (4096×2048 WebP): `data/build/media/panorama/milky-way.webp`, built by `build-media` |
+| Attribution | "The Milky Way panorama", ESO/S. Brunier, CC BY 4.0 — shown in About and in the HUD while the panorama is drawn |
+
+## Landscapes — Poly Haven (R2c)
+
+Equirectangular 360° photos, their tonemapped 8192×4096 JPEG from
+`https://dl.polyhaven.org/file/ph-assets/HDRIs/extra/Tonemapped%20JPG/<id>.jpg`, into
+`data/raw/polyhaven/`. Every Poly Haven asset is **CC0 1.0** (https://polyhaven.com/license); the
+authors are credited anyway. Downloaded 2026-11-25. Changes: the sky made transparent, a horizon
+profile derived from the outline, halved to 4096 px wide (`data/build/media/landscapes/*.webp`,
+settings in `data/curated/landscapes.json`).
+
+| Landscape | Asset | Authors | SHA-256 of the JPEG |
+|---|---|---|---|
+| Open field | `noon_grass` (2017-11-29) | Greg Zaal | `dfa12d5cb0d9c662484e8e7ef847f0a9a7112c02e542b667e4a29e0be857ac02` |
+| Mountains | `kiara_5_noon` (2018-04-04) | Greg Zaal | `846ae4d00f93edaf01eb7a2e013aea283b87640924a22534f48d473168e03b20` |
+| Desert | `goegap` (2017-10-02) | Greg Zaal | `62919c5b11e78a52e0ce320b0d425bc44f9beb153bc6b0e561cc4115df60ddd1` |
+| Edge of town | `suburban_garden` (2026-02-23) | Dimitrios Savva (photography), Jarod Guest (processing) | `10e50543f150678caa38bd38d87a72d3da18361d4a0d7329fdc902ae5c8cbb74` |
+
 ## JPL Horizons — test fixtures
 
 | | |

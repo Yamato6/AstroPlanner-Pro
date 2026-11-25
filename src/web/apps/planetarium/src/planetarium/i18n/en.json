@@ -99,7 +99,26 @@
       "neutral": "Neutral"
     },
     "scintillation": "Twinkling stars",
-    "scintillationDescription": "Stars twinkle more near the horizon. High quality only."
+    "scintillationDescription": "Stars twinkle more near the horizon. High quality only.",
+    "landscape": {
+      "title": "Landscape",
+      "label": "What the sky shows around the site",
+      "forSite": "Around {{site}}",
+      "profile": "Horizon profile",
+      "profileDescription": "The site's own horizon (Locations), drawn as a silhouette.",
+      "flat": "Flat ground",
+      "flatDescription": "Nothing above 0°.",
+      "credit": "{{author}} · {{license}}",
+      "useHorizon": "Use the landscape horizon for calculations",
+      "useHorizonDescription": "Replaces the site's horizon with this landscape's, so visibility and planning follow it.",
+      "horizonInUse": "The site's horizon already is this landscape's.",
+      "use": "Use…",
+      "confirm": "Replace the horizon of {{site}} with the one of {{landscape}}? The current horizon profile is overwritten.",
+      "replace": "Replace",
+      "cancel": "Cancel",
+      "notInstalled": "The landscapes and the Milky Way panorama are not installed (the data folder next to the app is missing).",
+      "noSite": "The site in use is not saved. Save it (Locations, classic window) to give it a landscape."
+    }
   },
   "help": {
     "keyboard": "Keyboard",
@@ -152,7 +171,8 @@
     "clearSelection": "Clear the selection",
     "track": "Track the selected object",
     "home": "Back to the south horizon",
-    "atmosphere": "Atmosphere and sky brightness"
+    "atmosphere": "Atmosphere and sky brightness",
+    "landscape": "Ground and landscape"
   },
   "dock": {
     "label": "Time and view",
@@ -180,7 +200,11 @@
     "sqm": "SQM",
     "limit": "Limit",
     "tracking": "Tracking",
-    "trackingOn": "On (T)"
+    "trackingOn": "On (T)",
+    "credit": {
+      "panorama": "Milky Way: {{author}}, {{license}}",
+      "landscape": "Landscape: {{author}}, {{license}}"
+    }
   },
   "card": {
     "label": "Selected object",

@@ -129,7 +129,8 @@ public static class SkyBridgeMapper
     public static VectorDto ToVector(Vector3d direction) =>
         new(Math.Round(direction.X, VectorDigits), Math.Round(direction.Y, VectorDigits), Math.Round(direction.Z, VectorDigits));
 
-    public static ObserverPayload ToPayload(string name, ObserverLocation observer, double minimumAltitudeDegrees, HorizonMask? horizon)
+    public static ObserverPayload ToPayload(string name, ObserverLocation observer, double minimumAltitudeDegrees, HorizonMask? horizon,
+        string? landscape = null)
     {
         ArgumentNullException.ThrowIfNull(observer);
         return new ObserverPayload(
@@ -139,7 +140,8 @@ public static class SkyBridgeMapper
             observer.ElevationMeters,
             minimumAltitudeDegrees,
             [.. (horizon?.Points ?? []).Select(p => new HorizonPointDto(p.AzimuthDegrees, p.AltitudeDegrees))],
-            RefractionModel.ForElevation(observer.ElevationMeters));
+            RefractionModel.ForElevation(observer.ElevationMeters),
+            landscape);
     }
 
     /// <summary>Center-on payload for catalog coordinates (J2000).</summary>

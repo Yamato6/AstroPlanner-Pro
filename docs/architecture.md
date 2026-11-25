@@ -56,6 +56,13 @@ flowchart TB
   finder chart) and `Sky.Map` (2D fallback), with `SkySession` (renderer channel, settings, clock)
   and `SkyBodyFeed` (frame, tracks, appearance) inside. Parts get delegates from their owner,
   never references to other view models.
+- **The sky's images** (R2c): `data/` next to the exe (panorama, landscapes, `manifest.json`),
+  read by `Application/Services/MediaLibrary` and served to WebView2 as `https://media.astroplanner/`
+  (`SkyHosts.MediaHost`) only when the folder exists. It is a third host beside `app.astroplanner`
+  (the pages) and `data.astroplanner` (the sky data extracted from the exe), not part of the data
+  host: those images are files of the installation, read-only, that the app can run without, while
+  the data host's folder is rebuilt from the exe at every update. Spec §5.4 names one data host;
+  this is a deliberate deviation.
 - **Views** are thin: code-behind only opens dialogs, moves the focus and switches tabs, and asks
   `Charts/*` (`SkyMapChart`, `AltitudeChart`, `PlanTimelineChart`, `HorizonChart`,
   `PredictionChart`, colors from `ChartPalette`) to redraw. Commands without a dialog are

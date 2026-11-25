@@ -50,6 +50,7 @@ public sealed class AppEndpoints
             new SearchEndpoints(shell, selection),
             new InterfaceEndpoints(shell.Settings, store, host, logger, ui, time),
             new LayoutEndpoints(store, logger),
+            new LandscapeEndpoints(shell.Locations, shell.Observer, shell.Sky.Media, ui, time),
         ];
         foreach (var module in _modules)
         {

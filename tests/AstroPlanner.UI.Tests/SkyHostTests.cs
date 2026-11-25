@@ -108,6 +108,9 @@ public sealed class SkyLaunchOptionsTests
     public void BenchmarkSwitches_BecomeRendererParameters()
     {
         SkyLaunchOptions.Query(["AstroPlannerPro.exe"]).Should().BeEmpty();
+        SkyLaunchOptions.Query(["AstroPlannerPro.exe", "--sky-quality=HIGH", "--sky-landscape=open-field"])
+            .Should().Be("?quality=high&landscape=open-field");
+        SkyLaunchOptions.Query(["AstroPlannerPro.exe", "--sky-quality=ultra", "--sky-landscape=../x"]).Should().BeEmpty();
         SkyLaunchOptions.Query(["AstroPlannerPro.exe", "--sky-benchmark", "--sky-stars=20", "--sky-resolution=1920x1080", "--sky-mode=allsky"])
             .Should().Be("?bench=1&stars=8&res=1920x1080&mode=allSky");
     }
