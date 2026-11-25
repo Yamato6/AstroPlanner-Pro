@@ -58,9 +58,6 @@ public sealed class SatelliteState
     /// <summary>The satellites the app follows (near-Earth, docked modules collapsed).</summary>
     public IReadOnlyList<TrackedSatellite> Satellites { get; private set; } = [];
 
-    /// <summary>When the elements were downloaded (old when they come from the cache offline).</summary>
-    public DateTime? FetchedUtc => _catalog?.FetchedAtUtc;
-
     /// <summary>Tonight's visible passes (sunset to sunrise), in order of the start of their visible part.</summary>
     public IReadOnlyList<SatellitePass> Passes { get; private set; } = [];
 

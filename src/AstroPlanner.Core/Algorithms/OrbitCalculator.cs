@@ -25,13 +25,6 @@ public static class OrbitCalculator
             elements.ArgumentOfPerihelionDegrees, elements.AscendingNodeDegrees, elements.InclinationDegrees);
     }
 
-    /// <summary>Distance from the Sun (AU) at <paramref name="julianDate"/>.</summary>
-    public static double SunDistance(OrbitalElements elements, double julianDate)
-    {
-        var (x, y) = InPlane(elements, julianDate - elements.PerihelionJulianDate);
-        return Math.Sqrt((x * x) + (y * y));
-    }
-
     public static SmallBodyPosition GetPosition(SmallBodyOrbit orbit, DateTime utcDateTime)
     {
         ArgumentNullException.ThrowIfNull(orbit);

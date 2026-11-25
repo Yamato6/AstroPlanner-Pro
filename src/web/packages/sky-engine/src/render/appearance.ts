@@ -131,11 +131,6 @@ export function displayLevel(sqm: number): number {
   return displayLuminance(skyColor(sqm));
 }
 
-/** Toward the horizon the sky is brighter (more air, light domes): drawn ~1.2 mag brighter. */
-export function horizonColor(zenithSqm: number): Rgb {
-  return skyColor(zenithSqm - 1.2);
-}
-
 /**
  * Faintest star drawn for a sky: the renderer is a planning view, a little deeper than the naked
  * eye (+2 mag: dark site ≈ 8.6, the default 8.5 limit), but a bright sky still hides the faint ones.

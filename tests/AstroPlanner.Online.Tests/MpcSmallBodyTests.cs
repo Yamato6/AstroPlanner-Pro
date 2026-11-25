@@ -11,24 +11,13 @@ public sealed class MpcSmallBodyTests
 {
     private static readonly DateTimeOffset Now = new(2026, 11, 21, 3, 0, 0, TimeSpan.Zero);
 
-    private static string Fixture(string name) => File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "fixtures", "online", name));
-
     private static double Jd(int year, int month, double day) =>
         AstronomyMath.ToJulianDate(new DateTime(year, month, 1, 0, 0, 0, DateTimeKind.Utc)) + day - 1;
-
-    private sealed class MemoryCache : IOnlineCache
-    {
-        public Dictionary<(string, string), CachedResponse> Entries { get; } = [];
-        public CachedResponse? Read(string service, string key) => Entries.GetValueOrDefault((service, key));
-        public void Write(string service, string key, byte[] content, DateTime storedAtUtc) => Entries[(service, key)] = new(content, storedAtUtc);
-        public long SizeBytes => Entries.Values.Sum(e => (long)e.Content.Length);
-        public void Clear() => Entries.Clear();
-    }
 
     [Fact]
     public void Comets_AreReadColumnByColumn()
     {
-        var comets = MpcSmallBodyService.ParseComets(Fixture("mpc-cometels-excerpt.txt"));
+        var comets = MpcSmallBodyService.ParseComets(OnlineFixtures.Text("mpc-cometels-excerpt.txt"));
 
         comets.Should().HaveCount(8);
         var atlas = comets.Single(c => c.Designation == "C/2023 A3");
@@ -68,7 +57,7 @@ public sealed class MpcSmallBodyTests
     [Fact]
     public void BrightAsteroids_AreReadFromMpcorb()
     {
-        var asteroids = MpcSmallBodyService.ParseBrightAsteroids(Fixture("mpc-bright-2026-excerpt.txt") + "\nnot an asteroid\n");
+        var asteroids = MpcSmallBodyService.ParseBrightAsteroids(OnlineFixtures.Text("mpc-bright-2026-excerpt.txt") + "\nnot an asteroid\n");
 
         asteroids.Should().HaveCount(6);
         var vesta = asteroids.Single(a => a.Name == "Vesta");
@@ -96,7 +85,7 @@ public sealed class MpcSmallBodyTests
     [Fact]
     public async Task Comets_AreCachedForADay_AndUsedOffline()
     {
-        var text = Fixture("mpc-cometels-excerpt.txt");
+        var text = OnlineFixtures.Text("mpc-cometels-excerpt.txt");
         var handler = new StubHttpHandler(_ => new HttpResponseMessage(HttpStatusCode.OK) { Content = new StringContent(text) });
         var cache = new MemoryCache();
         var clock = new ManualTimeProvider(Now);
@@ -121,7 +110,7 @@ public sealed class MpcSmallBodyTests
     [Fact]
     public async Task BrightAsteroids_FallBackToLastYearsFile()
     {
-        var text = Fixture("mpc-bright-2026-excerpt.txt");
+        var text = OnlineFixtures.Text("mpc-bright-2026-excerpt.txt");
         var handler = new StubHttpHandler(r => r.RequestUri!.AbsolutePath.Contains("/2027/", StringComparison.Ordinal)
             ? new HttpResponseMessage(HttpStatusCode.NotFound)
             : new HttpResponseMessage(HttpStatusCode.OK) { Content = new StringContent(text) });

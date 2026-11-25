@@ -146,6 +146,7 @@ public sealed class SkyLaunchOptionsTests
 /// window must resolve, property by property, from ShellViewModel (the sky view model is split
 /// into parts, Sky.Time, Sky.Layers, Sky.Camera, Sky.Search and Sky.Map).
 /// </summary>
+[Trait("Retires", "R5")]
 public sealed partial class SkyBindingTests
 {
     [Fact]

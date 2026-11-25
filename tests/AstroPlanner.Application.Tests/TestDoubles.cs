@@ -184,6 +184,14 @@ internal sealed class NullLogger : IAppLogger
 /// </summary>
 internal static class TestShell
 {
+    /// <summary>Loads the shell and waits for the night ephemerides and the catalog's feasibility.</summary>
+    public static async Task LoadAndSettleAsync(this ShellViewModel shell)
+    {
+        await shell.LoadCommand.ExecuteAsync(null);
+        await shell.Targets.NightEphemeridesTask;
+        await shell.Targets.FeasibilityTask;
+    }
+
     public static ShellViewModel Create(
         IReadOnlyList<CelestialObject>? catalog = null,
         FakePlanService? plan = null,

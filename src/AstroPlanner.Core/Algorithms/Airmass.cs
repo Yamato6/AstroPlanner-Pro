@@ -26,25 +26,4 @@ public static class Airmass
         var denominator = Math.Sin(altitudeRadians) + 0.50572 * Math.Pow(shifted, -1.6364);
         return denominator <= 0 ? double.PositiveInfinity : 1.0 / denominator;
     }
-
-    /// <summary>
-    /// Atmospheric extinction Δm = k·X in magnitudes, for air mass <paramref name="airmass"/>
-    /// and extinction coefficient <paramref name="extinctionCoefficient"/> (mag/air mass).
-    /// </summary>
-    public static double ExtinctionMagnitudes(
-        double airmass,
-        double extinctionCoefficient = DefaultExtinctionCoefficient)
-    {
-        if (double.IsNaN(airmass) || airmass < 1.0 - 1e-3)
-        {
-            throw new ArgumentOutOfRangeException(nameof(airmass), "Air mass must be at least 1.");
-        }
-
-        if (double.IsNaN(extinctionCoefficient) || extinctionCoefficient < 0)
-        {
-            throw new ArgumentOutOfRangeException(nameof(extinctionCoefficient), "The extinction coefficient must not be negative.");
-        }
-
-        return extinctionCoefficient * airmass;
-    }
 }

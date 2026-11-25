@@ -60,7 +60,6 @@ public sealed class NightConditionsTests
         conditions.DewRiskFromUtc.Should().BeNull();
         conditions.MaximumGustKmh.Should().Be(10);
         conditions.WindWarning.Should().BeFalse();
-        conditions.HasAstroForecast.Should().BeTrue();
     }
 
     [Fact]
@@ -74,7 +73,7 @@ public sealed class NightConditionsTests
         conditions.DewRisk.Should().Be(DewRisk.High);
         conditions.MinimumDewMarginC.Should().BeLessThanOrEqualTo(2);
         conditions.DewRiskFromUtc.Should().Be(Dusk);   // margin 3 °C at dusk, already "moderate"
-        conditions.HasAstroForecast.Should().BeFalse();
+        conditions.SeeingArcsec.Should().BeNull();
         NightConditions.Create(Dusk, Dawn, Weather(_ => 8, _ => 5, _ => 5), null).DewRisk.Should().Be(DewRisk.Moderate);
     }
 

@@ -8,7 +8,6 @@ namespace AstroPlanner.Application.Services;
 /// <summary>One line of "Why this verdict?": the text and whether it helps or hurts.</summary>
 public sealed record FeasibilityLine(string Text, ReasonImpact Impact)
 {
-    public bool IsBlocking => Impact == ReasonImpact.Blocking;
     public bool IsNegative => Impact is ReasonImpact.Negative or ReasonImpact.Blocking;
     public bool IsPositive => Impact == ReasonImpact.Positive;
 }

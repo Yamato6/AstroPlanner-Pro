@@ -463,7 +463,6 @@
   <data name="SkyFovCenterFormat" xml:space="preserve"><value>Center: RA {0:00}h {1:00.0}m · Dec {2}{3:00}° {4:00}′</value></data>
   <data name="SkyBrightnessHeader" xml:space="preserve"><value>Sky brightness</value></data>
   <data name="SkyBrightnessFormat" xml:space="preserve"><value>Now {0:0.0} mag/arcsec² at the zenith · naked eye to ≈ {1:0.0}</value></data>
-  <data name="SkySiteSqmFormat" xml:space="preserve"><value>Site: SQM {0:0.00} (≈ Bortle {1})</value></data>
   <data name="SkySiteSqmUnknown" xml:space="preserve"><value>Site SQM not set: a natural dark sky is assumed. Enter a reading in Locations.</value></data>
   <data name="SensorFullFrame" xml:space="preserve"><value>Full frame (36 × 24 mm)</value></data>
   <data name="SensorApsCNikonSony" xml:space="preserve"><value>APS-C Nikon/Sony/Fujifilm (23.5 × 15.6 mm)</value></data>

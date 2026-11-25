@@ -60,8 +60,6 @@ public sealed record Location
         init => field = Landscapes.Validate(value);
     }
 
-    public ObserverLocation ToObserver() => new(LatitudeDegrees, LongitudeDegrees, ElevationMeters);
-
     private static double ValidateSqm(double sqm) =>
         double.IsFinite(sqm) && sqm is >= SkyQuality.SkyBrightness.MinimumSqm and <= SkyQuality.SkyBrightness.MaximumSqm
             ? sqm

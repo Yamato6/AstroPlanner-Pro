@@ -10,9 +10,6 @@ namespace AstroPlanner.Core.Tests;
 /// </summary>
 public sealed class SolarSystemTests
 {
-    private static DateTime FromJulianDate(double jd) =>
-        new DateTime(2000, 1, 1, 12, 0, 0, DateTimeKind.Utc).AddDays(jd - 2451545.0);
-
     [Fact]
     public void Precession_MatchesMeeusExample21b()
     {
@@ -20,7 +17,7 @@ public sealed class SolarSystemTests
         // α0 = 2h44m12.975s = 41.054063°, δ0 = +49°13'39.90".
         var j2000 = new EquatorialCoordinates(41.054063 / 15.0, 49.227750);
 
-        var ofDate = Precession.FromJ2000(j2000, FromJulianDate(2462088.69));
+        var ofDate = Precession.FromJ2000(j2000, AstronomyMath.FromJulianDate(2462088.69));
 
         (ofDate.RightAscensionHours * 15.0).Should().BeApproximately(41.547214, 0.001);
         ofDate.DeclinationDegrees.Should().BeApproximately(49.348483, 0.001);

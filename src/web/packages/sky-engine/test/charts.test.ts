@@ -5,7 +5,6 @@ import {
   appearanceAt,
   DARK_SKY,
   deepSkyLoss,
-  horizonColor,
   milkyWayFactor,
   skyColor,
   starCap,
@@ -198,9 +197,6 @@ describe('sky appearance', () => {
     expect(luminance(20)).toBeGreaterThan(luminance(22));
     expect(luminance(12)).toBeGreaterThan(luminance(18));
     expect(luminance(3)).toBeGreaterThanOrEqual(luminance(5));
-    horizonColor(21).forEach((c, i) => {
-      expect(c).toBeCloseTo(skyColor(19.8)[i] ?? 0, 9);
-    });
   });
 
   it('hides faint stars, deep-sky objects and the Milky Way in a bright sky', () => {

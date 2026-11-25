@@ -277,7 +277,7 @@ public sealed class CatalogBuildTests : IDisposable
         var first = Build("first.sqlite");
         var second = Build("second.sqlite");
 
-        Hash(first).Should().Be(Hash(second));
+        Fixtures.Sha256(first).Should().Be(Fixtures.Sha256(second));
     }
 
     [Fact]
@@ -292,11 +292,12 @@ public sealed class CatalogBuildTests : IDisposable
         result.Report.Should().Contain("Galaxy: 3").And.Contain("Constellation differences with OpenNGC (0");
     }
 
-    private static string Hash(string path) => Convert.ToHexStringLower(SHA256.HashData(File.ReadAllBytes(path)));
 }
 
 internal static class Fixtures
 {
+    public static string Sha256(string path) => Convert.ToHexStringLower(SHA256.HashData(File.ReadAllBytes(path)));
+
     private static string Path(params string[] parts) => System.IO.Path.Combine([AppContext.BaseDirectory, "fixtures", .. parts]);
 
     public static MessierCuration Curation { get; } = Program.LoadCuration(Path("curated", "messier.json"));

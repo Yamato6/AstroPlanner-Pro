@@ -51,9 +51,7 @@ public sealed class StarsUiTests
             settings: new FakeSettingsService(Aguascalientes),
             time: new ManualTimeProvider(SummerNightUtc),
             equipment: new FakeEquipmentRepository(EquipmentInventory.Demo));
-        await shell.LoadCommand.ExecuteAsync(null);
-        await shell.Targets.NightEphemeridesTask;
-        await shell.Targets.FeasibilityTask;
+        await shell.LoadAndSettleAsync();
         return shell;
     }
 

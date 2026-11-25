@@ -5,6 +5,7 @@ using AstroPlanner.Application.ViewModels;
 namespace AstroPlanner.UI.Tests;
 
 /// <summary>What used to live in the main window's code-behind and is now in the view models.</summary>
+[Trait("Retires", "R5")]
 public sealed partial class MainWindowLogicTests
 {
     // 2026-01-16 04:00 UTC = 2026-01-15 22:00 in Mexico City (UTC-6).

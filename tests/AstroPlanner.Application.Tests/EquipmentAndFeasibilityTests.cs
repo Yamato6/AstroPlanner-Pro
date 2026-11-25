@@ -36,9 +36,7 @@ public sealed class EquipmentAndFeasibilityTests
             time: new ManualTimeProvider(WinterNightUtc),
             equipment: equipment,
             atlas: new FakeAtlas(atlasBrightness));
-        await shell.LoadCommand.ExecuteAsync(null);
-        await shell.Targets.NightEphemeridesTask;
-        await shell.Targets.FeasibilityTask;
+        await shell.LoadAndSettleAsync();
         return (shell, equipment);
     }
 

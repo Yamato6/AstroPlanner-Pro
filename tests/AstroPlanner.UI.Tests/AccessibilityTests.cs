@@ -15,6 +15,7 @@ namespace AstroPlanner.UI.Tests;
 /// M6b accessibility pass: every focusable control of every window has a name for screen
 /// readers, and the text colors of both themes keep a WCAG AA contrast (4.5:1).
 /// </summary>
+[Trait("Retires", "R5")]
 public sealed partial class AccessibilityTests
 {
     // ─── Contrast (WCAG 2.1, 1.4.3) ─────────────────────────────────────
