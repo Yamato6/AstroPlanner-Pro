@@ -73,18 +73,40 @@ test('changes made in the app reach the page', async ({ page }) => {
   await expect(page.getByRole('banner')).toContainText('San Pedro Mártir');
 });
 
-test('night vision recolours the shell', async ({ page }) => {
-  await host.emit('theme.changed', { theme: 'night' });
+test('night vision switched in the classic window recolours the shell', async ({ page }) => {
+  host.ui = { ...host.ui, theme: 'night', revision: host.ui.revision + 1 };
+  await host.emit('ui.changed', { revision: host.ui.revision });
   await expect(page.locator('html')).toHaveAttribute('data-theme', 'night');
 });
 
+test('Ctrl+Shift+N and the top bar switch night vision', async ({ page }) => {
+  const toggle = page.getByRole('button', { name: 'Night vision' });
+
+  await page.keyboard.press('Control+Shift+N');
+  await expect(page.locator('html')).toHaveAttribute('data-theme', 'night');
+  await expect(toggle).toHaveAttribute('aria-pressed', 'true');
+  await toggle.click();
+  await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');
+
+  expect(host.calls('ui.setTheme')).toEqual([{ theme: 'night' }, { theme: 'dark' }]);
+});
+
+test('F11 asks the window for full screen', async ({ page }) => {
+  await page.keyboard.press('F11');
+  await expect.poll(() => host.calls('ui.setFullScreen')).toEqual([{ enabled: true }]);
+});
+
 for (const theme of ['dark', 'night'] as const) {
-  test(`no accessibility violations (${theme} theme)`, async ({ page }) => {
+  test(`no accessibility violations (${theme} theme, windows open)`, async ({ page }) => {
     if (theme === 'night') {
-      await host.emit('theme.changed', { theme: 'night' });
+      await page.keyboard.press('Control+Shift+N');
       await expect(page.locator('html')).toHaveAttribute('data-theme', 'night');
     }
     await expect(page.getByRole('banner')).toContainText('Aguascalientes');
+    await page.keyboard.press('Control+,');
+    await page.keyboard.press('F1');
+    await page.getByRole('tab', { name: 'About' }).click();
+    await expect(page.getByRole('dialog', { name: 'Help' })).toContainText('Credits');
 
     const results = await new AxeBuilder({ page })
       .withTags(['wcag2a', 'wcag2aa', 'wcag21aa', 'wcag22aa'])

@@ -109,6 +109,66 @@ internal sealed class FakeSkyViewStore : ISkyViewStore
     }
 }
 
+internal sealed class FakeInterfaceStore : IInterfaceStore
+{
+    public IReadOnlyList<WindowLayout> Layouts { get; set; } = [];
+
+    public InterfacePreferences Preferences { get; set; } = new();
+
+    public int PreferenceSaves { get; private set; }
+
+    /// <summary>When set, every read and save fails with it (a locked or read-only app.db).</summary>
+    public Exception? Failure { get; set; }
+
+    public IReadOnlyList<WindowLayout> LoadLayouts() => Failure is null ? Layouts : throw Failure;
+
+    public void SaveLayouts(IReadOnlyList<WindowLayout> layouts) => Layouts = Failure is null ? [.. layouts] : throw Failure;
+
+    public InterfacePreferences LoadPreferences() => Preferences;
+
+    public void SavePreferences(InterfacePreferences preferences)
+    {
+        if (Failure is not null)
+        {
+            throw Failure;
+        }
+
+        Preferences = preferences;
+        PreferenceSaves++;
+    }
+}
+
+/// <summary>The planetarium window, without a window: it records what the page asked for.</summary>
+internal sealed class FakeAppHost : AstroPlanner.Application.Bridge.IAppHost
+{
+    public bool IsFullScreen { get; private set; }
+
+    public event EventHandler? FullScreenChanged;
+
+    public void SetFullScreen(bool fullScreen)
+    {
+        if (fullScreen != IsFullScreen)
+        {
+            IsFullScreen = fullScreen;
+            FullScreenChanged?.Invoke(this, EventArgs.Empty);
+        }
+    }
+
+    public string DataFolder => @"C:\Users\someone\AppData\Local\AstroPlannerPro";
+
+    public int DataFolderOpened { get; private set; }
+
+    public List<Uri> OpenedLinks { get; } = [];
+
+    public void OpenDataFolder() => DataFolderOpened++;
+
+    public bool OpenLink(Uri link)
+    {
+        OpenedLinks.Add(link);
+        return true;
+    }
+}
+
 internal sealed class NullLogger : IAppLogger
 {
     public string LogLocation => "";

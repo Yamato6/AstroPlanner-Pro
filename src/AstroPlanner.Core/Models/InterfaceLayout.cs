@@ -1,0 +1,35 @@
+namespace AstroPlanner.Core.Models;
+
+/// <summary>
+/// Where a floating window of the planetarium UI (v3) is and how it is arranged, restored at the
+/// next start. <see cref="X"/>…<see cref="Height"/> are its floating rectangle in CSS pixels, kept
+/// while it is maximised or docked so that restoring puts it back; <see cref="DockWidth"/> is
+/// its width as a side sheet. A higher <see cref="ZOrder"/> is in front.
+/// </summary>
+public sealed record WindowLayout(
+    string Id,
+    bool IsOpen,
+    bool IsMinimized,
+    WindowArrangement Arrangement,
+    int X,
+    int Y,
+    int Width,
+    int Height,
+    int DockWidth,
+    int ZOrder);
+
+/// <summary>How a window sits over the sky. New values are appended so that stored names stay valid.</summary>
+public enum WindowArrangement
+{
+    Floating,
+    Maximized,
+    DockLeft,
+    DockRight
+}
+
+/// <summary>Preferences that only the planetarium UI uses (Settings › Interface).</summary>
+public sealed record InterfacePreferences
+{
+    /// <summary>Opaque panels instead of glass over the sky (spec §3.3).</summary>
+    public bool ReduceTransparency { get; init; }
+}

@@ -1,0 +1,12 @@
+{
+  "v": 2,
+  "kind": "res",
+  "id": 9,
+  "type": "ui.get",
+  "payload": {
+    "revision": 0,
+    "theme": "dark",
+    "reduceTransparency": false,
+    "isFullScreen": false
+  }
+}

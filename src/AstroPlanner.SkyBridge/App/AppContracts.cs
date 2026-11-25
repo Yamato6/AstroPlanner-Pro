@@ -160,6 +160,96 @@ public sealed record SkyChangedEvent(
 public sealed record ThemeChangedEvent(
     [property: AllowedValues(AppThemes.Dark, AppThemes.Night)] string Theme);
 
+/// <summary>
+/// The interface state the host keeps (<c>ui.get</c>, and the answer of every <c>ui.*</c>
+/// command): theme, reduce transparency (saved) and full screen (the window's).
+/// </summary>
+public sealed record UiSnapshot(
+    [property: Range(0, int.MaxValue)] int Revision,
+    [property: AllowedValues(AppThemes.Dark, AppThemes.Night)] string Theme,
+    bool ReduceTransparency,
+    bool IsFullScreen);
+
+/// <summary><c>ui.setTheme</c>: dark or night vision (saved, like the classic window's switch).</summary>
+public sealed record UiSetThemeRequest(
+    [property: AllowedValues(AppThemes.Dark, AppThemes.Night)] string Theme);
+
+/// <summary>Turns an option on or off (<c>ui.setReduceTransparency</c>, <c>ui.setFullScreen</c>).</summary>
+public sealed record SwitchRequest(bool Enabled);
+
+/// <summary><c>ui.changed</c>: theme, transparency or full screen changed.</summary>
+public sealed record UiChangedEvent(
+    [property: Range(0, int.MaxValue)] int Revision);
+
+/// <summary>Ids of the planetarium UI's windows (spec §3.4).</summary>
+public static class WindowIds
+{
+    public const string Tonight = "tonight";
+    public const string Targets = "targets";
+    public const string Plan = "plan";
+    public const string Logbook = "logbook";
+    public const string Equipment = "equipment";
+    public const string Sites = "sites";
+    public const string MilkyWay = "milkyWay";
+    public const string Settings = "settings";
+    public const string Help = "help";
+}
+
+/// <summary>How a window sits over the sky (<c>WindowArrangement</c> in Core).</summary>
+public static class WindowArrangements
+{
+    public const string Floating = "floating";
+    public const string Maximized = "maximized";
+    public const string DockLeft = "dockLeft";
+    public const string DockRight = "dockRight";
+}
+
+/// <summary>
+/// One window of the layout: open or not, minimised to the rail, its arrangement, its floating
+/// rectangle (CSS pixels, kept while maximised or docked), its width as a side sheet and its
+/// stacking order (higher is in front).
+/// </summary>
+public sealed record WindowLayoutState(
+    [property: AllowedValues(WindowIds.Tonight, WindowIds.Targets, WindowIds.Plan, WindowIds.Logbook, WindowIds.Equipment,
+        WindowIds.Sites, WindowIds.MilkyWay, WindowIds.Settings, WindowIds.Help)] string Id,
+    bool IsOpen,
+    bool IsMinimized,
+    [property: AllowedValues(WindowArrangements.Floating, WindowArrangements.Maximized, WindowArrangements.DockLeft,
+        WindowArrangements.DockRight)] string Arrangement,
+    [property: Range(-20000, 20000)] int X,
+    [property: Range(-20000, 20000)] int Y,
+    [property: Range(1, 20000)] int Width,
+    [property: Range(1, 20000)] int Height,
+    [property: Range(1, 20000)] int DockWidth,
+    [property: Range(0, 10000)] int ZOrder);
+
+/// <summary>The saved window layout (<c>layout.load</c>; <c>layout.save</c> replaces it).</summary>
+public sealed record LayoutSnapshot(
+    [property: Length(0, 32)] IReadOnlyList<WindowLayoutState> Windows);
+
+/// <summary>One credit line of About: what (data, algorithms…), who and the license; a link when the source asks for one.</summary>
+public sealed record AboutCredit(
+    [property: StringLength(100, MinimumLength = 1)] string Title,
+    [property: StringLength(2000, MinimumLength = 1)] string Text,
+    [property: StringLength(200, MinimumLength = 1)] string? Url);
+
+/// <summary><c>app.about</c>: the About window's content (domain text, formatted by C#).</summary>
+public sealed record AboutResponse(
+    [property: StringLength(32, MinimumLength = 1)] string Version,
+    [property: StringLength(2000, MinimumLength = 1)] string Description,
+    [property: Length(0, 16)] IReadOnlyList<AboutCredit> Credits,
+    [property: StringLength(1000, MinimumLength = 1)] string YourData,
+    [property: StringLength(1024, MinimumLength = 1)] string DataFolder,
+    [property: StringLength(500, MinimumLength = 1)] string License,
+    [property: StringLength(200, MinimumLength = 1)] string RepositoryUrl);
+
+/// <summary><c>app.openLink</c>: opens an https link in the browser, only to the sites the app links to (SafeLinks).</summary>
+public sealed record OpenLinkRequest(
+    [property: StringLength(2048, MinimumLength = 1)] string Url);
+
+/// <summary>Whether the link was opened (false: not on the allow-list).</summary>
+public sealed record OpenLinkResponse(bool Opened);
+
 /// <summary>Why a request failed (the <c>error</c> member of a response).</summary>
 public sealed record RpcErrorPayload(
     [property: AllowedValues(RpcErrorCodes.BadRequest, RpcErrorCodes.UnknownMethod, RpcErrorCodes.Timeout,

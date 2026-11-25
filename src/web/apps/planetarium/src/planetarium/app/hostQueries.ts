@@ -20,6 +20,7 @@ export const queryClient = new QueryClient({
 const snapshots = {
   'observer.get': 'observer.changed',
   'sky.get': 'sky.changed',
+  'ui.get': 'ui.changed',
 } as const satisfies Partial<Record<MethodName, EventName>>;
 
 export type SnapshotMethod = keyof typeof snapshots;
@@ -44,6 +45,22 @@ export function useSnapshot<M extends SnapshotMethod>(method: M) {
     queryKey: [method],
     queryFn: ({ signal }) => host.request(method, {} as RequestOf<M>, { signal }),
     enabled: host.connected,
+  });
+}
+
+/** Runs a `ui.*` command (theme, transparency, full screen) and stores the snapshot it answers with. */
+export function useUiCommand<M extends 'ui.setTheme' | 'ui.setReduceTransparency' | 'ui.setFullScreen'>(
+  method: M,
+) {
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: (params: RequestOf<M>) => host.request(method, params),
+    onSuccess: (snapshot) => {
+      client.setQueryData(['ui.get'], snapshot);
+    },
+    onError: (error) => {
+      console.warn(method, 'failed', error);
+    },
   });
 }
 

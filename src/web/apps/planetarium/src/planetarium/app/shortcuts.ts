@@ -2,9 +2,13 @@
 // palette can list them, and none fires while a text field has focus.
 import { useEffect, useRef } from 'react';
 
+/** Where Help lists a shortcut. */
+export type ShortcutGroup = 'time' | 'sky' | 'interface' | 'windows';
+
 export interface Shortcut {
   /** Stable id; also the i18n key under "shortcuts". */
   readonly id: string;
+  readonly group: ShortcutGroup;
   /** `KeyboardEvent.key` (case-insensitive for letters), e.g. " ", "F5", "c". */
   readonly key: string;
   /** Shown to the user, e.g. "Space". */

@@ -38,6 +38,18 @@ versions follow [Semantic Versioning](https://semver.org/). Versions up to 1.0.0
   on React Aria, Lucide icons.
 - Playwright E2E tests of the planetarium page in Edge against a mock host that answers from the
   C# golden files, with axe (WCAG 2.2 AA) and CSP checks; they run in CI.
+- Planetarium UI: floating windows over the sky. They move by the title bar, resize by any edge,
+  stick to edges and to each other, snap to the left or right half (a side sheet) or maximise
+  (leaving 24 px of sky) when dragged to an edge, minimise to the rail, and work from the
+  keyboard (arrows move, Shift+arrows resize, Ctrl+arrows dock or maximise, `Esc`/`Ctrl+W`
+  close, `Ctrl+Tab` cycles). The layout is kept in `app.db` (migration `0006_window_layouts`)
+  and restored at start; Settings can reset it.
+- Planetarium UI: the left rail (one button per window), Settings (night vision, reduce
+  transparency, full screen, reset layout) and Help (keyboard map and About: version, credits,
+  data folder, license). Windows not moved yet say so and point to the classic window.
+- Planetarium UI: night vision from the top bar or `Ctrl+Shift+N` (saved, shared with the
+  classic window), reduce transparency (opaque panels), full screen with `F11`, `F1` Help and
+  `Ctrl+,` Settings.
 
 ## [2.0.1] — 2026-11-22
 

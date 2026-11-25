@@ -129,6 +129,7 @@ public partial class App : System.Windows.Application
         services.AddSingleton(_ => new AppDatabase(AppPaths.DataFile("app.db")));
         services.AddSingleton<ISettingsService, SqliteSettingsService>();
         services.AddSingleton<ISkyViewStore, SqliteSkyViewStore>();
+        services.AddSingleton<IInterfaceStore, SqliteInterfaceStore>();
         services.AddSingleton<IObservationPlanService, SqlitePlanService>();
         services.AddSingleton<IObservationLogService, SqliteLogbookService>();
         services.AddSingleton<ILocationRepository, SqliteLocationRepository>();

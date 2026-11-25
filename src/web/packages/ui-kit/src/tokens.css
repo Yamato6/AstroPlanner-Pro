@@ -15,6 +15,8 @@
   --surface-pressed: #274c77;
   --surface-tooltip: #182943;
   --glass-blur: 14px;
+  /* Behind the sky's canvas (seen only before the first frame or without WebGL). */
+  --page-background: #050b16;
 
   --border-hairline: rgb(143 168 200 / 22%);
   --border-strong: #36557d;
@@ -71,6 +73,7 @@
   --surface-hover: #2c0909;
   --surface-pressed: #3e0d0d;
   --surface-tooltip: #1a0505;
+  --page-background: #050000;
 
   --border-hairline: rgb(138 42 36 / 45%);
   --border-strong: #5a1616;
@@ -113,7 +116,7 @@ body {
   margin: 0;
   height: 100%;
   overflow: hidden;
-  background: #050b16;
+  background: var(--page-background);
   color: var(--text-primary);
   font-family: var(--font-ui);
   font-size: var(--font-size-md);
