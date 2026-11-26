@@ -46,6 +46,11 @@ namespace AstroPlanner.SkyBridge.App;
 [JsonSerializable(typeof(LandscapeSnapshot))]
 [JsonSerializable(typeof(LandscapeSetRequest))]
 [JsonSerializable(typeof(LandscapeChangedEvent))]
+[JsonSerializable(typeof(SurveySnapshot))]
+[JsonSerializable(typeof(SurveySetRequest))]
+[JsonSerializable(typeof(SurveySetModeRequest))]
+[JsonSerializable(typeof(SurveySetCacheLimitRequest))]
+[JsonSerializable(typeof(SurveyChangedEvent))]
 [JsonSerializable(typeof(RpcErrorPayload))]
 public sealed partial class AppJsonContext : JsonSerializerContext;
 
@@ -177,6 +182,22 @@ public static class AppMethods
     public static RpcMethod<NoParameters, LandscapeSnapshot> LandscapeUseHorizon { get; } =
         new("landscape.useHorizon", AppJsonContext.Default.NoParameters, AppJsonContext.Default.LandscapeSnapshot);
 
+    public static RpcMethod<NoParameters, SurveySnapshot> SurveyGet { get; } =
+        new("survey.get", AppJsonContext.Default.NoParameters, AppJsonContext.Default.SurveySnapshot);
+
+    public static RpcMethod<SurveySetRequest, SurveySnapshot> SurveySet { get; } =
+        new("survey.set", AppJsonContext.Default.SurveySetRequest, AppJsonContext.Default.SurveySnapshot);
+
+    public static RpcMethod<SurveySetModeRequest, SurveySnapshot> SurveySetMode { get; } =
+        new("survey.setMode", AppJsonContext.Default.SurveySetModeRequest, AppJsonContext.Default.SurveySnapshot);
+
+    public static RpcMethod<SurveySetCacheLimitRequest, SurveySnapshot> SurveySetCacheLimit { get; } =
+        new("survey.setCacheLimit", AppJsonContext.Default.SurveySetCacheLimitRequest, AppJsonContext.Default.SurveySnapshot);
+
+    /// <summary>Deletes the cached survey tiles.</summary>
+    public static RpcMethod<NoParameters, SurveySnapshot> SurveyClearCache { get; } =
+        new("survey.clearCache", AppJsonContext.Default.NoParameters, AppJsonContext.Default.SurveySnapshot);
+
     public static IReadOnlyList<IRpcMethod> All { get; } =
     [
         AppInfo, AppAbout, AppOpenLink, AppOpenDataFolder, ObserverGet,
@@ -185,6 +206,7 @@ public static class AppMethods
         SearchQuery, SearchGo, SearchResolve,
         UiGet, UiSetTheme, UiSetReduceTransparency, UiSetAutoHide, UiSetSkyInertia, UiSetSkyQuality, UiSetLightPollutionTint, UiSetScintillation, UiSetFullScreen, LayoutLoad, LayoutSave,
         LandscapeGet, LandscapeSet, LandscapeUseHorizon,
+        SurveyGet, SurveySet, SurveySetMode, SurveySetCacheLimit, SurveyClearCache,
     ];
 
     private static RpcMethod<NoParameters, SelectionSnapshot> Selection(string name) =>
@@ -218,6 +240,9 @@ public static class AppEvents
     public static AppEvent<LandscapeChangedEvent> LandscapeChanged { get; } =
         new("landscape.changed", AppJsonContext.Default.LandscapeChangedEvent);
 
+    public static AppEvent<SurveyChangedEvent> SurveyChanged { get; } =
+        new("survey.changed", AppJsonContext.Default.SurveyChangedEvent);
+
     public static IReadOnlyList<IAppEvent> All { get; } =
-        [ThemeChanged, ObserverChanged, SkyChanged, UiChanged, NightChanged, SelectionChanged, LandscapeChanged];
+        [ThemeChanged, ObserverChanged, SkyChanged, UiChanged, NightChanged, SelectionChanged, LandscapeChanged, SurveyChanged];
 }

@@ -28,6 +28,8 @@ public sealed class OnlineInfoUiTests
 
     private sealed class FakeTiles(Func<HipsTileKey, HipsTile>? serve = null) : ISurveyTileSource
     {
+        public HipsTile? GetCachedTile(HipsSurvey survey, HipsTileKey key) => null;
+
         public List<HipsTileKey> Requests { get; } = [];
 
         public IReadOnlyList<HipsSurvey> Surveys { get; } = [Dss, new HipsSurvey("PanSTARRS-DR1-color", "Pan-STARRS DR1 colour", 11)];

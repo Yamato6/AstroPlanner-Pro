@@ -1,0 +1,31 @@
+{
+  "v": 2,
+  "kind": "res",
+  "id": 20,
+  "type": "survey.get",
+  "payload": {
+    "revision": 1,
+    "tilesBaseUrl": "https://tiles.astroplanner/",
+    "surveys": [
+      {
+        "id": "DSSColor",
+        "name": "DSS2 colour",
+        "maxOrder": 9,
+        "tileWidth": 512,
+        "credit": "DSS: STScI/NASA, plates \u00A9 Caltech/Palomar, UK STFC/ROE, AAO (CC BY-NC-SA 4.0) \u00B7 colour and HiPS by CDS"
+      },
+      {
+        "id": "PanSTARRS-DR1-color",
+        "name": "Pan-STARRS DR1 colour",
+        "maxOrder": 11,
+        "tileWidth": 512,
+        "credit": "Pan-STARRS1: STScI/MAST \u00B7 HiPS by CDS"
+      }
+    ],
+    "surveyId": "DSSColor",
+    "mode": "realistic",
+    "downloads": true,
+    "cacheMegabytes": 312,
+    "cacheLimitMegabytes": 1024
+  }
+}

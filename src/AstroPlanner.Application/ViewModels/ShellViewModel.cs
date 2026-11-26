@@ -118,6 +118,9 @@ public sealed partial class ShellViewModel : ObservableObject, IDisposable
     }
 
     /// <summary>Overall state of the online services for the top bar (spec §10).</summary>
+    /// <summary>The online services' switches and last outcomes (shared with the planetarium UI's endpoints).</summary>
+    public OnlineInfoState Online => _online;
+
     public string OnlineStatusText
     {
         get

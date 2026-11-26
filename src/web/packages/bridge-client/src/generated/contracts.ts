@@ -295,6 +295,42 @@ export const landscapeSetRequestSchema = z.strictObject({
 });
 export type LandscapeSetRequest = z.infer<typeof landscapeSetRequestSchema>;
 
+export const surveyOptionSchema = z.strictObject({
+  id: z.string().min(1).max(60),
+  name: z.string().min(1).max(80),
+  maxOrder: z.int().min(3).max(13),
+  tileWidth: z.int().min(64).max(1024),
+  credit: z.string().min(1).max(300),
+});
+export type SurveyOption = z.infer<typeof surveyOptionSchema>;
+
+export const surveySnapshotSchema = z.strictObject({
+  revision: z.int().min(0).max(2147483647),
+  tilesBaseUrl: z.string().min(1).max(100),
+  surveys: z.array(surveyOptionSchema).min(0).max(8),
+  surveyId: z.string().min(1).max(60).nullable(),
+  mode: z.enum(['realistic', 'survey']),
+  downloads: z.boolean(),
+  cacheMegabytes: z.int().min(0).max(2147483647),
+  cacheLimitMegabytes: z.int().min(256).max(10240),
+});
+export type SurveySnapshot = z.infer<typeof surveySnapshotSchema>;
+
+export const surveySetRequestSchema = z.strictObject({
+  surveyId: z.string().min(1).max(60).nullable(),
+});
+export type SurveySetRequest = z.infer<typeof surveySetRequestSchema>;
+
+export const surveySetModeRequestSchema = z.strictObject({
+  mode: z.enum(['realistic', 'survey']),
+});
+export type SurveySetModeRequest = z.infer<typeof surveySetModeRequestSchema>;
+
+export const surveySetCacheLimitRequestSchema = z.strictObject({
+  cacheLimitMegabytes: z.int().min(256).max(10240),
+});
+export type SurveySetCacheLimitRequest = z.infer<typeof surveySetCacheLimitRequestSchema>;
+
 export const themeChangedEventSchema = z.strictObject({
   theme: z.enum(['dark', 'night']),
 });
@@ -329,6 +365,11 @@ export const landscapeChangedEventSchema = z.strictObject({
   revision: z.int().min(0).max(2147483647),
 });
 export type LandscapeChangedEvent = z.infer<typeof landscapeChangedEventSchema>;
+
+export const surveyChangedEventSchema = z.strictObject({
+  revision: z.int().min(0).max(2147483647),
+});
+export type SurveyChangedEvent = z.infer<typeof surveyChangedEventSchema>;
 
 export const rpcErrorPayloadSchema = z.strictObject({
   code: z.enum(['bad-request', 'unknown-method', 'timeout', 'cancelled', 'too-large', 'busy', 'internal']),
@@ -376,6 +417,11 @@ export const rpcMethods = {
   'landscape.get': { request: noParametersSchema, response: landscapeSnapshotSchema },
   'landscape.set': { request: landscapeSetRequestSchema, response: landscapeSnapshotSchema },
   'landscape.useHorizon': { request: noParametersSchema, response: landscapeSnapshotSchema },
+  'survey.get': { request: noParametersSchema, response: surveySnapshotSchema },
+  'survey.set': { request: surveySetRequestSchema, response: surveySnapshotSchema },
+  'survey.setMode': { request: surveySetModeRequestSchema, response: surveySnapshotSchema },
+  'survey.setCacheLimit': { request: surveySetCacheLimitRequestSchema, response: surveySnapshotSchema },
+  'survey.clearCache': { request: noParametersSchema, response: surveySnapshotSchema },
 } as const;
 
 /** Events the host pushes: payload contracts. */
@@ -387,4 +433,5 @@ export const appEvents = {
   'night.changed': nightChangedEventSchema,
   'selection.changed': selectionChangedEventSchema,
   'landscape.changed': landscapeChangedEventSchema,
+  'survey.changed': surveyChangedEventSchema,
 } as const;

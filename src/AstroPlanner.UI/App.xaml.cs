@@ -64,6 +64,8 @@ public partial class App : System.Windows.Application
         // requests without a User-Agent), a 15 s budget and the standard resilience pipeline
         // (retries with backoff, circuit breaker). Answers are cached on disk for offline use.
         services.AddSingleton<IOnlineCache>(_ => new DiskCache(AppPaths.DataFile("cache")));
+        // Survey tiles have their own, larger cache (Settings › Survey sets its limit, spec §8.3).
+        services.AddSingleton<ISizedCache>(_ => new DiskCache(AppPaths.DataFile("tiles"), SurveyPreferences.DefaultCacheLimitBytes));
         foreach (var name in OnlineClients.All)
         {
             services.AddHttpClient(name, http =>
@@ -104,7 +106,7 @@ public partial class App : System.Windows.Application
             sp.GetRequiredService<IHttpClientFactory>().CreateClient(OnlineClients.SevenTimer), sp.GetRequiredService<TimeProvider>(),
             sp.GetRequiredService<IOnlineCache>()));
         services.AddSingleton<ISurveyTileSource>(sp => new HipsTileService(
-            sp.GetRequiredService<IHttpClientFactory>().CreateClient(OnlineClients.Hips), sp.GetRequiredService<IOnlineCache>(),
+            sp.GetRequiredService<IHttpClientFactory>().CreateClient(OnlineClients.Hips), sp.GetRequiredService<ISizedCache>(),
             sp.GetRequiredService<TimeProvider>()));
         services.AddSingleton<IObjectInfoService>(sp => new WikipediaSummaryService(
             sp.GetRequiredService<IHttpClientFactory>().CreateClient(OnlineClients.Wikipedia), sp.GetRequiredService<IOnlineCache>(),

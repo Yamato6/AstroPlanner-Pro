@@ -82,6 +82,13 @@ public sealed class AppChannelTests
             new LandscapeOption("mountains", "Mountains", "Greg Zaal, Poly Haven", "CC0 1.0", "https://polyhaven.com/a/kiara_5_noon"),
         ], false), AppMethods.LandscapeGet.Response),
         ["landscape.changed.event"] = AppMessageCodec.Event(AppEvents.LandscapeChanged, new LandscapeChangedEvent(3)),
+        ["survey.get.response"] = AppMessageCodec.Response(20, AppMethods.SurveyGet.Name, new SurveySnapshot(1, "https://tiles.astroplanner/",
+        [
+            new SurveyOption("DSSColor", "DSS2 colour", 9, 512,
+                "DSS: STScI/NASA, plates © Caltech/Palomar, UK STFC/ROE, AAO (CC BY-NC-SA 4.0) · colour and HiPS by CDS"),
+            new SurveyOption("PanSTARRS-DR1-color", "Pan-STARRS DR1 colour", 11, 512, "Pan-STARRS1: STScI/MAST · HiPS by CDS"),
+        ], "DSSColor", SurveyModes.Realistic, true, 312, 1024), AppMethods.SurveyGet.Response),
+        ["survey.changed.event"] = AppMessageCodec.Event(AppEvents.SurveyChanged, new SurveyChangedEvent(2)),
     };
 
     // 2026-01-15 at the sample site, from 18:30 local (an hour before sunset, to the 10 min) to 07:40, every 10 min:

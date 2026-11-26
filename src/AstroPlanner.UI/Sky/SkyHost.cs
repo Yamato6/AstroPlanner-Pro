@@ -20,7 +20,11 @@ public sealed class SkyHost : Border, ISkyChannel, IDisposable
     public const string AppHost = SkyHosts.AppHost;
     public const string DataHost = SkyHosts.DataHost;
     public const string MediaHost = SkyHosts.MediaHost;
+    public const string TilesHost = SkyHosts.TilesHost;
     public static readonly Uri AppOrigin = new($"https://{AppHost}/");
+
+    /// <summary>How long the page waits for a survey tile before it gets "not found" (the engine then keeps a coarser one).</summary>
+    private static readonly TimeSpan TileTimeout = TimeSpan.FromSeconds(30);
 
     private readonly WebView2 _webView = new() { DefaultBackgroundColor = System.Drawing.Color.FromArgb(5, 11, 22) };
     private IAppLogger? _logger;
@@ -43,6 +47,12 @@ public sealed class SkyHost : Border, ISkyChannel, IDisposable
     public event EventHandler<string>? Unavailable;
 
     public bool IsReady => _webView.CoreWebView2 is not null;
+
+    /// <summary>
+    /// Answers the page's survey tile requests (<c>https://tiles.astroplanner/</c>, spec §5.4); set
+    /// before <see cref="StartAsync"/>. Without it no tile is served.
+    /// </summary>
+    public AstroPlanner.Application.Services.SurveyTileProxy? TileProxy { get; set; }
 
     /// <summary>
     /// Starts WebView2 and loads <paramref name="page"/>. <paramref name="query"/> is appended to
@@ -118,6 +128,12 @@ public sealed class SkyHost : Border, ISkyChannel, IDisposable
         {
             core.SetVirtualHostNameToFolderMapping(MediaHost, AppPaths.MediaDirectory, CoreWebView2HostResourceAccessKind.Allow);
         }
+        // Survey tiles: answered here, from the tile cache or the survey's mirrors (never by the page).
+        if (TileProxy is not null)
+        {
+            core.AddWebResourceRequestedFilter($"https://{TilesHost}/*", CoreWebView2WebResourceContext.All);
+            core.WebResourceRequested += OnWebResourceRequested;
+        }
         core.NavigationStarting += OnNavigationStarting;
         core.FrameNavigationStarting += OnNavigationStarting;
         core.NewWindowRequested += OnNewWindowRequested;
@@ -177,6 +193,51 @@ public sealed class SkyHost : Border, ISkyChannel, IDisposable
             e.Cancel = true;
             _logger?.LogInfo("Blocked a navigation out of the sky renderer.");
         }
+    }
+
+    private async void OnWebResourceRequested(object? sender, CoreWebView2WebResourceRequestedEventArgs e)
+    {
+        var core = _webView.CoreWebView2;
+        var proxy = TileProxy;
+        if (core is null || proxy is null)
+        {
+            return;
+        }
+
+        if (!string.Equals(e.Request.Method, "GET", StringComparison.Ordinal))
+        {
+            e.Response = TileResponse(core, null);
+            return;
+        }
+
+        using var deferral = e.GetDeferral();
+        byte[]? tile = null;
+        try
+        {
+            using var timeout = new CancellationTokenSource(TileTimeout);
+            tile = await proxy.GetAsync(e.Request.Uri, timeout.Token).ConfigureAwait(true);
+        }
+        catch (OperationCanceledException)
+        {
+            // Too slow: "not found", the engine keeps a coarser tile.
+        }
+        catch (Exception ex) when (ex is IOException or System.Net.Http.HttpRequestException)
+        {
+            _logger?.LogError("A survey tile could not be served.", ex);
+        }
+
+        e.Response = TileResponse(core, tile);
+        deferral.Complete();
+    }
+
+    /// <summary>A tile for the app origin (the page fetches it cross-origin), or "not found".</summary>
+    private static CoreWebView2WebResourceResponse TileResponse(CoreWebView2 core, byte[]? tile)
+    {
+        const string headers = "Access-Control-Allow-Origin: https://" + SkyHosts.AppHost + "\r\nX-Content-Type-Options: nosniff";
+        return tile is null
+            ? core.Environment.CreateWebResourceResponse(null, 404, "Not Found", headers)
+            : core.Environment.CreateWebResourceResponse(new MemoryStream(tile, writable: false), 200, "OK",
+                headers + "\r\nContent-Type: image/jpeg\r\nCache-Control: max-age=604800");
     }
 
     private void OnNewWindowRequested(object? sender, CoreWebView2NewWindowRequestedEventArgs e)

@@ -136,6 +136,12 @@ internal sealed class FakeInterfaceStore : IInterfaceStore
         Preferences = preferences;
         PreferenceSaves++;
     }
+
+    public SurveyPreferences Survey { get; set; } = new();
+
+    public SurveyPreferences LoadSurvey() => Survey;
+
+    public void SaveSurvey(SurveyPreferences survey) => Survey = Failure is null ? survey : throw Failure;
 }
 
 /// <summary>The planetarium window, without a window: it records what the page asked for.</summary>
