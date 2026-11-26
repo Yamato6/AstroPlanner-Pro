@@ -30,7 +30,7 @@ const MEDIA_MAX_WIDTH = 4096;
 
 /** An image of the media folder now on the GPU, with the credit it must show. */
 export interface MediaCredit {
-  readonly kind: 'panorama' | 'landscape';
+  readonly kind: 'panorama' | 'landscape' | 'survey';
   readonly author: string;
   readonly license: string;
 }

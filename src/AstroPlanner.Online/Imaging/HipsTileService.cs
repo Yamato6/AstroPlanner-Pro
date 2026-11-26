@@ -56,14 +56,23 @@ public sealed class HipsTileService(HttpClient http, IOnlineCache? cache = null,
         ? FormattableString.Invariant($"Norder{key.Order}/Allsky.jpg")
         : FormattableString.Invariant($"Norder{key.Order}/Dir{key.Index / 10000 * 10000}/Npix{key.Index}.jpg");
 
+    public HipsTile? GetCachedTile(HipsSurvey survey, HipsTileKey key)
+    {
+        Find(survey);
+        var now = _time.GetUtcNow().UtcDateTime;
+        return cache?.Read(CacheName, CacheKey(survey, key)) is { Content.Length: > 0 } cached && now - cached.StoredAtUtc < TileCacheDuration
+            ? new HipsTile(cached.Content, "cache")
+            : null;
+    }
+
     public async Task<HipsTile> GetTileAsync(HipsSurvey survey, HipsTileKey key, CancellationToken cancellationToken = default)
     {
         var definition = Find(survey);
-        var cacheKey = survey.Id + "/" + TilePath(key);
+        var cacheKey = CacheKey(survey, key);
         var now = _time.GetUtcNow().UtcDateTime;
-        if (cache?.Read(CacheName, cacheKey) is { Content.Length: > 0 } cached && now - cached.StoredAtUtc < TileCacheDuration)
+        if (GetCachedTile(survey, key) is { } cached)
         {
-            return new HipsTile(cached.Content, "cache");
+            return cached;
         }
 
         Exception? last = null;
@@ -104,6 +113,8 @@ public sealed class HipsTileService(HttpClient http, IOnlineCache? cache = null,
     }
 
     public void Dispose() => _downloads.Dispose();
+
+    private static string CacheKey(HipsSurvey survey, HipsTileKey key) => survey.Id + "/" + TilePath(key);
 
     private static OnlineServiceException Fail(string message, Exception? inner) => new(message, inner);
 

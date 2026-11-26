@@ -216,6 +216,24 @@ public sealed class SqliteStoreTests : TempFolderTest
     }
 
     [Fact]
+    public void SurveyPreferences_DefaultToDss_ThenRoundTrip_AndSurviveDamage_ApartFromTheUiOnes()
+    {
+        var database = Database();
+        var store = new SqliteInterfaceStore(database);
+        store.LoadSurvey().Should().Be(new SurveyPreferences());
+        store.LoadSurvey().SurveyId.Should().Be("DSSColor");
+
+        var saved = new SurveyPreferences { SurveyId = null, Mode = "survey", CacheLimitBytes = SurveyPreferences.MinimumCacheLimitBytes };
+        store.SaveSurvey(saved);
+        store.SavePreferences(new InterfacePreferences { ReduceTransparency = true });
+        new SqliteInterfaceStore(Database()).LoadSurvey().Should().Be(saved);
+
+        SettingsTable.Write(database, "survey", "{ broken");
+        store.LoadSurvey().Should().Be(new SurveyPreferences());
+        store.LoadPreferences().ReduceTransparency.Should().BeTrue();
+    }
+
+    [Fact]
     public void Plan_KeepsOrderAndNotes_AndSaveReplacesIt()
     {
         var service = new SqlitePlanService(Database());

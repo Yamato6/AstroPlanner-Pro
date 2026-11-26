@@ -1,4 +1,5 @@
 using AstroPlanner.Application.Bridge;
+using AstroPlanner.Application.Services;
 using AstroPlanner.Application.ViewModels;
 using AstroPlanner.Core.Interfaces;
 using AstroPlanner.SkyBridge.App;
@@ -18,8 +19,10 @@ public sealed class AppEndpoints
     /// <param name="store">The planetarium UI's window layout and preferences.</param>
     /// <param name="ui">The view models' thread; defaults to the calling (UI) thread.</param>
     /// <param name="time">Clock of the change-event coalescing; defaults to the system clock.</param>
+    /// <param name="tiles">The survey tiles (and their surveys); none by default.</param>
+    /// <param name="tileCache">The survey tiles' disk cache; none by default.</param>
     public AppEndpoints(ShellViewModel shell, IAppHost host, IInterfaceStore store, Action<string> send, IAppLogger logger,
-        IUiDispatcher? ui = null, TimeProvider? time = null)
+        IUiDispatcher? ui = null, TimeProvider? time = null, ISurveyTileSource? tiles = null, ISizedCache? tileCache = null)
     {
         ArgumentNullException.ThrowIfNull(shell);
         ArgumentNullException.ThrowIfNull(host);
@@ -51,6 +54,7 @@ public sealed class AppEndpoints
             new InterfaceEndpoints(shell.Settings, store, host, logger, ui, time),
             new LayoutEndpoints(store, logger),
             new LandscapeEndpoints(shell.Locations, shell.Observer, shell.Sky.Media, ui, time),
+            new SurveyEndpoints(tiles ?? NoSurveyTiles.Instance, store, tileCache ?? NoSurveyTiles.Instance, shell.Online, logger, ui, time),
         ];
         foreach (var module in _modules)
         {

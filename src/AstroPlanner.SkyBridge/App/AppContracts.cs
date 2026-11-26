@@ -341,6 +341,55 @@ public sealed record LandscapeSetRequest(
 public sealed record LandscapeChangedEvent(
     [property: Range(0, int.MaxValue)] int Revision);
 
+/// <summary>How the survey layer is shown (spec §8.3).</summary>
+public static class SurveyModes
+{
+    /// <summary>Dimmed by the sky's brightness, as the eye would see it (a city sky shows less).</summary>
+    public const string Realistic = "realistic";
+
+    /// <summary>At full contrast, whatever the sky.</summary>
+    public const string Survey = "survey";
+}
+
+/// <summary>A HiPS survey the sky can show (its tiles come through <see cref="SurveySnapshot.TilesBaseUrl"/>).</summary>
+public sealed record SurveyOption(
+    [property: StringLength(60, MinimumLength = 1)] string Id,
+    [property: StringLength(80, MinimumLength = 1)] string Name,
+    [property: Range(3, 13)] int MaxOrder,
+    [property: Range(64, 1024)] int TileWidth,
+    [property: StringLength(300, MinimumLength = 1)] string Credit);
+
+/// <summary>
+/// <c>survey.get</c>: the deep-sky survey layer (spec §8.3). <see cref="SurveyId"/> is null when
+/// none is shown. <see cref="Downloads"/> is false when online images are turned off: only cached
+/// tiles are shown. Tiles are fetched as <c>{TilesBaseUrl}{id}/Norder{o}/Dir{d}/Npix{n}.jpg</c>.
+/// </summary>
+public sealed record SurveySnapshot(
+    [property: Range(0, int.MaxValue)] int Revision,
+    [property: StringLength(100, MinimumLength = 1)] string TilesBaseUrl,
+    [property: Length(0, 8)] IReadOnlyList<SurveyOption> Surveys,
+    [property: StringLength(60, MinimumLength = 1)] string? SurveyId,
+    [property: AllowedValues(SurveyModes.Realistic, SurveyModes.Survey)] string Mode,
+    bool Downloads,
+    [property: Range(0, int.MaxValue)] int CacheMegabytes,
+    [property: Range(256, 10240)] int CacheLimitMegabytes);
+
+/// <summary><c>survey.set</c>: the survey to show (an id of <see cref="SurveySnapshot.Surveys"/>), or null for none.</summary>
+public sealed record SurveySetRequest(
+    [property: StringLength(60, MinimumLength = 1)] string? SurveyId);
+
+/// <summary><c>survey.setMode</c>: realistic or full-contrast survey.</summary>
+public sealed record SurveySetModeRequest(
+    [property: AllowedValues(SurveyModes.Realistic, SurveyModes.Survey)] string Mode);
+
+/// <summary><c>survey.setCacheLimit</c>: disk space for the survey tiles, MB.</summary>
+public sealed record SurveySetCacheLimitRequest(
+    [property: Range(256, 10240)] int CacheLimitMegabytes);
+
+/// <summary><c>survey.changed</c>: the survey settings, the online switch or the cache changed.</summary>
+public sealed record SurveyChangedEvent(
+    [property: Range(0, int.MaxValue)] int Revision);
+
 /// <summary>Ids of the planetarium UI's windows (spec §3.4).</summary>
 public static class WindowIds
 {

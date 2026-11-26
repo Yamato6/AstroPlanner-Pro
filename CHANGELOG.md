@@ -34,6 +34,12 @@ versions follow [Semantic Versioning](https://semver.org/). Versions up to 1.0.0
   `Shift+G` shows and hides the ground.
 - The images come in a `data` folder next to the program (installer and portable zip, ~5.5 MB);
   their credits are in About, and the Milky Way's in the sky while it shows.
+- Sky (planetarium UI): zooming in shows the sky photographed — the DSS2 colour survey, or
+  Pan-STARRS north of −30° — appearing below a 30° field. *Realistic* shows as much of it as the
+  site's sky would; *Survey* shows it in full, even by day. Settings › Survey chooses the survey,
+  its contrast and the size of its tile cache (1 GB by default), and clears it. Survey images are
+  downloaded by the app only, cached, and shown offline once downloaded; with online images off
+  only those are shown.
 
 ### Changed
 - Sky: the sky's brightness now comes from the same model as the capture feasibility (site sky,

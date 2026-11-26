@@ -69,6 +69,10 @@ Landscape (R2c, `LandscapeSection`) is a radio list (React Aria `RadioField`): t
 profile, a flat ground or one of the media folder's landscapes, each with its credit; *Use the
 landscape horizon for calculations* asks for a confirmation in place before it replaces the site's
 horizon. It needs a saved active site and the media folder, and says so when either is missing.
+Settings › Survey (R3a, `SurveySection`) chooses the survey shown when zooming in (DSS2 colour,
+Pan-STARRS DR1 colour, or none, each with its credit), its contrast (*Realistic* or *Survey*) and
+the tile cache's size (256 MB to 10 GB, with the space in use), and clears it; with online images
+off it says that only downloaded tiles show. Its segmented choices are `SegmentedChoice`.
 
 ## Shell
 

@@ -11,6 +11,7 @@ namespace AstroPlanner.Data.Storage;
 public sealed class SqliteInterfaceStore(AppDatabase database) : IInterfaceStore
 {
     private const string PreferencesKey = "ui";
+    private const string SurveyKey = "survey";
     private readonly AppDatabase _database = database ?? throw new ArgumentNullException(nameof(database));
 
     public IReadOnlyList<WindowLayout> LoadLayouts()
@@ -83,5 +84,25 @@ public sealed class SqliteInterfaceStore(AppDatabase database) : IInterfaceStore
     {
         ArgumentNullException.ThrowIfNull(preferences);
         SettingsTable.Write(_database, PreferencesKey, JsonSerializer.Serialize(preferences));
+    }
+
+    public SurveyPreferences LoadSurvey()
+    {
+        try
+        {
+            return SettingsTable.Read(_database, SurveyKey) is { } json
+                ? JsonSerializer.Deserialize<SurveyPreferences>(json) ?? new SurveyPreferences()
+                : new SurveyPreferences();
+        }
+        catch (JsonException)
+        {
+            return new SurveyPreferences();
+        }
+    }
+
+    public void SaveSurvey(SurveyPreferences survey)
+    {
+        ArgumentNullException.ThrowIfNull(survey);
+        SettingsTable.Write(_database, SurveyKey, JsonSerializer.Serialize(survey));
     }
 }

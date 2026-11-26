@@ -15,4 +15,9 @@ public interface IInterfaceStore
     InterfacePreferences LoadPreferences();
 
     void SavePreferences(InterfacePreferences preferences);
+
+    /// <summary>The saved survey layer settings; defaults if there are none or they are damaged.</summary>
+    SurveyPreferences LoadSurvey();
+
+    void SaveSurvey(SurveyPreferences survey);
 }

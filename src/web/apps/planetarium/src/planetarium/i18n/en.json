@@ -118,6 +118,27 @@
       "cancel": "Cancel",
       "notInstalled": "The landscapes and the Milky Way panorama are not installed (the data folder next to the app is missing).",
       "noSite": "The site in use is not saved. Save it (Locations, classic window) to give it a landscape."
+    },
+    "survey": {
+      "title": "Survey",
+      "label": "Sky photographs shown as you zoom in",
+      "none": "None",
+      "noneDescription": "Only the catalog's stars and deep-sky markers.",
+      "mode": "Contrast",
+      "modeDescription": "Realistic dims the photographs as the site's sky would; Survey shows them in full.",
+      "modes": {
+        "realistic": "Realistic",
+        "survey": "Survey"
+      },
+      "cache": "Tile cache",
+      "cacheDescription": "Disk space for the survey's tiles.",
+      "cacheUsed": "{{used}} in use; the oldest tiles go first.",
+      "megabytes": "{{value}} MB",
+      "gigabytes": "{{value}} GB",
+      "clear": "Clear the tile cache",
+      "clearDescription": "Downloaded tiles are deleted; they come back as you look around.",
+      "clearButton": "Clear",
+      "offline": "Online images are off (classic window › Settings › Online): only tiles already downloaded are shown."
     }
   },
   "help": {
@@ -203,7 +224,8 @@
     "trackingOn": "On (T)",
     "credit": {
       "panorama": "Milky Way: {{author}}, {{license}}",
-      "landscape": "Landscape: {{author}}, {{license}}"
+      "landscape": "Landscape: {{author}}, {{license}}",
+      "survey": "Survey: {{author}}"
     }
   },
   "card": {

@@ -43,6 +43,8 @@ import { hasObstruction, maskAltitude, silhouetteTriangles, type HorizonPoint } 
 import { landscapeHorizon, type LandscapeEntry, type MediaManifest } from './media';
 import { MediaLayers, type MediaCredit } from './mediaLayers';
 import { SkyOverlay, type FovState, type OverlayView, type Placed, type Selection } from './overlay';
+import { SurveyLayer, type SurveyFrame, type SurveyMode } from './surveyLayer';
+import { surveyOpacity, type SurveyConfig } from './surveyTiles';
 import { extinctionAt, fluxOf, nakedEyeLimit, skyBrightnessAt } from './photometry';
 import { pickNearest, type PickCandidate } from './picking';
 import {
@@ -155,12 +157,14 @@ export class SkyView {
     uNightChroma: { value: unitChroma(skyColor(22)) },
     uTintChroma: { value: unitChroma(TINTS.led) },
     uMoonChroma: { value: unitChroma(MOON_CHROMA) },
+    uSurveyCover: { value: 0 },
   };
   private readonly groundColors = {
     uGround: { value: color(palette.ground) },
     uHorizon: { value: color(palette.horizon) },
   };
   private readonly mediaLayers: MediaLayers;
+  private readonly surveyLayer: SurveyLayer;
   private readonly layerFactory: LayerFactory;
   private readonly overlayLayer: SkyOverlay;
   /** The dome camera of the last frame (projection of the overlay, picking, unproject). */
@@ -276,6 +280,11 @@ export class SkyView {
         this.onMediaError?.(error);
       },
     );
+
+    // The deep-sky survey (HiPS tiles through the host's proxy), over the sky as the field narrows.
+    this.surveyLayer = new SurveyLayer(this.renderer, this.scene, this.shared, (error) => {
+      this.onMediaError?.(error);
+    });
 
     // The sky: a full-screen pass in the dome and the all-sky chart (the finder has a flat
     // background), drawn before everything else.
@@ -449,9 +458,49 @@ export class SkyView {
     return fluxOf(22) / fluxOf(a.zenithSqm) >= 0.1;
   }
 
-  /** The images on screen now, whose credits the page shows (spec §8.3: CC BY). */
+  /** The images on screen now, whose credits the page shows (spec §8.3: CC BY; §10). */
   get mediaCredits(): MediaCredit[] {
-    return this.mediaLayers.credits(this.milkyWayVisible);
+    const credits = this.mediaLayers.credits(this.milkyWayVisible);
+    // Dimmed like the panorama in the realistic mode: credited only when the sky lets it show.
+    const survey = this.surveyLayer.credit;
+    const shown = survey !== null && (!this.surveyLayer.isRealistic || this.milkyWayVisible);
+    return shown ? [...credits, { kind: 'survey', author: survey, license: '' }] : credits;
+  }
+
+  // ---- survey (HiPS) -------------------------------------------------------------------------
+
+  /** The survey shown when zooming in (null: none), from the host's `survey.get`. */
+  setSurvey(config: SurveyConfig | null): void {
+    this.surveyLayer.setSurvey(config);
+  }
+
+  /** Realistic (dimmed by the sky's brightness) or full contrast. */
+  setSurveyMode(mode: SurveyMode): void {
+    this.surveyLayer.setMode(mode);
+  }
+
+  /** The survey layer's view of this frame: what is on screen and how finely. */
+  private surveyFrame(): SurveyFrame {
+    const aspect = this.width / this.height;
+    const half = ((this.effectiveFov / 2) * Math.PI) / 180;
+    let radius: number;
+    if (this.mode === 'dome') {
+      // The generalized projection r = k·tan(θ/k): the screen's corner is √(1 + aspect²) times
+      // farther from the centre than its top edge.
+      const k = domeK(this.fov);
+      const corner = k * Math.tan(half / k) * Math.sqrt(1 + aspect * aspect);
+      radius = k * Math.atan(corner / k);
+    } else {
+      radius = Math.atan(Math.tan(Math.min(half, 1.5)) * Math.sqrt(1 + aspect * aspect));
+    }
+    return {
+      nowMs: this.frameMs || performance.now(),
+      opacity: this.mode === 'allSky' ? 0 : surveyOpacity(this.effectiveFov),
+      center: this.viewCenter(),
+      radiusDegrees: (radius * 180) / Math.PI + 0.5,
+      degreesPerPixel: 1 / Math.max(1e-6, this.pixelsPerDegree * this.pixelRatio),
+      horizon: this.mode === 'dome' && this.layers.ground ? this.currentH : null,
+    };
   }
 
   /**
@@ -1087,6 +1136,8 @@ export class SkyView {
     this.applyVisibility();
 
     this.updateDome();
+    this.surveyLayer.update(this.surveyFrame());
+    this.skyPassUniforms.uSurveyCover.value = this.surveyLayer.skyCover;
 
     // The dome and the all-sky chart limit each star by its own sky (shaders.ts); the finder by the zenith.
     const finder = this.mode === 'finder';

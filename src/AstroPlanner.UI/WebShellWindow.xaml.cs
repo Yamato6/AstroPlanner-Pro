@@ -19,13 +19,17 @@ public partial class WebShellWindow : Window, IAppHost
 {
     private readonly IAppLogger _logger;
     private readonly IInterfaceStore _interfaceStore;
+    private readonly ISurveyTileSource _tiles;
+    private readonly ISizedCache _tileCache;
     private AppEndpoints? _endpoints;
     private FrameState? _beforeFullScreen;
 
-    public WebShellWindow(IAppLogger logger, IInterfaceStore interfaceStore)
+    public WebShellWindow(IAppLogger logger, IInterfaceStore interfaceStore, ISurveyTileSource tiles, ISizedCache tileCache)
     {
         _logger = logger;
         _interfaceStore = interfaceStore;
+        _tiles = tiles;
+        _tileCache = tileCache;
         InitializeComponent();
         NativeWindows.UseDarkTitleBar(this);
         SkyHostView.Unavailable += OnSkyUnavailable;
@@ -44,7 +48,9 @@ public partial class WebShellWindow : Window, IAppHost
         await viewModel.LoadCommand.ExecuteAsync(null);
         viewModel.Sky.Attach(SkyHostView);
         // The app channel (bridge v2): requests and events of the planetarium UI.
-        _endpoints = new AppEndpoints(viewModel, this, _interfaceStore, SkyHostView.Post, _logger);
+        _endpoints = new AppEndpoints(viewModel, this, _interfaceStore, SkyHostView.Post, _logger, tiles: _tiles, tileCache: _tileCache);
+        // Survey tiles reach the page only through the host (https://tiles.astroplanner/, spec §5.4).
+        SkyHostView.TileProxy = new SurveyTileProxy(_tiles, viewModel.Online);
         await SkyHostView.StartAsync(_logger, SkyLaunchOptions.Query(Environment.GetCommandLineArgs()), SkyPage.Planetarium);
         SkyHostView.FocusPage();
     }

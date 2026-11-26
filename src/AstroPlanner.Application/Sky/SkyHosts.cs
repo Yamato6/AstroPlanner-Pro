@@ -10,4 +10,9 @@ public static class SkyHosts
     public const string AppHost = "app.astroplanner";
     public const string DataHost = "data.astroplanner";
     public const string MediaHost = "media.astroplanner";
+
+    /// <summary>Survey tiles, answered by the host's tile proxy (<see cref="Services.SurveyTileProxy"/>), never by the internet directly.</summary>
+    public const string TilesHost = "tiles.astroplanner";
+
+    public const string TilesBaseUrl = "https://" + TilesHost + "/";
 }

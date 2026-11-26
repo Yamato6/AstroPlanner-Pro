@@ -23,3 +23,10 @@ public interface IOnlineCache
     /// <summary>Deletes every entry.</summary>
     void Clear();
 }
+
+/// <summary>A cache with a size limit that can change while it is used (the survey tiles).</summary>
+public interface ISizedCache : IOnlineCache
+{
+    /// <summary>Size above which the least recently used entries are removed.</summary>
+    long LimitBytes { get; set; }
+}

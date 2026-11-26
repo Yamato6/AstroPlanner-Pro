@@ -24,9 +24,9 @@ export interface SkyEventMap {
     readonly fovDegrees: number;
     readonly mode: SkyViewMode;
     readonly starLimitMagnitude: number;
-    /** The images on screen whose authors must be credited (the Milky Way panorama, the landscape). */
+    /** The images on screen whose authors must be credited (the Milky Way panorama, the landscape, the survey). */
     readonly credits: readonly {
-      readonly kind: 'panorama' | 'landscape';
+      readonly kind: 'panorama' | 'landscape' | 'survey';
       readonly author: string;
       readonly license: string;
     }[];

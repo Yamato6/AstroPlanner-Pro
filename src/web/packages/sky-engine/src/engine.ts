@@ -217,6 +217,12 @@ export function mountSky(container: HTMLElement, options: MountOptions = {}): vo
       setScintillation: (on) => {
         created.setScintillation(on);
       },
+      setSurvey: (survey) => {
+        created.setSurvey(survey);
+      },
+      setSurveyMode: (mode) => {
+        created.setSurveyMode(mode);
+      },
     });
     requestAnimationFrame(loop);
   }

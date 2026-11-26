@@ -255,6 +255,35 @@ test("Settings › Landscape chooses the site's landscape and uses its horizon a
   await expect(settings.getByRole('button', { name: 'Use…' })).toBeDisabled();
 });
 
+test('Settings › Survey chooses the survey, its contrast and the tile cache', async ({ page }) => {
+  await rail(page, 'Settings').click();
+  const settings = dialog(page, 'Settings');
+  const surveys = settings.getByRole('radiogroup', { name: 'Sky photographs shown as you zoom in' });
+
+  // The golden snapshot: DSS2 colour, realistic, 312 MB of a 1 GB cache.
+  await expect(surveys.getByRole('radio', { name: 'DSS2 colour' })).toBeChecked();
+  await expect(surveys).toContainText('Pan-STARRS1: STScI/MAST · HiPS by CDS');
+  await expect(settings).toContainText('312 MB in use');
+
+  await surveys.getByText('Pan-STARRS DR1 colour', { exact: true }).click();
+  await surveys.getByText('None', { exact: true }).click();
+  expect(host.calls('survey.set')).toEqual([{ surveyId: 'PanSTARRS-DR1-color' }, { surveyId: null }]);
+  // Without a survey there is no contrast to choose.
+  await expect(settings.getByRole('radio', { name: 'Survey', exact: true })).toBeDisabled();
+
+  await surveys.getByText('DSS2 colour', { exact: true }).click();
+  await settings.getByRole('radio', { name: 'Survey', exact: true }).click();
+  expect(host.calls('survey.setMode')).toEqual([{ mode: 'survey' }]);
+
+  await settings.getByRole('radio', { name: '5 GB' }).click();
+  expect(host.calls('survey.setCacheLimit')).toEqual([{ cacheLimitMegabytes: 5120 }]);
+
+  await settings.getByRole('button', { name: 'Clear' }).click();
+  expect(host.calls('survey.clearCache')).toEqual([{}]);
+  await expect(settings).toContainText('0 MB in use');
+  await expect(settings.getByRole('button', { name: 'Clear' })).toBeDisabled();
+});
+
 test('Help lists every shortcut and shows About from the app', async ({ page }) => {
   await page.keyboard.press('F1');
   const help = dialog(page, 'Help');

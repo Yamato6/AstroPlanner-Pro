@@ -6,7 +6,7 @@
     <!-- Strict CSP (spec §5.4): own scripts only, data only from the local data host, no eval. -->
     <meta
       http-equiv="Content-Security-Policy"
-      content="default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self' data: https://media.astroplanner; connect-src 'self' https://data.astroplanner https://media.astroplanner; font-src 'self'; base-uri 'none'; form-action 'none'"
+      content="default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self' data: https://media.astroplanner https://tiles.astroplanner; connect-src 'self' https://data.astroplanner https://media.astroplanner https://tiles.astroplanner; font-src 'self'; base-uri 'none'; form-action 'none'"
     />
     <title>AstroPlanner Pro</title>
     <!-- React Aria injects a <style> (blocked by the CSP) unless this id exists; the rule is in ui-kit's tokens.css. -->

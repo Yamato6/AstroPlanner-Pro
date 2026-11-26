@@ -85,7 +85,8 @@ AstroPlanner Pro is free.
   by CDS (Strasbourg); served by CDS alasky and its ESA ESASky mirror.
 - **Pan-STARRS1 DR1** (STScI/MAST), HiPS by CDS.
 
-The preview credits the survey and the mirror under every image. `docs/screenshots/framing.png`
+The preview credits the survey and the mirror under every image; the sky's survey layer (planetarium
+UI) credits the survey in the HUD while it shows. `docs/screenshots/framing.png`
 contains DSS imagery (CC BY-NC-SA 4.0) and Wikipedia text (CC BY-SA 4.0); it is not covered by the
 MIT license of the code.
 
