@@ -13,6 +13,9 @@ public interface ISurveyTileSource
     /// <exception cref="OnlineServiceException">No mirror could serve it and it is not cached.</exception>
     Task<HipsTile> GetTileAsync(HipsSurvey survey, HipsTileKey key, CancellationToken cancellationToken = default);
 
+    /// <summary>The tile if it is in the cache (no network: online images turned off), else null.</summary>
+    HipsTile? GetCachedTile(HipsSurvey survey, HipsTileKey key);
+
     /// <summary>Credit line to show under images of the survey.</summary>
     string CreditFor(HipsSurvey survey);
 }

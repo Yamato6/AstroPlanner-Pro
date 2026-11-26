@@ -75,6 +75,33 @@ public sealed class DiskCacheTests : IDisposable
     }
 
     [Fact]
+    public void Size_IsKeptUpToDate_AcrossWritesAndReplacements()
+    {
+        var cache = new DiskCache(_root);
+        cache.Write("s", "a", new byte[100], Stored);
+        cache.Write("s", "b", new byte[50], Stored);
+        cache.Write("s", "a", new byte[10], Stored);
+
+        cache.SizeBytes.Should().Be((8 + 50) + (8 + 10));
+        new DiskCache(_root).SizeBytes.Should().Be(cache.SizeBytes, "a new instance counts the files once");
+    }
+
+    [Fact]
+    public void LoweringTheLimit_TrimsAtOnce_ToBelowIt()
+    {
+        var cache = new DiskCache(_root);
+        foreach (var key in new[] { "a", "b", "c", "d" })
+        {
+            cache.Write("s", key, new byte[100], Stored);
+        }
+
+        cache.LimitBytes = 2 * (8 + 100);
+
+        cache.SizeBytes.Should().BeLessThanOrEqualTo((long)(cache.LimitBytes * DiskCache.TrimTarget));
+        cache.Read("s", "d").Should().NotBeNull();
+    }
+
+    [Fact]
     public void Clear_RemovesEverything()
     {
         var cache = new DiskCache(_root);

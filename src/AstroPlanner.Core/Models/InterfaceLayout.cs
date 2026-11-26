@@ -48,3 +48,20 @@ public sealed record InterfacePreferences
     /// <summary>Twinkling stars, at High quality only (spec §8.2; off by default).</summary>
     public bool Scintillation { get; init; }
 }
+
+/// <summary>The deep-sky survey layer of the planetarium UI (Settings › Survey, spec §8.3).</summary>
+public sealed record SurveyPreferences
+{
+    public const long DefaultCacheLimitBytes = 1024L * 1024 * 1024;
+    public const long MinimumCacheLimitBytes = 256L * 1024 * 1024;
+    public const long MaximumCacheLimitBytes = 10L * 1024 * 1024 * 1024;
+
+    /// <summary>The survey shown when zooming in (a HiPS survey id); null shows none.</summary>
+    public string? SurveyId { get; init; } = "DSSColor";
+
+    /// <summary>"realistic": dimmed by the sky's brightness like the eye would see it; "survey": full contrast.</summary>
+    public string Mode { get; init; } = "realistic";
+
+    /// <summary>Disk space the survey tiles may take (least recently used tiles go first).</summary>
+    public long CacheLimitBytes { get; init; } = DefaultCacheLimitBytes;
+}
