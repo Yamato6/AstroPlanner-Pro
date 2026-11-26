@@ -277,6 +277,49 @@ void main() {
 }
 `;
 
+// Survey tiles (surveyLayer.ts, spec §8.3): HiPS images on HEALPix grids placed by the same
+// projection as the stars, added to the sky. In the realistic mode each vertex weighs them by the
+// natural sky's share of the light there and the air in front, like the Milky Way panorama.
+export const surveyVertex = /* glsl */ `
+${common}
+attribute vec2 tileUv;
+uniform vec4 uRect;        // the tile's pixels in its texture: u0, v0 (top-left), width, height
+uniform float uRealistic;
+varying vec2 vUv;
+varying float vVisibility;
+
+void main() {
+  gl_Position = skyClip(position);
+  vUv = uRect.xy + tileUv * uRect.zw;
+  float visibility = 1.0;
+  if (uRealistic > 0.5 && uBrightnessOn > 0.5 && uMode < 1.5) {
+    float natural; float artificial; float moon; float twilight; vec3 c;
+    skyParts(gNeu, natural, artificial, moon, twilight, c);
+    visibility = natural / max(natural + artificial + moon + twilight, 1e-30);
+    visibility *= pow(10.0, -0.4 * uExtinction * min(kastenYoung(vAltitude), 40.0));
+  }
+  vVisibility = visibility;
+}
+`;
+
+export const surveyFragment = /* glsl */ `
+${horizonCut}
+uniform sampler2D uTile;
+uniform float uWeight;     // this tile's share while it fades in over its parent
+uniform float uOpacity;    // the field-of-view ramp
+uniform float uBlack;      // the plates' sky background, subtracted
+varying vec2 vUv;
+varying float vVisibility;
+
+void main() {
+  if (vCull > 0.001) discard;
+  if (uHideBelowHorizon > 0.5 && vAltitude < 0.0) discard;
+  vec3 c = texture2D(uTile, vUv).rgb;
+  c = max(c - uBlack, vec3(0.0)) / (1.0 - uBlack);
+  gl_FragColor = vec4(c * (uWeight * uOpacity * vVisibility), 1.0);
+}
+`;
+
 export const dsoVertex = /* glsl */ `
 ${common}
 attribute float magnitude;
@@ -452,6 +495,7 @@ uniform sampler2D uPanorama;
 uniform float uPanoramaOn;
 uniform float uPanoramaGain; // display brightness of a white texel under a natural sky, field fade included
 uniform float uPanoramaLod;
+uniform float uSurveyCover;  // the survey at full contrast replaces the sky's light (surveyLayer.ts)
 
 ${displayLevel}
 
@@ -478,7 +522,7 @@ void main() {
     float visibility = natural / total;
     sky = min(sky + texel * uPanoramaGain * visibility * extinction, vec3(1.0));
   }
-  gl_FragColor = vec4(sky, 1.0);
+  gl_FragColor = vec4(sky * (1.0 - uSurveyCover), 1.0);
 }
 `;
 }

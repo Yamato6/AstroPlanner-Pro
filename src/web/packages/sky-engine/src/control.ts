@@ -3,8 +3,10 @@
 // before that every call does nothing; the last options are kept and applied once it is.
 import type { SkyQuality } from './render/atmosphere';
 import type { LightPollutionTint } from './render/skyStyle';
+import type { SurveyMode } from './render/surveyLayer';
+import type { SurveyConfig } from './render/surveyTiles';
 
-export type { LightPollutionTint, SkyQuality };
+export type { LightPollutionTint, SkyQuality, SurveyConfig, SurveyMode };
 
 export interface SkyControlHandlers {
   /** Flies the dome back to the south, 30° up, 70° field. */
@@ -19,6 +21,9 @@ export interface SkyControlHandlers {
   readonly setLightPollutionTint: (tint: LightPollutionTint) => void;
   /** Twinkling stars (High quality only). */
   readonly setScintillation: (on: boolean) => void;
+  /** The deep-sky survey shown when zooming in (spec §8.3); null shows none. */
+  readonly setSurvey: (survey: SurveyConfig | null) => void;
+  readonly setSurveyMode: (mode: SurveyMode) => void;
 }
 
 let handlers: SkyControlHandlers | null = null;
@@ -29,6 +34,8 @@ const pending: {
   quality?: SkyQuality;
   tint?: LightPollutionTint;
   scintillation?: boolean;
+  survey?: SurveyConfig | null;
+  surveyMode?: SurveyMode;
 } = {};
 
 /** Called by the engine when the sky is built. */
@@ -39,6 +46,8 @@ export function registerSkyControl(next: SkyControlHandlers | null): void {
     if (pending.quality !== undefined) next.setQuality(pending.quality);
     if (pending.tint !== undefined) next.setLightPollutionTint(pending.tint);
     if (pending.scintillation !== undefined) next.setScintillation(pending.scintillation);
+    if (pending.survey !== undefined) next.setSurvey(pending.survey);
+    if (pending.surveyMode !== undefined) next.setSurveyMode(pending.surveyMode);
   }
 }
 
@@ -67,5 +76,13 @@ export const skyControl = {
   setScintillation(on: boolean): void {
     pending.scintillation = on;
     handlers?.setScintillation(on);
+  },
+  setSurvey(survey: SurveyConfig | null): void {
+    pending.survey = survey;
+    handlers?.setSurvey(survey);
+  },
+  setSurveyMode(mode: SurveyMode): void {
+    pending.surveyMode = mode;
+    handlers?.setSurveyMode(mode);
   },
 };
