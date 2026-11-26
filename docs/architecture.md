@@ -63,6 +63,11 @@ flowchart TB
   host: those images are files of the installation, read-only, that the app can run without, while
   the data host's folder is rebuilt from the exe at every update. Spec §5.4 names one data host;
   this is a deliberate deviation.
+- **Survey tiles** (R3a): `https://tiles.astroplanner/` is not a folder but the host's proxy
+  (`SkyHost` → `Application/Services/SurveyTileProxy` → `Online/Imaging/HipsTileService`), with
+  its own disk cache (`%LocalAppData%\AstroPlannerPro\tiles`, a `DiskCache` as `ISizedCache`:
+  1 GB by default, 256 MB–10 GB in Settings › Survey; the framing preview shares it). The survey
+  settings are saved apart from the UI preferences (`settings` key `survey`, `SurveyPreferences`).
 - **Views** are thin: code-behind only opens dialogs, moves the focus and switches tabs, and asks
   `Charts/*` (`SkyMapChart`, `AltitudeChart`, `PlanTimelineChart`, `HorizonChart`,
   `PredictionChart`, colors from `ChartPalette`) to redraw. Commands without a dialog are

@@ -24,6 +24,7 @@ const snapshots = {
   'night.get': 'night.changed',
   'selection.get': 'selection.changed',
   'landscape.get': 'landscape.changed',
+  'survey.get': 'survey.changed',
 } as const satisfies Partial<Record<MethodName, EventName>>;
 
 export type SnapshotMethod = keyof typeof snapshots;

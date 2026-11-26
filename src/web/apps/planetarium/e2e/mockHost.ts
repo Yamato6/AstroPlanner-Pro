@@ -12,6 +12,7 @@ import {
   type MethodName,
   aboutResponseSchema,
   landscapeSnapshotSchema,
+  surveySnapshotSchema,
   layoutSnapshotSchema,
   nightTimelineSchema,
   searchResultsSchema,
@@ -20,6 +21,7 @@ import {
   skySnapshotSchema,
   uiSnapshotSchema,
   type LandscapeSnapshot,
+  type SurveySnapshot,
   type LayoutSnapshot,
   type NightTimeline,
   type SelectionSnapshot,
@@ -81,6 +83,7 @@ export class MockHost {
   sky: SkySnapshot = skySnapshotSchema.parse(goldenPayload('sky.get.response'));
   ui: UiSnapshot = uiSnapshotSchema.parse(goldenPayload('ui.get.response'));
   landscape: LandscapeSnapshot = landscapeSnapshotSchema.parse(goldenPayload('landscape.get.response'));
+  survey: SurveySnapshot = surveySnapshotSchema.parse(goldenPayload('survey.get.response'));
   /** The saved window layout: empty, like a first start (the golden file has a sample). */
   layout: LayoutSnapshot = { windows: [] };
   readonly openedLinks: string[] = [];
@@ -256,6 +259,18 @@ export class MockHost {
           revision: this.landscape.revision + 1,
         };
         return this.landscape;
+      case 'survey.get':
+        return this.survey;
+      case 'survey.set':
+        return this.updateSurvey({ surveyId: (payload as { surveyId: string | null }).surveyId });
+      case 'survey.setMode':
+        return this.updateSurvey({ mode: (payload as { mode: SurveySnapshot['mode'] }).mode });
+      case 'survey.setCacheLimit':
+        return this.updateSurvey({
+          cacheLimitMegabytes: (payload as { cacheLimitMegabytes: number }).cacheLimitMegabytes,
+        });
+      case 'survey.clearCache':
+        return this.updateSurvey({ cacheMegabytes: 0 });
       case 'layout.load':
         return this.layout;
       case 'layout.save':
@@ -302,6 +317,11 @@ export class MockHost {
   private updateUi(change: Partial<UiSnapshot>): UiSnapshot {
     this.ui = { ...this.ui, ...change, revision: this.ui.revision + 1 };
     return this.ui;
+  }
+
+  private updateSurvey(change: Partial<SurveySnapshot>): SurveySnapshot {
+    this.survey = { ...this.survey, ...change, revision: this.survey.revision + 1 };
+    return this.survey;
   }
 
   private update(change: Partial<SkySnapshot>): SkySnapshot {
