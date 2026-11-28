@@ -18,7 +18,7 @@
     "@astroplanner/ui-kit": "0.1.0",
     "@internationalized/date": "3.12.4",
     "@tanstack/react-query": "5.108.4",
-    "i18next": "27.2.7",
+    "i18next": "27.2.9",
     "react": "19.3.1",
     "react-aria-components": "1.22.1",
     "react-dom": "19.3.1",
